@@ -1,32 +1,32 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import "@digdir/designsystemet-css";
+import "@digdir/designsystemet-css/theme"; /* eller ditt tema */
+
+import { Button, Card, Heading, Paragraph,  } from "@digdir/designsystemet-react";
 
 function App() {
   const [count, setCount] = useState(0)
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
+
       <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
+      <Card>
+        <Button onClick={() => setCount((count) => count + 1)}>
+          Count is {count}
+        </Button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      </Card>
+      <Card style={{ maxWidth: '320px' }} data-color='neutral'>
+      <Heading>Lykkeland Barneskole</Heading>
+      <Paragraph>
+        Lykkeland Barneskole er ein trygg og inkluderande nærskule der leik,
+        læring og nysgjerrigheit går hand i hand.
+      </Paragraph>
+      <Paragraph data-size='sm'>Solslett kommune</Paragraph>
+    </Card>
     </>
   )
 }
