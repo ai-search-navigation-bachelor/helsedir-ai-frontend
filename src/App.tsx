@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import "@digdir/designsystemet-css";
-import "@digdir/designsystemet-css/theme"; /* eller ditt tema */
 
-import { Button, Card, Heading, Paragraph,  } from "@digdir/designsystemet-react";
+import { Button, Card, Heading, Paragraph } from '@digdir/designsystemet-react'
 
 function App() {
   const [count, setCount] = useState(0)
@@ -19,7 +17,7 @@ function App() {
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
       </Card>
-      <Card style={{ maxWidth: '320px' }} data-color='neutral'>
+      <Card style={{ maxWidth: '320px' }} data-color='bla-1'>
       <Heading>Lykkeland Barneskole</Heading>
       <Paragraph>
         Lykkeland Barneskole er ein trygg og inkluderande nærskule der leik,
