@@ -13,7 +13,8 @@
     "@digdir/designsystemet-css": "^1.11.0",
     "@digdir/designsystemet-react": "^1.11.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
     "@digdir/designsystemet-types": "^1.11.0",

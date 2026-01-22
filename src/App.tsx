@@ -1,31 +1,17 @@
-import { useState } from 'react'
+import { AppLayout } from './components/layout/AppLayout'
 
-import { Button, Card, Heading, Paragraph } from '@digdir/designsystemet-react'
+import { Heading, Paragraph } from '@digdir/designsystemet-react'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-
-      <h1>Vite + React</h1>
-      <Card>
-        <Button onClick={() => setCount((count) => count + 1)}>
-          Count is {count}
-        </Button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </Card>
-      <Card style={{ maxWidth: '320px' }} data-color='bla-1'>
-      <Heading>Lykkeland Barneskole</Heading>
+    <AppLayout>
+      <Heading level={2} data-size='lg'>
+        Velkommen
+      </Heading>
       <Paragraph>
-        Lykkeland Barneskole er ein trygg og inkluderande nærskule der leik,
-        læring og nysgjerrigheit går hand i hand.
+        Dette er en enkel layout med header, inspirert av Helsedirektoratet.
       </Paragraph>
-      <Paragraph data-size='sm'>Solslett kommune</Paragraph>
-    </Card>
-    </>
+    </AppLayout>
   )
 }
 
