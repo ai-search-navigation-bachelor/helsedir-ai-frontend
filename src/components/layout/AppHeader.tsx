@@ -4,13 +4,15 @@ import {
   Link,
 } from '@digdir/designsystemet-react'
 
-import { IoIosSearch, IoIosMenu  } from "react-icons/io";
+import { colors } from '../../styles/dsTokens'
+
+import { IoSearch, IoMenu } from 'react-icons/io5'
 import Hdir_logo from '../../../public/Hdir_logo.svg'
 
 export function AppHeader() {
   return (
     <>
-      <div style={{backgroundColor: "blue"}}>
+      <div style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}>
         <header>
           <CardBlock style={{ padding: '2rem 1rem' }}>
             <div
@@ -48,7 +50,7 @@ export function AppHeader() {
 
                   }}
                 >
-                <IoIosSearch />
+                <IoSearch />
                   Søk
                 </Button>
                 <Button
@@ -60,7 +62,7 @@ export function AppHeader() {
                     gap: '0.5rem',
                   }}
                 >
-                  <IoIosMenu />
+                  <IoMenu />
                   Meny
                 </Button>
               </div>
