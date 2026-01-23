@@ -7,7 +7,6 @@ import {
 import { colors } from '../../styles/dsTokens'
 
 import { IoSearch, IoMenu } from 'react-icons/io5'
-import Hdir_logo from '../../../public/Hdir_logo.svg'
 
 export function AppHeader() {
   return (
@@ -35,7 +34,7 @@ export function AppHeader() {
                   textDecoration: 'none',
                 }}
               >
-                <img src={Hdir_logo} alt='Helsedirektoratet' height={40} />
+                <img src='/Hdir_logo.svg' alt='Helsedirektoratet' height={40} />
               </Link>
 
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>

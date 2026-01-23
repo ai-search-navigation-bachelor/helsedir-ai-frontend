@@ -19,11 +19,13 @@ import { searchApi } from '../../api/search'
 export type AppSearchProps = {
   label?: string
   placeholder?: string
+  onSelectResult?: (id: string) => void
 }
 
 export function AppSearch({
   label = 'Søk',
   placeholder = 'Søk…',
+  onSelectResult,
 }: AppSearchProps) {
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -98,7 +100,10 @@ export function AppSearch({
     const koder = parseKoder(item.koder)
 
     return (
-      <Card>
+      <Card
+        onClick={() => onSelectResult?.(item.id)}
+        style={{ cursor: onSelectResult ? 'pointer' : 'default' }}
+      >
         <CardBlock style={{ display: 'grid', gap: '0.5rem', padding: '1rem' }}>
           <Heading level={3} data-size='md' style={{ margin: 0 }}>
             {item.tittel}
@@ -115,10 +120,6 @@ export function AppSearch({
                 )),
               )}
           </div>
-
-          <Paragraph data-size='sm' style={{ margin: 0 }}>
-            <Link href={item.url}>Åpne kilde</Link>
-          </Paragraph>
 
           {preview && (
             <Details>
