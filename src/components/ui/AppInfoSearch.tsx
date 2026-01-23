@@ -21,61 +21,70 @@ function InfoItem({ item, depth }: InfoItemProps) {
     <div style={{ marginLeft: depth * 20 }}>
       <div
         style={{
-          padding: '12px',
-          marginBottom: '8px',
-          backgroundColor: 'var(--fds-semantic-surface-neutral-subtle)',
+          padding: '16px',
+          marginBottom: '12px',
+          backgroundColor: depth === 0 ? '#fff' : '#f9f9f9',
           borderRadius: '4px',
-          borderLeft: `3px solid var(--fds-semantic-border-info-default)`,
+          border: '1px solid #e0e0e0',
+          boxShadow: depth === 0 ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
           {hasChildren && (
             <button
-              onClick={() => setExpanded(!expanded)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setExpanded(!expanded)
+              }}
               style={{
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                padding: 0,
+                padding: '4px',
                 display: 'flex',
                 alignItems: 'center',
+                color: '#0051be',
+                marginTop: '2px',
               }}
-              aria-label={expanded ? 'Collapse' : 'Expand'}
+              aria-label={expanded ? 'Skjul innhold' : 'Vis innhold'}
             >
               {expanded ? <FiChevronDown size={20} /> : <FiChevronRight size={20} />}
             </button>
           )}
           <div style={{ flex: 1 }}>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+            <h3 
+              style={{ 
+                margin: 0, 
+                fontSize: depth === 0 ? '24px' : '18px', 
+                fontWeight: 600,
+                color: '#1a1a1a',
+                lineHeight: '1.4',
+              }}
+            >
               {item.tittel}
             </h3>
             {item.infoId && (
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
-                ID: {item.infoId} {item.infoType && `| Type: ${item.infoType}`}
+              <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#666' }}>
+                {item.infoType && `${item.infoType} • `}ID: {item.infoId}
               </p>
             )}
             {item.tekst && (
-              <p style={{ margin: '8px 0 0', fontSize: '14px' }}>
-                {item.tekst.substring(0, 150)}
-                {item.tekst.length > 150 && '...'}
-              </p>
-            )}
-            {item.url && (
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ fontSize: '14px', marginTop: '8px', display: 'inline-block' }}
-              >
-                Les mer →
-              </a>
+              <div 
+                style={{ 
+                  margin: '12px 0 0', 
+                  fontSize: '15px',
+                  lineHeight: '1.6',
+                  color: '#333',
+                }}
+                dangerouslySetInnerHTML={{ __html: item.tekst }}
+              />
             )}
           </div>
         </div>
       </div>
 
       {hasChildren && expanded && (
-        <div style={{ marginTop: '8px' }}>
+        <div style={{ marginTop: '8px', marginLeft: '20px' }}>
           {item.children!.map((child) => (
             <InfoItem key={child.id} item={child} depth={depth + 1} />
           ))}
@@ -131,32 +140,7 @@ export function AppInfoSearch({ selectedId, depth: initialDepth = 2 }: AppInfoSe
   }, [selectedId, depth])
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <h1 style={{ marginBottom: '24px' }}>Detaljert informasjon</h1>
-
-      <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <label htmlFor="depth" style={{ fontSize: '14px' }}>
-          Dybde:
-        </label>
-        <input
-          id="depth"
-          type="number"
-          min="1"
-          max="5"
-          value={depth}
-          onChange={(e) => setDepth(Number(e.target.value))}
-          style={{
-            width: '60px',
-            padding: '6px',
-            fontSize: '14px',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-          }}
-        />
-        <span style={{ fontSize: '12px', color: '#666' }}>
-          (1-5 nivåer av children)
-        </span>
-      </div>
+    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', backgroundColor: '#fff' }}>
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>

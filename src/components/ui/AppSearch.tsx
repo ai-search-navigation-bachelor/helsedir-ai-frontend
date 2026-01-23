@@ -122,7 +122,7 @@ export function AppSearch({
           </div>
 
           {preview && (
-            <Details>
+            <Details onClick={(e) => e.stopPropagation()}>
               <Details.Summary>Vis tekst</Details.Summary>
               <Details.Content>
                 <Paragraph style={{ margin: 0 }}>{preview}</Paragraph>
