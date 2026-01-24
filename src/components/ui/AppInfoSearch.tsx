@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { FiChevronDown, FiChevronRight } from 'react-icons/fi'
+import DOMPurify from 'dompurify'
 import type { InfoResultItem } from '../../api/search'
 import { getInfobitApi } from '../../api/search'
 
@@ -76,7 +77,7 @@ function InfoItem({ item, depth }: InfoItemProps) {
                   lineHeight: '1.6',
                   color: '#333',
                 }}
-                dangerouslySetInnerHTML={{ __html: item.tekst }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.tekst) }}
               />
             )}
           </div>
@@ -95,7 +96,7 @@ function InfoItem({ item, depth }: InfoItemProps) {
 }
 
 export function AppInfoSearch({ selectedId, depth: initialDepth = 2 }: AppInfoSearchProps) {
-  const [depth, setDepth] = useState(initialDepth)
+  const [depth] = useState(initialDepth)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<InfoResultItem | null>(null)

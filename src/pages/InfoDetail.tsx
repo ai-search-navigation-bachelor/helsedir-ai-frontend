@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FiArrowLeft } from 'react-icons/fi'
+import DOMPurify from 'dompurify'
 import { Button, Alert, Paragraph, Spinner, Heading } from '@digdir/designsystemet-react'
 import type { InfoResultItem } from '../api/search'
 import { getInfobitApi } from '../api/search'
@@ -70,7 +71,7 @@ function TableOfContents({ items }: { items: TableOfContentsItem[] }) {
         border: '1px solid #e0e0e0',
       }}
     >
-      <Heading level={3} size='xs' style={{ marginBottom: '12px' }}>
+      <Heading level={3} data-size='xs' style={{ marginBottom: '12px' }}>
         På denne siden
       </Heading>
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -114,7 +115,9 @@ function ContentWithSideNav({ result }: { result: InfoResultItem }) {
   }, [result.tekst])
 
   const processedHtml = useMemo(() => {
-    return result.tekst ? addIdsToH2Elements(result.tekst) : ''
+    if (!result.tekst) return ''
+    const htmlWithIds = addIdsToH2Elements(result.tekst)
+    return DOMPurify.sanitize(htmlWithIds)
   }, [result.tekst])
 
   const formatDate = (dateString: string | undefined) => {
@@ -131,12 +134,12 @@ function ContentWithSideNav({ result }: { result: InfoResultItem }) {
     <div>
       {/* Tittel og intro */}
       <div style={{ marginBottom: '48px' }}>
-        <Heading level={1} size='xl' style={{ marginBottom: '20px', fontSize: '48px', fontWeight: 700 }}>
+        <Heading level={1} data-size='xl' style={{ marginBottom: '20px', fontSize: '48px', fontWeight: 700 }}>
           {result.tittel}
         </Heading>
         {result.intro && (
           <Paragraph
-            size='lg'
+            data-size='lg'
             style={{
               color: '#555',
               lineHeight: '1.6',
@@ -222,7 +225,7 @@ export function InfoDetail() {
 
       {isLoading && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-          <Spinner title="Laster informasjon..." />
+          <Spinner aria-label="Laster informasjon..." />
         </div>
       )}
 

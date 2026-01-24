@@ -17,9 +17,12 @@ export type InfoResultItem = {
   id: string
   tittel: string
   tekst?: string | null
+  intro?: string
   infoId?: string
   infoType?: string
   url: string
+  forstPublisert?: string
+  sistFagligOppdatert?: string
   children?: InfoResultItem[]
 }
 
@@ -87,9 +90,13 @@ export async function getInfobitApi(
 
   const endpoint = getInfobitEndpoint()
   
-  const url = `${endpoint}/${trimmed}?include_children=true&depth=${depth}`
+  const url = endpoint.startsWith('http')
+    ? new URL(`${endpoint}/${encodeURIComponent(trimmed)}`)
+    : new URL(`${endpoint}/${encodeURIComponent(trimmed)}`, window.location.origin)
+  url.searchParams.set('include_children', 'true')
+  url.searchParams.set('depth', String(depth))
 
-  const response = await fetch(url, {
+  const response = await fetch(url.toString(), {
     method: 'GET',
     headers: {
       Accept: 'application/json',

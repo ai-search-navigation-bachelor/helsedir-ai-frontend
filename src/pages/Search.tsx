@@ -119,7 +119,8 @@ export function Search() {
             name="query"
             aria-label='Søk'
             placeholder='Søk etter innhold…'
-            defaultValue={searchQuery}
+            value={searchQuery}
+            onChange={(e) => setSearchParams({ searchquery: e.target.value }, { replace: true })}
           />
           <SearchComponent.Clear
             aria-label='Tøm'
@@ -136,7 +137,7 @@ export function Search() {
 
       {isLoading && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-          <Spinner title="Søker..." />
+          <Spinner aria-label="Søker..." />
         </div>
       )}
 
