@@ -1,84 +1,60 @@
-import { useState, useEffect, type FormEvent } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   Alert,
   Card,
   CardBlock,
   Details,
   Heading,
-  Link,
   Paragraph,
-  Search,
+  Search as SearchComponent,
   Tag,
+  Spinner,
 } from '@digdir/designsystemet-react'
 
-import { useSearchQuery } from '../hooks/queries/useSearchQuery'
 import type { SearchResultItem } from '../api/search'
+import { searchApi } from '../api/search'
 
-export function SearchPage() {
-  const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
-  const searchQuery = searchParams.get('searchquery') || ''
-  const [inputValue, setInputValue] = useState(searchQuery)
-
-  // Sync input value with URL parameter
-  useEffect(() => {
-    setInputValue(searchQuery)
-  }, [searchQuery])
-
-  const { data, isLoading, error } = useSearchQuery(searchQuery)
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const trimmed = inputValue.trim()
-    if (trimmed) {
-      navigate(`/search?searchquery=${encodeURIComponent(trimmed)}`)
-    }
+function htmlToText(value: string): string {
+  if (!value) return ''
+  try {
+    const doc = new DOMParser().parseFromString(value, 'text/html')
+    return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim()
+  } catch {
+    return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
   }
+}
 
-  function handleClear() {
-    setInputValue('')
-    navigate('/search')
-  }
-
-  function htmlToText(value: string): string {
-    if (!value) return ''
-    try {
-      const doc = new DOMParser().parseFromString(value, 'text/html')
-      return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim()
-    } catch {
-      return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-    }
-  }
-
-  function parseKoder(
-    value: string | null | undefined,
-  ): Record<string, string[]> | null {
-    if (!value) return null
-    try {
-      const parsed = JSON.parse(value) as unknown
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        const record = parsed as Record<string, unknown>
-        const out: Record<string, string[]> = {}
-        for (const [key, v] of Object.entries(record)) {
-          if (Array.isArray(v) && v.every((x) => typeof x === 'string')) {
-            out[key] = v as string[]
-          }
+function parseKoder(value: string | null | undefined): Record<string, string[]> | null {
+  if (!value) return null
+  try {
+    const parsed = JSON.parse(value) as unknown
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const record = parsed as Record<string, unknown>
+      const out: Record<string, string[]> = {}
+      for (const [key, v] of Object.entries(record)) {
+        if (Array.isArray(v) && v.every((x) => typeof x === 'string')) {
+          out[key] = v as string[]
         }
-        return Object.keys(out).length > 0 ? out : null
       }
-      return null
-    } catch {
-      return null
+      return Object.keys(out).length > 0 ? out : null
     }
+    return null
+  } catch {
+    return null
   }
+}
 
-  function ResultCard({ item }: { item: SearchResultItem }) {
-    const preview = item.tekst ? htmlToText(item.tekst) : ''
-    const koder = parseKoder(item.koder)
+function ResultCard({ item }: { item: SearchResultItem }) {
+  const preview = item.tekst ? htmlToText(item.tekst) : ''
+  const koder = parseKoder(item.koder)
 
-    return (
-      <Card>
+  return (
+    <Link 
+      to={`/info/${item.id}`} 
+      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+    >
+      <Card style={{ cursor: 'pointer' }}>
         <CardBlock style={{ display: 'grid', gap: '0.5rem', padding: '1rem' }}>
           <Heading level={3} data-size='md' style={{ margin: 0 }}>
             {item.tittel}
@@ -96,12 +72,8 @@ export function SearchPage() {
               )}
           </div>
 
-          <Paragraph data-size='sm' style={{ margin: 0 }}>
-            <Link href={item.url}>Åpne kilde</Link>
-          </Paragraph>
-
           {preview && (
-            <Details>
+            <Details onClick={(e) => e.stopPropagation()}>
               <Details.Summary>Vis tekst</Details.Summary>
               <Details.Content>
                 <Paragraph style={{ margin: 0 }}>{preview}</Paragraph>
@@ -110,52 +82,90 @@ export function SearchPage() {
           )}
         </CardBlock>
       </Card>
-    )
+    </Link>
+  )
+}
+
+export function Search() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const searchQuery = searchParams.get('searchquery') || ''
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['search', searchQuery],
+    queryFn: async ({ signal }) => {
+      if (!searchQuery.trim()) {
+        return { results: [] }
+      }
+      return searchApi(searchQuery, { signal })
+    },
+    enabled: !!searchQuery.trim(),
+    staleTime: 5 * 60 * 1000, // Cache i 5 minutter
+  })
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const newQuery = formData.get('query') as string
+    if (newQuery.trim()) {
+      setSearchParams({ searchquery: newQuery.trim() })
+    }
   }
 
   return (
-    <>
-      <Heading level={2} data-size='lg'>
-        Søk
-      </Heading>
-
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.75rem' }}>
-        <Search>
-          <Search.Input
+    <div style={{ display: 'grid', gap: '0.75rem' }}>
+      <form onSubmit={handleSubmit}>
+        <SearchComponent>
+          <SearchComponent.Input
+            name="query"
             aria-label='Søk'
-            placeholder='Søk…'
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            placeholder='Søk etter innhold…'
+            value={searchQuery}
+            onChange={(e) => setSearchParams({ searchquery: e.target.value }, { replace: true })}
           />
-          <Search.Clear
+          <SearchComponent.Clear
             aria-label='Tøm'
             onClick={(e) => {
               e.preventDefault()
-              handleClear()
+              navigate('/search')
             }}
           />
-          <Search.Button type='submit' variant='secondary' loading={isLoading}>
+          <SearchComponent.Button type='submit' variant='secondary'>
             Søk
-          </Search.Button>
-        </Search>
-
-        {error && (
-          <Alert data-color='danger'>
-            <Paragraph>{error.message || 'Ukjent feil'}</Paragraph>
-          </Alert>
-        )}
-
-        {data && !error && (
-          <div style={{ display: 'grid', gap: '0.75rem' }}>
-            <Paragraph data-size='sm' style={{ margin: 0 }}>
-              Treff: {data.results.length}
-            </Paragraph>
-            {data.results.map((item) => (
-              <ResultCard key={item.id} item={item} />
-            ))}
-          </div>
-        )}
+          </SearchComponent.Button>
+        </SearchComponent>
       </form>
-    </>
+
+      {isLoading && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+          <Spinner aria-label="Søker..." />
+        </div>
+      )}
+
+      {error && (
+        <Alert data-color='danger'>
+          <Paragraph>
+            {error instanceof Error ? error.message : 'Søket feilet'}
+          </Paragraph>
+        </Alert>
+      )}
+
+      {data && !isLoading && !error && (
+        <div style={{ display: 'grid', gap: '0.75rem' }}>
+          <Paragraph data-size='sm' style={{ margin: 0 }}>
+            Treff: {data.results.length}
+          </Paragraph>
+          {data.results.length === 0 ? (
+            <Paragraph style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>
+              Ingen resultater funnet for "{searchQuery}"
+            </Paragraph>
+          ) : (
+            data.results.map((item) => (
+              <ResultCard key={item.id} item={item} />
+            ))
+          )}
+        </div>
+      )}
+    </div>
   )
 }

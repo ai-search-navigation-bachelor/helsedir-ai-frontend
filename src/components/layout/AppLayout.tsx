@@ -1,14 +1,10 @@
-import type { ReactNode } from 'react'
+import { Outlet } from 'react-router-dom'
 
 import { Divider, CardBlock, SkipLink } from '@digdir/designsystemet-react'
 
 import { AppHeader } from './AppHeader'
 
-export type AppLayoutProps = {
-  children: ReactNode
-}
-
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout() {
   return (
     <>
       <SkipLink href='#main-content'>Hopp til hovedinnhold</SkipLink>
@@ -22,7 +18,9 @@ export function AppLayout({ children }: AppLayoutProps) {
           padding: '1.5rem 1rem',
         }}
       >
-        <main id='main-content'>{children}</main>
+        <main id='main-content'>
+          <Outlet />
+        </main>
       </CardBlock>
     </>
   )

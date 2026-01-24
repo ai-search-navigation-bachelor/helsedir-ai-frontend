@@ -1,19 +1,18 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { AppLayout } from './components/layout/AppLayout'
-import { Home } from './pages/Home'
-import { SearchPage } from './pages/Search'
+import { Routes, Route } from 'react-router-dom'
+import { AppLayout } from './components/layout'
+import { Home, Search, InfoDetail } from './pages'
 
 function App() {
   return (
-    <BrowserRouter>
-      <AppLayout>
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/search' element={<SearchPage />} />
-        </Routes>
-      </AppLayout>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<AppLayout />}>
+        <Route index element={<Home />} />
+        <Route path="search" element={<Search />} />
+        <Route path="info/:id" element={<InfoDetail />} />
+      </Route>
+    </Routes>
   )
 }
 
 export default App
+

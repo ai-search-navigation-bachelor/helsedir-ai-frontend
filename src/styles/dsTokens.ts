@@ -55,7 +55,7 @@ export const ds = {
  * Prefer semantic names (what it is used for) over raw token names.
  */
 export const colors = {
-  headerBg: ds.color('logobla-2', 'base-default'),
+  headerBg: '#80a8b4',
   headerFg: ds.color('logobla-2', 'base-contrast-default'),
 
   surface: ds.color('neutral', 'surface-default'),
