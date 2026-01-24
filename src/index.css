@@ -13,3 +13,70 @@ body {
   font-family: "Inter", sans-serif;
   font-feature-settings: "cv05" 1; /* Enable lowercase l with tail */
 }
+
+/* Styling for HTML-innhold fra API */
+.content-html h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-top: 32px;
+  margin-bottom: 16px;
+  color: #1a1a1a;
+  padding-top: 16px;
+  scroll-margin-top: 80px;
+}
+
+.content-html h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  color: #1a1a1a;
+}
+
+.content-html p {
+  margin-bottom: 16px;
+  line-height: 1.7;
+}
+
+.content-html ul, .content-html ol {
+  margin-bottom: 16px;
+  padding-left: 32px;
+}
+
+.content-html li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.content-html figure {
+  margin: 24px 0;
+}
+
+.content-html img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.content-html figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+.content-html a {
+  color: #0051be;
+  text-decoration: underline;
+}
+
+.content-html a:hover {
+  color: #003d8f;
+}
+
+/* Responsiv design for to-kolonners layout */
+@media (max-width: 768px) {
+  .content-html h2 {
+    font-size: 20px;
+  }
+}
