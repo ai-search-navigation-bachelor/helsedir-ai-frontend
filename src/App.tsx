@@ -1,17 +1,18 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AppLayout } from './components/layout/AppLayout'
-
-import { Heading, Paragraph } from '@digdir/designsystemet-react'
+import { Home } from './pages/Home'
+import { SearchPage } from './pages/Search'
 
 function App() {
   return (
-    <AppLayout>
-      <Heading level={2} data-size='lg'>
-        Velkommen
-      </Heading>
-      <Paragraph>
-        Dette er en enkel layout med header, inspirert av Helsedirektoratet.
-      </Paragraph>
-    </AppLayout>
+    <BrowserRouter>
+      <AppLayout>
+        <Routes>
+          <Route path='/' element={<Home />} />
+          <Route path='/search' element={<SearchPage />} />
+        </Routes>
+      </AppLayout>
+    </BrowserRouter>
   )
 }
 
