@@ -4,7 +4,7 @@ import {
 } from '@digdir/designsystemet-react'
 import { Link } from 'react-router-dom'
 
-import { colors } from '../../styles/dsTokens'
+import { colors, ds } from '../../styles/dsTokens'
 
 import { IoSearch, IoMenu } from 'react-icons/io5'
 
@@ -41,17 +41,32 @@ export function AppHeader() {
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <Button
                   variant='secondary'
-                  data-color='hvit'
                   style={{
                     borderRadius: '999px',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.5rem',
-
+                    backgroundColor: ds.color('hvit', 'surface-default'),
+                    border: `2px solid ${ds.color('logobla-1', 'base-hover')}`,
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
+                    e.currentTarget.style.color = ds.color('logobla-1', 'base-contrast-default')
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = ds.color('hvit', 'surface-default')
+                    e.currentTarget.style.color = ds.color('logobla-1', 'text-default')
+                  }}
+                  onMouseDown={(e) => {
+                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-active')
+                  }}
+                  onMouseUp={(e) => {
+                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
                   }}
                 >
-                <IoSearch />
                   Søk
+                <IoSearch />
                 </Button>
                 <Button
                   variant='secondary'
@@ -60,6 +75,23 @@ export function AppHeader() {
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '0.5rem',
+                    backgroundColor: ds.color('hvit', 'surface-default'),
+                    border: `2px solid ${ds.color('logobla-1', 'base-hover')}`,
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
+                    e.currentTarget.style.color = ds.color('logobla-1', 'base-contrast-default')
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = ds.color('hvit', 'surface-default')
+                    e.currentTarget.style.color = ds.color('logobla-1', 'text-default')
+                  }}
+                  onMouseDown={(e) => {
+                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-active')
+                  }}
+                  onMouseUp={(e) => {
+                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
                   }}
                 >
                   <IoMenu />

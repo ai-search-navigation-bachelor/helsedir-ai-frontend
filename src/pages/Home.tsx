@@ -5,6 +5,7 @@ import {
   Paragraph,
   Search as SearchComponent,
 } from '@digdir/designsystemet-react'
+import { colors } from '../styles/dsTokens'
 
 export function Home() {
   const [query, setQuery] = useState('')
@@ -18,34 +19,56 @@ export function Home() {
   }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem 0' }}>
-      <Heading level={1} data-size='xl' style={{ marginBottom: '1rem' }}>
-        Søk i Helsedirektoratets innhold
-      </Heading>
-      <Paragraph style={{ marginBottom: '2rem', color: '#666' }}>
-        Søk etter retningslinjer, pakkeforløp, diagnoser og annet helsefaglig innhold.
-      </Paragraph>
-      
-      <form onSubmit={onSubmit}>
-        <SearchComponent>
-          <SearchComponent.Input
-            aria-label='Søk'
-            placeholder='Søk etter innhold…'
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <SearchComponent.Clear
-            aria-label='Tøm'
-            onClick={(e) => {
-              e.preventDefault()
-              setQuery('')
-            }}
-          />
-          <SearchComponent.Button type='submit' variant='secondary'>
-            Søk
-          </SearchComponent.Button>
-        </SearchComponent>
-      </form>
+    <div 
+      style={{ 
+        backgroundColor: colors.headerBg,
+        padding: '2rem 1rem',
+        minHeight: '200px',
+        borderBottomRightRadius: '50px',
+      }}
+    >
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <Heading 
+          level={1} 
+          data-size='xl' 
+          style={{ 
+            marginBottom: '1rem',
+            textAlign: 'center'
+          }}
+        >
+          Søk i Helsedirektoratets innhold
+        </Heading>
+        <Paragraph 
+          style={{ 
+            marginBottom: '2rem', 
+            color: '#666',
+            textAlign: 'center'
+          }}
+        >
+          Søk etter retningslinjer, pakkeforløp, diagnoser og annet helsefaglig innhold.
+        </Paragraph>
+        
+        <form onSubmit={onSubmit}>
+          <SearchComponent>
+            <SearchComponent.Input
+              aria-label='Søk'
+              placeholder='Søk etter innhold…'
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <SearchComponent.Clear
+              aria-label='Tøm'
+              onClick={(e) => {
+                e.preventDefault()
+                setQuery('')
+              }}
+            />
+            <SearchComponent.Button type='submit' variant='secondary'>
+              Søk
+            </SearchComponent.Button>
+          </SearchComponent>
+        </form>
+      </div>
     </div>
   )
 }
