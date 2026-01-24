@@ -1,4 +1,4 @@
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   Alert,
@@ -48,40 +48,41 @@ function parseKoder(value: string | null | undefined): Record<string, string[]> 
 function ResultCard({ item }: { item: SearchResultItem }) {
   const preview = item.tekst ? htmlToText(item.tekst) : ''
   const koder = parseKoder(item.koder)
-  const navigate = useNavigate()
 
   return (
-    <Card
-      onClick={() => navigate(`/info/${item.id}`)}
-      style={{ cursor: 'pointer' }}
+    <Link 
+      to={`/info/${item.id}`} 
+      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
     >
-      <CardBlock style={{ display: 'grid', gap: '0.5rem', padding: '1rem' }}>
-        <Heading level={3} data-size='md' style={{ margin: 0 }}>
-          {item.tittel}
-        </Heading>
+      <Card style={{ cursor: 'pointer' }}>
+        <CardBlock style={{ display: 'grid', gap: '0.5rem', padding: '1rem' }}>
+          <Heading level={3} data-size='md' style={{ margin: 0 }}>
+            {item.tittel}
+          </Heading>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-          {item.infoType && <Tag variant='outline'>{item.infoType}</Tag>}
-          {koder &&
-            Object.entries(koder).flatMap(([key, values]) =>
-              values.map((v) => (
-                <Tag key={`${item.id}-${key}-${v}`} variant='outline'>
-                  {key}: {v}
-                </Tag>
-              )),
-            )}
-        </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {item.infoType && <Tag variant='outline'>{item.infoType}</Tag>}
+            {koder &&
+              Object.entries(koder).flatMap(([key, values]) =>
+                values.map((v) => (
+                  <Tag key={`${item.id}-${key}-${v}`} variant='outline'>
+                    {key}: {v}
+                  </Tag>
+                )),
+              )}
+          </div>
 
-        {preview && (
-          <Details onClick={(e) => e.stopPropagation()}>
-            <Details.Summary>Vis tekst</Details.Summary>
-            <Details.Content>
-              <Paragraph style={{ margin: 0 }}>{preview}</Paragraph>
-            </Details.Content>
-          </Details>
-        )}
-      </CardBlock>
-    </Card>
+          {preview && (
+            <Details onClick={(e) => e.stopPropagation()}>
+              <Details.Summary>Vis tekst</Details.Summary>
+              <Details.Content>
+                <Paragraph style={{ margin: 0 }}>{preview}</Paragraph>
+              </Details.Content>
+            </Details>
+          )}
+        </CardBlock>
+      </Card>
+    </Link>
   )
 }
 

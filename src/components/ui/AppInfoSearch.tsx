@@ -101,6 +101,7 @@ export function AppInfoSearch({ selectedId, depth: initialDepth = 2 }: AppInfoSe
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<InfoResultItem | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const requestIdRef = useRef(0)
 
   useEffect(() => {
     const fetchInfo = async () => {
@@ -110,6 +111,10 @@ export function AppInfoSearch({ selectedId, depth: initialDepth = 2 }: AppInfoSe
 
       const controller = new AbortController()
       abortControllerRef.current = controller
+      
+      // Increment request ID for this fetch
+      requestIdRef.current += 1
+      const currentRequestId = requestIdRef.current
 
       setLoading(true)
       setError(null)
@@ -119,15 +124,24 @@ export function AppInfoSearch({ selectedId, depth: initialDepth = 2 }: AppInfoSe
           signal: controller.signal,
           depth,
         })
-        setResult(data)
+        // Only update result if this is still the current request
+        if (currentRequestId === requestIdRef.current) {
+          setResult(data)
+        }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
           return
         }
-        setError(err instanceof Error ? err.message : 'Henting av infobit feilet')
-        setResult(null)
+        // Only update error if this is still the current request
+        if (currentRequestId === requestIdRef.current) {
+          setError(err instanceof Error ? err.message : 'Henting av infobit feilet')
+          setResult(null)
+        }
       } finally {
-        setLoading(false)
+        // Only clear loading if this is still the current request
+        if (currentRequestId === requestIdRef.current) {
+          setLoading(false)
+        }
       }
     }
 

@@ -123,6 +123,7 @@ function ContentWithSideNav({ result }: { result: InfoResultItem }) {
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'Ukjent'
     const date = new Date(dateString)
+    if (isNaN(date.getTime())) return 'Ukjent'
     return date.toLocaleDateString('nb-NO', {
       day: '2-digit',
       month: '2-digit',
