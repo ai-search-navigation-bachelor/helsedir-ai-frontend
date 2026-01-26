@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -90,6 +91,12 @@ export function Search() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const searchQuery = searchParams.get('searchquery') || ''
+  const [inputValue, setInputValue] = useState(searchQuery)
+
+  // Sync input with URL parameter when it changes
+  useEffect(() => {
+    setInputValue(searchQuery)
+  }, [searchQuery])
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['search', searchQuery],
@@ -105,11 +112,16 @@ export function Search() {
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const newQuery = formData.get('query') as string
-    if (newQuery.trim()) {
-      setSearchParams({ searchquery: newQuery.trim() })
-    }
+    const trimmed = inputValue.trim()
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (trimmed) {
+        next.set('searchquery', trimmed)
+      } else {
+        next.delete('searchquery')
+      }
+      return next
+    })
   }
 
   return (
@@ -120,13 +132,14 @@ export function Search() {
             name="query"
             aria-label='Søk'
             placeholder='Søk etter innhold…'
-            value={searchQuery}
-            onChange={(e) => setSearchParams({ searchquery: e.target.value }, { replace: true })}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
           />
           <SearchComponent.Clear
             aria-label='Tøm'
             onClick={(e) => {
               e.preventDefault()
+              setInputValue('')
               navigate('/search')
             }}
           />
