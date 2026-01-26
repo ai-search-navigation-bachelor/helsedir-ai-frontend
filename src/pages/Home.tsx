@@ -27,13 +27,14 @@ export function Home() {
       }}
     >
       <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-        <Label style={{fontWeight: 'bold'}}>
+        <Label htmlFor="home-search" style={{fontWeight: 'bold'}}>
           Hva leter du etter?
         </Label>
         
         <form onSubmit={onSubmit}>
           <SearchComponent>
             <SearchComponent.Input
+              id="home-search"
               aria-label='Søk'
               placeholder='Søk etter innhold…'
               value={query}
