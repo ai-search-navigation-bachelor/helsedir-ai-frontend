@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Heading,
+  Label,
   Paragraph,
   Search as SearchComponent,
 } from '@digdir/designsystemet-react'
@@ -23,30 +24,14 @@ export function Home() {
       style={{ 
         backgroundColor: colors.headerBg,
         padding: '2rem 1rem',
-        minHeight: '200px',
+        minHeight: '100px',
         borderBottomRightRadius: '50px',
       }}
     >
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <Heading 
-          level={1} 
-          data-size='xl' 
-          style={{ 
-            marginBottom: '1rem',
-            textAlign: 'center'
-          }}
-        >
-          Søk i Helsedirektoratets innhold
-        </Heading>
-        <Paragraph 
-          style={{ 
-            marginBottom: '2rem', 
-            color: '#666',
-            textAlign: 'center'
-          }}
-        >
-          Søk etter retningslinjer, pakkeforløp, diagnoser og annet helsefaglig innhold.
-        </Paragraph>
+      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+        <Label style={{fontWeight: 'bold'}}>
+          Hva leter du etter?
+        </Label>
         
         <form onSubmit={onSubmit}>
           <SearchComponent>
