@@ -1,9 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Heading,
   Label,
-  Paragraph,
   Search as SearchComponent,
 } from '@digdir/designsystemet-react'
 import { colors } from '../styles/dsTokens'

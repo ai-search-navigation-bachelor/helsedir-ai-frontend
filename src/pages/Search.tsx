@@ -112,9 +112,16 @@ export function Search() {
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (inputValue.trim()) {
-      setSearchParams({ searchquery: inputValue.trim() })
-    }
+    const trimmed = inputValue.trim()
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (trimmed) {
+        next.set('searchquery', trimmed)
+      } else {
+        next.delete('searchquery')
+      }
+      return next
+    })
   }
 
   return (
