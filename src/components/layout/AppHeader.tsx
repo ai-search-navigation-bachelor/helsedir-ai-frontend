@@ -41,6 +41,9 @@ export function AppHeader() {
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                 <Button
                   variant='secondary'
+                  onClick={() => {
+                    window.dispatchEvent(new Event('toggleSearch'))
+                  }}
                   style={{
                     borderRadius: '999px',
                     display: 'inline-flex',
