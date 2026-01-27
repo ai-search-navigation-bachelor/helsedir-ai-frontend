@@ -69,7 +69,18 @@ export async function searchApi(
   { signal, offset = 0, limit = 10, role, search_id }: SearchApiOptions = {},
 ): Promise<SearchApiResult> {
   const trimmed = query.trim()
-  if (!trimmed) return { results: [] }
+  if (!trimmed) {
+    return {
+      results: [],
+      query: '',
+      total: 0,
+      offset: 0,
+      limit: 10,
+      search_id: '',
+      has_next: false,
+      has_prev: false,
+    }
+  }
 
   const endpoint = getSearchEndpoint()
 

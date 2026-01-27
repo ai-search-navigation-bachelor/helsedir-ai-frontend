@@ -41,7 +41,7 @@ function CategoryCard({
           <Heading level={2} data-size='md' style={{ margin: 0 }}>
             {category.display_name}
           </Heading>
-          <Tag variant='info' data-size='sm'>
+          <Tag variant='outline' data-size='sm'>
             {category.count} {category.count === 1 ? 'treff' : 'treff'}
           </Tag>
         </div>
@@ -89,7 +89,7 @@ function ResultItem({ result }: { result: CategoryResult }) {
             <Tag variant='outline' data-size='sm'>
               {result.info_type}
             </Tag>
-            <Tag variant='neutral' data-size='sm'>
+            <Tag variant='outline' data-size='sm'>
               Score: {result.score.toFixed(2)}
             </Tag>
           </div>
@@ -187,7 +187,7 @@ export function CategorizedSearch() {
             <Heading level={1} data-size='lg' style={{ margin: 0 }}>
               Søkeresultater
             </Heading>
-            <Tag variant='info'>
+            <Tag variant='outline'>
               Totalt {data.total} {data.total === 1 ? 'treff' : 'treff'}
             </Tag>
           </div>

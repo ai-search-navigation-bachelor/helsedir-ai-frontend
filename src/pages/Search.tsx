@@ -5,7 +5,6 @@ import {
   Alert,
   Card,
   CardBlock,
-  Details,
   Heading,
   Paragraph,
   Search as SearchComponent,
@@ -31,7 +30,7 @@ function ResultCard({ item }: { item: SearchResultItem }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
             <Tag variant='outline'>{item.info_type}</Tag>
             {item.score && (
-              <Tag variant='info'>Score: {item.score.toFixed(2)}</Tag>
+              <Tag variant='outline'>Score: {item.score.toFixed(2)}</Tag>
             )}
           </div>
 
