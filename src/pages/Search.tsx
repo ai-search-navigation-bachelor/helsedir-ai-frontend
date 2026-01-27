@@ -53,15 +53,15 @@ function ResultCard({ item }: { item: SearchResultItem }) {
   return (
     <Link 
       to={`/info/${item.id}`} 
-      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+      className='search-page__link'
     >
-      <Card style={{ cursor: 'pointer' }}>
-        <CardBlock style={{ display: 'grid', gap: '0.5rem', padding: '1rem' }}>
+      <Card className='search-page__card'>
+        <CardBlock className='search-page__card-block'>
           <Heading level={3} data-size='md' style={{ margin: 0 }}>
             {item.tittel}
           </Heading>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div className='search-page__tags'>
             {item.infoType && <Tag variant='outline'>{item.infoType}</Tag>}
             {koder &&
               Object.entries(koder).flatMap(([key, values]) =>
@@ -125,8 +125,8 @@ export function Search() {
   }
 
   return (
-    <div style={{ display: 'grid', gap: '0.75rem' }}>
-      <form onSubmit={handleSubmit}>
+    <div className='search-page'>
+      <form onSubmit={handleSubmit} className='search-page__form'>
         <SearchComponent>
           <SearchComponent.Input
             name="query"
@@ -150,7 +150,7 @@ export function Search() {
       </form>
 
       {isLoading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+        <div className='search-page__loading'>
           <Spinner aria-label="Søker..." />
         </div>
       )}
@@ -164,12 +164,12 @@ export function Search() {
       )}
 
       {data && !isLoading && !error && (
-        <div style={{ display: 'grid', gap: '0.75rem' }}>
+        <div className='search-page__results'>
           <Paragraph data-size='sm' style={{ margin: 0 }}>
             Treff: {data.results.length}
           </Paragraph>
           {data.results.length === 0 ? (
-            <Paragraph style={{ textAlign: 'center', color: '#666', padding: '2rem' }}>
+            <Paragraph className='search-page__empty'>
               Ingen resultater funnet for "{searchQuery}"
             </Paragraph>
           ) : (

@@ -97,18 +97,19 @@ export function AppSearch({
   function ResultCard({ item }: { item: SearchResultItem }) {
     const preview = item.tekst ? htmlToText(item.tekst) : ''
     const koder = parseKoder(item.koder)
+    const isClickable = Boolean(onSelectResult)
 
     return (
       <Card
         onClick={() => onSelectResult?.(item.id)}
-        style={{ cursor: onSelectResult ? 'pointer' : 'default' }}
+        className={`app-search__card ${isClickable ? 'is-clickable' : ''}`}
       >
-        <CardBlock style={{ display: 'grid', gap: '0.5rem', padding: '1rem' }}>
+        <CardBlock className='app-search__card-block'>
           <Heading level={3} data-size='md' style={{ margin: 0 }}>
             {item.tittel}
           </Heading>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div className='app-search__tags'>
             {item.infoType && <Tag variant='outline'>{item.infoType}</Tag>}
             {koder &&
               Object.entries(koder).flatMap(([key, values]) =>
@@ -134,7 +135,7 @@ export function AppSearch({
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: 'grid', gap: '0.75rem' }}>
+    <form onSubmit={onSubmit} className='app-search'>
       <Search>
         <Search.Input
           aria-label={label}
@@ -161,7 +162,7 @@ export function AppSearch({
       )}
 
       {result != null && !error && (
-        <div style={{ display: 'grid', gap: '0.75rem' }}>
+        <div className='app-search__results'>
           <Paragraph data-size='sm' style={{ margin: 0 }}>
             Treff: {result.results.length}
           </Paragraph>

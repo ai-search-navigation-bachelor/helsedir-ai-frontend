@@ -62,21 +62,14 @@ function TableOfContents({ items }: { items: TableOfContentsItem[] }) {
 
   return (
     <nav
-      style={{
-        position: 'sticky',
-        top: '20px',
-        padding: '16px',
-        backgroundColor: '#f9f9f9',
-        borderRadius: '4px',
-        border: '1px solid #e0e0e0',
-      }}
+      className='toc'
     >
-      <Heading level={3} data-size='xs' style={{ marginBottom: '12px' }}>
+      <Heading level={3} data-size='xs' className='toc__title'>
         På denne siden
       </Heading>
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+      <ul className='toc__list'>
         {items.map((item) => (
-          <li key={item.id} style={{ marginBottom: '8px' }}>
+          <li key={item.id} className='toc__item'>
             <a
               href={`#${item.id}`}
               onClick={(e) => {
@@ -86,19 +79,7 @@ function TableOfContents({ items }: { items: TableOfContentsItem[] }) {
                   block: 'start',
                 })
               }}
-              style={{
-                display: 'block',
-                padding: '8px 12px',
-                textDecoration: 'none',
-                color: activeId === item.id ? '#0051be' : '#333',
-                backgroundColor: activeId === item.id ? '#d4e7f7' : 'transparent',
-                borderRadius: '4px',
-                borderLeft: activeId === item.id ? '3px solid #0051be' : '3px solid transparent',
-                fontSize: '14px',
-                fontWeight: activeId === item.id ? 600 : 400,
-                transition: 'all 0.2s ease',
-                boxShadow: activeId === item.id ? '0 0 0 3px rgba(0, 81, 190, 0.1)' : 'none',
-              }}
+              className={`toc__link ${activeId === item.id ? 'is-active' : ''}`}
             >
               {item.text}
             </a>
@@ -133,59 +114,36 @@ function ContentWithSideNav({ result }: { result: InfoResultItem }) {
 
   return (
     <div>
-      {/* Tittel og intro */}
-      <div style={{ marginBottom: '48px' }}>
-        <Heading level={1} data-size='xl' style={{ marginBottom: '20px', fontSize: '48px', fontWeight: 700 }}>
+      {/* Title and intro */}
+      <div className='info-detail__header'>
+        <Heading level={1} data-size='xl' className='info-detail__title'>
           {result.tittel}
         </Heading>
         {result.intro && (
           <Paragraph
             data-size='lg'
-            style={{
-              color: '#555',
-              lineHeight: '1.6',
-              fontSize: '22px',
-              fontWeight: 500,
-            }}
+            className='info-detail__intro'
           >
             {result.intro}
           </Paragraph>
         )}
       </div>
 
-      {/* To-kolonners layout */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: tocItems.length > 0 ? '250px 1fr' : '1fr',
-          gap: '40px',
-          alignItems: 'start',
-        }}
-      >
-        {/* Venstre kolonne - Table of Contents */}
+      {/* Two-column layout */}
+      <div className={`info-detail__layout ${tocItems.length > 0 ? 'info-detail__layout--toc' : ''}`}>
+        {/* Left column - Table of contents */}
         {tocItems.length > 0 && <TableOfContents items={tocItems} />}
 
-        {/* Høyre kolonne - Hovedinnhold */}
+        {/* Right column - Main content */}
         <div>
           <div
-            style={{
-              fontSize: '16px',
-              lineHeight: '1.7',
-              color: '#333',
-            }}
             className="content-html"
             dangerouslySetInnerHTML={{ __html: processedHtml }}
           />
 
-          {/* Metadata nederst */}
+          {/* Metadata */}
           <div
-            style={{
-              marginTop: '48px',
-              paddingTop: '24px',
-              borderTop: '1px solid #e0e0e0',
-              fontSize: '14px',
-              color: '#666',
-            }}
+            className='info-detail__meta'
           >
             <p style={{ margin: 0 }}>
               <strong>Først publisert:</strong> {formatDate(result.forstPublisert)} |{' '}
@@ -214,18 +172,18 @@ export function InfoDetail() {
   })
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+    <div className='info-detail'>
       <Button
         variant='tertiary'
         onClick={() => navigate(-1)}
-        style={{ marginBottom: '24px' }}
+        className='info-detail__back'
       >
         <FiArrowLeft size={20} />
         Tilbake
       </Button>
 
       {isLoading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+        <div className='info-detail__loading'>
           <Spinner aria-label="Laster informasjon..." />
         </div>
       )}

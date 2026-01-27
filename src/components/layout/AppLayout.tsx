@@ -12,7 +12,7 @@ export function AppLayout() {
   const [isSearchVisible, setIsSearchVisible] = useState(isHome)
 
   useEffect(() => {
-    // Oppdater søkebar synlighet basert på side
+    // Update search bar visibility based on route
     setIsSearchVisible(isHome)
   }, [isHome])
 
@@ -39,19 +39,15 @@ export function AppLayout() {
       {!isHome && (
         <CardBlock
           asChild
-          style={{
-            maxWidth: '1200px',
-            marginInline: 'auto',
-            padding: '1.5rem 1rem',
-          }}
+          className='page-shell__card'
         >
-          <main id='main-content'>
+          <main id='main-content' className='page-shell__main'>
             <Outlet />
           </main>
         </CardBlock>
       )}
       {isHome && (
-        <main id='main-content'>
+        <main id='main-content' className='page-shell__main page-shell__main--home'>
           <Outlet />
         </main>
       )}

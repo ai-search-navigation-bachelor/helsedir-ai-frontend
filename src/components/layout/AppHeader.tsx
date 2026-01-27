@@ -11,47 +11,35 @@ import { IoSearch, IoMenu } from 'react-icons/io5'
 export function AppHeader() {
   return (
     <>
-      <div style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}>
+      <div
+        className='site-header'
+        style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}
+      >
         <header>
-          <CardBlock style={{ padding: '2rem 1rem' }}>
-            <div
-              style={{
-                maxWidth: '1100px',
-                marginInline: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '1.5rem',
-              }}
-            >
+          <CardBlock className='site-header__card'>
+            <div className='site-header__inner'>
               <Link
                 to='/'
                 aria-label='Helsedirektoratet'
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                }}
+                className='site-header__logo'
               >
-                <img src='/Hdir_logo.svg' alt='Helsedirektoratet' height={40} />
+                <picture>
+                  <source srcSet='/hdir_logo_small.svg' media='(max-width: 640px)' />
+                  <img src='/Hdir_logo.svg' alt='Helsedirektoratet' />
+                </picture>
               </Link>
 
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <div className='site-header__actions'>
                 <Button
                   variant='secondary'
                   onClick={() => {
                     window.dispatchEvent(new Event('toggleSearch'))
                   }}
+                  aria-label='Søk'
+                  className='site-header__button'
                   style={{
-                    borderRadius: '999px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
                     backgroundColor: ds.color('hvit', 'surface-default'),
                     border: `2px solid ${ds.color('logobla-1', 'base-hover')}`,
-                    transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
@@ -69,18 +57,15 @@ export function AppHeader() {
                   }}
                 >
                   Søk
-                <IoSearch />
+                  <IoSearch />
                 </Button>
                 <Button
                   variant='secondary'
+                  aria-label='Meny'
+                  className='site-header__button'
                   style={{
-                    borderRadius: '999px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
                     backgroundColor: ds.color('hvit', 'surface-default'),
                     border: `2px solid ${ds.color('logobla-1', 'base-hover')}`,
-                    transition: 'all 0.2s ease',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')

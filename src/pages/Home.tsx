@@ -18,7 +18,7 @@ export function Home({ isSearchBar = false }: HomeProps) {
   const isHome = location.pathname === '/'
 
   useEffect(() => {
-    // Fokuser kun hvis vi ikke er på hjemmesiden og søkebaren åpnes
+    // Focus only when not on the home page and the search bar opens
     if (isSearchBar && !isHome && searchInputRef.current) {
       setTimeout(() => {
         searchInputRef.current?.focus()
@@ -44,28 +44,24 @@ export function Home({ isSearchBar = false }: HomeProps) {
     if (!trimmed) return
     navigate(`/search?searchquery=${encodeURIComponent(trimmed)}`)
     
-    // Lukk søkebaren på andre sider enn hovedsiden
+    // Close the search bar on pages other than home
     if (!isHome) {
       window.dispatchEvent(new Event('closeSearch'))
     }
   }
 
   return (
-    <div 
-      style={{ 
-        backgroundColor: colors.headerBg,
-        padding: '2rem 1rem',
-        minHeight: '100px',
-        borderBottomRightRadius: '50px',
-      }}
+    <div
+      className={`search-shell ${isSearchBar ? 'search-shell--bar' : ''}`}
+      style={{ backgroundColor: colors.headerBg }}
     >
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-        <Label htmlFor="home-search" style={{fontWeight: 'bold'}}>
+      <div className='container'>
+        <Label htmlFor="home-search" style={{ fontWeight: 'bold' }}>
           Hva leter du etter?
         </Label>
         
-        <form onSubmit={onSubmit}>
-          <SearchComponent>
+        <form onSubmit={onSubmit} className='search-shell__form'>
+          <SearchComponent className='search-shell__control'>
             <SearchComponent.Input
               ref={searchInputRef}
               id="home-search"
