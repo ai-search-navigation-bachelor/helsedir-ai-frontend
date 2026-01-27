@@ -15,25 +15,14 @@ import {
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery'
 import type { CategoryGroup, CategoryResult } from '../api/categorized'
 
-// Map category names to Norwegian display names
-const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
-  'temaside': 'Tema side',
-  'nasjonal_faglig_retningslinje': 'Nasjonal faglig retningslinje',
-  'anbefalinger': 'Anbefalinger',
-  'regelverk': 'Regelverk',
-  'raad': 'Råd',
-}
-
 // Categories that support expand/collapse
 const EXPANDABLE_CATEGORIES = ['temaside', 'nasjonal_faglig_retningslinje']
 
 function CategoryCard({ 
   category, 
-  displayName,
   isExpandable 
 }: { 
   category: CategoryGroup
-  displayName: string
   isExpandable: boolean
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -50,10 +39,10 @@ function CategoryCard({
       <CardBlock style={{ padding: '1.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <Heading level={2} data-size='md' style={{ margin: 0 }}>
-            {displayName}
+            {category.display_name}
           </Heading>
           <Tag variant='info' data-size='sm'>
-            {category.total_count} {category.total_count === 1 ? 'treff' : 'treff'}
+            {category.count} {category.count === 1 ? 'treff' : 'treff'}
           </Tag>
         </div>
 
@@ -93,27 +82,23 @@ function ResultItem({ result }: { result: CategoryResult }) {
       <Card style={{ cursor: 'pointer', backgroundColor: '#f9f9f9' }}>
         <CardBlock style={{ padding: '1rem' }}>
           <Heading level={3} data-size='sm' style={{ margin: 0, marginBottom: '0.5rem' }}>
-            {result.tittel}
+            {result.title}
           </Heading>
           
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
-            {result.infoType && (
-              <Tag variant='outline' data-size='sm'>
-                {result.infoType}
-              </Tag>
-            )}
-            {result.score && (
-              <Tag variant='neutral' data-size='sm'>
-                Score: {result.score.toFixed(2)}
-              </Tag>
-            )}
+            <Tag variant='outline' data-size='sm'>
+              {result.info_type}
+            </Tag>
+            <Tag variant='neutral' data-size='sm'>
+              Score: {result.score.toFixed(2)}
+            </Tag>
           </div>
 
-          {result.intro && (
+          {result.explanation && (
             <Paragraph data-size='sm' style={{ marginTop: '0.5rem', marginBottom: 0, color: '#555' }}>
-              {result.intro.length > 150 
-                ? `${result.intro.substring(0, 150)}...` 
-                : result.intro}
+              {result.explanation.length > 150 
+                ? `${result.explanation.substring(0, 150)}...` 
+                : result.explanation}
             </Paragraph>
           )}
         </CardBlock>
@@ -221,7 +206,6 @@ export function CategorizedSearch() {
                 <CategoryCard
                   key={category.category}
                   category={category}
-                  displayName={CATEGORY_DISPLAY_NAMES[category.category] || category.category}
                   isExpandable={EXPANDABLE_CATEGORIES.includes(category.category)}
                 />
               ))}

@@ -1,19 +1,16 @@
 export type CategoryResult = {
   id: string
-  tittel: string
-  tekst?: string | null
-  intro?: string
-  infoId?: string
-  infoType?: string
-  url: string
-  score?: number
-  forstPublisert?: string
-  sistFagligOppdatert?: string
+  title: string
+  info_type: string
+  score: number
+  explanation?: string
 }
 
 export type CategoryGroup = {
   category: string
-  total_count: number
+  display_name: string
+  count: number
+  is_priority: boolean
   results: CategoryResult[]
 }
 

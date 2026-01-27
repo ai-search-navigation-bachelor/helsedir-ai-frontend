@@ -1,20 +1,35 @@
 export type SearchResultItem = {
-  url: string
   id: string
-  tittel: string
-  tekst?: string | null
-  infoId?: string
-  infoType?: string
-  koder?: string | null
-  maalgruppe?: unknown[]
+  title: string
+  info_type: string
+  score: number
+  explanation?: string
 }
 
 export type SearchApiResult = {
   results: SearchResultItem[]
-  total?: number
-  offset?: number
-  limit?: number
-  search_id?: string
+  query: string
+  total: number
+  offset: number
+  limit: number
+  search_id: string
+  has_next: boolean
+  has_prev: boolean
+}
+
+export type ContentDetail = {
+  id: string
+  title: string
+  body: string
+  content_type: string
+  target_groups?: string[]
+  links?: Array<{
+    rel: string
+    type: string
+    tittel: string
+    href: string
+    strukturId?: string
+  }>
 }
 
 export type InfoResultItem = {
