@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { searchCategoryApi, CategorySearchResponse } from '../../api/categorySearch'
+import { searchCategoryApi, type CategorySearchResponse } from '../../api/categorySearch'
 
 type UseCategorySearchQueryOptions = {
   role?: string

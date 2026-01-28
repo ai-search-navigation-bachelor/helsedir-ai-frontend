@@ -1,4 +1,4 @@
-export type CategorySearchResult = {
+export interface CategorySearchResult {
   id: string
   title: string
   info_type: string
@@ -6,7 +6,7 @@ export type CategorySearchResult = {
   explanation?: string
 }
 
-export type CategorySearchResponse = {
+export interface CategorySearchResponse {
   results: CategorySearchResult[]
   query: string
   category: string
@@ -18,7 +18,7 @@ export type CategorySearchResponse = {
   has_prev: boolean
 }
 
-export type CategorySearchOptions = {
+export interface CategorySearchOptions {
   signal?: AbortSignal
   role?: string
   search_id: string
