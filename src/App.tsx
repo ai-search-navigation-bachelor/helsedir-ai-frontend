@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AppLayout } from './components/layout'
-import { Home, Search, InfoDetail, CategorizedSearch } from './pages'
+import { Home, Search, InfoDetail, CategorizedSearch, CategoryResults } from './pages'
 
 function App() {
   return (
@@ -9,6 +9,7 @@ function App() {
         <Route index element={<Home />} />
         <Route path="search" element={<Search />} />
         <Route path="categorized" element={<CategorizedSearch />} />
+        <Route path="category" element={<CategoryResults />} />
         <Route path="info/:id" element={<InfoDetail />} />
       </Route>
     </Routes>

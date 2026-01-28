@@ -15,31 +15,54 @@ import {
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery'
 import type { CategoryGroup, CategoryResult } from '../api/categorized'
 
-// Categories that support expand/collapse
-const EXPANDABLE_CATEGORIES = ['temaside', 'nasjonal_faglig_retningslinje']
+// Priority categories (temaside, retningslinje) - not clickable
+const PRIORITY_CATEGORIES = ['temaside', 'retningslinje']
 
 function CategoryCard({ 
-  category, 
-  isExpandable 
+  category,
+  searchQuery,
+  searchId
 }: { 
   category: CategoryGroup
-  isExpandable: boolean
+  searchQuery: string
+  searchId?: string
 }) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const navigate = useNavigate()
   
-  // Show top 3 results initially for expandable categories, all for others
-  const displayResults = isExpandable && !isExpanded 
-    ? category.results.slice(0, 3) 
-    : category.results
+  // Show only 1 result initially, 5 when expanded
+  const displayResults = !isExpanded 
+    ? category.results.slice(0, 1) 
+    : category.results.slice(0, 5)
   
-  const hasMore = isExpandable && category.results.length > 3
+  const hasMore = category.results.length > 1
+  const canShowLess = isExpanded && category.results.length > 5
+  
+  const isPriority = PRIORITY_CATEGORIES.includes(category.category)
+  const canNavigateToCategory = !isPriority && category.count > 0 && searchId
+
+  function handleCategoryClick() {
+    if (canNavigateToCategory) {
+      navigate(`/category?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category.category)}&search_id=${searchId}`)
+    }
+  }
 
   return (
-    <Card>
+    <Card style={{ cursor: canNavigateToCategory ? 'pointer' : 'default' }}>
       <CardBlock style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div 
+          style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '1rem',
+            cursor: canNavigateToCategory ? 'pointer' : 'default'
+          }}
+          onClick={canNavigateToCategory ? handleCategoryClick : undefined}
+        >
           <Heading level={2} data-size='md' style={{ margin: 0 }}>
             {category.display_name}
+            {canNavigateToCategory && ' →'}
           </Heading>
           <Tag variant='outline' data-size='sm'>
             {category.count} {category.count === 1 ? 'treff' : 'treff'}
@@ -63,9 +86,14 @@ function CategoryCard({
             variant='tertiary'
             data-size='sm'
             style={{ marginTop: '1rem' }}
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsExpanded(!isExpanded)
+            }}
           >
-            {isExpanded ? 'Vis færre' : `Vis flere (${category.results.length - 3} til)`}
+            {isExpanded 
+              ? (canShowLess ? `Vis færre` : 'Vis færre')
+              : `Vis flere (${Math.min(4, category.results.length - 1)} til)`}
           </Button>
         )}
       </CardBlock>
@@ -122,6 +150,24 @@ export function CategorizedSearch() {
     enabled: !!searchQuery.trim(),
   })
 
+  // Always create a mock "Tema side" category as first
+  const mockTemaside: CategoryGroup = {
+    category: 'temaside',
+    display_name: 'Tema side',
+    count: 0,
+    is_priority: false,
+    results: []
+  }
+
+  // Get top 4 categories from API response (priority categories + top other categories)
+  const apiCategories = [
+    ...(data?.priority_categories || []),
+    ...(data?.other_categories || []),
+  ].slice(0, 4)
+
+  // Combine mock temaside with 4 API categories to always show exactly 5 boxes
+  const displayCategories = [mockTemaside, ...apiCategories]
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const trimmed = inputValue.trim()
@@ -135,12 +181,6 @@ export function CategorizedSearch() {
       return next
     })
   }
-
-  // Combine all categories for display
-  const allCategories = [
-    ...(data?.priority_categories || []),
-    ...(data?.other_categories || []),
-  ]
 
   return (
     <div style={{ display: 'grid', gap: '1.5rem', maxWidth: '1200px', margin: '0 auto' }}>
@@ -192,7 +232,7 @@ export function CategorizedSearch() {
             </Tag>
           </div>
 
-          {allCategories.length === 0 ? (
+          {displayCategories.length === 0 || data.total === 0 ? (
             <Card>
               <CardBlock style={{ padding: '2rem', textAlign: 'center' }}>
                 <Paragraph style={{ color: '#666', margin: 0 }}>
@@ -202,11 +242,12 @@ export function CategorizedSearch() {
             </Card>
           ) : (
             <div style={{ display: 'grid', gap: '1.5rem' }}>
-              {allCategories.map((category) => (
+              {displayCategories.map((category) => (
                 <CategoryCard
                   key={category.category}
                   category={category}
-                  isExpandable={EXPANDABLE_CATEGORIES.includes(category.category)}
+                  searchQuery={searchQuery}
+                  searchId={data.search_id}
                 />
               ))}
             </div>
