@@ -15,8 +15,8 @@ import {
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery'
 import type { CategoryGroup, CategoryResult } from '../api/categorized'
 
-// Priority categories (temaside, retningslinje) - not clickable
-const PRIORITY_CATEGORIES = ['temaside', 'retningslinje']
+// Priority categories (temaside, nasjonal faglig retningslinje) - not clickable
+const PRIORITY_CATEGORIES = ['temaside', 'nasjonal_faglig_retningslinje']
 
 function CategoryCard({ 
   category,
@@ -30,16 +30,16 @@ function CategoryCard({
   const [isExpanded, setIsExpanded] = useState(false)
   const navigate = useNavigate()
   
-  // Show only 1 result initially, 5 when expanded
+  const isPriority = PRIORITY_CATEGORIES.includes(category.category)
+  const canNavigateToCategory = !isPriority && category.count > 0 && searchId
+  
+  // All categories: show 1 result initially, 5 when expanded
   const displayResults = !isExpanded 
-    ? category.results.slice(0, 1) 
+    ? category.results.slice(0, 1)
     : category.results.slice(0, 5)
   
   const hasMore = category.results.length > 1
   const canShowLess = isExpanded && category.results.length > 5
-  
-  const isPriority = PRIORITY_CATEGORIES.includes(category.category)
-  const canNavigateToCategory = !isPriority && category.count > 0 && searchId
 
   function handleCategoryClick() {
     if (canNavigateToCategory) {
