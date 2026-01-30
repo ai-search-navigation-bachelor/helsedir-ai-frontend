@@ -6,6 +6,7 @@ import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
 import DOMPurify from 'dompurify'
 import { Button, Alert, Paragraph, Spinner, Heading } from '@digdir/designsystemet-react'
 import { getContentApi } from '../api/search'
+import { fetchHelsedirContent, type HelselinkContent } from '../api/helsedir'
 import type { ContentDetail as ContentDetailType } from '../api/types'
 import { useSearchStore } from '../stores/searchStore'
 
@@ -112,6 +113,8 @@ function TableOfContents({ items }: { items: TableOfContentsItem[] }) {
 }
 
 function ContentDisplay({ content }: { content: ContentDetailType }) {
+  const [expandedChildren, setExpandedChildren] = useState<Set<number>>(new Set())
+  
   const tocItems = useMemo(() => {
     return content.body ? extractH2Headings(content.body) : []
   }, [content.body])
@@ -121,6 +124,42 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
     const htmlWithIds = addIdsToH2Elements(content.body)
     return DOMPurify.sanitize(htmlWithIds)
   }, [content.body])
+
+  // Get children (barn) links
+  const childrenLinks = content.links?.filter(link => link.rel === 'barn') || []
+
+  // Fetch child content for expanded items
+  const { data: childrenData } = useQuery<Record<number, HelselinkContent>>({
+    queryKey: ['children-content', content.id, Array.from(expandedChildren)],
+    queryFn: async ({ signal }) => {
+      const results: Record<number, HelselinkContent> = {}
+      for (const idx of expandedChildren) {
+        const link = childrenLinks[idx]
+        if (link?.href) {
+          try {
+            results[idx] = await fetchHelsedirContent(link.href, signal)
+          } catch (error) {
+            console.error(`Failed to fetch child ${idx}:`, error)
+          }
+        }
+      }
+      return results
+    },
+    enabled: expandedChildren.size > 0,
+    staleTime: 10 * 60 * 1000,
+  })
+
+  const toggleChild = (idx: number) => {
+    setExpandedChildren(prev => {
+      const next = new Set(prev)
+      if (next.has(idx)) {
+        next.delete(idx)
+      } else {
+        next.add(idx)
+      }
+      return next
+    })
+  }
 
   // Capitalize content type for display
   const displayType = content.content_type 
@@ -173,30 +212,120 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
             />
           )}
 
-          {/* Related links */}
-          {content.links && content.links.length > 0 && (
+          {/* Children sections */}
+          {childrenLinks.length > 0 && (
             <div style={{ marginTop: '48px' }}>
-              <Heading level={2} data-size='sm' style={{ marginBottom: '16px' }}>
-                Relaterte lenker
+              <Heading level={2} data-size='md' style={{ marginBottom: '24px' }}>
+                Innhold
               </Heading>
-              <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {content.links.filter(link => link.rel === 'barn').map((link, idx) => (
-                  <li key={idx}>
-                    <a 
-                      href={link.href} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ 
-                        color: '#2563eb', 
-                        textDecoration: 'none',
-                        fontSize: '15px'
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {childrenLinks.map((link, idx) => {
+                  const isExpanded = expandedChildren.has(idx)
+                  const childContent = childrenData?.[idx]
+
+                  return (
+                    <div 
+                      key={idx}
+                      style={{
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
                       }}
                     >
-                      {link.tittel || link.href}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+                      {/* Child header - clickable */}
+                      <button
+                        onClick={() => toggleChild(idx)}
+                        style={{
+                          width: '100%',
+                          padding: '20px',
+                          backgroundColor: isExpanded ? '#f0f9ff' : 'white',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isExpanded) e.currentTarget.style.backgroundColor = '#f8fafc'
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isExpanded) e.currentTarget.style.backgroundColor = 'white'
+                        }}
+                      >
+                        <div>
+                          <Heading level={3} data-size='sm' style={{ margin: 0, marginBottom: '4px' }}>
+                            {link.tittel || 'Uten tittel'}
+                          </Heading>
+                          <p style={{ 
+                            fontSize: '14px', 
+                            color: '#64748b', 
+                            margin: 0,
+                            textTransform: 'capitalize'
+                          }}>
+                            {link.type || 'kapittel'}
+                          </p>
+                        </div>
+                        <span style={{ 
+                          fontSize: '24px', 
+                          color: '#64748b',
+                          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.2s',
+                        }}>
+                          ▼
+                        </span>
+                      </button>
+
+                      {/* Child content - expandable */}
+                      {isExpanded && (
+                        <div style={{ 
+                          padding: '24px',
+                          backgroundColor: '#fafafa',
+                          borderTop: '1px solid #e2e8f0'
+                        }}>
+                          {!childContent && (
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                              <Spinner aria-label="Laster innhold..." />
+                            </div>
+                          )}
+                          
+                          {childContent && (
+                            <div>
+                              {childContent.intro && (
+                                <Paragraph 
+                                  data-size='md'
+                                  style={{
+                                    color: '#555',
+                                    marginBottom: '20px',
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  {childContent.intro}
+                                </Paragraph>
+                              )}
+                              
+                              {childContent.tekst && (
+                                <div
+                                  style={{
+                                    fontSize: '16px',
+                                    lineHeight: '1.7',
+                                    color: '#333',
+                                  }}
+                                  className="content-html"
+                                  dangerouslySetInnerHTML={{ 
+                                    __html: DOMPurify.sanitize(childContent.tekst) 
+                                  }}
+                                />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
