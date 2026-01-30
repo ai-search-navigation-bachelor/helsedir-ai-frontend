@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   Alert,
   Button,
@@ -14,6 +15,8 @@ import {
 
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery'
 import type { CategoryGroup } from '../api/categorized'
+import { getContentApi } from '../api/search'
+import type { ContentDetail } from '../api/types'
 
 // Special category handling
 const TEMASIDE_CATEGORY = 'temaside'
@@ -199,6 +202,48 @@ function RetningslinjeCard({
   )
 }
 
+// Component to display a single result with content data
+function ResultWithContent({ 
+  resultId, 
+  resultTitle,
+  searchId 
+}: { 
+  resultId: string
+  resultTitle: string
+  searchId?: string 
+}) {
+  const { data: content } = useQuery<ContentDetail, Error>({
+    queryKey: ['content', resultId],
+    queryFn: async () => getContentApi(resultId, searchId),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  })
+
+  // Find the root link
+  const rootLink = content?.links?.find(link => link.rel === 'root')
+
+  return (
+    <Link 
+      to={`/info/${resultId}?search_id=${searchId}`}
+      style={{ textDecoration: 'none', color: 'inherit' }}
+    >
+      <Card style={{ cursor: 'pointer', backgroundColor: '#fff' }}>
+        <CardBlock style={{ padding: '1rem' }}>
+          <Heading level={3} data-size='sm' style={{ margin: 0, marginBottom: '0.25rem', color: '#0062BA' }}>
+            {resultTitle} →
+          </Heading>
+          <Paragraph data-size='xs' style={{ color: '#666', margin: 0 }}>
+            {rootLink ? (
+              <>Hentet fra: {rootLink.tittel}</>
+            ) : (
+              <>Dette er et utdrag fra innholdet.</>
+            )}
+          </Paragraph>
+        </CardBlock>
+      </Card>
+    </Link>
+  )
+}
+
 function RegularCategoryCard({ 
   category,
   searchQuery,
@@ -223,7 +268,7 @@ function RegularCategoryCard({
   return (
     <div style={{ 
       border: '1px solid #E6E6E6',
-      borderRadius: '8px',
+      borderRadius: '4px',
       overflow: 'hidden',
       backgroundColor: '#fff'
     }}>
@@ -235,7 +280,8 @@ function RegularCategoryCard({
           borderBottom: '1px solid #E6E6E6',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          backgroundColor: '#fff'
         }}
         onClick={handleHeaderClick}
       >
@@ -251,26 +297,16 @@ function RegularCategoryCard({
       {displayResults.length > 0 && (
         <div style={{ 
           padding: '1.5rem',
-          backgroundColor: '#F5F9FC'
+          backgroundColor: '#F8FAFC'
         }}>
           <div style={{ display: 'grid', gap: '0.75rem' }}>
             {displayResults.map((result) => (
-              <Link 
+              <ResultWithContent
                 key={result.id}
-                to={`/info/${result.id}?search_id=${searchId}`}
-                style={{ textDecoration: 'none', color: 'inherit' }}
-              >
-                <Card style={{ cursor: 'pointer', backgroundColor: '#fff' }}>
-                  <CardBlock style={{ padding: '1rem' }}>
-                    <Heading level={3} data-size='sm' style={{ margin: 0, marginBottom: '0.25rem' }}>
-                      {result.title} →
-                    </Heading>
-                    <Paragraph data-size='xs' style={{ color: '#999', margin: 0 }}>
-                      Hentet fra: Dette er et utdrag fra innholdet.
-                    </Paragraph>
-                  </CardBlock>
-                </Card>
-              </Link>
+                resultId={result.id}
+                resultTitle={result.title}
+                searchId={searchId}
+              />
             ))}
           </div>
         </div>
