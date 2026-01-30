@@ -90,7 +90,7 @@ export function RegularCategoryCard({ category, searchQuery, searchId }: Regular
             {items.map((result) => (
               <a
                 key={result.id}
-                href={`/info/${result.id}?search_id=${searchId ?? ''}`}
+                href={`/content/${result.id}?search_id=${searchId ?? ''}&query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category.category)}`}
                 style={{
                   display: 'block',
                   borderRadius: '12px',

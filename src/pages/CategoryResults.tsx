@@ -7,7 +7,7 @@ import {
   Search as SearchComponent,
   Spinner,
 } from '@digdir/designsystemet-react'
-import { ChevronRightIcon } from '@navikt/aksel-icons'
+import { ChevronRightIcon, MagnifyingGlassIcon } from '@navikt/aksel-icons'
 
 import { useCategorySearchQuery } from '../hooks/queries/useCategorySearchQuery'
 import type { CategorySearchResult } from '../api/categorySearch'
@@ -16,14 +16,14 @@ import { CategoryResultItem } from '../components/search/CategoryResultItem'
 function ResultItem({ result }: { result: CategorySearchResult }) {
   return (
     <Link 
-      to={`/info/${result.id}`}
+      to={`/content/${result.id}`}
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       <a
-        href={`/info/${result.id}`}
+        href={`/content/${result.id}`}
         onClick={(e) => {
           e.preventDefault();
-          window.location.href = `/info/${result.id}`;
+          window.location.href = `/content/${result.id}`;
         }}
         style={{
           display: 'block',
@@ -124,17 +124,20 @@ export function CategoryResults() {
               style={{ 
                 color: '#2563eb', 
                 textDecoration: 'none',
-                fontWeight: '500'
+                fontWeight: '500',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
               }}
               onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
               onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
             >
+              <MagnifyingGlassIcon style={{ width: '16px', height: '16px' }} />
               {searchQuery.toUpperCase()}
             </Link>
           </li>
-          <li>/</li>
           <li style={{ color: '#0f172a', fontWeight: '500' }}>
-            {data?.category || category}
+            - {data?.category || category}
           </li>
         </ol>
       </nav>
@@ -190,7 +193,7 @@ export function CategoryResults() {
               margin: 0,
               marginBottom: '4px'
             }}>
-              {data.category || category}
+              {(data.category || category).charAt(0).toUpperCase() + (data.category || category).slice(1)}
             </h1>
             <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
               {data.total} treff

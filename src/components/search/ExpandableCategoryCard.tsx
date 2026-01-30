@@ -39,12 +39,18 @@ export function ExpandableCategoryCard({
   const [isHoveringButton, setIsHoveringButton] = useState(false);
 
   const navigateToCategory = () => {
-    if (!searchId) return;
-    navigate(
-      `/category?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(
-        category.category
-      )}&search_id=${searchId}`
-    );
+    // For expandable cards (Temaside/Retningslinje), navigate to first result if available
+    const firstResult = category.results?.[0];
+    if (firstResult) {
+      navigate(`/content/${firstResult.id}?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category.category)}&search_id=${searchId || ''}`);
+    } else if (searchId) {
+      // Fallback to category page if no results
+      navigate(
+        `/category?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(
+          category.category
+        )}&search_id=${searchId}`
+      );
+    }
   };
 
   const visibleResults = useMemo(() => {
@@ -146,7 +152,7 @@ export function ExpandableCategoryCard({
                 {visibleResults.map((result) => (
                   <a
                     key={result.id}
-                    href={`/info/${result.id}?search_id=${searchId ?? ''}`}
+                    href={`/content/${result.id}?search_id=${searchId ?? ''}&query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category.category)}`}
                     style={{
                       display: 'block',
                       borderRadius: '12px',
