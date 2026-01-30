@@ -61,7 +61,7 @@ export type SearchApiOptions = {
 function getSearchEndpoint(): string {
   const envEndpoint = import.meta.env.VITE_SEARCH_ENDPOINT as string | undefined
   if (envEndpoint && envEndpoint.trim().length > 0) return envEndpoint
-  return 'https://helsedir-ai-backend.onrender.com/search'
+  return 'http://129.241.150.141:8000/search'
 }
 
 export async function searchApi(
@@ -104,8 +104,8 @@ export async function searchApi(
     })
 
     if (!response.ok) {
-      // If render fails, try localhost fallback
-      if (endpoint.includes('onrender.com')) {
+      // If main backend fails, try localhost fallback
+      if (endpoint.includes('129.241.150.141')) {
         return searchApiFallback(query, { signal, offset, limit, role, search_id })
       }
       throw new Error(`Search failed: ${response.status} ${response.statusText}`)
@@ -118,9 +118,9 @@ export async function searchApi(
 
     throw new Error('Search failed: expected JSON response')
   } catch (error) {
-    // If render fails (network error, timeout, etc.), try localhost fallback
-    if (endpoint.includes('onrender.com') && error instanceof Error && !signal?.aborted) {
-      console.warn('Render endpoint failed, falling back to localhost:', error.message)
+    // If main backend fails (network error, timeout, etc.), try localhost fallback
+    if (endpoint.includes('129.241.150.141') && error instanceof Error && !signal?.aborted) {
+      console.warn('Main backend failed, falling back to localhost:', error.message)
       return searchApiFallback(query, { signal, offset, limit, role, search_id })
     }
     throw error
@@ -160,12 +160,96 @@ async function searchApiFallback(
   throw new Error('Search (localhost) failed: expected JSON response')
 }
 
-function getInfobitEndpoint(): string {
-  const envEndpoint = import.meta.env.VITE_INFOBIT_ENDPOINT as string | undefined
+function getContentEndpoint(): string {
+  const envEndpoint = import.meta.env.VITE_CONTENT_ENDPOINT as string | undefined
   if (envEndpoint && envEndpoint.trim().length > 0) return envEndpoint
-  return 'https://helsedir-ai-backend.onrender.com/helsedir/infobit'
+  return 'http://129.241.150.141:8000/content'
 }
 
+export async function getContentApi(
+  contentId: string,
+  searchId?: string,
+  { signal }: SearchApiOptions = {},
+): Promise<ContentDetail> {
+  const trimmed = contentId.trim()
+  if (!trimmed) throw new Error('Content ID is required')
+
+  const endpoint = getContentEndpoint()
+  
+  const url = endpoint.startsWith('http')
+    ? new URL(`${endpoint}/${encodeURIComponent(trimmed)}`)
+    : new URL(`${endpoint}/${encodeURIComponent(trimmed)}`, window.location.origin)
+  
+  if (searchId) {
+    url.searchParams.set('search_id', searchId)
+  }
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+      signal,
+    })
+
+    if (!response.ok) {
+      // If main backend fails, try localhost fallback
+      if (endpoint.includes('129.241.150.141')) {
+        return getContentApiFallback(contentId, searchId, { signal })
+      }
+      throw new Error(`Content fetch failed: ${response.status} ${response.statusText}`)
+    }
+
+    const contentType = response.headers.get('content-type') ?? ''
+    if (contentType.includes('application/json')) {
+      return response.json() as Promise<ContentDetail>
+    }
+
+    throw new Error('Content fetch failed: expected JSON response')
+  } catch (error) {
+    // If main backend fails (network error, timeout, etc.), try localhost fallback
+    if (endpoint.includes('129.241.150.141') && error instanceof Error && !signal?.aborted) {
+      console.warn('Main backend failed, falling back to localhost:', error.message)
+      return getContentApiFallback(contentId, searchId, { signal })
+    }
+    throw error
+  }
+}
+
+async function getContentApiFallback(
+  contentId: string,
+  searchId?: string,
+  { signal }: SearchApiOptions = {},
+): Promise<ContentDetail> {
+  const localEndpoint = 'http://localhost:8000/content'
+  const url = new URL(`${localEndpoint}/${encodeURIComponent(contentId)}`)
+  
+  if (searchId) {
+    url.searchParams.set('search_id', searchId)
+  }
+
+  const response = await fetch(url.toString(), {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error(`Content fetch (localhost) failed: ${response.status} ${response.statusText}`)
+  }
+
+  const contentType = response.headers.get('content-type') ?? ''
+  if (contentType.includes('application/json')) {
+    return response.json() as Promise<ContentDetail>
+  }
+
+  throw new Error('Content fetch (localhost) failed: expected JSON response')
+}
+
+// Deprecated: Use getContentApi instead
 export async function getInfobitApi(
   infobitId: string,
   { signal, depth = 2 }: SearchApiOptions = {},
@@ -173,7 +257,8 @@ export async function getInfobitApi(
   const trimmed = infobitId.trim()
   if (!trimmed) throw new Error('Infobit ID is required')
 
-  const endpoint = getInfobitEndpoint()
+  // Legacy endpoint for backwards compatibility
+  const endpoint = 'http://129.241.150.141:8000/helsedir/infobit'
   
   const url = endpoint.startsWith('http')
     ? new URL(`${endpoint}/${encodeURIComponent(trimmed)}`)

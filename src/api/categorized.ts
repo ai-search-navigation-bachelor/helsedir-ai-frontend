@@ -32,7 +32,7 @@ function getCategorizedSearchEndpoint(): string {
   const envEndpoint = import.meta.env.VITE_CATEGORIZED_SEARCH_ENDPOINT as string | undefined
   if (envEndpoint && envEndpoint.trim().length > 0) return envEndpoint
   
-  return 'https://helsedir-ai-backend.onrender.com/search/categorized'
+  return 'http://129.241.150.141:8000/search/categorized'
 }
 
 export async function searchCategorizedApi(
@@ -72,8 +72,8 @@ export async function searchCategorizedApi(
     })
 
     if (!response.ok) {
-      // If render fails, try localhost fallback
-      if (endpoint.includes('onrender.com')) {
+      // If main backend fails, try localhost fallback
+      if (endpoint.includes('129.241.150.141')) {
         return searchCategorizedApiFallback(query, { signal, role })
       }
       throw new Error(`Categorized search failed: ${response.status} ${response.statusText}`)
@@ -86,9 +86,9 @@ export async function searchCategorizedApi(
 
     throw new Error('Categorized search failed: expected JSON response')
   } catch (error) {
-    // If render fails (network error, timeout, etc.), try localhost fallback
-    if (endpoint.includes('onrender.com') && error instanceof Error && !signal?.aborted) {
-      console.warn('Render endpoint failed, falling back to localhost:', error.message)
+    // If main backend fails (network error, timeout, etc.), try localhost fallback
+    if (endpoint.includes('129.241.150.141') && error instanceof Error && !signal?.aborted) {
+      console.warn('Main backend failed, falling back to localhost:', error.message)
       return searchCategorizedApiFallback(query, { signal, role })
     }
     throw error

@@ -30,7 +30,7 @@ function getCategorySearchEndpoint(): string {
     // Use the base endpoint and append /category
     return envEndpoint.replace('/search/categorized', '/search/category')
   }
-  return 'https://helsedir-ai-backend.onrender.com/search/category'
+  return 'http://129.241.150.141:8000/search/category'
 }
 
 export async function searchCategoryApi(
@@ -66,8 +66,8 @@ export async function searchCategoryApi(
     })
 
     if (!response.ok) {
-      // If render fails, try localhost fallback
-      if (endpoint.includes('onrender.com')) {
+      // If main backend fails, try localhost fallback
+      if (endpoint.includes('129.241.150.141')) {
         return searchCategoryApiFallback(query, category, { signal, role, search_id })
       }
       throw new Error(`Category search failed: ${response.status} ${response.statusText}`)
@@ -80,9 +80,9 @@ export async function searchCategoryApi(
 
     throw new Error('Category search failed: expected JSON response')
   } catch (error) {
-    // If render fails (network error, timeout, etc.), try localhost fallback
-    if (endpoint.includes('onrender.com') && error instanceof Error && !signal?.aborted) {
-      console.warn('Render endpoint failed, falling back to localhost:', error.message)
+    // If main backend fails (network error, timeout, etc.), try localhost fallback
+    if (endpoint.includes('129.241.150.141') && error instanceof Error && !signal?.aborted) {
+      console.warn('Main backend failed, falling back to localhost:', error.message)
       return searchCategoryApiFallback(query, category, { signal, role, search_id })
     }
     throw error
