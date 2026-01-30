@@ -76,6 +76,11 @@ export async function httpRequest<T>(
 ): Promise<T> {
   const { signal, headers = {}, method = 'GET' } = options
 
+  // Debug logging
+  if (import.meta.env.DEV) {
+    console.log(`[HTTP ${method}]`, url.toString())
+  }
+
   try {
     const response = await fetch(url.toString(), {
       method,

@@ -13,12 +13,193 @@ import {
 } from '@digdir/designsystemet-react'
 
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery'
-import type { CategoryGroup, CategoryResult } from '../api/categorized'
+import type { CategoryGroup } from '../api/categorized'
 
-// Priority categories (temaside, nasjonal faglig retningslinje) - not clickable
-const PRIORITY_CATEGORIES = ['temaside', 'nasjonal_faglig_retningslinje']
+// Special category handling
+const TEMASIDE_CATEGORY = 'temaside'
+const RETNINGSLINJE_CATEGORY = 'retningslinje'
 
-function CategoryCard({ 
+function TemaSideCard({ 
+  category
+}: { 
+  category: CategoryGroup
+  searchQuery: string
+}) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  
+  // Show first result initially, 3 more when expanded
+  const firstResult = category.results[0]
+  const expandedResults = category.results.slice(1, 4)
+  const hasMore = category.results.length > 1
+
+  if (!firstResult) return null
+
+  return (
+    <Card style={{ border: '3px solid #0062BA' }}>
+      <CardBlock style={{ padding: '1.5rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <Tag variant='outline' data-size='sm' style={{ marginBottom: '0.5rem' }}>
+            {category.count} {category.count === 1 ? 'artikkel' : 'artikler'}
+          </Tag>
+        </div>
+
+        {/* First temaside - clickable */}
+        <Link 
+          to={`/info/${firstResult.id}`}
+          style={{ textDecoration: 'none', color: 'inherit' }}
+        >
+          <div style={{ cursor: 'pointer' }}>
+            <Heading level={2} data-size='lg' style={{ margin: 0, marginBottom: '0.25rem' }}>
+              {firstResult.title}
+            </Heading>
+            <Paragraph data-size='sm' style={{ color: '#666', margin: 0 }}>
+              Temaside
+            </Paragraph>
+          </div>
+        </Link>
+
+        {hasMore && (
+          <>
+            <div style={{ 
+              margin: '1rem 0',
+              borderTop: '1px solid #E6E6E6',
+              paddingTop: '1rem',
+              display: 'flex',
+              justifyContent: 'center'
+            }}>
+              <Button
+                variant='tertiary'
+                data-size='sm'
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                Vis {isExpanded ? 'færre' : 'flere'} {isExpanded ? '↑' : '↓'}
+              </Button>
+            </div>
+
+            {isExpanded && (
+              <div style={{ display: 'grid', gap: '0.75rem', marginTop: '1rem' }}>
+                {expandedResults.map((result) => (
+                  <Link 
+                    key={result.id}
+                    to={`/info/${result.id}`}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
+                    <Card style={{ cursor: 'pointer', backgroundColor: '#f9f9f9' }}>
+                      <CardBlock style={{ padding: '1rem' }}>
+                        <Heading level={3} data-size='sm' style={{ margin: 0, marginBottom: '0.25rem' }}>
+                          {result.title}
+                        </Heading>
+                        <Paragraph data-size='xs' style={{ color: '#666', margin: 0 }}>
+                          Temaside
+                        </Paragraph>
+                      </CardBlock>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </CardBlock>
+    </Card>
+  )
+}
+
+function RetningslinjeCard({ 
+  category
+}: { 
+  category: CategoryGroup
+  searchQuery: string
+}) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  
+  // Show first 5 results
+  const displayResults = category.results.slice(0, 5)
+
+  return (
+    <Card style={{ border: '3px solid #0062BA' }}>
+      <CardBlock style={{ padding: '1.5rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
+          <Tag variant='outline' data-size='sm' style={{ marginBottom: '0.5rem' }}>
+            {category.count} {category.count === 1 ? 'artikkel' : 'artikler'}
+          </Tag>
+          <Heading level={2} data-size='lg' style={{ margin: 0, marginBottom: '0.25rem' }}>
+            ADHD
+          </Heading>
+          <Paragraph data-size='sm' style={{ color: '#666', margin: 0 }}>
+            Nasjonal faglig retningslinje
+          </Paragraph>
+        </div>
+
+        {displayResults.length > 0 && (
+          <>
+            {/* Show collapsed or expanded view */}
+            {!isExpanded ? (
+              <>
+                <div style={{ 
+                  margin: '1rem 0',
+                  borderTop: '1px solid #E6E6E6',
+                  paddingTop: '1rem',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}>
+                  <Button
+                    variant='tertiary'
+                    data-size='sm'
+                    onClick={() => setIsExpanded(true)}
+                  >
+                    Vis flere ↓
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ 
+                  margin: '1rem 0',
+                  borderTop: '1px solid #E6E6E6',
+                  paddingTop: '1rem',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}>
+                  <Button
+                    variant='tertiary'
+                    data-size='sm'
+                    onClick={() => setIsExpanded(false)}
+                  >
+                    Vis færre ↑
+                  </Button>
+                </div>
+
+                <div style={{ display: 'grid', gap: '0.75rem' }}>
+                  {displayResults.map((result) => (
+                    <Link 
+                      key={result.id}
+                      to={`/info/${result.id}`}
+                      style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                      <Card style={{ cursor: 'pointer', backgroundColor: '#f9f9f9' }}>
+                        <CardBlock style={{ padding: '1rem' }}>
+                          <Heading level={3} data-size='sm' style={{ margin: 0, marginBottom: '0.25rem' }}>
+                            {result.title}
+                          </Heading>
+                          <Paragraph data-size='xs' style={{ color: '#999', margin: 0 }}>
+                            Hentet fra: Dette er et utdrag fra innholdet.
+                          </Paragraph>
+                        </CardBlock>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </CardBlock>
+    </Card>
+  )
+}
+
+function RegularCategoryCard({ 
   category,
   searchQuery,
   searchId
@@ -27,111 +208,74 @@ function CategoryCard({
   searchQuery: string
   searchId?: string
 }) {
-  const [isExpanded, setIsExpanded] = useState(false)
   const navigate = useNavigate()
   
-  const isPriority = PRIORITY_CATEGORIES.includes(category.category)
-  const canNavigateToCategory = !isPriority && category.count > 0 && searchId
-  
-  // All categories: show 1 result initially, 5 when expanded
-  const displayResults = !isExpanded 
-    ? category.results.slice(0, 1)
-    : category.results.slice(0, 5)
-  
-  const hasMore = category.results.length > 1
-  const canShowLess = isExpanded && category.results.length > 5
+  // Show top 3 results
+  const displayResults = category.results.slice(0, 3)
+  const totalResults = category.count
 
-  function handleCategoryClick() {
-    if (canNavigateToCategory) {
+  function handleHeaderClick() {
+    if (searchId) {
       navigate(`/category?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category.category)}&search_id=${searchId}`)
     }
   }
 
   return (
-    <Card style={{ cursor: canNavigateToCategory ? 'pointer' : 'default' }}>
-      <CardBlock style={{ padding: '1.5rem' }}>
-        <div 
-          style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            marginBottom: '1rem',
-            cursor: canNavigateToCategory ? 'pointer' : 'default'
-          }}
-          onClick={canNavigateToCategory ? handleCategoryClick : undefined}
-        >
-          <Heading level={2} data-size='md' style={{ margin: 0 }}>
-            {category.display_name}
-            {canNavigateToCategory && ' →'}
-          </Heading>
-          <Tag variant='outline' data-size='sm'>
-            {category.count} {category.count === 1 ? 'treff' : 'treff'}
-          </Tag>
-        </div>
+    <div style={{ 
+      border: '1px solid #E6E6E6',
+      borderRadius: '8px',
+      overflow: 'hidden',
+      backgroundColor: '#fff'
+    }}>
+      {/* Header - clickable */}
+      <div 
+        style={{ 
+          padding: '1.5rem',
+          cursor: 'pointer',
+          borderBottom: '1px solid #E6E6E6',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+        onClick={handleHeaderClick}
+      >
+        <Heading level={2} data-size='md' style={{ margin: 0 }}>
+          {category.display_name} →
+        </Heading>
+        <Tag variant='outline' data-size='sm'>
+          {totalResults} treff
+        </Tag>
+      </div>
 
-        {displayResults.length === 0 ? (
-          <Paragraph data-size='sm' style={{ color: '#666', margin: 0 }}>
-            Ingen resultater
-          </Paragraph>
-        ) : (
+      {/* Top 3 results */}
+      {displayResults.length > 0 && (
+        <div style={{ 
+          padding: '1.5rem',
+          backgroundColor: '#F5F9FC'
+        }}>
           <div style={{ display: 'grid', gap: '0.75rem' }}>
             {displayResults.map((result) => (
-              <ResultItem key={result.id} result={result} />
+              <Link 
+                key={result.id}
+                to={`/info/${result.id}?search_id=${searchId}`}
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <Card style={{ cursor: 'pointer', backgroundColor: '#fff' }}>
+                  <CardBlock style={{ padding: '1rem' }}>
+                    <Heading level={3} data-size='sm' style={{ margin: 0, marginBottom: '0.25rem' }}>
+                      {result.title} →
+                    </Heading>
+                    <Paragraph data-size='xs' style={{ color: '#999', margin: 0 }}>
+                      Hentet fra: Dette er et utdrag fra innholdet.
+                    </Paragraph>
+                  </CardBlock>
+                </Card>
+              </Link>
             ))}
           </div>
-        )}
-
-        {hasMore && (
-          <Button
-            variant='tertiary'
-            data-size='sm'
-            style={{ marginTop: '1rem' }}
-            onClick={(e) => {
-              e.stopPropagation()
-              setIsExpanded(!isExpanded)
-            }}
-          >
-            {isExpanded 
-              ? (canShowLess ? `Vis færre` : 'Vis færre')
-              : `Vis flere (${Math.min(4, category.results.length - 1)} til)`}
-          </Button>
-        )}
-      </CardBlock>
-    </Card>
-  )
-}
-
-function ResultItem({ result }: { result: CategoryResult }) {
-  return (
-    <Link 
-      to={`/info/${result.id}`}
-      style={{ textDecoration: 'none', color: 'inherit' }}
-    >
-      <Card style={{ cursor: 'pointer', backgroundColor: '#f9f9f9' }}>
-        <CardBlock style={{ padding: '1rem' }}>
-          <Heading level={3} data-size='sm' style={{ margin: 0, marginBottom: '0.5rem' }}>
-            {result.title}
-          </Heading>
-          
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
-            <Tag variant='outline' data-size='sm'>
-              {result.info_type}
-            </Tag>
-            <Tag variant='outline' data-size='sm'>
-              Score: {result.score.toFixed(2)}
-            </Tag>
-          </div>
-
-          {result.explanation && (
-            <Paragraph data-size='sm' style={{ marginTop: '0.5rem', marginBottom: 0, color: '#555' }}>
-              {result.explanation.length > 150 
-                ? `${result.explanation.substring(0, 150)}...` 
-                : result.explanation}
-            </Paragraph>
-          )}
-        </CardBlock>
-      </Card>
-    </Link>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -150,23 +294,22 @@ export function CategorizedSearch() {
     enabled: !!searchQuery.trim(),
   })
 
-  // Always create a mock "Tema side" category as first
-  const mockTemaside: CategoryGroup = {
-    category: 'temaside',
-    display_name: 'Tema side',
-    count: 0,
-    is_priority: false,
-    results: []
-  }
-
-  // Get top 4 categories from API response (priority categories + top other categories)
-  const apiCategories = [
+  // Separate categories by type
+  const temasideCategory = data?.priority_categories.find(cat => cat.category === TEMASIDE_CATEGORY) ||
+    data?.other_categories.find(cat => cat.category === TEMASIDE_CATEGORY)
+  
+  const retningslinjeCategory = data?.priority_categories.find(cat => cat.category === RETNINGSLINJE_CATEGORY) ||
+    data?.other_categories.find(cat => cat.category === RETNINGSLINJE_CATEGORY)
+  
+  // Get other categories (excluding temaside and retningslinje)
+  const otherCategories = [
     ...(data?.priority_categories || []),
     ...(data?.other_categories || []),
-  ].slice(0, 4)
-
-  // Combine mock temaside with 4 API categories to always show exactly 5 boxes
-  const displayCategories = [mockTemaside, ...apiCategories]
+  ].filter(cat => 
+    cat.category !== TEMASIDE_CATEGORY && 
+    cat.category !== RETNINGSLINJE_CATEGORY &&
+    cat.results.length > 0
+  )
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -224,15 +367,16 @@ export function CategorizedSearch() {
       {data && !isLoading && !error && (
         <div style={{ display: 'grid', gap: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Heading level={1} data-size='lg' style={{ margin: 0 }}>
-              Søkeresultater
+            <Heading level={1} data-size='xl' style={{ margin: 0 }}>
+              {searchQuery.toUpperCase()}
             </Heading>
-            <Tag variant='outline'>
-              Totalt {data.total} {data.total === 1 ? 'treff' : 'treff'}
-            </Tag>
           </div>
 
-          {displayCategories.length === 0 || data.total === 0 ? (
+          <Paragraph data-size='md' style={{ color: '#666', margin: 0 }}>
+            {data.total} treff på {searchQuery.toUpperCase()}
+          </Paragraph>
+
+          {data.total === 0 ? (
             <Card>
               <CardBlock style={{ padding: '2rem', textAlign: 'center' }}>
                 <Paragraph style={{ color: '#666', margin: 0 }}>
@@ -242,8 +386,25 @@ export function CategorizedSearch() {
             </Card>
           ) : (
             <div style={{ display: 'grid', gap: '1.5rem' }}>
-              {displayCategories.map((category) => (
-                <CategoryCard
+              {/* Temaside - always first */}
+              {temasideCategory && temasideCategory.results.length > 0 && (
+                <TemaSideCard
+                  category={temasideCategory}
+                  searchQuery={searchQuery}
+                />
+              )}
+
+              {/* Retningslinje - always second */}
+              {retningslinjeCategory && retningslinjeCategory.results.length > 0 && (
+                <RetningslinjeCard
+                  category={retningslinjeCategory}
+                  searchQuery={searchQuery}
+                />
+              )}
+
+              {/* Other categories */}
+              {otherCategories.map((category) => (
+                <RegularCategoryCard
                   key={category.category}
                   category={category}
                   searchQuery={searchQuery}

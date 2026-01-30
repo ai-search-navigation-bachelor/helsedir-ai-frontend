@@ -10,7 +10,15 @@ const DEFAULT_BASE_URL = 'http://129.241.150.141:8000'
  */
 function getEnvVar(key: string, fallback: string): string {
   const value = import.meta.env[key] as string | undefined
-  return value && value.trim().length > 0 ? value : fallback
+  const result = value && value.trim().length > 0 ? value : fallback
+  
+  // Ensure URL is valid
+  if (!result.startsWith('http://') && !result.startsWith('https://')) {
+    console.warn(`Invalid endpoint for ${key}: ${result}, using fallback`)
+    return fallback
+  }
+  
+  return result
 }
 
 /**
@@ -22,6 +30,11 @@ export const API_ENDPOINTS = {
   categorySearch: getEnvVar('VITE_CATEGORIZED_SEARCH_ENDPOINT', `${DEFAULT_BASE_URL}/search/categorized`).replace('/search/categorized', '/search/category'),
   content: getEnvVar('VITE_CONTENT_ENDPOINT', `${DEFAULT_BASE_URL}/content`),
 } as const
+
+// Debug: Log endpoints in development
+if (import.meta.env.DEV) {
+  console.log('API Endpoints:', API_ENDPOINTS)
+}
 
 /**
  * Default request headers
