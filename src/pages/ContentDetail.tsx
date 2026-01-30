@@ -1,135 +1,37 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { FiArrowLeft } from 'react-icons/fi'
-import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
+import { MagnifyingGlassIcon, ChevronDownIcon, ChevronRightIcon } from '@navikt/aksel-icons'
 import DOMPurify from 'dompurify'
-import { Button, Alert, Paragraph, Spinner, Heading } from '@digdir/designsystemet-react'
+import { Button, Alert, Spinner, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { getContentApi } from '../api/search'
-import { fetchHelsedirContent, type HelselinkContent } from '../api/helsedir'
+import { fetchChapterWithSubchapters, type ChapterWithSubchapters } from '../api/helsedir'
 import type { ContentDetail as ContentDetailType } from '../api/types'
 import { useSearchStore } from '../stores/searchStore'
 
-type TableOfContentsItem = {
-  id: string
-  text: string
-}
-
-function extractH2Headings(html: string): TableOfContentsItem[] {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-  const h2Elements = doc.querySelectorAll('h2')
-  
-  return Array.from(h2Elements).map((h2, index) => ({
-    id: `heading-${index}`,
-    text: h2.textContent || '',
-  }))
-}
-
-function addIdsToH2Elements(html: string): string {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-  const h2Elements = doc.querySelectorAll('h2')
-  
-  h2Elements.forEach((h2, index) => {
-    h2.id = `heading-${index}`
-  })
-  
-  return doc.body.innerHTML
-}
-
-function TableOfContents({ items }: { items: TableOfContentsItem[] }) {
-  const [activeId, setActiveId] = useState<string>('')
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id)
-          }
-        })
-      },
-      { rootMargin: '-20% 0px -35% 0px' }
-    )
-
-    items.forEach(({ id }) => {
-      const element = document.getElementById(id)
-      if (element) observer.observe(element)
-    })
-
-    return () => observer.disconnect()
-  }, [items])
-
-  if (items.length === 0) return null
-
-  return (
-    <nav
-      style={{
-        position: 'sticky',
-        top: '20px',
-        padding: '16px',
-        backgroundColor: '#f9f9f9',
-        borderRadius: '4px',
-        border: '1px solid #e0e0e0',
-      }}
-    >
-      <Heading level={3} data-size='xs' style={{ marginBottom: '12px' }}>
-        På denne siden
-      </Heading>
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {items.map((item) => (
-          <li key={item.id} style={{ marginBottom: '8px' }}>
-            <a
-              href={`#${item.id}`}
-              onClick={(e) => {
-                e.preventDefault()
-                document.getElementById(item.id)?.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'start',
-                })
-              }}
-              style={{
-                display: 'block',
-                padding: '8px 12px',
-                textDecoration: 'none',
-                color: activeId === item.id ? '#0051be' : '#333',
-                backgroundColor: activeId === item.id ? '#d4e7f7' : 'transparent',
-                borderRadius: '4px',
-                borderLeft: activeId === item.id ? '3px solid #0051be' : '3px solid transparent',
-                fontSize: '14px',
-                fontWeight: activeId === item.id ? 600 : 400,
-                transition: 'all 0.2s ease',
-                boxShadow: activeId === item.id ? '0 0 0 3px rgba(0, 81, 190, 0.1)' : 'none',
-              }}
-            >
-              {item.text}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  )
-}
-
 function ContentDisplay({ content }: { content: ContentDetailType }) {
-  const [activeChapter, setActiveChapter] = useState<string>('')
+  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set())
+  const [expandedSubchapters, setExpandedSubchapters] = useState<Set<string>>(new Set())
+  const [activeChapter, setActiveChapter] = useState<string | null>(null)
   
   // Get children (barn) links
   const childrenLinks = content.links?.filter(link => link.rel === 'barn') || []
 
-  // Fetch ALL child content immediately
-  const { data: childrenData, isLoading: childrenLoading } = useQuery<Record<number, HelselinkContent>>({
-    queryKey: ['children-content', content.id],
+  // Fetch chapters with their subchapters
+  const { data: chaptersData, isLoading: chaptersLoading } = useQuery<Record<number, ChapterWithSubchapters>>({
+    queryKey: ['chapters-content', content.id],
     queryFn: async ({ signal }) => {
-      const results: Record<number, HelselinkContent> = {}
+      const results: Record<number, ChapterWithSubchapters> = {}
       for (let idx = 0; idx < childrenLinks.length; idx++) {
         const link = childrenLinks[idx]
         if (link?.href) {
           try {
-            results[idx] = await fetchHelsedirContent(link.href, signal)
+            results[idx] = await fetchChapterWithSubchapters(link.href, signal)
           } catch (error) {
-            console.error(`Failed to fetch child ${idx}:`, error)
+            // Ignore AbortErrors (expected when navigating away)
+            if (error instanceof Error && error.name !== 'AbortError') {
+              console.error(`Failed to fetch chapter ${idx}:`, error)
+            }
           }
         }
       }
@@ -139,31 +41,60 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
     staleTime: 10 * 60 * 1000,
   })
 
-  // Track active chapter with intersection observer
+  const toggleChapter = (idx: number) => {
+    setExpandedChapters(prev => {
+      const next = new Set(prev)
+      if (next.has(idx)) {
+        next.delete(idx)
+      } else {
+        next.add(idx)
+      }
+      return next
+    })
+  }
+
+  const toggleSubchapter = (key: string) => {
+    setExpandedSubchapters(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) {
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
+      return next
+    })
+  }
+
+  // Set up intersection observer to track visible chapters
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
+        // Find the most visible entry
+        let mostVisible = null
+        let maxRatio = 0
+        
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveChapter(entry.target.id)
+          if (entry.isIntersecting && entry.intersectionRatio > maxRatio) {
+            maxRatio = entry.intersectionRatio
+            mostVisible = entry.target.id
           }
         })
+        
+        if (mostVisible) {
+          setActiveChapter(mostVisible)
+        }
       },
-      { rootMargin: '-20% 0px -35% 0px' }
+      { rootMargin: '0px 0px -50% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] }
     )
 
+    // Observe all chapters and subchapters
     childrenLinks.forEach((_, idx) => {
       const element = document.getElementById(`chapter-${idx}`)
       if (element) observer.observe(element)
     })
 
     return () => observer.disconnect()
-  }, [childrenLinks.length])
-
-  const scrollToChapter = (idx: number) => {
-    const element = document.getElementById(`chapter-${idx}`)
-    element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
+  }, [childrenLinks])
 
   // Capitalize content type for display
   const displayType = content.content_type 
@@ -190,7 +121,7 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
         </Heading>
       </div>
 
-      {/* Two-column layout with chapters TOC */}
+      {/* Two-column layout with TOC and chapters */}
       {childrenLinks.length > 0 ? (
         <div
           style={{
@@ -200,7 +131,7 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
             alignItems: 'start',
           }}
         >
-          {/* Left column - Chapters Table of Contents */}
+          {/* Left column - Table of Contents */}
           <nav
             style={{
               position: 'sticky',
@@ -215,41 +146,107 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
               Kapitler
             </Heading>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {childrenLinks.map((link, idx) => (
-                <li key={idx} style={{ marginBottom: '8px' }}>
-                  <button
-                    onClick={() => scrollToChapter(idx)}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '8px 12px',
-                      textAlign: 'left',
-                      textDecoration: 'none',
-                      color: activeChapter === `chapter-${idx}` ? '#0051be' : '#333',
-                      backgroundColor: activeChapter === `chapter-${idx}` ? '#d4e7f7' : 'transparent',
-                      borderRadius: '4px',
-                      borderLeft: activeChapter === `chapter-${idx}` ? '3px solid #0051be' : '3px solid transparent',
-                      fontSize: '14px',
-                      fontWeight: activeChapter === `chapter-${idx}` ? 600 : 400,
-                      transition: 'all 0.2s ease',
-                      boxShadow: activeChapter === `chapter-${idx}` ? '0 0 0 3px rgba(0, 81, 190, 0.1)' : 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <span style={{ fontWeight: '700', color: '#64748b', minWidth: '20px' }}>
-                        {idx + 1}.
-                      </span>
-                      <span>{link.tittel || 'Uten tittel'}</span>
-                    </div>
-                  </button>
-                </li>
-              ))}
+              {childrenLinks.map((link, idx) => {
+                const chapter = chaptersData?.[idx]
+                const isExpanded = expandedChapters.has(idx)
+                const isActive = activeChapter === `chapter-${idx}`
+                
+                return (
+                  <li key={idx} style={{ marginBottom: '8px' }}>
+                    <button
+                      onClick={() => {
+                        // Scroll to chapter and expand it if collapsed
+                        const element = document.getElementById(`chapter-${idx}`)
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }
+                        if (!isExpanded) {
+                          toggleChapter(idx)
+                        }
+                      }}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '8px 12px',
+                        textAlign: 'left',
+                        color: isActive ? '#0051be' : '#333',
+                        backgroundColor: isActive ? '#d4e7f7' : 'transparent',
+                        borderRadius: '4px',
+                        borderTop: 'none',
+                        borderRight: 'none',
+                        borderBottom: 'none',
+                        borderLeft: isActive ? '3px solid #0051be' : '3px solid transparent',
+                        fontSize: '14px',
+                        fontWeight: isActive ? 600 : 400,
+                        transition: 'all 0.2s ease',
+                        boxShadow: isActive ? '0 0 0 3px rgba(0, 81, 190, 0.1)' : 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <span style={{ fontWeight: '700', color: '#64748b', minWidth: '20px' }}>
+                          {idx + 1}.
+                        </span>
+                        <span>{link.tittel || 'Uten tittel'}</span>
+                      </div>
+                    </button>
+                    
+                    {/* Show subchapters in TOC if chapter is expanded */}
+                    {isExpanded && chapter?.subchapters && chapter.subchapters.length > 0 && (
+                      <ul style={{ listStyle: 'none', padding: '0 0 0 32px', margin: '4px 0 0 0' }}>
+                        {chapter.subchapters.map((sub, subIdx) => {
+                          const subKey = `${idx}-${subIdx}`
+                          const isSubActive = activeChapter === `subchapter-${subKey}`
+                          
+                          return (
+                            <li key={subKey} style={{ marginBottom: '4px' }}>
+                              <button
+                                onClick={() => {
+                                  const element = document.getElementById(`subchapter-${subKey}`)
+                                  if (element) {
+                                    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                                  }
+                                  if (!expandedSubchapters.has(subKey)) {
+                                    toggleSubchapter(subKey)
+                                  }
+                                }}
+                                style={{
+                                  display: 'block',
+                                  width: '100%',
+                                  padding: '6px 8px',
+                                  textAlign: 'left',
+                                  color: isSubActive ? '#0051be' : '#64748b',
+                                  backgroundColor: 'transparent',
+                                  borderTop: 'none',
+                                  borderRight: 'none',
+                                  borderBottom: 'none',
+                                  borderLeft: 'none',
+                                  borderRadius: '4px',
+                                  fontSize: '13px',
+                                  fontWeight: isSubActive ? 600 : 400,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  <span style={{ fontWeight: '600', minWidth: '30px' }}>
+                                    {idx + 1}.{subIdx + 1}
+                                  </span>
+                                  <span>{sub.tittel || 'Uten tittel'}</span>
+                                </div>
+                              </button>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </nav>
 
-          {/* Right column - Chapters content */}
+          {/* Right column - Content */}
           <div>
             {/* Main body content if exists */}
             {content.body && (
@@ -266,97 +263,233 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
             )}
 
             {/* Loading state */}
-            {childrenLoading && (
+            {chaptersLoading && (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
                 <Spinner aria-label="Laster kapitler..." />
               </div>
             )}
 
-            {/* Chapters */}
-            {!childrenLoading && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                {childrenLinks.map((link, idx) => {
-                  const childContent = childrenData?.[idx]
+            {/* Chapters accordion */}
+            {!chaptersLoading && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {childrenLinks.map((link, chapterIdx) => {
+                const chapter = chaptersData?.[chapterIdx]
+                const isExpanded = expandedChapters.has(chapterIdx)
 
-                  return (
-                    <div 
-                      key={idx}
-                      id={`chapter-${idx}`}
+                return (
+                  <div 
+                    key={chapterIdx}
+                    id={`chapter-${chapterIdx}`}
+                    style={{
+                      border: '2px solid #cbd5e1',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      scrollMarginTop: '20px',
+                    }}
+                  >
+                    {/* Chapter header button */}
+                    <button
+                      onClick={() => toggleChapter(chapterIdx)}
                       style={{
-                        scrollMarginTop: '20px',
+                        width: '100%',
+                        padding: '16px 20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        backgroundColor: isExpanded ? '#f0f9ff' : '#ffffff',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isExpanded) {
+                          e.currentTarget.style.backgroundColor = '#f8fafc'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isExpanded) {
+                          e.currentTarget.style.backgroundColor = '#ffffff'
+                        }
                       }}
                     >
-                      {/* Chapter header */}
-                      <div style={{
-                        marginBottom: '24px',
-                        paddingBottom: '16px',
-                        borderBottom: '2px solid #e2e8f0',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '8px' }}>
-                          <span style={{ 
-                            fontSize: '20px', 
-                            fontWeight: '700',
-                            color: '#2563eb'
-                          }}>
-                            {idx + 1}
-                          </span>
-                          <Heading level={2} data-size='lg' style={{ margin: 0 }}>
-                            {link.tittel || 'Uten tittel'}
-                          </Heading>
-                        </div>
-                        <p style={{ 
-                          fontSize: '14px', 
-                          color: '#64748b', 
-                          margin: 0,
-                          marginLeft: '32px',
-                          textTransform: 'capitalize'
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ 
+                          fontSize: '18px', 
+                          fontWeight: '700',
+                          color: '#2563eb',
+                          minWidth: '30px',
                         }}>
-                          {link.type || 'kapittel'}
-                        </p>
+                          {chapterIdx + 1}.
+                        </span>
+                        <span style={{ 
+                          fontSize: '18px', 
+                          fontWeight: '600',
+                          color: '#1e293b',
+                          textAlign: 'left',
+                        }}>
+                          {link.tittel || 'Uten tittel'}
+                        </span>
                       </div>
+                      {isExpanded ? (
+                        <ChevronDownIcon style={{ width: '24px', height: '24px', color: '#2563eb' }} />
+                      ) : (
+                        <ChevronRightIcon style={{ width: '24px', height: '24px', color: '#64748b' }} />
+                      )}
+                    </button>
 
-                      {/* Chapter content */}
-                      {!childContent && (
-                        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                          Kunne ikke laste kapittel
-                        </div>
-                      )}
-                      
-                      {childContent && (
-                        <div>
-                          {childContent.intro && (
-                            <Paragraph 
-                              data-size='lg'
-                              style={{
-                                color: '#555',
-                                marginBottom: '24px',
-                                fontWeight: 500,
-                                fontSize: '18px',
-                                lineHeight: '1.6',
-                              }}
-                            >
-                              {childContent.intro}
-                            </Paragraph>
-                          )}
-                          
-                          {childContent.tekst && (
-                            <div
-                              style={{
-                                fontSize: '16px',
-                                lineHeight: '1.7',
-                                color: '#333',
-                              }}
-                              className="content-html"
-                              dangerouslySetInnerHTML={{ 
-                                __html: DOMPurify.sanitize(childContent.tekst) 
-                              }}
-                            />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
+                    {/* Expanded chapter content */}
+                    {isExpanded && chapter && (
+                      <div style={{ 
+                        padding: '24px',
+                        backgroundColor: '#fafafa',
+                        borderTop: '2px solid #cbd5e1',
+                      }}>
+                        {/* Chapter intro and tekst */}
+                        {chapter.intro && (
+                          <div style={{
+                            fontSize: '16px',
+                            lineHeight: '1.7',
+                            color: '#555',
+                            marginBottom: '20px',
+                            fontWeight: 500,
+                          }}>
+                            {chapter.intro}
+                          </div>
+                        )}
+                        
+                        {chapter.tekst && (
+                          <div
+                            style={{
+                              fontSize: '16px',
+                              lineHeight: '1.7',
+                              color: '#333',
+                              marginBottom: chapter.subchapters && chapter.subchapters.length > 0 ? '24px' : '0',
+                            }}
+                            className="content-html"
+                            dangerouslySetInnerHTML={{ 
+                              __html: DOMPurify.sanitize(chapter.tekst) 
+                            }}
+                          />
+                        )}
+
+                        {/* Subchapters */}
+                        {chapter.subchapters && chapter.subchapters.length > 0 && (
+                          <div style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: '12px',
+                            marginTop: '24px',
+                          }}>
+                            {chapter.subchapters.map((subchapter, subIdx) => {
+                              const subKey = `${chapterIdx}-${subIdx}`
+                              const isSubExpanded = expandedSubchapters.has(subKey)
+
+                              return (
+                                <div
+                                  key={subKey}
+                                  id={`subchapter-${subKey}`}
+                                  style={{
+                                    border: '1px solid #cbd5e1',
+                                    borderRadius: '6px',
+                                    overflow: 'hidden',
+                                    backgroundColor: '#ffffff',
+                                    scrollMarginTop: '20px',
+                                  }}
+                                >
+                                  {/* Subchapter header button */}
+                                  <button
+                                    onClick={() => toggleSubchapter(subKey)}
+                                    style={{
+                                      width: '100%',
+                                      padding: '12px 16px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'space-between',
+                                      backgroundColor: isSubExpanded ? '#f0f9ff' : '#ffffff',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      transition: 'background-color 0.2s ease',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (!isSubExpanded) {
+                                        e.currentTarget.style.backgroundColor = '#f8fafc'
+                                      }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (!isSubExpanded) {
+                                        e.currentTarget.style.backgroundColor = '#ffffff'
+                                      }
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                      <span style={{ 
+                                        fontSize: '15px', 
+                                        fontWeight: '600',
+                                        color: '#2563eb',
+                                        minWidth: '40px',
+                                      }}>
+                                        {chapterIdx + 1}.{subIdx + 1}
+                                      </span>
+                                      <span style={{ 
+                                        fontSize: '15px', 
+                                        fontWeight: '500',
+                                        color: '#334155',
+                                        textAlign: 'left',
+                                      }}>
+                                        {subchapter.tittel || 'Uten tittel'}
+                                      </span>
+                                    </div>
+                                    {isSubExpanded ? (
+                                      <ChevronDownIcon style={{ width: '20px', height: '20px', color: '#2563eb' }} />
+                                    ) : (
+                                      <ChevronRightIcon style={{ width: '20px', height: '20px', color: '#64748b' }} />
+                                    )}
+                                  </button>
+
+                                  {/* Expanded subchapter content */}
+                                  {isSubExpanded && (
+                                    <div style={{ 
+                                      padding: '16px',
+                                      backgroundColor: '#f9fafb',
+                                      borderTop: '1px solid #cbd5e1',
+                                    }}>
+                                      {subchapter.intro && (
+                                        <div style={{
+                                          fontSize: '15px',
+                                          lineHeight: '1.6',
+                                          color: '#555',
+                                          marginBottom: '16px',
+                                          fontWeight: 400,
+                                        }}>
+                                          {subchapter.intro}
+                                        </div>
+                                      )}
+                                      
+                                      {subchapter.tekst && (
+                                        <div
+                                          style={{
+                                            fontSize: '15px',
+                                            lineHeight: '1.6',
+                                            color: '#333',
+                                          }}
+                                          className="content-html"
+                                          dangerouslySetInnerHTML={{ 
+                                            __html: DOMPurify.sanitize(subchapter.tekst) 
+                                          }}
+                                        />
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
               </div>
             )}
           </div>
@@ -487,8 +620,7 @@ export function ContentDetail() {
           onClick={() => navigate(-1)}
           style={{ marginBottom: '24px' }}
         >
-          <FiArrowLeft size={20} />
-          Tilbake
+          ← Tilbake
         </Button>
       )}
 

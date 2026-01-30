@@ -17,7 +17,18 @@ export interface HelselinkContent {
   forstPublisert?: string
   sistFagligOppdatert?: string
   type?: string
+  lenker?: Array<{
+    rel: string
+    type?: string
+    tittel?: string
+    href?: string
+    strukturId?: string
+  }>
   [key: string]: unknown
+}
+
+export interface ChapterWithSubchapters extends HelselinkContent {
+  subchapters?: HelselinkContent[]
 }
 
 /**
@@ -61,4 +72,34 @@ export async function fetchMultipleHelsedirContent(
 ): Promise<HelselinkContent[]> {
   const promises = hrefs.map(href => fetchHelsedirContent(href, signal))
   return Promise.all(promises)
+}
+
+/**
+ * Fetch chapter with its subchapters (nested children)
+ */
+export async function fetchChapterWithSubchapters(
+  href: string,
+  signal?: AbortSignal
+): Promise<ChapterWithSubchapters> {
+  const chapter = await fetchHelsedirContent(href, signal)
+  
+  // Check if chapter has children (subchapters)
+  const childrenLinks = chapter.lenker?.filter(link => link.rel === 'barn') || []
+  
+  if (childrenLinks.length > 0) {
+    const subchapters: HelselinkContent[] = []
+    for (const link of childrenLinks) {
+      if (link.href) {
+        try {
+          const subchapter = await fetchHelsedirContent(link.href, signal)
+          subchapters.push(subchapter)
+        } catch (error) {
+          console.error(`Failed to fetch subchapter:`, error)
+        }
+      }
+    }
+    return { ...chapter, subchapters }
+  }
+  
+  return chapter
 }
