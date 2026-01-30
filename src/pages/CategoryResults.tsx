@@ -3,17 +3,15 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import {
   Alert,
   Button,
-  Card,
-  CardBlock,
-  Heading,
   Paragraph,
   Search as SearchComponent,
-  Tag,
   Spinner,
 } from '@digdir/designsystemet-react'
+import { ChevronRightIcon } from '@navikt/aksel-icons'
 
 import { useCategorySearchQuery } from '../hooks/queries/useCategorySearchQuery'
 import type { CategorySearchResult } from '../api/categorySearch'
+import { CategoryResultItem } from '../components/search/CategoryResultItem'
 
 function ResultItem({ result }: { result: CategorySearchResult }) {
   return (
@@ -21,30 +19,36 @@ function ResultItem({ result }: { result: CategorySearchResult }) {
       to={`/info/${result.id}`}
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
-      <Card style={{ cursor: 'pointer', backgroundColor: '#f9f9f9' }}>
-        <CardBlock style={{ padding: '1rem' }}>
-          <Heading level={3} data-size='sm' style={{ margin: 0, marginBottom: '0.5rem' }}>
-            {result.title}
-          </Heading>
-          
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
-            <Tag variant='outline' data-size='sm'>
-              {result.info_type}
-            </Tag>
-            <Tag variant='outline' data-size='sm'>
-              Score: {result.score.toFixed(2)}
-            </Tag>
-          </div>
-
-          {result.explanation && (
-            <Paragraph data-size='sm' style={{ marginTop: '0.5rem', marginBottom: 0, color: '#555' }}>
-              {result.explanation.length > 150 
-                ? `${result.explanation.substring(0, 150)}...` 
-                : result.explanation}
-            </Paragraph>
-          )}
-        </CardBlock>
-      </Card>
+      <a
+        href={`/info/${result.id}`}
+        onClick={(e) => {
+          e.preventDefault();
+          window.location.href = `/info/${result.id}`;
+        }}
+        style={{
+          display: 'block',
+          padding: '16px 20px',
+          backgroundColor: 'white',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          textDecoration: 'none',
+          color: 'inherit',
+          transition: 'all 0.2s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#f8fafc';
+          e.currentTarget.style.borderColor = '#cbd5e1';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'white';
+          e.currentTarget.style.borderColor = '#e2e8f0';
+        }}
+      >
+        <CategoryResultItem 
+          result={result} 
+          variant="regular"
+        />
+      </a>
     </Link>
   )
 }
@@ -58,6 +62,7 @@ export function CategoryResults() {
   const searchId = searchParams.get('search_id') || ''
   
   const [inputValue, setInputValue] = useState(searchQuery)
+  const [itemsToShow, setItemsToShow] = useState(20)
 
   // Sync input with URL parameter when it changes
   useEffect(() => {
@@ -73,17 +78,69 @@ export function CategoryResults() {
     event.preventDefault()
     const trimmed = inputValue.trim()
     if (trimmed) {
-      navigate(`/search?searchquery=${encodeURIComponent(trimmed)}`)
+      navigate(`/search?query=${encodeURIComponent(trimmed)}`)
     }
   }
 
-  function handleBack() {
-    navigate(`/search?searchquery=${encodeURIComponent(searchQuery)}`)
+  function handleLoadMore() {
+    setItemsToShow(prev => prev + 20)
   }
 
+  const visibleResults = data?.results.slice(0, itemsToShow) || []
+  const hasMore = (data?.results.length || 0) > itemsToShow
+
   return (
-    <div style={{ display: 'grid', gap: '0.75rem' }}>
-      <form onSubmit={handleSubmit}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+      {/* Breadcrumbs */}
+      <nav style={{ marginBottom: '24px' }}>
+        <ol style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          listStyle: 'none', 
+          padding: 0, 
+          margin: 0,
+          fontSize: '14px',
+          color: '#64748b'
+        }}>
+          <li>
+            <Link 
+              to="/"
+              style={{ 
+                color: '#2563eb', 
+                textDecoration: 'none',
+                fontWeight: '500'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+              onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+            >
+              Forside
+            </Link>
+          </li>
+          <li>/</li>
+          <li>
+            <Link 
+              to={`/search?query=${encodeURIComponent(searchQuery)}`}
+              style={{ 
+                color: '#2563eb', 
+                textDecoration: 'none',
+                fontWeight: '500'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+              onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+            >
+              {searchQuery.toUpperCase()}
+            </Link>
+          </li>
+          <li>/</li>
+          <li style={{ color: '#0f172a', fontWeight: '500' }}>
+            {data?.category || category}
+          </li>
+        </ol>
+      </nav>
+
+      {/* Search Bar */}
+      <form onSubmit={handleSubmit} style={{ marginBottom: '24px' }}>
         <SearchComponent>
           <SearchComponent.Input
             name="query"
@@ -97,7 +154,6 @@ export function CategoryResults() {
             onClick={(e) => {
               e.preventDefault()
               setInputValue('')
-              navigate('/search')
             }}
           />
           <SearchComponent.Button type='submit' variant='secondary'>
@@ -106,20 +162,14 @@ export function CategoryResults() {
         </SearchComponent>
       </form>
 
-      <Button
-        variant='tertiary'
-        onClick={handleBack}
-        style={{ width: 'fit-content' }}
-      >
-        ← Tilbake til søkeresultater
-      </Button>
-
+      {/* Loading State */}
       {isLoading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '48px' }}>
           <Spinner aria-label="Laster..." />
         </div>
       )}
 
+      {/* Error State */}
       {error && (
         <Alert data-color='danger'>
           <Paragraph>
@@ -128,33 +178,61 @@ export function CategoryResults() {
         </Alert>
       )}
 
+      {/* Results */}
       {data && !isLoading && !error && (
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Heading level={1} data-size='lg' style={{ margin: 0 }}>
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </Heading>
-            <Tag variant='outline'>
-              {data.total} {data.total === 1 ? 'treff' : 'treff'}
-            </Tag>
+        <>
+          {/* Header */}
+          <div style={{ marginBottom: '24px' }}>
+            <h1 style={{ 
+              fontSize: '28px', 
+              fontWeight: '700', 
+              color: '#0f172a', 
+              margin: 0,
+              marginBottom: '4px'
+            }}>
+              {data.category || category}
+            </h1>
+            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+              {data.total} treff
+            </p>
           </div>
 
+          {/* Results List */}
           {data.results.length === 0 ? (
-            <Card>
-              <CardBlock style={{ padding: '2rem', textAlign: 'center' }}>
-                <Paragraph style={{ color: '#666', margin: 0 }}>
-                  Ingen resultater funnet
-                </Paragraph>
-              </CardBlock>
-            </Card>
-          ) : (
-            <div style={{ display: 'grid', gap: '1rem' }}>
-              {data.results.map((result) => (
-                <ResultItem key={result.id} result={result} />
-              ))}
+            <div style={{
+              padding: '48px',
+              textAlign: 'center',
+              backgroundColor: '#f8fafc',
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0'
+            }}>
+              <Paragraph style={{ color: '#64748b', margin: 0 }}>
+                Ingen resultater funnet
+              </Paragraph>
             </div>
+          ) : (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {visibleResults.map((result) => (
+                  <ResultItem key={result.id} result={result} />
+                ))}
+              </div>
+
+              {/* Load More Button */}
+              {hasMore && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
+                  <Button 
+                    variant="secondary" 
+                    onClick={handleLoadMore}
+                    data-size="lg"
+                  >
+                    Last flere ({data.total - itemsToShow} til)
+                  </Button>
+                </div>
+              )}
+            </>
           )}
-        </div>
+        </>
       )}
     </div>
   )
