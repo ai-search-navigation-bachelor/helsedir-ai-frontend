@@ -60,7 +60,11 @@ export type SearchApiOptions = {
 
 function getSearchEndpoint(): string {
   const envEndpoint = import.meta.env.VITE_SEARCH_ENDPOINT as string | undefined
-  if (envEndpoint && envEndpoint.trim().length > 0) return envEndpoint
+  if (envEndpoint && envEndpoint.trim().length > 0) {
+    return envEndpoint
+  }
+  
+  // Default to production endpoint
   return 'http://129.241.150.141:8000/search'
 }
 
@@ -84,9 +88,7 @@ export async function searchApi(
 
   const endpoint = getSearchEndpoint()
 
-  const url = endpoint.startsWith('http')
-    ? new URL(endpoint)
-    : new URL(endpoint, window.location.origin)
+  const url = new URL(endpoint)
   
   url.searchParams.set('query', trimmed)
   url.searchParams.set('offset', String(offset))
@@ -104,10 +106,6 @@ export async function searchApi(
     })
 
     if (!response.ok) {
-      // If main backend fails, try localhost fallback
-      if (endpoint.includes('129.241.150.141')) {
-        return searchApiFallback(query, { signal, offset, limit, role, search_id })
-      }
       throw new Error(`Search failed: ${response.status} ${response.statusText}`)
     }
 
@@ -118,51 +116,18 @@ export async function searchApi(
 
     throw new Error('Search failed: expected JSON response')
   } catch (error) {
-    // If main backend fails (network error, timeout, etc.), try localhost fallback
-    if (endpoint.includes('129.241.150.141') && error instanceof Error && !signal?.aborted) {
-      console.warn('Main backend failed, falling back to localhost:', error.message)
-      return searchApiFallback(query, { signal, offset, limit, role, search_id })
-    }
+    console.error('Search error:', error)
     throw error
   }
 }
 
-async function searchApiFallback(
-  query: string,
-  { signal, offset = 0, limit = 10, role, search_id }: SearchApiOptions = {},
-): Promise<SearchApiResult> {
-  const localEndpoint = 'http://localhost:8000/search'
-  const url = new URL(localEndpoint)
-  
-  url.searchParams.set('query', query.trim())
-  url.searchParams.set('offset', String(offset))
-  url.searchParams.set('limit', String(limit))
-  if (role) url.searchParams.set('role', role)
-  if (search_id) url.searchParams.set('search_id', search_id)
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-    signal,
-  })
-
-  if (!response.ok) {
-    throw new Error(`Search (localhost) failed: ${response.status} ${response.statusText}`)
-  }
-
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    return response.json() as Promise<SearchApiResult>
-  }
-
-  throw new Error('Search (localhost) failed: expected JSON response')
-}
-
 function getContentEndpoint(): string {
   const envEndpoint = import.meta.env.VITE_CONTENT_ENDPOINT as string | undefined
-  if (envEndpoint && envEndpoint.trim().length > 0) return envEndpoint
+  if (envEndpoint && envEndpoint.trim().length > 0) {
+    return envEndpoint
+  }
+  
+  // Default to production endpoint
   return 'http://129.241.150.141:8000/content'
 }
 
@@ -176,9 +141,7 @@ export async function getContentApi(
 
   const endpoint = getContentEndpoint()
   
-  const url = endpoint.startsWith('http')
-    ? new URL(`${endpoint}/${encodeURIComponent(trimmed)}`)
-    : new URL(`${endpoint}/${encodeURIComponent(trimmed)}`, window.location.origin)
+  const url = new URL(`${endpoint}/${encodeURIComponent(trimmed)}`)
   
   if (searchId) {
     url.searchParams.set('search_id', searchId)
@@ -194,10 +157,6 @@ export async function getContentApi(
     })
 
     if (!response.ok) {
-      // If main backend fails, try localhost fallback
-      if (endpoint.includes('129.241.150.141')) {
-        return getContentApiFallback(contentId, searchId, { signal })
-      }
       throw new Error(`Content fetch failed: ${response.status} ${response.statusText}`)
     }
 
@@ -208,45 +167,9 @@ export async function getContentApi(
 
     throw new Error('Content fetch failed: expected JSON response')
   } catch (error) {
-    // If main backend fails (network error, timeout, etc.), try localhost fallback
-    if (endpoint.includes('129.241.150.141') && error instanceof Error && !signal?.aborted) {
-      console.warn('Main backend failed, falling back to localhost:', error.message)
-      return getContentApiFallback(contentId, searchId, { signal })
-    }
+    console.error('Content fetch error:', error)
     throw error
   }
-}
-
-async function getContentApiFallback(
-  contentId: string,
-  searchId?: string,
-  { signal }: SearchApiOptions = {},
-): Promise<ContentDetail> {
-  const localEndpoint = 'http://localhost:8000/content'
-  const url = new URL(`${localEndpoint}/${encodeURIComponent(contentId)}`)
-  
-  if (searchId) {
-    url.searchParams.set('search_id', searchId)
-  }
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-    signal,
-  })
-
-  if (!response.ok) {
-    throw new Error(`Content fetch (localhost) failed: ${response.status} ${response.statusText}`)
-  }
-
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    return response.json() as Promise<ContentDetail>
-  }
-
-  throw new Error('Content fetch (localhost) failed: expected JSON response')
 }
 
 // Deprecated: Use getContentApi instead
@@ -260,9 +183,8 @@ export async function getInfobitApi(
   // Legacy endpoint for backwards compatibility
   const endpoint = 'http://129.241.150.141:8000/helsedir/infobit'
   
-  const url = endpoint.startsWith('http')
-    ? new URL(`${endpoint}/${encodeURIComponent(trimmed)}`)
-    : new URL(`${endpoint}/${encodeURIComponent(trimmed)}`, window.location.origin)
+  const url = new URL(`${endpoint}/${encodeURIComponent(trimmed)}`)
+  
   url.searchParams.set('include_children', 'true')
   url.searchParams.set('depth', String(depth))
 
