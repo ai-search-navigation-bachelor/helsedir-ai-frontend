@@ -54,6 +54,25 @@ export interface ContentDetail {
 }
 
 /**
+ * Nested content from Helsedirektoratet API (external)
+ */
+export interface NestedContent {
+  id: string
+  tittel?: string
+  title?: string
+  tekst?: string
+  body?: string
+  intro?: string
+  lenker?: Array<{
+    rel: string
+    type?: string
+    tittel?: string
+    href?: string
+  }>
+  children?: NestedContent[]
+}
+
+/**
  * Legacy info result item (for backwards compatibility)
  */
 export interface InfoResultItem {

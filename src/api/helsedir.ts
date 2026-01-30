@@ -3,7 +3,6 @@
  * Fetches content directly from helsedirektoratet.no API
  */
 
-const HELSEDIR_API_BASE = import.meta.env.VITE_HELSEDIR_API_URL || 'https://api.helsedirektoratet.no'
 const API_KEY = import.meta.env.VITE_HELSEDIR_API_KEY || ''
 
 /**
@@ -28,7 +27,7 @@ export interface HelselinkContent {
 }
 
 export interface ChapterWithSubchapters extends HelselinkContent {
-  subchapters?: HelselinkContent[]
+  children?: ChapterWithSubchapters[]
 }
 
 /**
@@ -75,30 +74,44 @@ export async function fetchMultipleHelsedirContent(
 }
 
 /**
- * Fetch chapter with its subchapters (nested children)
+ * Fetch chapter with ALL nested subchapters recursively
+ * This will fetch children, children of children, etc.
  */
 export async function fetchChapterWithSubchapters(
   href: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  depth: number = 0,
+  maxDepth: number = 10
 ): Promise<ChapterWithSubchapters> {
+  // Prevent infinite recursion
+  if (depth >= maxDepth) {
+    return fetchHelsedirContent(href, signal) as Promise<ChapterWithSubchapters>
+  }
+
   const chapter = await fetchHelsedirContent(href, signal)
   
   // Check if chapter has children (subchapters)
-  const childrenLinks = chapter.lenker?.filter(link => link.rel === 'barn') || []
+  // Handle both 'lenker' (external API) and 'links' (backend API)
+  const allLinks = (chapter.lenker || (chapter as any).links) as Array<{rel: string, href?: string}> | undefined
+  const childrenLinks = allLinks?.filter(link => link.rel === 'barn') || []
   
   if (childrenLinks.length > 0) {
-    const subchapters: HelselinkContent[] = []
+    const children: ChapterWithSubchapters[] = []
     for (const link of childrenLinks) {
       if (link.href) {
         try {
-          const subchapter = await fetchHelsedirContent(link.href, signal)
-          subchapters.push(subchapter)
+          // RECURSIVELY fetch each subchapter and its children
+          const subchapter = await fetchChapterWithSubchapters(link.href, signal, depth + 1, maxDepth)
+          children.push(subchapter)
         } catch (error) {
-          console.error(`Failed to fetch subchapter:`, error)
+          // Ignore AbortErrors (expected when navigating away)
+          if (error instanceof Error && error.name !== 'AbortError') {
+            console.error(`Failed to fetch nested content at depth ${depth}:`, error)
+          }
         }
       }
     }
-    return { ...chapter, subchapters }
+    return { ...chapter, children }
   }
   
   return chapter

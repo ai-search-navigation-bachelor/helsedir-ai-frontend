@@ -1,45 +1,49 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { MagnifyingGlassIcon, ChevronDownIcon, ChevronRightIcon } from '@navikt/aksel-icons'
+import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
 import DOMPurify from 'dompurify'
 import { Button, Alert, Spinner, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { getContentApi } from '../api/search'
-import { fetchChapterWithSubchapters, type ChapterWithSubchapters } from '../api/helsedir'
-import type { ContentDetail as ContentDetailType } from '../api/types'
+import { fetchChapterWithSubchapters } from '../api/helsedir'
+import type { ContentDetail as ContentDetailType, NestedContent } from '../api/types'
 import { useSearchStore } from '../stores/searchStore'
+import { ChapterAccordion } from '../components/content/ChapterAccordion'
 
 function ContentDisplay({ content }: { content: ContentDetailType }) {
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set())
   const [expandedSubchapters, setExpandedSubchapters] = useState<Set<string>>(new Set())
   const [activeChapter, setActiveChapter] = useState<string | null>(null)
   
-  // Get children (barn) links
+  // Get children (barn) links from backend content
   const childrenLinks = content.links?.filter(link => link.rel === 'barn') || []
 
-  // Fetch chapters with their subchapters
-  const { data: chaptersData, isLoading: chaptersLoading } = useQuery<Record<number, ChapterWithSubchapters>>({
-    queryKey: ['chapters-content', content.id],
+  // Fetch nested chapters from Helsedirektoratet API
+  const { data: chaptersData, isLoading: chaptersLoading } = useQuery<NestedContent[]>({
+    queryKey: ['nested-chapters', content.id],
     queryFn: async ({ signal }) => {
-      const results: Record<number, ChapterWithSubchapters> = {}
-      for (let idx = 0; idx < childrenLinks.length; idx++) {
-        const link = childrenLinks[idx]
-        if (link?.href) {
+      const chapters: NestedContent[] = []
+      for (const link of childrenLinks) {
+        if (link.href) {
           try {
-            results[idx] = await fetchChapterWithSubchapters(link.href, signal)
+            const chapter = await fetchChapterWithSubchapters(link.href, signal)
+            console.log('Fetched chapter:', chapter)
+            chapters.push(chapter)
           } catch (error) {
-            // Ignore AbortErrors (expected when navigating away)
             if (error instanceof Error && error.name !== 'AbortError') {
-              console.error(`Failed to fetch chapter ${idx}:`, error)
+              console.error('Failed to fetch chapter:', error)
             }
           }
         }
       }
-      return results
+      console.log('All chapters loaded:', chapters)
+      return chapters
     },
     enabled: childrenLinks.length > 0,
     staleTime: 10 * 60 * 1000,
   })
+
+  const chapters = chaptersData || []
 
   const toggleChapter = (idx: number) => {
     setExpandedChapters(prev => {
@@ -88,13 +92,13 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
     )
 
     // Observe all chapters and subchapters
-    childrenLinks.forEach((_, idx) => {
+    chapters.forEach((_, idx) => {
       const element = document.getElementById(`chapter-${idx}`)
       if (element) observer.observe(element)
     })
 
     return () => observer.disconnect()
-  }, [childrenLinks])
+  }, [chapters.length])
 
   // Capitalize content type for display
   const displayType = content.content_type 
@@ -122,7 +126,7 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
       </div>
 
       {/* Two-column layout with TOC and chapters */}
-      {childrenLinks.length > 0 ? (
+      {chapters.length > 0 ? (
         <div
           style={{
             display: 'grid',
@@ -145,9 +149,14 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
             <Heading level={3} data-size='xs' style={{ marginBottom: '12px' }}>
               Kapitler
             </Heading>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {childrenLinks.map((link, idx) => {
-                const chapter = chaptersData?.[idx]
+            
+            {chaptersLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                <Spinner aria-label="Laster kapitler..." />
+              </div>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {chapters.map((chapter, idx) => {
                 const isExpanded = expandedChapters.has(idx)
                 const isActive = activeChapter === `chapter-${idx}`
                 
@@ -187,14 +196,14 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
                         <span style={{ fontWeight: '700', color: '#64748b', minWidth: '20px' }}>
                           {idx + 1}.
                         </span>
-                        <span>{link.tittel || 'Uten tittel'}</span>
+                        <span>{chapter.tittel || chapter.title || 'Uten tittel'}</span>
                       </div>
                     </button>
                     
                     {/* Show subchapters in TOC if chapter is expanded */}
-                    {isExpanded && chapter?.subchapters && chapter.subchapters.length > 0 && (
+                    {isExpanded && chapter.children && chapter.children.length > 0 && (
                       <ul style={{ listStyle: 'none', padding: '0 0 0 32px', margin: '4px 0 0 0' }}>
-                        {chapter.subchapters.map((sub, subIdx) => {
+                        {chapter.children.map((sub: NestedContent, subIdx: number) => {
                           const subKey = `${idx}-${subIdx}`
                           const isSubActive = activeChapter === `subchapter-${subKey}`
                           
@@ -232,7 +241,7 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
                                   <span style={{ fontWeight: '600', minWidth: '30px' }}>
                                     {idx + 1}.{subIdx + 1}
                                   </span>
-                                  <span>{sub.tittel || 'Uten tittel'}</span>
+                                  <span>{sub.tittel || sub.title || 'Uten tittel'}</span>
                                 </div>
                               </button>
                             </li>
@@ -243,7 +252,8 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
                   </li>
                 )
               })}
-            </ul>
+              </ul>
+            )}
           </nav>
 
           {/* Right column - Content */}
@@ -272,224 +282,17 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
             {/* Chapters accordion */}
             {!chaptersLoading && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {childrenLinks.map((link, chapterIdx) => {
-                const chapter = chaptersData?.[chapterIdx]
-                const isExpanded = expandedChapters.has(chapterIdx)
-
-                return (
-                  <div 
+                {chapters.map((chapter, chapterIdx) => (
+                  <ChapterAccordion
                     key={chapterIdx}
-                    id={`chapter-${chapterIdx}`}
-                    style={{
-                      border: '2px solid #cbd5e1',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      scrollMarginTop: '20px',
-                    }}
-                  >
-                    {/* Chapter header button */}
-                    <button
-                      onClick={() => toggleChapter(chapterIdx)}
-                      style={{
-                        width: '100%',
-                        padding: '16px 20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        backgroundColor: isExpanded ? '#f0f9ff' : '#ffffff',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isExpanded) {
-                          e.currentTarget.style.backgroundColor = '#f8fafc'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isExpanded) {
-                          e.currentTarget.style.backgroundColor = '#ffffff'
-                        }
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ 
-                          fontSize: '18px', 
-                          fontWeight: '700',
-                          color: '#2563eb',
-                          minWidth: '30px',
-                        }}>
-                          {chapterIdx + 1}.
-                        </span>
-                        <span style={{ 
-                          fontSize: '18px', 
-                          fontWeight: '600',
-                          color: '#1e293b',
-                          textAlign: 'left',
-                        }}>
-                          {link.tittel || 'Uten tittel'}
-                        </span>
-                      </div>
-                      {isExpanded ? (
-                        <ChevronDownIcon style={{ width: '24px', height: '24px', color: '#2563eb' }} />
-                      ) : (
-                        <ChevronRightIcon style={{ width: '24px', height: '24px', color: '#64748b' }} />
-                      )}
-                    </button>
-
-                    {/* Expanded chapter content */}
-                    {isExpanded && chapter && (
-                      <div style={{ 
-                        padding: '24px',
-                        backgroundColor: '#fafafa',
-                        borderTop: '2px solid #cbd5e1',
-                      }}>
-                        {/* Chapter intro and tekst */}
-                        {chapter.intro && (
-                          <div style={{
-                            fontSize: '16px',
-                            lineHeight: '1.7',
-                            color: '#555',
-                            marginBottom: '20px',
-                            fontWeight: 500,
-                          }}>
-                            {chapter.intro}
-                          </div>
-                        )}
-                        
-                        {chapter.tekst && (
-                          <div
-                            style={{
-                              fontSize: '16px',
-                              lineHeight: '1.7',
-                              color: '#333',
-                              marginBottom: chapter.subchapters && chapter.subchapters.length > 0 ? '24px' : '0',
-                            }}
-                            className="content-html"
-                            dangerouslySetInnerHTML={{ 
-                              __html: DOMPurify.sanitize(chapter.tekst) 
-                            }}
-                          />
-                        )}
-
-                        {/* Subchapters */}
-                        {chapter.subchapters && chapter.subchapters.length > 0 && (
-                          <div style={{ 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            gap: '12px',
-                            marginTop: '24px',
-                          }}>
-                            {chapter.subchapters.map((subchapter, subIdx) => {
-                              const subKey = `${chapterIdx}-${subIdx}`
-                              const isSubExpanded = expandedSubchapters.has(subKey)
-
-                              return (
-                                <div
-                                  key={subKey}
-                                  id={`subchapter-${subKey}`}
-                                  style={{
-                                    border: '1px solid #cbd5e1',
-                                    borderRadius: '6px',
-                                    overflow: 'hidden',
-                                    backgroundColor: '#ffffff',
-                                    scrollMarginTop: '20px',
-                                  }}
-                                >
-                                  {/* Subchapter header button */}
-                                  <button
-                                    onClick={() => toggleSubchapter(subKey)}
-                                    style={{
-                                      width: '100%',
-                                      padding: '12px 16px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'space-between',
-                                      backgroundColor: isSubExpanded ? '#f0f9ff' : '#ffffff',
-                                      border: 'none',
-                                      cursor: 'pointer',
-                                      transition: 'background-color 0.2s ease',
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      if (!isSubExpanded) {
-                                        e.currentTarget.style.backgroundColor = '#f8fafc'
-                                      }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      if (!isSubExpanded) {
-                                        e.currentTarget.style.backgroundColor = '#ffffff'
-                                      }
-                                    }}
-                                  >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                      <span style={{ 
-                                        fontSize: '15px', 
-                                        fontWeight: '600',
-                                        color: '#2563eb',
-                                        minWidth: '40px',
-                                      }}>
-                                        {chapterIdx + 1}.{subIdx + 1}
-                                      </span>
-                                      <span style={{ 
-                                        fontSize: '15px', 
-                                        fontWeight: '500',
-                                        color: '#334155',
-                                        textAlign: 'left',
-                                      }}>
-                                        {subchapter.tittel || 'Uten tittel'}
-                                      </span>
-                                    </div>
-                                    {isSubExpanded ? (
-                                      <ChevronDownIcon style={{ width: '20px', height: '20px', color: '#2563eb' }} />
-                                    ) : (
-                                      <ChevronRightIcon style={{ width: '20px', height: '20px', color: '#64748b' }} />
-                                    )}
-                                  </button>
-
-                                  {/* Expanded subchapter content */}
-                                  {isSubExpanded && (
-                                    <div style={{ 
-                                      padding: '16px',
-                                      backgroundColor: '#f9fafb',
-                                      borderTop: '1px solid #cbd5e1',
-                                    }}>
-                                      {subchapter.intro && (
-                                        <div style={{
-                                          fontSize: '15px',
-                                          lineHeight: '1.6',
-                                          color: '#555',
-                                          marginBottom: '16px',
-                                          fontWeight: 400,
-                                        }}>
-                                          {subchapter.intro}
-                                        </div>
-                                      )}
-                                      
-                                      {subchapter.tekst && (
-                                        <div
-                                          style={{
-                                            fontSize: '15px',
-                                            lineHeight: '1.6',
-                                            color: '#333',
-                                          }}
-                                          className="content-html"
-                                          dangerouslySetInnerHTML={{ 
-                                            __html: DOMPurify.sanitize(subchapter.tekst) 
-                                          }}
-                                        />
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+                    chapter={chapter}
+                    chapterIndex={chapterIdx}
+                    isExpanded={expandedChapters.has(chapterIdx)}
+                    onToggle={() => toggleChapter(chapterIdx)}
+                    expandedSubchapters={expandedSubchapters}
+                    onToggleSubchapter={toggleSubchapter}
+                  />
+                ))}
               </div>
             )}
           </div>

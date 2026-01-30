@@ -70,7 +70,7 @@ export async function searchApi(
 }
 
 /**
- * Get content detail by ID
+ * Get content by ID
  */
 export async function getContentApi(
   contentId: string,
