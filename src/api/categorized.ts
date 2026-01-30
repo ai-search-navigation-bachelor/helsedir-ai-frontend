@@ -1,12 +1,21 @@
-export type CategoryResult = {
-  id: string
-  title: string
-  info_type: string
-  score: number
-  explanation?: string
-}
+/**
+ * Categorized Search API
+ * Handles categorized search requests with priority and other categories
+ */
 
-export type CategoryGroup = {
+import { API_ENDPOINTS } from './config'
+import { httpRequest, buildUrl } from './httpClient'
+import type { SearchResultBase, BaseRequestOptions } from './types'
+
+/**
+ * Category result item
+ */
+export interface CategoryResult extends SearchResultBase {}
+
+/**
+ * Category group
+ */
+export interface CategoryGroup {
   category: string
   display_name: string
   count: number
@@ -14,7 +23,10 @@ export type CategoryGroup = {
   results: CategoryResult[]
 }
 
-export type CategorizedSearchResponse = {
+/**
+ * Categorized search response
+ */
+export interface CategorizedSearchResponse {
   query: string
   total: number
   min_score: number
@@ -23,68 +35,42 @@ export type CategorizedSearchResponse = {
   other_categories: CategoryGroup[]
 }
 
-export type CategorizedSearchOptions = {
-  signal?: AbortSignal
-  role?: string
-}
+/**
+ * Categorized search options
+ */
+export interface CategorizedSearchOptions extends BaseRequestOptions {}
 
-function getCategorizedSearchEndpoint(): string {
-  const envEndpoint = import.meta.env.VITE_CATEGORIZED_SEARCH_ENDPOINT as string | undefined
-  if (envEndpoint && envEndpoint.trim().length > 0) {
-    return envEndpoint
+/**
+ * Empty response for invalid queries
+ */
+function emptyResponse(query: string): CategorizedSearchResponse {
+  return {
+    query,
+    total: 0,
+    min_score: 0,
+    search_id: '',
+    priority_categories: [],
+    other_categories: [],
   }
-  
-  // Default to production endpoint
-  return 'http://129.241.150.141:8000/search/categorized'
 }
 
+/**
+ * Search with categorized results
+ */
 export async function searchCategorizedApi(
   query: string,
   { signal, role }: CategorizedSearchOptions = {},
 ): Promise<CategorizedSearchResponse> {
   const trimmed = query.trim()
+  
   if (!trimmed) {
-    return {
-      query: trimmed,
-      total: 0,
-      min_score: 0,
-      search_id: '',
-      priority_categories: [],
-      other_categories: [],
-    }
+    return emptyResponse(trimmed)
   }
 
-  const endpoint = getCategorizedSearchEndpoint()
-  
-  const url = new URL(endpoint)
-  
-  url.searchParams.set('query', trimmed)
-  if (role) {
-    url.searchParams.set('role', role)
-  }
+  const url = buildUrl(API_ENDPOINTS.categorizedSearch, {
+    query: trimmed,
+    role,
+  })
 
-  try {
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
-      signal,
-    })
-
-    if (!response.ok) {
-      throw new Error(`Categorized search failed: ${response.status} ${response.statusText}`)
-    }
-
-    const contentType = response.headers.get('content-type') ?? ''
-    if (contentType.includes('application/json')) {
-      return response.json() as Promise<CategorizedSearchResponse>
-    }
-
-    throw new Error('Categorized search failed: expected JSON response')
-  } catch (error) {
-    console.error('Categorized search error:', error)
-    throw error
-  }
+  return httpRequest<CategorizedSearchResponse>(url, { signal })
 }
-

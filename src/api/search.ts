@@ -1,209 +1,118 @@
-export type SearchResultItem = {
-  id: string
-  title: string
-  info_type: string
-  score: number
-  explanation?: string
-}
+/**
+ * Search API
+ * Handles general search and content retrieval
+ */
 
-export type SearchApiResult = {
+import { API_ENDPOINTS } from './config'
+import { httpRequest, buildUrl } from './httpClient'
+import type { SearchResultBase, PaginatedResponse, BaseRequestOptions, ContentDetail, InfoResultItem } from './types'
+
+/**
+ * Search result item
+ */
+export interface SearchResultItem extends SearchResultBase {}
+
+/**
+ * Search API result
+ */
+export interface SearchApiResult extends PaginatedResponse {
   results: SearchResultItem[]
-  query: string
-  total: number
-  offset: number
-  limit: number
-  search_id: string
-  has_next: boolean
-  has_prev: boolean
 }
 
-export type ContentDetail = {
-  id: string
-  title: string
-  body: string
-  content_type: string
-  target_groups?: string[]
-  links?: Array<{
-    rel: string
-    type: string
-    tittel: string
-    href: string
-    strukturId?: string
-  }>
-}
-
-export type InfoResultItem = {
-  id: string
-  tittel: string
-  tekst?: string | null
-  intro?: string
-  infoId?: string
-  infoType?: string
-  url: string
-  forstPublisert?: string
-  sistFagligOppdatert?: string
-  children?: InfoResultItem[]
-}
-
-export type InfoSearchApiResult = {
-  results: InfoResultItem[]
-}
-
-export type SearchApiOptions = {
-  signal?: AbortSignal
+/**
+ * Search options
+ */
+export interface SearchApiOptions extends BaseRequestOptions {
   depth?: number
   offset?: number
   limit?: number
-  role?: string
   search_id?: string
 }
 
-function getSearchEndpoint(): string {
-  const envEndpoint = import.meta.env.VITE_SEARCH_ENDPOINT as string | undefined
-  if (envEndpoint && envEndpoint.trim().length > 0) {
-    return envEndpoint
+/**
+ * Empty search response for invalid queries
+ */
+function emptySearchResponse(): SearchApiResult {
+  return {
+    results: [],
+    query: '',
+    total: 0,
+    offset: 0,
+    limit: 10,
+    search_id: '',
+    has_next: false,
+    has_prev: false,
   }
-  
-  // Default to production endpoint
-  return 'http://129.241.150.141:8000/search'
 }
 
+/**
+ * General search
+ */
 export async function searchApi(
   query: string,
   { signal, offset = 0, limit = 10, role, search_id }: SearchApiOptions = {},
 ): Promise<SearchApiResult> {
   const trimmed = query.trim()
+  
   if (!trimmed) {
-    return {
-      results: [],
-      query: '',
-      total: 0,
-      offset: 0,
-      limit: 10,
-      search_id: '',
-      has_next: false,
-      has_prev: false,
-    }
+    return emptySearchResponse()
   }
 
-  const endpoint = getSearchEndpoint()
+  const url = buildUrl(API_ENDPOINTS.search, {
+    query: trimmed,
+    offset,
+    limit,
+    role,
+    search_id,
+  })
 
-  const url = new URL(endpoint)
-  
-  url.searchParams.set('query', trimmed)
-  url.searchParams.set('offset', String(offset))
-  url.searchParams.set('limit', String(limit))
-  if (role) url.searchParams.set('role', role)
-  if (search_id) url.searchParams.set('search_id', search_id)
-
-  try {
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
-      signal,
-    })
-
-    if (!response.ok) {
-      throw new Error(`Search failed: ${response.status} ${response.statusText}`)
-    }
-
-    const contentType = response.headers.get('content-type') ?? ''
-    if (contentType.includes('application/json')) {
-      return response.json() as Promise<SearchApiResult>
-    }
-
-    throw new Error('Search failed: expected JSON response')
-  } catch (error) {
-    console.error('Search error:', error)
-    throw error
-  }
+  return httpRequest<SearchApiResult>(url, { signal })
 }
 
-function getContentEndpoint(): string {
-  const envEndpoint = import.meta.env.VITE_CONTENT_ENDPOINT as string | undefined
-  if (envEndpoint && envEndpoint.trim().length > 0) {
-    return envEndpoint
-  }
-  
-  // Default to production endpoint
-  return 'http://129.241.150.141:8000/content'
-}
-
+/**
+ * Get content detail by ID
+ */
 export async function getContentApi(
   contentId: string,
   searchId?: string,
   { signal }: SearchApiOptions = {},
 ): Promise<ContentDetail> {
   const trimmed = contentId.trim()
-  if (!trimmed) throw new Error('Content ID is required')
-
-  const endpoint = getContentEndpoint()
   
-  const url = new URL(`${endpoint}/${encodeURIComponent(trimmed)}`)
-  
-  if (searchId) {
-    url.searchParams.set('search_id', searchId)
+  if (!trimmed) {
+    throw new Error('Content ID is required')
   }
 
-  try {
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-      },
-      signal,
-    })
+  const url = buildUrl(`${API_ENDPOINTS.content}/${encodeURIComponent(trimmed)}`, {
+    search_id: searchId,
+  })
 
-    if (!response.ok) {
-      throw new Error(`Content fetch failed: ${response.status} ${response.statusText}`)
-    }
-
-    const contentType = response.headers.get('content-type') ?? ''
-    if (contentType.includes('application/json')) {
-      return response.json() as Promise<ContentDetail>
-    }
-
-    throw new Error('Content fetch failed: expected JSON response')
-  } catch (error) {
-    console.error('Content fetch error:', error)
-    throw error
-  }
+  return httpRequest<ContentDetail>(url, { signal })
 }
 
-// Deprecated: Use getContentApi instead
+/**
+ * @deprecated Use getContentApi instead
+ * Get infobit by ID (legacy endpoint)
+ */
 export async function getInfobitApi(
   infobitId: string,
   { signal, depth = 2 }: SearchApiOptions = {},
 ): Promise<InfoResultItem> {
   const trimmed = infobitId.trim()
-  if (!trimmed) throw new Error('Infobit ID is required')
+  
+  if (!trimmed) {
+    throw new Error('Infobit ID is required')
+  }
 
   // Legacy endpoint for backwards compatibility
-  const endpoint = 'http://129.241.150.141:8000/helsedir/infobit'
-  
-  const url = new URL(`${endpoint}/${encodeURIComponent(trimmed)}`)
-  
-  url.searchParams.set('include_children', 'true')
-  url.searchParams.set('depth', String(depth))
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-    signal,
+  const legacyEndpoint = 'http://129.241.150.141:8000/helsedir/infobit'
+  const url = buildUrl(`${legacyEndpoint}/${encodeURIComponent(trimmed)}`, {
+    include_children: true,
+    depth,
   })
 
-  if (!response.ok) {
-    throw new Error(`Infobit fetch failed: ${response.status} ${response.statusText}`)
-  }
-
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    return response.json() as Promise<InfoResultItem>
-  }
-
-  throw new Error('Infobit fetch failed: expected JSON response')
+  return httpRequest<InfoResultItem>(url, { signal })
 }
+
+// Re-export shared types for convenience
+export type { ContentDetail, InfoResultItem } from './types'
