@@ -14,7 +14,7 @@ export function Home() {
     event.preventDefault()
     const trimmed = query.trim()
     if (!trimmed) return
-    navigate(`/search?searchquery=${encodeURIComponent(trimmed)}`)
+    navigate(`/search?query=${encodeURIComponent(trimmed)}`)
   }
 
   return (
