@@ -285,7 +285,7 @@ export function ContentDetail() {
                     onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
                     onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
                   >
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                    {category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                   </Link>
                 </li>
               </>

@@ -193,7 +193,7 @@ export function CategoryResults() {
               margin: 0,
               marginBottom: '4px'
             }}>
-              {(data.category || category).charAt(0).toUpperCase() + (data.category || category).slice(1)}
+              {(data.category || category).split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
             </h1>
             <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
               {data.total} treff
