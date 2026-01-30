@@ -12,6 +12,7 @@ import { ChevronRightIcon, MagnifyingGlassIcon } from '@navikt/aksel-icons'
 import { useCategorySearchQuery } from '../hooks/queries/useCategorySearchQuery'
 import type { CategorySearchResult } from '../api/categorySearch'
 import { CategoryResultItem } from '../components/search/CategoryResultItem'
+import { useSearchStore } from '../stores/searchStore'
 
 function ResultItem({ result }: { result: CategorySearchResult }) {
   return (
@@ -61,6 +62,9 @@ export function CategoryResults() {
   const category = searchParams.get('category') || ''
   const searchId = searchParams.get('search_id') || ''
   
+  const storedSearchId = useSearchStore((state) => state.searchId)
+  const effectiveSearchId = searchId || storedSearchId || ''
+  
   const [inputValue, setInputValue] = useState(searchQuery)
   const [itemsToShow, setItemsToShow] = useState(20)
 
@@ -70,8 +74,8 @@ export function CategoryResults() {
   }, [searchQuery])
 
   const { data, isLoading, error } = useCategorySearchQuery(searchQuery, category, {
-    search_id: searchId,
-    enabled: !!searchQuery.trim() && !!category && !!searchId,
+    search_id: effectiveSearchId,
+    enabled: !!searchQuery.trim() && !!category && !!effectiveSearchId,
   })
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {

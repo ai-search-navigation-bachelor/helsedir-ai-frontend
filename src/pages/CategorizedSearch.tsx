@@ -10,6 +10,7 @@ import {
 
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery';
 import { TemaSideCard, RetningslinjeCard, RegularCategoryCard } from '../components/search';
+import { useSearchStore } from '../stores/searchStore';
 
 // Special category handling
 const TEMASIDE_CATEGORY = 'temaside';
@@ -36,6 +37,8 @@ export function CategorizedSearch() {
   const navigate = useNavigate();
   const searchQuery = searchParams.get('query') || '';
   const [inputValue, setInputValue] = useState(searchQuery);
+  
+  const setSearchData = useSearchStore((state) => state.setSearchData);
 
   // Sync input with URL parameter when it changes
   useEffect(() => {
@@ -45,6 +48,13 @@ export function CategorizedSearch() {
   const { data, isLoading, error } = useCategorizedSearchQuery(searchQuery, {
     enabled: !!searchQuery.trim(),
   });
+
+  // Store search_id in Zustand when data is received
+  useEffect(() => {
+    if (data?.search_id && searchQuery) {
+      setSearchData(data.search_id, searchQuery);
+    }
+  }, [data?.search_id, searchQuery, setSearchData]);
 
   // Create mock Temaside if not in database
   const temasideCategory =

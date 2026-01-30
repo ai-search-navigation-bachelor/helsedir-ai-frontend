@@ -7,6 +7,7 @@ import DOMPurify from 'dompurify'
 import { Button, Alert, Paragraph, Spinner, Heading } from '@digdir/designsystemet-react'
 import { getContentApi } from '../api/search'
 import type { ContentDetail as ContentDetailType } from '../api/types'
+import { useSearchStore } from '../stores/searchStore'
 
 type TableOfContentsItem = {
   id: string
@@ -212,12 +213,18 @@ export function ContentDetail() {
   const searchId = searchParams.get('search_id')
   const searchQuery = searchParams.get('query')
   const category = searchParams.get('category')
+  
+  const storedSearchId = useSearchStore((state) => state.searchId)
+  const storedSearchQuery = useSearchStore((state) => state.searchQuery)
+  
+  const effectiveSearchId = searchId || storedSearchId || undefined
+  const effectiveSearchQuery = searchQuery || storedSearchQuery || ''
 
   const { data: content, isLoading, error } = useQuery({
-    queryKey: ['content', id, searchId],
+    queryKey: ['content', id, effectiveSearchId],
     queryFn: async ({ signal }) => {
       if (!id) throw new Error('ID mangler')
-      return getContentApi(id, searchId || undefined, { signal })
+      return getContentApi(id, effectiveSearchId, { signal })
     },
     enabled: !!id,
     staleTime: 10 * 60 * 1000,
@@ -226,7 +233,7 @@ export function ContentDetail() {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
       {/* Breadcrumbs */}
-      {searchQuery && (
+      {effectiveSearchQuery && (
         <nav style={{ marginBottom: '24px' }}>
           <ol style={{ 
             display: 'flex', 
@@ -255,7 +262,7 @@ export function ContentDetail() {
             <li>/</li>
             <li>
               <Link 
-                to={`/search?query=${encodeURIComponent(searchQuery)}`}
+                to={`/search?query=${encodeURIComponent(effectiveSearchQuery)}`}
                 style={{ 
                   color: '#2563eb', 
                   textDecoration: 'none',
@@ -268,7 +275,7 @@ export function ContentDetail() {
                 onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
               >
                 <MagnifyingGlassIcon style={{ width: '16px', height: '16px' }} />
-                {searchQuery.toUpperCase()}
+                {effectiveSearchQuery.toUpperCase()}
               </Link>
             </li>
             {category && (
@@ -276,7 +283,7 @@ export function ContentDetail() {
                 <li>/</li>
                 <li>
                   <Link 
-                    to={`/category?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category)}&search_id=${searchId || ''}`}
+                    to={`/category?query=${encodeURIComponent(effectiveSearchQuery)}&category=${encodeURIComponent(category)}&search_id=${effectiveSearchId || ''}`}
                     style={{ 
                       color: '#2563eb', 
                       textDecoration: 'none',
@@ -298,7 +305,7 @@ export function ContentDetail() {
       )}
 
       {/* Back button if no breadcrumbs */}
-      {!searchQuery && (
+      {!effectiveSearchQuery && (
         <Button
           variant='tertiary'
           onClick={() => navigate(-1)}
