@@ -61,9 +61,9 @@ export function ExpandableCategoryCard({
       style={{
         overflow: 'hidden',
         borderRadius: '16px',
-        border: '1px solid #e2e8f0',
-        backgroundColor: 'white',
-        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+        border: '2px solid #cbd5e1',
+        backgroundColor: '#f0f9ff',
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
       }}
     >
       {/* Header */}
@@ -78,8 +78,8 @@ export function ExpandableCategoryCard({
           width: '100%',
           textAlign: 'left',
           padding: '20px 24px',
-          backgroundColor: isHoveringHeader ? '#e0f2fe' : '#f0f9ff',
-          borderBottom: '1px solid #e0f2fe',
+          backgroundColor: isHoveringHeader ? '#dbeafe' : '#e0f2fe',
+          borderBottom: '2px solid #cbd5e1',
           border: 'none',
           cursor: 'pointer',
           transition: 'background-color 0.2s',
@@ -129,77 +129,83 @@ export function ExpandableCategoryCard({
         </div>
       </button>
 
-      {/* List */}
-      {visibleResults.length > 0 && (
+      {/* List - Show when expanded or previewCount > 0 */}
+      {(category.results && category.results.length > 0) && (
         <div style={{ padding: '16px' }}>
-          <div
-            style={{
-              borderRadius: '12px',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              padding: '12px',
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {visibleResults.map((result) => {
-                const [isHovering, setIsHovering] = useState(false);
-                return (
+          {visibleResults.length > 0 && (
+            <div
+              style={{
+                borderRadius: '12px',
+                backgroundColor: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                padding: '12px',
+                marginBottom: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {visibleResults.map((result) => (
                   <a
                     key={result.id}
                     href={`/info/${result.id}?search_id=${searchId ?? ''}`}
-                    onMouseEnter={() => setIsHovering(true)}
-                    onMouseLeave={() => setIsHovering(false)}
                     style={{
                       display: 'block',
                       borderRadius: '12px',
-                      border: `1px solid ${isHovering ? '#cbd5e1' : '#e2e8f0'}`,
-                      backgroundColor: isHovering ? '#f8fafc' : 'white',
+                      border: '1px solid #e2e8f0',
+                      backgroundColor: 'white',
                       padding: '12px 16px',
                       textDecoration: 'none',
                       transition: 'all 0.2s',
                     }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f8fafc';
+                      e.currentTarget.style.borderColor = '#cbd5e1';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'white';
+                      e.currentTarget.style.borderColor = '#e2e8f0';
+                    }}
                   >
                     <CategoryResultItem result={result} searchId={searchId} variant={variant} />
                   </a>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Footer controls */}
-          <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              onClick={() => setIsExpanded((v) => !v)}
-              onMouseEnter={() => setIsHoveringButton(true)}
-              onMouseLeave={() => setIsHoveringButton(false)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: isHoveringButton ? '#1e40af' : '#1d4ed8',
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px 8px',
-                borderRadius: '8px',
-                transition: 'color 0.2s',
-              }}
-              aria-expanded={isExpanded}
-            >
+          {/* Footer controls - Always show if there are results */}
+          <button
+            type="button"
+            onClick={() => setIsExpanded((v) => !v)}
+            onMouseEnter={() => setIsHoveringButton(true)}
+            onMouseLeave={() => setIsHoveringButton(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              fontSize: '14px',
+              fontWeight: '500',
+              color: isHoveringButton ? '#1e40af' : '#1d4ed8',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '12px',
+              borderRadius: '8px',
+              transition: 'color 0.2s',
+              width: '100%',
+            }}
+            aria-expanded={isExpanded}
+          >
               {isExpanded ? UI.showLess : UI.showMore}
-              <ChevronDownIcon
-                style={{
-                  width: '16px',
-                  height: '16px',
-                  transition: 'transform 0.2s',
-                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                }}
-              />
-            </button>
-          </div>
+            <ChevronDownIcon
+              style={{
+                width: '16px',
+                height: '16px',
+                transition: 'transform 0.2s',
+                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
+          </button>
 
           {/* Optional: "Vis flere (n til)" button */}
           {isExpanded && category.count > (category.results?.length ?? 0) && (

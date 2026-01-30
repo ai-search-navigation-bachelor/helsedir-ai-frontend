@@ -10,7 +10,7 @@ export function TemaSideCard(props: { category: CategoryGroup; searchQuery: stri
       variant="temaside"
       badgeSuffix="artikler"
       subtitle="Temaside"
-      previewCount={3}
+      previewCount={0}
     />
   );
 }

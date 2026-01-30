@@ -14,6 +14,18 @@ import { TemaSideCard, RetningslinjeCard, RegularCategoryCard } from '../compone
 // Special category handling
 const TEMASIDE_CATEGORY = 'temaside';
 const RETNINGSLINJE_CATEGORY = 'retningslinje';
+const ANBEFALINGER_CATEGORY = 'anbefaling';
+const REGELVERK_CATEGORY = 'regelverk-lov-eller-forskrift';
+const RAD_CATEGORY = 'veileder-lov-forskrift';
+
+// The 5 categories we want to display in order
+const CATEGORY_ORDER = [
+  TEMASIDE_CATEGORY,
+  RETNINGSLINJE_CATEGORY,
+  ANBEFALINGER_CATEGORY,
+  REGELVERK_CATEGORY,
+  RAD_CATEGORY,
+];
 
 /**
  * Categorized Search Page
@@ -34,19 +46,43 @@ export function CategorizedSearch() {
     enabled: !!searchQuery.trim(),
   });
 
-  // Separate categories by type
+  // Create mock Temaside if not in database
   const temasideCategory =
     data?.priority_categories.find((cat) => cat.category === TEMASIDE_CATEGORY) ||
-    data?.other_categories.find((cat) => cat.category === TEMASIDE_CATEGORY);
+    data?.other_categories.find((cat) => cat.category === TEMASIDE_CATEGORY) ||
+    (data ? {
+      category: TEMASIDE_CATEGORY,
+      display_name: 'Temaside',
+      count: 0,
+      results: [],
+    } : undefined);
 
   const retningslinjeCategory =
     data?.priority_categories.find((cat) => cat.category === RETNINGSLINJE_CATEGORY) ||
     data?.other_categories.find((cat) => cat.category === RETNINGSLINJE_CATEGORY);
 
-  // Get other categories (excluding temaside and retningslinje)
-  const otherCategories = [...(data?.priority_categories || []), ...(data?.other_categories || [])].filter(
-    (cat) => cat.category !== TEMASIDE_CATEGORY && cat.category !== RETNINGSLINJE_CATEGORY && cat.results.length > 0
-  );
+  // Get exactly the 3 other categories in order: Anbefalinger, Regelverk, Råd
+  const allCategories = [...(data?.priority_categories || []), ...(data?.other_categories || [])];
+  
+  // Debug: Log available categories
+  if (data) {
+    console.log('Available categories:', allCategories.map(cat => `"${cat.category}"`));
+    console.log('Looking for:', { ANBEFALINGER_CATEGORY, REGELVERK_CATEGORY, RAD_CATEGORY });
+  }
+  
+  const anbefalingerCategory = allCategories.find((cat) => cat.category === ANBEFALINGER_CATEGORY);
+  const regelverkCategory = allCategories.find((cat) => cat.category === REGELVERK_CATEGORY);
+  const radCategory = allCategories.find((cat) => cat.category === RAD_CATEGORY);
+
+  if (data) {
+    console.log('Found categories:', {
+      anbefalinger: anbefalingerCategory?.category || 'NOT FOUND',
+      regelverk: regelverkCategory?.category || 'NOT FOUND',
+      rad: radCategory?.category || 'NOT FOUND',
+    });
+  }
+
+  const bottomThreeCategories = [anbefalingerCategory, regelverkCategory, radCategory].filter(Boolean);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -116,19 +152,19 @@ export function CategorizedSearch() {
               <p className="text-slate-600">Ingen resultater funnet for "{searchQuery}"</p>
             </div>
           ) : (
-            <div className="space-y-5">
-              {/* Temaside - Box 1 */}
-              {temasideCategory && temasideCategory.results.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* Box 1: Temaside - Always show (mock if not in DB) */}
+              {temasideCategory && (
                 <TemaSideCard category={temasideCategory} searchQuery={searchQuery} searchId={data.search_id} />
               )}
 
-              {/* Retningslinje - Box 2 */}
-              {retningslinjeCategory && retningslinjeCategory.results.length > 0 && (
+              {/* Box 2: Retningslinje */}
+              {retningslinjeCategory && (
                 <RetningslinjeCard category={retningslinjeCategory} searchQuery={searchQuery} searchId={data.search_id} />
               )}
 
-              {/* Other categories - Boxes 3, 4, 5 */}
-              {otherCategories.map((category) => (
+              {/* Boxes 3-5: Anbefalinger, Regelverk, Råd */}
+              {bottomThreeCategories.map((category) => (
                 <RegularCategoryCard key={category.category} category={category} searchQuery={searchQuery} searchId={data.search_id} />
               ))}
             </div>

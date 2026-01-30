@@ -10,7 +10,7 @@ export function RetningslinjeCard(props: { category: CategoryGroup; searchQuery:
       variant="retningslinje"
       badgeSuffix="artikler"
       subtitle="Nasjonal faglig retningslinje"
-      previewCount={3}
+      previewCount={0}
     />
   );
 }
