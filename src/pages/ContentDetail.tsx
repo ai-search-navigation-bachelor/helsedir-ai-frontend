@@ -113,27 +113,17 @@ function TableOfContents({ items }: { items: TableOfContentsItem[] }) {
 }
 
 function ContentDisplay({ content }: { content: ContentDetailType }) {
-  const [expandedChildren, setExpandedChildren] = useState<Set<number>>(new Set())
+  const [activeChapter, setActiveChapter] = useState<string>('')
   
-  const tocItems = useMemo(() => {
-    return content.body ? extractH2Headings(content.body) : []
-  }, [content.body])
-
-  const processedHtml = useMemo(() => {
-    if (!content.body) return ''
-    const htmlWithIds = addIdsToH2Elements(content.body)
-    return DOMPurify.sanitize(htmlWithIds)
-  }, [content.body])
-
   // Get children (barn) links
   const childrenLinks = content.links?.filter(link => link.rel === 'barn') || []
 
-  // Fetch child content for expanded items
-  const { data: childrenData } = useQuery<Record<number, HelselinkContent>>({
-    queryKey: ['children-content', content.id, Array.from(expandedChildren)],
+  // Fetch ALL child content immediately
+  const { data: childrenData, isLoading: childrenLoading } = useQuery<Record<number, HelselinkContent>>({
+    queryKey: ['children-content', content.id],
     queryFn: async ({ signal }) => {
       const results: Record<number, HelselinkContent> = {}
-      for (const idx of expandedChildren) {
+      for (let idx = 0; idx < childrenLinks.length; idx++) {
         const link = childrenLinks[idx]
         if (link?.href) {
           try {
@@ -145,20 +135,34 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
       }
       return results
     },
-    enabled: expandedChildren.size > 0,
+    enabled: childrenLinks.length > 0,
     staleTime: 10 * 60 * 1000,
   })
 
-  const toggleChild = (idx: number) => {
-    setExpandedChildren(prev => {
-      const next = new Set(prev)
-      if (next.has(idx)) {
-        next.delete(idx)
-      } else {
-        next.add(idx)
-      }
-      return next
+  // Track active chapter with intersection observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveChapter(entry.target.id)
+          }
+        })
+      },
+      { rootMargin: '-20% 0px -35% 0px' }
+    )
+
+    childrenLinks.forEach((_, idx) => {
+      const element = document.getElementById(`chapter-${idx}`)
+      if (element) observer.observe(element)
     })
+
+    return () => observer.disconnect()
+  }, [childrenLinks.length])
+
+  const scrollToChapter = (idx: number) => {
+    const element = document.getElementById(`chapter-${idx}`)
+    element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   // Capitalize content type for display
@@ -186,139 +190,167 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
         </Heading>
       </div>
 
-      {/* Two-column layout */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: tocItems.length > 0 ? '250px 1fr' : '1fr',
-          gap: '40px',
-          alignItems: 'start',
-        }}
-      >
-        {/* Left column - Table of Contents */}
-        {tocItems.length > 0 && <TableOfContents items={tocItems} />}
+      {/* Two-column layout with chapters TOC */}
+      {childrenLinks.length > 0 ? (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '280px 1fr',
+            gap: '40px',
+            alignItems: 'start',
+          }}
+        >
+          {/* Left column - Chapters Table of Contents */}
+          <nav
+            style={{
+              position: 'sticky',
+              top: '20px',
+              padding: '16px',
+              backgroundColor: '#f9f9f9',
+              borderRadius: '8px',
+              border: '1px solid #e0e0e0',
+            }}
+          >
+            <Heading level={3} data-size='xs' style={{ marginBottom: '12px' }}>
+              Kapitler
+            </Heading>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {childrenLinks.map((link, idx) => (
+                <li key={idx} style={{ marginBottom: '8px' }}>
+                  <button
+                    onClick={() => scrollToChapter(idx)}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 12px',
+                      textAlign: 'left',
+                      textDecoration: 'none',
+                      color: activeChapter === `chapter-${idx}` ? '#0051be' : '#333',
+                      backgroundColor: activeChapter === `chapter-${idx}` ? '#d4e7f7' : 'transparent',
+                      borderRadius: '4px',
+                      borderLeft: activeChapter === `chapter-${idx}` ? '3px solid #0051be' : '3px solid transparent',
+                      fontSize: '14px',
+                      fontWeight: activeChapter === `chapter-${idx}` ? 600 : 400,
+                      transition: 'all 0.2s ease',
+                      boxShadow: activeChapter === `chapter-${idx}` ? '0 0 0 3px rgba(0, 81, 190, 0.1)' : 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <span style={{ fontWeight: '700', color: '#64748b', minWidth: '20px' }}>
+                        {idx + 1}.
+                      </span>
+                      <span>{link.tittel || 'Uten tittel'}</span>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-        {/* Right column - Main content */}
-        <div>
-          {processedHtml && (
-            <div
-              style={{
-                fontSize: '16px',
-                lineHeight: '1.7',
-                color: '#333',
-              }}
-              className="content-html"
-              dangerouslySetInnerHTML={{ __html: processedHtml }}
-            />
-          )}
+          {/* Right column - Chapters content */}
+          <div>
+            {/* Main body content if exists */}
+            {content.body && (
+              <div
+                style={{
+                  fontSize: '16px',
+                  lineHeight: '1.7',
+                  color: '#333',
+                  marginBottom: '48px',
+                }}
+                className="content-html"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.body) }}
+              />
+            )}
 
-          {/* Children sections */}
-          {childrenLinks.length > 0 && (
-            <div style={{ marginTop: '48px' }}>
-              <Heading level={2} data-size='md' style={{ marginBottom: '24px' }}>
-                Innhold
-              </Heading>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Loading state */}
+            {childrenLoading && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+                <Spinner aria-label="Laster kapitler..." />
+              </div>
+            )}
+
+            {/* Chapters */}
+            {!childrenLoading && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
                 {childrenLinks.map((link, idx) => {
-                  const isExpanded = expandedChildren.has(idx)
                   const childContent = childrenData?.[idx]
 
                   return (
                     <div 
                       key={idx}
+                      id={`chapter-${idx}`}
                       style={{
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '12px',
-                        overflow: 'hidden',
+                        scrollMarginTop: '20px',
                       }}
                     >
-                      {/* Child header - clickable */}
-                      <button
-                        onClick={() => toggleChild(idx)}
-                        style={{
-                          width: '100%',
-                          padding: '20px',
-                          backgroundColor: isExpanded ? '#f0f9ff' : 'white',
-                          border: 'none',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          transition: 'background-color 0.2s',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isExpanded) e.currentTarget.style.backgroundColor = '#f8fafc'
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isExpanded) e.currentTarget.style.backgroundColor = 'white'
-                        }}
-                      >
-                        <div>
-                          <Heading level={3} data-size='sm' style={{ margin: 0, marginBottom: '4px' }}>
+                      {/* Chapter header */}
+                      <div style={{
+                        marginBottom: '24px',
+                        paddingBottom: '16px',
+                        borderBottom: '2px solid #e2e8f0',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '8px' }}>
+                          <span style={{ 
+                            fontSize: '20px', 
+                            fontWeight: '700',
+                            color: '#2563eb'
+                          }}>
+                            {idx + 1}
+                          </span>
+                          <Heading level={2} data-size='lg' style={{ margin: 0 }}>
                             {link.tittel || 'Uten tittel'}
                           </Heading>
-                          <p style={{ 
-                            fontSize: '14px', 
-                            color: '#64748b', 
-                            margin: 0,
-                            textTransform: 'capitalize'
-                          }}>
-                            {link.type || 'kapittel'}
-                          </p>
                         </div>
-                        <span style={{ 
-                          fontSize: '24px', 
-                          color: '#64748b',
-                          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                          transition: 'transform 0.2s',
+                        <p style={{ 
+                          fontSize: '14px', 
+                          color: '#64748b', 
+                          margin: 0,
+                          marginLeft: '32px',
+                          textTransform: 'capitalize'
                         }}>
-                          ▼
-                        </span>
-                      </button>
+                          {link.type || 'kapittel'}
+                        </p>
+                      </div>
 
-                      {/* Child content - expandable */}
-                      {isExpanded && (
-                        <div style={{ 
-                          padding: '24px',
-                          backgroundColor: '#fafafa',
-                          borderTop: '1px solid #e2e8f0'
-                        }}>
-                          {!childContent && (
-                            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
-                              <Spinner aria-label="Laster innhold..." />
-                            </div>
+                      {/* Chapter content */}
+                      {!childContent && (
+                        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                          Kunne ikke laste kapittel
+                        </div>
+                      )}
+                      
+                      {childContent && (
+                        <div>
+                          {childContent.intro && (
+                            <Paragraph 
+                              data-size='lg'
+                              style={{
+                                color: '#555',
+                                marginBottom: '24px',
+                                fontWeight: 500,
+                                fontSize: '18px',
+                                lineHeight: '1.6',
+                              }}
+                            >
+                              {childContent.intro}
+                            </Paragraph>
                           )}
                           
-                          {childContent && (
-                            <div>
-                              {childContent.intro && (
-                                <Paragraph 
-                                  data-size='md'
-                                  style={{
-                                    color: '#555',
-                                    marginBottom: '20px',
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  {childContent.intro}
-                                </Paragraph>
-                              )}
-                              
-                              {childContent.tekst && (
-                                <div
-                                  style={{
-                                    fontSize: '16px',
-                                    lineHeight: '1.7',
-                                    color: '#333',
-                                  }}
-                                  className="content-html"
-                                  dangerouslySetInnerHTML={{ 
-                                    __html: DOMPurify.sanitize(childContent.tekst) 
-                                  }}
-                                />
-                              )}
-                            </div>
+                          {childContent.tekst && (
+                            <div
+                              style={{
+                                fontSize: '16px',
+                                lineHeight: '1.7',
+                                color: '#333',
+                              }}
+                              className="content-html"
+                              dangerouslySetInnerHTML={{ 
+                                __html: DOMPurify.sanitize(childContent.tekst) 
+                              }}
+                            />
                           )}
                         </div>
                       )}
@@ -326,10 +358,25 @@ function ContentDisplay({ content }: { content: ContentDetailType }) {
                   )
                 })}
               </div>
-            </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        // No chapters - show just the body content
+        <div>
+          {content.body && (
+            <div
+              style={{
+                fontSize: '16px',
+                lineHeight: '1.7',
+                color: '#333',
+              }}
+              className="content-html"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.body) }}
+            />
           )}
         </div>
-      </div>
+      )}
     </div>
   )
 }
