@@ -19,31 +19,31 @@ export function CategoryResultItem({ result, searchId, variant }: CategoryResult
     staleTime: 10 * 60 * 1000,
   });
 
-  const rootLink = content?.links?.find((link) => link.rel === 'root');
+  const rootLinkTitle = content?.links?.find((link) => link.rel === 'root')?.tittel;
 
   if (variant === 'temaside') {
     return (
-      <div className="flex items-center justify-between gap-4">
-        <span className="font-semibold text-blue-600">{result.title}</span>
-        <ChevronRightIcon className="h-5 w-5 text-slate-500 group-hover:text-blue-600 transition-colors" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+        <span style={{ fontWeight: '600', color: '#0f172a' }}>{result.title}</span>
+        <ChevronRightIcon style={{ width: '20px', height: '20px', color: '#64748b', flexShrink: 0 }} />
       </div>
     );
   }
 
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <h4 style={{ fontWeight: '600', color: '#0f172a', margin: 0 }}>
           {result.title}
         </h4>
 
-        <p className="text-sm text-slate-600 mt-1">
-          <span className="font-semibold text-slate-900">Hentet fra:</span>{' '}
-          {rootLink?.tittel ?? 'Dette er et utdrag fra innholdet.'}
+        <p style={{ fontSize: '14px', color: '#64748b', marginTop: '4px', margin: '4px 0 0 0' }}>
+          <span style={{ fontWeight: '500', color: '#334155' }}>Hentet fra:</span>{' '}
+          {rootLinkTitle ?? 'Dette er et utdrag fra innholdet.'}
         </p>
       </div>
 
-      <ChevronRightIcon className="h-5 w-5 text-slate-500 group-hover:text-blue-600 transition-colors mt-0.5" />
+      <ChevronRightIcon style={{ width: '20px', height: '20px', color: '#64748b', marginTop: '2px', flexShrink: 0 }} />
     </div>
   );
 }

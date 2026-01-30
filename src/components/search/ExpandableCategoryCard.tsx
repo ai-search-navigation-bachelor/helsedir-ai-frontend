@@ -7,6 +7,13 @@ import { CategoryResultItem } from './CategoryResultItem';
 
 type Variant = 'temaside' | 'retningslinje';
 
+const UI = {
+  showMore: 'Vis flere',
+  showLess: 'Vis færre',
+  articles: 'artikler',
+  hits: 'treff',
+};
+
 export interface ExpandableCategoryCardProps {
   category: CategoryGroup;
   searchQuery: string;
@@ -22,12 +29,14 @@ export function ExpandableCategoryCard({
   searchQuery,
   searchId,
   variant,
-  badgeSuffix = 'artikler',
-  previewCount = 0,
+  badgeSuffix = UI.articles,
+  previewCount = 3,
   subtitle,
 }: ExpandableCategoryCardProps) {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isHoveringHeader, setIsHoveringHeader] = useState(false);
+  const [isHoveringButton, setIsHoveringButton] = useState(false);
 
   const navigateToCategory = () => {
     if (!searchId) return;
@@ -41,77 +50,160 @@ export function ExpandableCategoryCard({
   const visibleResults = useMemo(() => {
     const base = category.results ?? [];
     if (isExpanded) return base;
-    if (previewCount <= 0) return [];
-    return base.slice(0, previewCount);
+    return base.slice(0, Math.max(0, previewCount));
   }, [category.results, isExpanded, previewCount]);
+
+  const title = category.display_name;
+  const sub = subtitle ?? category.display_name;
 
   return (
     <div
-      className="p-0 overflow-hidden rounded-2xl transition-shadow border-2 border-slate-300/80 ring-1 ring-slate-200/60 bg-white"
-      style={{ boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)' }}
+      style={{
+        overflow: 'hidden',
+        borderRadius: '16px',
+        border: '1px solid #e2e8f0',
+        backgroundColor: 'white',
+        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+      }}
     >
       {/* Header */}
       <button
         type="button"
         onClick={navigateToCategory}
-        className="relative block w-full text-left px-8 py-7 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 bg-sky-50 hover:bg-sky-100/70 border-b-2 border-sky-200 before:absolute before:inset-y-0 before:left-0 before:w-1.5 before:bg-blue-600"
+        onMouseEnter={() => setIsHoveringHeader(true)}
+        onMouseLeave={() => setIsHoveringHeader(false)}
+        style={{
+          position: 'relative',
+          display: 'block',
+          width: '100%',
+          textAlign: 'left',
+          padding: '20px 24px',
+          backgroundColor: isHoveringHeader ? '#e0f2fe' : '#f0f9ff',
+          borderBottom: '1px solid #e0f2fe',
+          border: 'none',
+          cursor: 'pointer',
+          transition: 'background-color 0.2s',
+        }}
       >
-        {/* Count badge */}
-        <div className="absolute left-6 top-4">
-          <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-white/80 text-slate-700 border border-sky-200/70">
+        {/* Left marker */}
+        <span
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: '4px',
+            backgroundColor: '#2563eb',
+          }}
+        />
+
+        {/* Badge */}
+        <div style={{ position: 'absolute', left: '20px', top: '16px' }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: '9999px',
+              padding: '4px 12px',
+              fontSize: '12px',
+              fontWeight: '500',
+              backgroundColor: 'white',
+              color: '#334155',
+              border: '1px solid #e2e8f0',
+            }}
+          >
             {category.count} {badgeSuffix}
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-6">
-          <div className="flex-1 text-center">
-            <h3 className="text-2xl mb-1 text-slate-900">{searchQuery}</h3>
-            <p className="text-base font-semibold text-slate-800">
-              {subtitle ?? category.display_name}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#0f172a', lineHeight: '1.2', margin: 0 }}>
+              {title}
+            </h3>
+            <p style={{ fontSize: '14px', fontWeight: '600', color: '#334155', marginTop: '4px' }}>
+              {sub}
             </p>
           </div>
-          <ChevronRightIcon className="h-6 w-6 text-slate-600" />
+          <ChevronRightIcon style={{ width: '20px', height: '20px', color: '#475569', flexShrink: 0 }} />
         </div>
       </button>
 
-      {/* Expand/Collapse button */}
-      <div className="bg-white">
-        <button
-          type="button"
-          onClick={() => setIsExpanded((v) => !v)}
-          className="w-full px-8 py-4 flex items-center justify-between text-sm border-t border-slate-200/70 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
-          aria-expanded={isExpanded}
-        >
-          <span className="ml-auto inline-flex items-center gap-2 text-blue-600 font-medium">
-            {isExpanded ? 'Vis færre' : 'Vis flere'}
-            <ChevronDownIcon className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-          </span>
-        </button>
-      </div>
-
-      {/* Expandable content */}
+      {/* List */}
       {visibleResults.length > 0 && (
-        <div className="relative p-6 bg-white border-t border-slate-200/70">
-          <div className="absolute left-0 top-0 h-full w-1.5 bg-blue-600" />
-          <div className="space-y-3 pl-3">
-            {visibleResults.map((result) => (
-              <a
-                key={result.id}
-                href={`/info/${result.id}?search_id=${searchId ?? ''}`}
-                className="group block w-full rounded-xl border px-5 py-4 transition border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
-              >
-                <CategoryResultItem
-                  result={result}
-                  searchId={searchId}
-                  variant={variant}
-                />
-              </a>
-            ))}
+        <div style={{ padding: '16px' }}>
+          <div
+            style={{
+              borderRadius: '12px',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              padding: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {visibleResults.map((result) => {
+                const [isHovering, setIsHovering] = useState(false);
+                return (
+                  <a
+                    key={result.id}
+                    href={`/info/${result.id}?search_id=${searchId ?? ''}`}
+                    onMouseEnter={() => setIsHovering(true)}
+                    onMouseLeave={() => setIsHovering(false)}
+                    style={{
+                      display: 'block',
+                      borderRadius: '12px',
+                      border: `1px solid ${isHovering ? '#cbd5e1' : '#e2e8f0'}`,
+                      backgroundColor: isHovering ? '#f8fafc' : 'white',
+                      padding: '12px 16px',
+                      textDecoration: 'none',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <CategoryResultItem result={result} searchId={searchId} variant={variant} />
+                  </a>
+                );
+              })}
+            </div>
           </div>
 
-          {/* "Vis flere (n til)" button */}
+          {/* Footer controls */}
+          <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={() => setIsExpanded((v) => !v)}
+              onMouseEnter={() => setIsHoveringButton(true)}
+              onMouseLeave={() => setIsHoveringButton(false)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: isHoveringButton ? '#1e40af' : '#1d4ed8',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: '8px',
+                transition: 'color 0.2s',
+              }}
+              aria-expanded={isExpanded}
+            >
+              {isExpanded ? UI.showLess : UI.showMore}
+              <ChevronDownIcon
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  transition: 'transform 0.2s',
+                  transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                }}
+              />
+            </button>
+          </div>
+
+          {/* Optional: "Vis flere (n til)" button */}
           {isExpanded && category.count > (category.results?.length ?? 0) && (
-            <div className="mt-5 text-center">
+            <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
               <Button variant="tertiary" data-size="sm" onClick={navigateToCategory}>
                 Vis flere ({category.count - (category.results?.length ?? 0)} til)
               </Button>

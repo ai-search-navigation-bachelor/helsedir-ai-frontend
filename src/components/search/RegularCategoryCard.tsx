@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRightIcon } from '@navikt/aksel-icons';
 import type { CategoryGroup } from '../../api/categorized';
@@ -11,6 +12,7 @@ export interface RegularCategoryCardProps {
 
 export function RegularCategoryCard({ category, searchQuery, searchId }: RegularCategoryCardProps) {
   const navigate = useNavigate();
+  const [isHoveringHeader, setIsHoveringHeader] = useState(false);
 
   const navigateToCategory = () => {
     if (!searchId) return;
@@ -25,40 +27,90 @@ export function RegularCategoryCard({ category, searchQuery, searchId }: Regular
 
   return (
     <div
-      className="p-0 overflow-hidden rounded-2xl transition-shadow border-2 border-slate-400/80 ring-1 ring-slate-300/50 bg-white"
-      style={{ boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)' }}
+      style={{
+        overflow: 'hidden',
+        borderRadius: '16px',
+        border: '1px solid #e2e8f0',
+        backgroundColor: 'white',
+        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+      }}
     >
       <button
         type="button"
         onClick={navigateToCategory}
-        className="relative block w-full text-left px-8 py-7 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 bg-white hover:bg-slate-50 border-b-2 border-slate-200"
+        onMouseEnter={() => setIsHoveringHeader(true)}
+        onMouseLeave={() => setIsHoveringHeader(false)}
+        style={{
+          position: 'relative',
+          display: 'block',
+          width: '100%',
+          textAlign: 'left',
+          padding: '20px 24px',
+          backgroundColor: isHoveringHeader ? '#f8fafc' : 'white',
+          transition: 'background-color 0.2s',
+          borderBottom: '1px solid #e2e8f0',
+          border: 'none',
+          cursor: 'pointer',
+        }}
       >
-        <div className="absolute left-6 top-4">
-          <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-slate-200/80 text-slate-700">
+        <div style={{ position: 'absolute', left: '20px', top: '16px' }}>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: '9999px',
+              padding: '4px 12px',
+              fontSize: '12px',
+              fontWeight: '500',
+              backgroundColor: '#f1f5f9',
+              color: '#334155',
+              border: '1px solid #e2e8f0',
+            }}
+          >
             {category.count} treff
           </span>
         </div>
 
-        <div className="flex items-center justify-between gap-6">
-          <div className="flex-1 text-center">
-            <h3 className="text-2xl mb-1 font-medium text-slate-900">{category.display_name}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+          <div style={{ flex: 1, textAlign: 'center' }}>
+            <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#0f172a', margin: 0 }}>{category.display_name}</h3>
           </div>
-          <ChevronRightIcon className="h-6 w-6 text-slate-600" />
+          <ChevronRightIcon style={{ width: '20px', height: '20px', color: '#475569' }} />
         </div>
       </button>
 
-      <div className="p-6 bg-white">
-        <div className="bg-slate-50 border border-slate-300/70 rounded-xl p-4 sm:p-5">
-          <div className="space-y-3">
-            {items.map((result) => (
-              <a
-                key={result.id}
-                href={`/info/${result.id}?search_id=${searchId ?? ''}`}
-                className="group block w-full rounded-xl px-5 py-4 transition bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
-              >
-                <CategoryResultItem result={result} searchId={searchId} variant="regular" />
-              </a>
-            ))}
+      <div style={{ padding: '16px' }}>
+        <div
+          style={{
+            borderRadius: '12px',
+            backgroundColor: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            padding: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {items.map((result) => {
+              const [isHovering, setIsHovering] = useState(false);
+              return (
+                <a
+                  key={result.id}
+                  href={`/info/${result.id}?search_id=${searchId ?? ''}`}
+                  onMouseEnter={() => setIsHovering(true)}
+                  onMouseLeave={() => setIsHovering(false)}
+                  style={{
+                    display: 'block',
+                    borderRadius: '12px',
+                    border: `1px solid ${isHovering ? '#cbd5e1' : '#e2e8f0'}`,
+                    backgroundColor: isHovering ? '#f8fafc' : 'white',
+                    padding: '12px 16px',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <CategoryResultItem result={result} searchId={searchId} variant="regular" />
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>

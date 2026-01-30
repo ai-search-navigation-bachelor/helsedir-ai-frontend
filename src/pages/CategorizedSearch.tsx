@@ -78,7 +78,7 @@ export function CategorizedSearch() {
             onClick={(e) => {
               e.preventDefault();
               setInputValue('');
-              navigate('/categorized');
+              navigate('/search');
             }}
           />
           <SearchComponent.Button type="submit" variant="secondary">
@@ -101,30 +101,33 @@ export function CategorizedSearch() {
 
       {data && !isLoading && !error && (
         <>
+          {/* Search Results Header */}
           <div className="mb-6">
-            <h2 className="text-3xl mb-2">{searchQuery.toUpperCase()}</h2>
-            <p className="text-slate-600">
+            <h1 className="text-3xl font-bold text-slate-900 mb-1">
+              {searchQuery.toUpperCase()}
+            </h1>
+            <p className="text-sm text-slate-500">
               {data.total} treff på {searchQuery.toUpperCase()}
             </p>
           </div>
 
           {data.total === 0 ? (
             <div className="text-center py-12">
-              <Paragraph className="text-gray-600">Ingen resultater funnet for "{searchQuery}"</Paragraph>
+              <p className="text-slate-600">Ingen resultater funnet for "{searchQuery}"</p>
             </div>
           ) : (
-            <div className="grid gap-6">
-              {/* Temaside - always first */}
+            <div className="space-y-5">
+              {/* Temaside - Box 1 */}
               {temasideCategory && temasideCategory.results.length > 0 && (
                 <TemaSideCard category={temasideCategory} searchQuery={searchQuery} searchId={data.search_id} />
               )}
 
-              {/* Retningslinje - always second */}
+              {/* Retningslinje - Box 2 */}
               {retningslinjeCategory && retningslinjeCategory.results.length > 0 && (
                 <RetningslinjeCard category={retningslinjeCategory} searchQuery={searchQuery} searchId={data.search_id} />
               )}
 
-              {/* Other categories */}
+              {/* Other categories - Boxes 3, 4, 5 */}
               {otherCategories.map((category) => (
                 <RegularCategoryCard key={category.category} category={category} searchQuery={searchQuery} searchId={data.search_id} />
               ))}

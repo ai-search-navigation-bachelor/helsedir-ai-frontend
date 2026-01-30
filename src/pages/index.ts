@@ -1,5 +1,4 @@
 export { Home } from './Home'
-export { Search } from './Search'
 export { InfoDetail } from './InfoDetail'
 export { CategorizedSearch } from './CategorizedSearch'
 export { CategoryResults } from './CategoryResults'
