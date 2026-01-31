@@ -3,6 +3,7 @@ export { ExpandableCategoryCard } from './ExpandableCategoryCard';
 export { TemaSideCard } from './TemaSideCard';
 export { RetningslinjeCard } from './RetningslinjeCard';
 export { RegularCategoryCard } from './RegularCategoryCard';
+export { ResultItem } from './ResultItem';
 
 export type { CategoryResultItemProps } from './CategoryResultItem';
 export type { ExpandableCategoryCardProps } from './ExpandableCategoryCard';

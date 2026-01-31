@@ -4,29 +4,20 @@ import {
   Alert,
   Heading,
   Paragraph,
-  Search as SearchComponent,
   Spinner,
 } from '@digdir/designsystemet-react';
 
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery';
 import { TemaSideCard, RetningslinjeCard, RegularCategoryCard } from '../components/search';
+import { SearchForm } from '../components/ui/SearchForm';
 import { useSearchStore } from '../stores/searchStore';
-
-// Special category handling
-const TEMASIDE_CATEGORY = 'temaside';
-const RETNINGSLINJE_CATEGORY = 'retningslinje';
-const ANBEFALINGER_CATEGORY = 'anbefaling';
-const REGELVERK_CATEGORY = 'regelverk-lov-eller-forskrift';
-const RAD_CATEGORY = 'veileder-lov-forskrift';
-
-// The 5 categories we want to display in order
-const CATEGORY_ORDER = [
+import {
   TEMASIDE_CATEGORY,
   RETNINGSLINJE_CATEGORY,
   ANBEFALINGER_CATEGORY,
   REGELVERK_CATEGORY,
   RAD_CATEGORY,
-];
+} from '../constants/categories';
 
 /**
  * Categorized Search Page
@@ -36,14 +27,8 @@ export function CategorizedSearch() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const searchQuery = searchParams.get('query') || '';
-  const [inputValue, setInputValue] = useState(searchQuery);
   
   const setSearchData = useSearchStore((state) => state.setSearchData);
-
-  // Sync input with URL parameter when it changes
-  useEffect(() => {
-    setInputValue(searchQuery);
-  }, [searchQuery]);
 
   const { data, isLoading, error } = useCategorizedSearchQuery(searchQuery, {
     enabled: !!searchQuery.trim(),
@@ -94,44 +79,21 @@ export function CategorizedSearch() {
 
   const bottomThreeCategories = [anbefalingerCategory, regelverkCategory, radCategory].filter(Boolean);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmed = inputValue.trim();
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (trimmed) {
-        next.set('query', trimmed);
-      } else {
-        next.delete('query');
-      }
-      return next;
-    });
+  function handleSearch(query: string) {
+    navigate(`/search?query=${encodeURIComponent(query)}`)
+  }
+
+  function handleClear() {
+    navigate('/search')
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <form onSubmit={handleSubmit} className="mb-6">
-        <SearchComponent>
-          <SearchComponent.Input
-            name="query"
-            aria-label="Søk"
-            placeholder="Søk etter innhold…"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-          />
-          <SearchComponent.Clear
-            aria-label="Tøm"
-            onClick={(e) => {
-              e.preventDefault();
-              setInputValue('');
-              navigate('/search');
-            }}
-          />
-          <SearchComponent.Button type="submit" variant="secondary">
-            Søk
-          </SearchComponent.Button>
-        </SearchComponent>
-      </form>
+      <SearchForm
+        initialValue={searchQuery}
+        onSubmit={handleSearch}
+        onClear={handleClear}
+      />
 
       {isLoading && (
         <div className="flex justify-center py-12">
