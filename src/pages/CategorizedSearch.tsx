@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Alert,
-  Heading,
   Paragraph,
   Spinner,
 } from '@digdir/designsystemet-react';
@@ -24,7 +23,7 @@ import {
  * Displays search results organized by categories with different card styles
  */
 export function CategorizedSearch() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const searchQuery = searchParams.get('query') || '';
   

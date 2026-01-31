@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
 import { Heading, Spinner } from '@digdir/designsystemet-react'
@@ -13,19 +13,27 @@ export function ContentDisplay({ content }: ContentDisplayProps) {
   const [expandedSubchapters, setExpandedSubchapters] = useState<Set<string>>(new Set())
   const [activeChapter, setActiveChapter] = useState<string | null>(null)
   
-  // Get children (barn) links from backend content
-  const childrenLinks = content.links?.filter(link => link.rel === 'barn') || []
+  // Get children (barn) links from backend content - memoized to prevent unnecessary rerenders
+  const childrenLinks = useMemo(
+    () => content.links?.filter(link => link.rel === 'barn') || [],
+    [content.links]
+  )
+  
+  // Create stable key from children hrefs to properly invalidate cache
+  const childrenKey = useMemo(
+    () => childrenLinks.map(link => link.href).join(','),
+    [childrenLinks]
+  )
 
   // Fetch nested chapters from Helsedirektoratet API
   const { data: chaptersData, isLoading: chaptersLoading } = useQuery<NestedContent[]>({
-    queryKey: ['nested-chapters', content.id],
+    queryKey: ['nested-chapters', content.id, childrenKey],
     queryFn: async ({ signal }) => {
       const chapters: NestedContent[] = []
       for (const link of childrenLinks) {
         if (link.href) {
           try {
             const chapter = await fetchChapterWithSubchapters(link.href, signal)
-            console.log('Fetched chapter:', chapter)
             chapters.push(chapter)
           } catch (error) {
             if (error instanceof Error && error.name !== 'AbortError') {
@@ -34,14 +42,13 @@ export function ContentDisplay({ content }: ContentDisplayProps) {
           }
         }
       }
-      console.log('All chapters loaded:', chapters)
       return chapters
     },
     enabled: childrenLinks.length > 0,
     staleTime: 10 * 60 * 1000,
   })
 
-  const chapters = chaptersData || []
+  const chapters = useMemo(() => chaptersData || [], [chaptersData])
 
   const toggleChapter = (idx: number) => {
     setExpandedChapters(prev => {
@@ -94,7 +101,7 @@ export function ContentDisplay({ content }: ContentDisplayProps) {
     })
 
     return () => observer.disconnect()
-  }, [chapters.length])
+  }, [chapters])
 
   // Capitalize content type for display
   const displayType = content.content_type 

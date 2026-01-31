@@ -10,7 +10,7 @@ import type { SearchResultBase, PaginatedResponse, BaseRequestOptions } from './
 /**
  * Category search result item
  */
-export interface CategorySearchResult extends SearchResultBase {}
+export type CategorySearchResult = SearchResultBase
 
 /**
  * Category search response
