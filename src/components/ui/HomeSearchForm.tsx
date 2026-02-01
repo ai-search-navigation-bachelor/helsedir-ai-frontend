@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useState, forwardRef } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon } from '@navikt/aksel-icons'
 import { colors } from '../../styles/dsTokens'
 
@@ -8,38 +8,40 @@ interface HomeSearchFormProps {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }
 
-export function HomeSearchForm({ query, onQueryChange, onSubmit }: HomeSearchFormProps) {
-  const [isHoveringIcon, setIsHoveringIcon] = useState(false)
-  const [isFocused, setIsFocused] = useState(false)
+export const HomeSearchForm = forwardRef<HTMLInputElement, HomeSearchFormProps>(
+  ({ query, onQueryChange, onSubmit }, ref) => {
+    const [isHoveringIcon, setIsHoveringIcon] = useState(false)
+    const [isFocused, setIsFocused] = useState(false)
 
-  function handleIconClick() {
-    if (query.trim()) {
-      const event = new Event('submit', { bubbles: true, cancelable: true }) as any
-      onSubmit(event)
+    function handleIconClick() {
+      if (query.trim()) {
+        const event = new Event('submit', { bubbles: true, cancelable: true }) as any
+        onSubmit(event)
+      }
     }
-  }
 
-  function handleClear() {
-    onQueryChange('')
-  }
+    function handleClear() {
+      onQueryChange('')
+    }
 
-  return (
-    <div
-      className="rounded-br-[50px]"
-      style={{ backgroundColor: colors.headerBg }}
-    >
-      <div className="max-w-screen-xl mx-auto px-8 pt-5 pb-8">
-        <label htmlFor="home-search" className="block font-bold mb-2">
-          Hva leter du etter?
-        </label>
+    return (
+      <div
+        className="rounded-br-[50px]"
+        style={{ backgroundColor: colors.headerBg }}
+      >
+        <div className="max-w-screen-xl mx-auto px-8 pt-5 pb-8">
+          <label htmlFor="home-search" className="block font-bold mb-2">
+            Hva leter du etter?
+          </label>
 
-        <form onSubmit={onSubmit} className="mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              id="home-search"
-              name="query"
-              aria-label="Søk"
+          <form onSubmit={onSubmit} className="mb-6">
+            <div className="relative">
+              <input
+                ref={ref}
+                type="text"
+                id="home-search"
+                name="query"
+                aria-label="Søk"
               placeholder="Søk etter innhold…"
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
@@ -83,5 +85,8 @@ export function HomeSearchForm({ query, onQueryChange, onSubmit }: HomeSearchFor
         </form>
       </div>
     </div>
-  )
-}
+    )
+  }
+)
+
+HomeSearchForm.displayName = 'HomeSearchForm'
