@@ -54,7 +54,7 @@ export function ExpandableCategoryCard({
           {topResult.title}
         </div>
         <div className="text-sm text-slate-500">
-          Hentet fra: {category.display_name}
+          Hentet fra ...
         </div>
       </Link>
 
@@ -72,7 +72,7 @@ export function ExpandableCategoryCard({
                 {result.title}
               </div>
               <div className="text-sm text-slate-500">
-                Hentet fra: {category.display_name}
+                Hentet fra ...
               </div>
             </Link>
           ))}

@@ -20,6 +20,7 @@ export function RegularCategoryCard({ category, searchQuery, searchId }: Regular
   }
 
   const items = (category.results ?? []).slice(0, 3)
+  const topLabel = items.length === 1 ? 'Top 1' : items.length === 2 ? 'Top 2' : 'Top 3'
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
@@ -37,9 +38,9 @@ export function RegularCategoryCard({ category, searchQuery, searchId }: Regular
       </button>
 
       <div className="p-5">
-        {/* Top 3 label */}
+        {/* Dynamic top label */}
         <div className="text-sm text-slate-500 font-medium mb-3">
-          Topp 3
+          {topLabel}
         </div>
 
         {/* List of results */}
@@ -55,7 +56,7 @@ export function RegularCategoryCard({ category, searchQuery, searchId }: Regular
                 {result.title}
               </div>
               <div className="text-sm text-slate-500">
-                Hentet fra: {category.display_name}
+                Hentet fra ...
               </div>
             </Link>
           ))}

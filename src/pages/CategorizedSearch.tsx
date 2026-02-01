@@ -14,9 +14,6 @@ import { useSearchStore } from '../stores/searchStore';
 import {
   TEMASIDE_CATEGORY,
   RETNINGSLINJE_CATEGORY,
-  ANBEFALINGER_CATEGORY,
-  REGELVERK_CATEGORY,
-  RAD_CATEGORY,
 } from '../constants/categories';
 
 /**
@@ -44,43 +41,75 @@ export function CategorizedSearch() {
     }
   }, [data?.search_id, searchQuery, setSearchData]);
 
-  // Create mock Temaside if not in database
-  const temasideCategory =
-    data?.priority_categories.find((cat) => cat.category === TEMASIDE_CATEGORY) ||
-    data?.other_categories.find((cat) => cat.category === TEMASIDE_CATEGORY) ||
-    (data ? {
-      category: TEMASIDE_CATEGORY,
-      display_name: 'Temaside',
-      count: 0,
-      results: [],
-    } : undefined);
+  // DEBUG: Log full API response
+  useEffect(() => {
+    if (data) {
+      console.log('=== FULL API RESPONSE ===');
+      console.log('Query:', data.query);
+      console.log('Total results:', data.total);
+      console.log('Search ID:', data.search_id);
+      console.log('Min score:', data.min_score);
+      console.log('\nPRIORITY CATEGORIES:', data.priority_categories.length);
+      data.priority_categories.forEach((cat, idx) => {
+        console.log(`  ${idx + 1}. "${cat.category}" - ${cat.display_name} (${cat.count} results, ${cat.results.length} previews)`);
+      });
+      console.log('\nOTHER CATEGORIES:', data.other_categories.length);
+      data.other_categories.forEach((cat, idx) => {
+        console.log(`  ${idx + 1}. "${cat.category}" - ${cat.display_name} (${cat.count} results, ${cat.results.length} previews)`);
+      });
+      console.log('\nALL CATEGORIES COMBINED:');
+      const allCats = [...data.priority_categories, ...data.other_categories];
+      allCats.forEach((cat, idx) => {
+        console.log(`  ${idx + 1}. "${cat.category}" - ${cat.display_name} (${cat.count} results)`);
+      });
+      console.log('========================\n');
+    }
+  }, [data]);
 
-  const retningslinjeCategory =
-    data?.priority_categories.find((cat) => cat.category === RETNINGSLINJE_CATEGORY) ||
-    data?.other_categories.find((cat) => cat.category === RETNINGSLINJE_CATEGORY);
+  // Combine all categories (priority first, then others)
+  const allCategories = [
+    ...(data?.priority_categories || []),
+    ...(data?.other_categories || [])
+  ];
 
-  // Get exactly the 3 other categories in order: Anbefalinger, Regelverk, Råd
-  const allCategories = [...(data?.priority_categories || []), ...(data?.other_categories || [])];
-  
-  // Debug: Log available categories
-  if (data) {
-    console.log('Available categories:', allCategories.map(cat => `"${cat.category}"`));
-    console.log('Looking for:', { ANBEFALINGER_CATEGORY, REGELVERK_CATEGORY, RAD_CATEGORY });
+  // Render appropriate card component based on category type
+  function renderCategoryCard(category: typeof allCategories[0]) {
+    const { category: categoryId } = category;
+
+    // Use specialized card for Temaside
+    if (categoryId === TEMASIDE_CATEGORY) {
+      return (
+        <TemaSideCard
+          key={categoryId}
+          category={category}
+          searchQuery={searchQuery}
+          searchId={data?.search_id}
+        />
+      );
+    }
+
+    // Use specialized card for Retningslinje
+    if (categoryId === RETNINGSLINJE_CATEGORY) {
+      return (
+        <RetningslinjeCard
+          key={categoryId}
+          category={category}
+          searchQuery={searchQuery}
+          searchId={data?.search_id}
+        />
+      );
+    }
+
+    // Use regular card for all other categories
+    return (
+      <RegularCategoryCard
+        key={categoryId}
+        category={category}
+        searchQuery={searchQuery}
+        searchId={data?.search_id}
+      />
+    );
   }
-  
-  const anbefalingerCategory = allCategories.find((cat) => cat.category === ANBEFALINGER_CATEGORY);
-  const regelverkCategory = allCategories.find((cat) => cat.category === REGELVERK_CATEGORY);
-  const radCategory = allCategories.find((cat) => cat.category === RAD_CATEGORY);
-
-  if (data) {
-    console.log('Found categories:', {
-      anbefalinger: anbefalingerCategory?.category || 'NOT FOUND',
-      regelverk: regelverkCategory?.category || 'NOT FOUND',
-      rad: radCategory?.category || 'NOT FOUND',
-    });
-  }
-
-  const bottomThreeCategories = [anbefalingerCategory, regelverkCategory, radCategory].filter(Boolean);
 
   function handleSearch(query: string) {
     navigate(`/search?query=${encodeURIComponent(query)}`)
@@ -124,20 +153,8 @@ export function CategorizedSearch() {
             </div>
           ) : (
             <div className="flex flex-col gap-6">
-              {/* Box 1: Temaside - Always show (mock if not in DB) */}
-              {temasideCategory && (
-                <TemaSideCard category={temasideCategory} searchQuery={searchQuery} searchId={data.search_id} />
-              )}
-
-              {/* Box 2: Retningslinje */}
-              {retningslinjeCategory && (
-                <RetningslinjeCard category={retningslinjeCategory} searchQuery={searchQuery} searchId={data.search_id} />
-              )}
-
-              {/* Boxes 3-5: Anbefalinger, Regelverk, Råd */}
-              {bottomThreeCategories.map((category) => (
-                <RegularCategoryCard key={category.category} category={category} searchQuery={searchQuery} searchId={data.search_id} />
-              ))}
+              {/* Dynamically render all categories returned by API */}
+              {allCategories.map(renderCategoryCard)}
             </div>
           )}
         </>
