@@ -16,20 +16,18 @@ export function AppHeader() {
         style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}
       >
         <header>
-          <CardBlock className='site-header__card'>
-            <div className='site-header__inner'>
+          <CardBlock style={{ padding: '2.5rem 6rem 2rem 6rem' }}>
+            <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-6">
               <Link
                 to='/'
                 aria-label='Helsedirektoratet'
-                className='site-header__logo'
+                className="flex items-center gap-3"
+                style={{ color: 'inherit', textDecoration: 'none' }}
               >
-                <picture>
-                  <source srcSet='/hdir_logo_small.svg' media='(max-width: 640px)' />
-                  <img src='/Hdir_logo.svg' alt='Helsedirektoratet' />
-                </picture>
+                <img src='/Hdir_logo.svg' alt='Helsedirektoratet' className="h-8" />
               </Link>
 
-              <div className='site-header__actions'>
+              <div className="flex gap-3 items-center">
                 <Button
                   variant='secondary'
                   onClick={() => {
@@ -57,7 +55,7 @@ export function AppHeader() {
                   }}
                 >
                   Søk
-                  <IoSearch />
+                  <IoSearch size={18} />
                 </Button>
                 <Button
                   variant='secondary'
@@ -82,7 +80,7 @@ export function AppHeader() {
                     e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
                   }}
                 >
-                  <IoMenu />
+                  <IoMenu size={18} />
                   Meny
                 </Button>
               </div>

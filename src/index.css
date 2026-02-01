@@ -1,3 +1,9 @@
+@import "tailwindcss";
+
+html {
+  scrollbar-gutter: stable;
+}
+
 html,
 body {
   margin: 0;
@@ -295,6 +301,43 @@ body {
 .info-item__title {
   margin: 0;
   font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
+/* Dark mode scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #e2e8f0;
+}
+
+*::-webkit-scrollbar {
+  width: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #475569;
+  border-radius: 6px;
+  border: 3px solid #e2e8f0;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #334155;
+}
+
+/* Always show scrollbar on home page */
+body.home-page {
+  overflow-y: scroll;
+}
+
+/* Styling for HTML-innhold fra API */
+.content-html h2 {
+  font-size: 24px;
   font-weight: 600;
   color: #1a1a1a;
   line-height: 1.4;

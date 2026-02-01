@@ -9,6 +9,7 @@ import {
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery';
 import { TemaSideCard, RetningslinjeCard, RegularCategoryCard } from '../components/search';
 import { SearchForm } from '../components/ui/SearchForm';
+import { FilterBar } from '../components/ui/FilterBar';
 import { useSearchStore } from '../stores/searchStore';
 import {
   TEMASIDE_CATEGORY,
@@ -26,11 +27,14 @@ export function CategorizedSearch() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const searchQuery = searchParams.get('query') || '';
-  
+
   const setSearchData = useSearchStore((state) => state.setSearchData);
+  const filters = useSearchStore((state) => state.filters);
 
   const { data, isLoading, error } = useCategorizedSearchQuery(searchQuery, {
     enabled: !!searchQuery.trim(),
+    tema: filters.tema,
+    innholdstype: filters.innholdstype,
   });
 
   // Store search_id in Zustand when data is received
@@ -82,17 +86,16 @@ export function CategorizedSearch() {
     navigate(`/search?query=${encodeURIComponent(query)}`)
   }
 
-  function handleClear() {
-    navigate('/search')
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <SearchForm
-        initialValue={searchQuery}
-        onSubmit={handleSearch}
-        onClear={handleClear}
-      />
+    <div className="max-w-screen-xl mx-auto px-8 py-8">
+      <div className="mt-6">
+        <SearchForm
+          initialValue={searchQuery}
+          onSubmit={handleSearch}
+        />
+      </div>
+
+      {searchQuery && <FilterBar />}
 
       {isLoading && (
         <div className="flex justify-center py-12">
@@ -110,11 +113,8 @@ export function CategorizedSearch() {
         <>
           {/* Search Results Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-slate-900 mb-1">
-              {searchQuery.toUpperCase()}
-            </h1>
             <p className="text-sm text-slate-500">
-              {data.total} treff på {searchQuery.toUpperCase()}
+              {data.total} treff på {searchQuery}
             </p>
           </div>
 
@@ -123,7 +123,7 @@ export function CategorizedSearch() {
               <p className="text-slate-600">Ingen resultater funnet for "{searchQuery}"</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="flex flex-col gap-6">
               {/* Box 1: Temaside - Always show (mock if not in DB) */}
               {temasideCategory && (
                 <TemaSideCard category={temasideCategory} searchQuery={searchQuery} searchId={data.search_id} />

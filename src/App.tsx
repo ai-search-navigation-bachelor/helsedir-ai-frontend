@@ -8,7 +8,7 @@ function App() {
       <Route path="/" element={<AppLayout />}>
         <Route index element={<Home />} />
         <Route path="search" element={<CategorizedSearch />} />
-        <Route path="category" element={<CategoryResults />} />
+        <Route path="category/:category" element={<CategoryResults />} />
         <Route path="content/:id" element={<ContentDetail />} />
       </Route>
     </Routes>

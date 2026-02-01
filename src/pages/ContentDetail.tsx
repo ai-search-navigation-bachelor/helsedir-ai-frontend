@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
 import { Button, Alert, Spinner, Paragraph } from '@digdir/designsystemet-react'
@@ -10,18 +10,13 @@ import type { BreadcrumbItem } from '../types/components'
 
 export function ContentDetail() {
   const { id } = useParams<{ id: string }>()
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  
-  const searchId = searchParams.get('search_id')
-  const searchQuery = searchParams.get('query')
-  const category = searchParams.get('category')
-  
-  const storedSearchId = useSearchStore((state) => state.searchId)
-  const storedSearchQuery = useSearchStore((state) => state.searchQuery)
-  
-  const effectiveSearchId = searchId || storedSearchId || undefined
-  const effectiveSearchQuery = searchQuery || storedSearchQuery || ''
+
+  const searchId = useSearchStore((state) => state.searchId)
+  const searchQuery = useSearchStore((state) => state.searchQuery)
+
+  const effectiveSearchId = searchId || undefined
+  const effectiveSearchQuery = searchQuery || ''
 
   const { data: content, isLoading, error } = useQuery({
     queryKey: ['content', id, effectiveSearchId],
@@ -36,21 +31,17 @@ export function ContentDetail() {
   const breadcrumbItems: BreadcrumbItem[] = effectiveSearchQuery
     ? [
         { label: 'Forside', href: '/' },
-        { 
-          label: effectiveSearchQuery.toUpperCase(), 
+        {
+          label: effectiveSearchQuery,
           href: `/search?query=${encodeURIComponent(effectiveSearchQuery)}`,
-          icon: <MagnifyingGlassIcon style={{ width: '16px', height: '16px' }} />
+          icon: <MagnifyingGlassIcon style={{ width: '18px', height: '18px' }} />
         },
-        ...(category ? [{
-          label: category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-          href: `/category?query=${encodeURIComponent(effectiveSearchQuery)}&category=${encodeURIComponent(category)}&search_id=${effectiveSearchId || ''}`
-        }] : []),
         { label: content?.title || 'Laster...', href: '#' }
       ]
     : []
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+    <div className="max-w-screen-xl mx-auto px-8 pt-4 pb-8">
       {effectiveSearchQuery ? (
         <Breadcrumb items={breadcrumbItems} />
       ) : (
@@ -64,7 +55,7 @@ export function ContentDetail() {
       )}
 
       {isLoading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+        <div className="flex justify-center py-10">
           <Spinner aria-label="Laster innhold..." />
         </div>
       )}

@@ -1,3 +1,4 @@
+import { Breadcrumbs } from '@digdir/designsystemet-react'
 import { Link } from 'react-router-dom'
 import type { BreadcrumbItem } from '../../types/components'
 
@@ -7,47 +8,35 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav style={{ marginBottom: '24px' }}>
-      <ol 
-        style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '8px', 
-          listStyle: 'none', 
-          padding: 0, 
-          margin: 0,
-          fontSize: '14px',
-          color: '#64748b'
-        }}
-      >
-        {items.map((item, index) => (
-          <li key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {index > 0 && <span>/</span>}
-            {index === items.length - 1 ? (
-              <span style={{ color: '#0f172a', fontWeight: '500' }}>
-                - {item.label}
-              </span>
-            ) : (
-              <Link 
-                to={item.href}
-                style={{ 
-                  color: '#2563eb', 
-                  textDecoration: 'none',
-                  fontWeight: '500',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
-              >
-                {item.icon}
-                {item.label}
-              </Link>
-            )}
-          </li>
-        ))}
-      </ol>
-    </nav>
+    <Breadcrumbs style={{ marginBottom: '24px' }}>
+      <Breadcrumbs.List>
+        {items.map((item, index) => {
+          const isLast = index === items.length - 1
+          const content = (
+            <span className="inline-flex items-center gap-1.5 underline">
+              {item.label}
+              {item.icon}
+            </span>
+          )
+
+          return (
+            <Breadcrumbs.Item key={index}>
+              {isLast ? (
+                <span className="inline-flex items-center gap-1.5">
+                  {item.label}
+                  {item.icon}
+                </span>
+              ) : (
+                <Breadcrumbs.Link asChild>
+                  <Link to={item.href}>
+                    {content}
+                  </Link>
+                </Breadcrumbs.Link>
+              )}
+            </Breadcrumbs.Item>
+          )
+        })}
+      </Breadcrumbs.List>
+    </Breadcrumbs>
   )
 }

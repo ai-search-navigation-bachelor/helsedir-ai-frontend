@@ -1,16 +1,14 @@
+import { Paragraph } from '@digdir/designsystemet-react';
 import type { CategoryGroup } from '../../api/categorized';
-import { ExpandableCategoryCard } from './ExpandableCategoryCard';
 
 export function TemaSideCard(props: { category: CategoryGroup; searchQuery: string; searchId?: string }) {
   return (
-    <ExpandableCategoryCard
-      category={props.category}
-      searchQuery={props.searchQuery}
-      searchId={props.searchId}
-      variant="temaside"
-      badgeSuffix="artikler"
-      subtitle="Temaside"
-      previewCount={0}
-    />
+    <div className="border-b border-slate-200 pb-6">
+      <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 text-center">
+        <Paragraph style={{ color: '#64748b', margin: 0 }}>
+          Temaside – Kommer snart
+        </Paragraph>
+      </div>
+    </div>
   );
 }

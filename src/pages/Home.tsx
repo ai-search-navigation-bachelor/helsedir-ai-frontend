@@ -35,6 +35,14 @@ export function Home({ isSearchBar = false }: HomeProps) {
     return () => window.removeEventListener('toggleSearch', handleSearchFocus)
   }, [isHome])
 
+  // Add home-page class to body on mount, remove on unmount
+  useEffect(() => {
+    document.body.classList.add('home-page')
+    return () => {
+      document.body.classList.remove('home-page')
+    }
+  }, [])
+
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const trimmed = query.trim()

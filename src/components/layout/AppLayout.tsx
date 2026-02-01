@@ -37,14 +37,9 @@ export function AppLayout() {
       <AppHeader />
       {isSearchVisible && !isHome && <Home isSearchBar />}
       {!isHome && (
-        <CardBlock
-          asChild
-          className='page-shell__card'
-        >
-          <main id='main-content' className='page-shell__main'>
-            <Outlet />
-          </main>
-        </CardBlock>
+        <main id='main-content'>
+          <Outlet />
+        </main>
       )}
       {isHome && (
         <main id='main-content' className='page-shell__main page-shell__main--home'>
