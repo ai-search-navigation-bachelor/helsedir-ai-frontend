@@ -38,7 +38,10 @@ export interface CategorizedSearchResponse {
 /**
  * Categorized search options
  */
-export type CategorizedSearchOptions = BaseRequestOptions
+export interface CategorizedSearchOptions extends BaseRequestOptions {
+  tema?: string
+  innholdstype?: string
+}
 
 /**
  * Empty response for invalid queries
@@ -59,10 +62,10 @@ function emptyResponse(query: string): CategorizedSearchResponse {
  */
 export async function searchCategorizedApi(
   query: string,
-  { signal, role }: CategorizedSearchOptions = {},
+  { signal, role, tema, innholdstype }: CategorizedSearchOptions = {},
 ): Promise<CategorizedSearchResponse> {
   const trimmed = query.trim()
-  
+
   if (!trimmed) {
     return emptyResponse(trimmed)
   }
@@ -70,6 +73,8 @@ export async function searchCategorizedApi(
   const url = buildUrl(API_ENDPOINTS.categorizedSearch, {
     query: trimmed,
     role,
+    tema,
+    innholdstype,
   })
 
   return httpRequest<CategorizedSearchResponse>(url, { signal })

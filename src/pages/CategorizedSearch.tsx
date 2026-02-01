@@ -9,6 +9,7 @@ import {
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery';
 import { TemaSideCard, RetningslinjeCard, RegularCategoryCard } from '../components/search';
 import { SearchForm } from '../components/ui/SearchForm';
+import { FilterBar } from '../components/ui/FilterBar';
 import { useSearchStore } from '../stores/searchStore';
 import {
   TEMASIDE_CATEGORY,
@@ -26,11 +27,14 @@ export function CategorizedSearch() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const searchQuery = searchParams.get('query') || '';
-  
+
   const setSearchData = useSearchStore((state) => state.setSearchData);
+  const filters = useSearchStore((state) => state.filters);
 
   const { data, isLoading, error } = useCategorizedSearchQuery(searchQuery, {
     enabled: !!searchQuery.trim(),
+    tema: filters.tema,
+    innholdstype: filters.innholdstype,
   });
 
   // Store search_id in Zustand when data is received
@@ -90,6 +94,8 @@ export function CategorizedSearch() {
           onSubmit={handleSearch}
         />
       </div>
+
+      {searchQuery && <FilterBar />}
 
       {isLoading && (
         <div className="flex justify-center py-12">
