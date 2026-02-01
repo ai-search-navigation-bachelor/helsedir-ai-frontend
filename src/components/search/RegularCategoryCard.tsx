@@ -15,9 +15,7 @@ export function RegularCategoryCard({ category, searchQuery, searchId }: Regular
   const navigateToCategory = () => {
     if (!searchId) return;
     navigate(
-      `/category?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(
-        category.category
-      )}&search_id=${searchId}`
+      `/category/${encodeURIComponent(category.category)}?query=${encodeURIComponent(searchQuery)}`
     );
   };
 
@@ -90,7 +88,7 @@ export function RegularCategoryCard({ category, searchQuery, searchId }: Regular
             {items.map((result) => (
               <a
                 key={result.id}
-                href={`/content/${result.id}?search_id=${searchId ?? ''}&query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category.category)}`}
+                href={`/content/${result.id}`}
                 style={{
                   display: 'block',
                   borderRadius: '12px',

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
   Button,
@@ -16,15 +16,14 @@ import { useSearchStore } from '../stores/searchStore'
 import type { BreadcrumbItem } from '../types/components'
 
 export function CategoryResults() {
+  const { category = '' } = useParams<{ category: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  
+
   const searchQuery = searchParams.get('query') || ''
-  const category = searchParams.get('category') || ''
-  const searchId = searchParams.get('search_id') || ''
-  
-  const storedSearchId = useSearchStore((state) => state.searchId)
-  const effectiveSearchId = searchId || storedSearchId || ''
+  const searchId = useSearchStore((state) => state.searchId)
+
+  const effectiveSearchId = searchId || ''
   
   const [itemsToShow, setItemsToShow] = useState(20)
 

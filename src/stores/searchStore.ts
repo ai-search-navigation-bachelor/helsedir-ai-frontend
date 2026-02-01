@@ -19,14 +19,14 @@ export const useSearchStore = create<SearchState>()(
     (set) => ({
       searchId: null,
       searchQuery: null,
-      
+
       setSearchId: (searchId: string) => set({ searchId }),
-      
+
       setSearchQuery: (query: string) => set({ searchQuery: query }),
-      
-      setSearchData: (searchId: string, query: string) => 
+
+      setSearchData: (searchId: string, query: string) =>
         set({ searchId, searchQuery: query }),
-      
+
       clearSearch: () => set({ searchId: null, searchQuery: null }),
     }),
     {

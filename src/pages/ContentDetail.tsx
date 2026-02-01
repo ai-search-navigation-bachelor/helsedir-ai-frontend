@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
 import { Button, Alert, Spinner, Paragraph } from '@digdir/designsystemet-react'
@@ -10,18 +10,13 @@ import type { BreadcrumbItem } from '../types/components'
 
 export function ContentDetail() {
   const { id } = useParams<{ id: string }>()
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  
-  const searchId = searchParams.get('search_id')
-  const searchQuery = searchParams.get('query')
-  const category = searchParams.get('category')
-  
-  const storedSearchId = useSearchStore((state) => state.searchId)
-  const storedSearchQuery = useSearchStore((state) => state.searchQuery)
-  
-  const effectiveSearchId = searchId || storedSearchId || undefined
-  const effectiveSearchQuery = searchQuery || storedSearchQuery || ''
+
+  const searchId = useSearchStore((state) => state.searchId)
+  const searchQuery = useSearchStore((state) => state.searchQuery)
+
+  const effectiveSearchId = searchId || undefined
+  const effectiveSearchQuery = searchQuery || ''
 
   const { data: content, isLoading, error } = useQuery({
     queryKey: ['content', id, effectiveSearchId],
@@ -36,15 +31,11 @@ export function ContentDetail() {
   const breadcrumbItems: BreadcrumbItem[] = effectiveSearchQuery
     ? [
         { label: 'Forside', href: '/' },
-        { 
-          label: effectiveSearchQuery.toUpperCase(), 
+        {
+          label: effectiveSearchQuery.toUpperCase(),
           href: `/search?query=${encodeURIComponent(effectiveSearchQuery)}`,
           icon: <MagnifyingGlassIcon style={{ width: '16px', height: '16px' }} />
         },
-        ...(category ? [{
-          label: category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-          href: `/category?query=${encodeURIComponent(effectiveSearchQuery)}&category=${encodeURIComponent(category)}&search_id=${effectiveSearchId || ''}`
-        }] : []),
         { label: content?.title || 'Laster...', href: '#' }
       ]
     : []

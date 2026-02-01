@@ -42,13 +42,11 @@ export function ExpandableCategoryCard({
     // For expandable cards (Temaside/Retningslinje), navigate to first result if available
     const firstResult = category.results?.[0];
     if (firstResult) {
-      navigate(`/content/${firstResult.id}?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category.category)}&search_id=${searchId || ''}`);
+      navigate(`/content/${firstResult.id}`);
     } else if (searchId) {
       // Fallback to category page if no results
       navigate(
-        `/category?query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(
-          category.category
-        )}&search_id=${searchId}`
+        `/category/${encodeURIComponent(category.category)}?query=${encodeURIComponent(searchQuery)}`
       );
     }
   };
@@ -152,7 +150,7 @@ export function ExpandableCategoryCard({
                 {visibleResults.map((result) => (
                   <a
                     key={result.id}
-                    href={`/content/${result.id}?search_id=${searchId ?? ''}&query=${encodeURIComponent(searchQuery)}&category=${encodeURIComponent(category.category)}`}
+                    href={`/content/${result.id}`}
                     style={{
                       display: 'block',
                       borderRadius: '12px',
