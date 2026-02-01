@@ -1,28 +1,37 @@
 /**
  * Search API
- * Handles general search and content retrieval
+ * Handles all search operations: categorized, category-specific, and general search
  */
 
-import { API_ENDPOINTS } from './config'
-import { httpRequest, buildUrl } from './httpClient'
-import type { SearchResultBase, PaginatedResponse, BaseRequestOptions, ContentDetail, InfoResultItem } from './types'
+import { httpRequest, buildUrl } from '../lib/httpClient'
+import type {
+  BaseRequestOptions,
+  CategorizedSearchResponse,
+  CategorySearchResponse,
+  SearchResponse,
+} from '../types'
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://129.241.150.141:8000'
 
 /**
- * Search result item
+ * Categorized search options
  */
-export type SearchResultItem = SearchResultBase
-
-/**
- * Search API result
- */
-export interface SearchApiResult extends PaginatedResponse {
-  results: SearchResultItem[]
+export interface CategorizedSearchOptions extends BaseRequestOptions {
+  tema?: string
+  innholdstype?: string
 }
 
 /**
- * Search options
+ * Category search options
  */
-export interface SearchApiOptions extends BaseRequestOptions {
+export interface CategorySearchOptions extends BaseRequestOptions {
+  search_id: string
+}
+
+/**
+ * General search options
+ */
+export interface SearchOptions extends BaseRequestOptions {
   depth?: number
   offset?: number
   limit?: number
@@ -30,9 +39,23 @@ export interface SearchApiOptions extends BaseRequestOptions {
 }
 
 /**
+ * Empty categorized response for invalid queries
+ */
+function emptyCategorizedResponse(query: string): CategorizedSearchResponse {
+  return {
+    query,
+    total: 0,
+    min_score: 0,
+    search_id: '',
+    priority_categories: [],
+    other_categories: [],
+  }
+}
+
+/**
  * Empty search response for invalid queries
  */
-function emptySearchResponse(): SearchApiResult {
+function emptySearchResponse(): SearchResponse {
   return {
     results: [],
     query: '',
@@ -46,19 +69,66 @@ function emptySearchResponse(): SearchApiResult {
 }
 
 /**
- * General search
+ * Categorized search - returns results grouped by category
  */
-export async function searchApi(
+export async function searchCategorized(
   query: string,
-  { signal, offset = 0, limit = 10, role, search_id }: SearchApiOptions = {},
-): Promise<SearchApiResult> {
+  { signal, role, tema, innholdstype }: CategorizedSearchOptions = {},
+): Promise<CategorizedSearchResponse> {
   const trimmed = query.trim()
-  
+
+  if (!trimmed) {
+    return emptyCategorizedResponse(trimmed)
+  }
+
+  const url = buildUrl(`${BASE_URL}/search/categorized`, {
+    query: trimmed,
+    role,
+    tema,
+    innholdstype,
+  })
+
+  return httpRequest<CategorizedSearchResponse>(url, { signal })
+}
+
+/**
+ * Category-specific search - search within a single category
+ */
+export async function searchCategory(
+  query: string,
+  category: string,
+  { signal, role, search_id }: CategorySearchOptions,
+): Promise<CategorySearchResponse> {
+  const trimmed = query.trim()
+
+  if (!trimmed || !category || !search_id) {
+    throw new Error('Query, category, and search_id are required')
+  }
+
+  const url = buildUrl(`${BASE_URL}/search/category`, {
+    query: trimmed,
+    category,
+    search_id,
+    role,
+  })
+
+  return httpRequest<CategorySearchResponse>(url, { signal })
+}
+
+/**
+ * General search - returns paginated results
+ */
+export async function search(
+  query: string,
+  { signal, offset = 0, limit = 10, role, search_id }: SearchOptions = {},
+): Promise<SearchResponse> {
+  const trimmed = query.trim()
+
   if (!trimmed) {
     return emptySearchResponse()
   }
 
-  const url = buildUrl(API_ENDPOINTS.search, {
+  const url = buildUrl(`${BASE_URL}/search`, {
     query: trimmed,
     offset,
     limit,
@@ -66,53 +136,5 @@ export async function searchApi(
     search_id,
   })
 
-  return httpRequest<SearchApiResult>(url, { signal })
+  return httpRequest<SearchResponse>(url, { signal })
 }
-
-/**
- * Get content by ID
- */
-export async function getContentApi(
-  contentId: string,
-  searchId?: string,
-  { signal }: SearchApiOptions = {},
-): Promise<ContentDetail> {
-  const trimmed = contentId.trim()
-  
-  if (!trimmed) {
-    throw new Error('Content ID is required')
-  }
-
-  const url = buildUrl(`${API_ENDPOINTS.content}/${encodeURIComponent(trimmed)}`, {
-    search_id: searchId,
-  })
-
-  return httpRequest<ContentDetail>(url, { signal })
-}
-
-/**
- * @deprecated Use getContentApi instead
- * Get infobit by ID (legacy endpoint)
- */
-export async function getInfobitApi(
-  infobitId: string,
-  { signal, depth = 2 }: SearchApiOptions = {},
-): Promise<InfoResultItem> {
-  const trimmed = infobitId.trim()
-  
-  if (!trimmed) {
-    throw new Error('Infobit ID is required')
-  }
-
-  // Legacy endpoint for backwards compatibility
-  const legacyEndpoint = 'http://129.241.150.141:8000/helsedir/infobit'
-  const url = buildUrl(`${legacyEndpoint}/${encodeURIComponent(trimmed)}`, {
-    include_children: true,
-    depth,
-  })
-
-  return httpRequest<InfoResultItem>(url, { signal })
-}
-
-// Re-export shared types for convenience
-export type { ContentDetail, InfoResultItem } from './types'

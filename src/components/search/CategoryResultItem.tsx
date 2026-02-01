@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRightIcon } from '@navikt/aksel-icons';
-import { getContentApi } from '../../api/search';
-import type { ContentDetail } from '../../api/types';
+import { getContent } from '../../api';
+import type { ContentDetail } from '../../types';
 import { useSearchStore } from '../../stores/searchStore';
 
 export interface CategoryResultItemProps {
@@ -18,7 +18,7 @@ export function CategoryResultItem({ result, searchId, variant }: CategoryResult
 
   const { data: content } = useQuery<ContentDetail, Error>({
     queryKey: ['content', result.id, effectiveSearchId],
-    queryFn: async () => getContentApi(result.id, effectiveSearchId),
+    queryFn: async () => getContent(result.id, effectiveSearchId),
     enabled: shouldFetch,
     staleTime: 10 * 60 * 1000,
   });

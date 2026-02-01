@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ChevronDownIcon } from '@navikt/aksel-icons'
 import { Heading, Link, Button } from '@digdir/designsystemet-react'
-import type { CategoryGroup } from '../../api/categorized'
+import type { CategoryGroup } from '../../types'
 
 type Variant = 'temaside' | 'retningslinje'
 

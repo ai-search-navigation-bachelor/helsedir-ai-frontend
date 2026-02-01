@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowRightIcon } from '@navikt/aksel-icons'
 import { Heading, Link } from '@digdir/designsystemet-react'
-import type { CategoryGroup } from '../../api/categorized'
+import type { CategoryGroup } from '../../types'
 
 export interface RegularCategoryCardProps {
   category: CategoryGroup

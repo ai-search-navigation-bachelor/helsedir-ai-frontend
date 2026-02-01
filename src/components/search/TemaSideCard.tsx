@@ -1,5 +1,5 @@
 import { Paragraph } from '@digdir/designsystemet-react';
-import type { CategoryGroup } from '../../api/categorized';
+import type { CategoryGroup } from '../../types';
 
 export function TemaSideCard(props: { category: CategoryGroup; searchQuery: string; searchId?: string }) {
   return (

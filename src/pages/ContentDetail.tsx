@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
 import { Button, Alert, Spinner, Paragraph } from '@digdir/designsystemet-react'
-import { getContentApi } from '../api/search'
+import { getContent } from '../api'
 import { useSearchStore } from '../stores/searchStore'
 import { ContentDisplay } from '../components/content'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
@@ -22,7 +22,7 @@ export function ContentDetail() {
     queryKey: ['content', id, effectiveSearchId],
     queryFn: async ({ signal }) => {
       if (!id) throw new Error('ID mangler')
-      return getContentApi(id, effectiveSearchId, { signal })
+      return getContent(id, effectiveSearchId, { signal })
     },
     enabled: !!id,
     staleTime: 10 * 60 * 1000,

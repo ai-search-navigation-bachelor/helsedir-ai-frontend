@@ -1,4 +1,4 @@
-import type { CategoryGroup } from '../../api/categorized';
+import type { CategoryGroup } from '../../types';
 import { ExpandableCategoryCard } from './ExpandableCategoryCard';
 
 export function RetningslinjeCard(props: { category: CategoryGroup; searchQuery: string; searchId?: string }) {

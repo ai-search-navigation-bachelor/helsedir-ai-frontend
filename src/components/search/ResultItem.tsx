@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
-import type { CategorySearchResult } from '../../api/categorySearch'
+import type { SearchResult } from '../../types'
 import { CategoryResultItem } from './CategoryResultItem'
 
 interface ResultItemProps {
-  result: CategorySearchResult
+  result: SearchResult
 }
 
 export function ResultItem({ result }: ResultItemProps) {

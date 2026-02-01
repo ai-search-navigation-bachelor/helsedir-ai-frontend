@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import type { CSSProperties } from 'react'
 import { FiChevronDown, FiChevronRight } from 'react-icons/fi'
 import DOMPurify from 'dompurify'
-import type { InfoResultItem } from '../../api/search'
-import { getInfobitApi } from '../../api/search'
+import { getInfobit } from '../../api'
+import type { InfoResultItem } from '../../types'
 
 type AppInfoSearchProps = {
   selectedId: string
@@ -92,7 +92,7 @@ export function AppInfoSearch({ selectedId, depth: initialDepth = 2 }: AppInfoSe
       setError(null)
 
       try {
-        const data = await getInfobitApi(selectedId, {
+        const data = await getInfobit(selectedId, {
           signal: controller.signal,
           depth,
         })

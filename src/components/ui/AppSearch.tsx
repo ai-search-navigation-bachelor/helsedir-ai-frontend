@@ -11,8 +11,8 @@ import {
   Tag,
 } from '@digdir/designsystemet-react'
 
-import type { SearchApiResult, SearchResultItem } from '../../api/search'
-import { searchApi } from '../../api/search'
+import { search } from '../../api'
+import type { SearchResponse, SearchResult } from '../../types'
 
 export type AppSearchProps = {
   label?: string
@@ -28,7 +28,7 @@ export function AppSearch({
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<SearchApiResult | null>(null)
+  const [result, setResult] = useState<SearchResponse | null>(null)
 
   const abortRef = useRef<AbortController | null>(null)
 
@@ -46,7 +46,7 @@ export function AppSearch({
     setError(null)
 
     try {
-      const data = await searchApi(trimmed, { signal: controller.signal })
+      const data = await search(trimmed, { signal: controller.signal })
       setResult(data)
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return
@@ -63,7 +63,7 @@ export function AppSearch({
     setResult(null)
   }
 
-  function ResultCard({ item }: { item: SearchResultItem }) {
+  function ResultCard({ item }: { item: SearchResult }) {
     const isClickable = Boolean(onSelectResult)
 
     return (

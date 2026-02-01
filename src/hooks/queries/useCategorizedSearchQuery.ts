@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { searchCategorizedApi, type CategorizedSearchResponse } from '../../api/categorized'
+import { searchCategorized } from '../../api'
+import type { CategorizedSearchResponse } from '../../types'
 
 export type UseCategorizedSearchQueryOptions = {
   enabled?: boolean
@@ -15,7 +16,7 @@ export function useCategorizedSearchQuery(
   return useQuery<CategorizedSearchResponse, Error>({
     queryKey: ['categorized-search', query, options?.role, options?.tema, options?.innholdstype],
     queryFn: async ({ signal }) => {
-      return searchCategorizedApi(query, {
+      return searchCategorized(query, {
         signal,
         role: options?.role,
         tema: options?.tema,
