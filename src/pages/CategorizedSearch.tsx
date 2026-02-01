@@ -82,17 +82,12 @@ export function CategorizedSearch() {
     navigate(`/search?query=${encodeURIComponent(query)}`)
   }
 
-  function handleClear() {
-    navigate('/search')
-  }
-
   return (
-    <div className="max-w-screen-xl mx-auto px-4 py-8">
+    <div className="max-w-screen-xl mx-auto px-8 py-8">
       <div className="mt-6">
         <SearchForm
           initialValue={searchQuery}
           onSubmit={handleSearch}
-          onClear={handleClear}
         />
       </div>
 

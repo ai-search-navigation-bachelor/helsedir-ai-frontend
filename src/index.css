@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  scrollbar-gutter: stable;
+}
+
 html,
 body {
   margin: 0;
@@ -14,6 +18,35 @@ body {
 body {
   font-family: "Inter", sans-serif;
   font-feature-settings: "cv05" 1; /* Enable lowercase l with tail */
+}
+
+/* Dark mode scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #475569 #e2e8f0;
+}
+
+*::-webkit-scrollbar {
+  width: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #475569;
+  border-radius: 6px;
+  border: 3px solid #e2e8f0;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #334155;
+}
+
+/* Always show scrollbar on home page */
+body.home-page {
+  overflow-y: scroll;
 }
 
 /* Styling for HTML-innhold fra API */

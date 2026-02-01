@@ -41,7 +41,7 @@ export function ContentDetail() {
     : []
 
   return (
-    <div className="max-w-screen-xl mx-auto px-4 py-8">
+    <div className="max-w-screen-xl mx-auto px-8 py-8">
       {effectiveSearchQuery ? (
         <Breadcrumb items={breadcrumbItems} />
       ) : (

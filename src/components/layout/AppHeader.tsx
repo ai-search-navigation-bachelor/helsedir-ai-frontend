@@ -13,7 +13,7 @@ export function AppHeader() {
     <>
       <div style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}>
         <header>
-          <CardBlock style={{ padding: '2rem 1rem' }}>
+          <CardBlock style={{ padding: '2.5rem 6rem 2rem 6rem' }}>
             <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-6">
               <Link
                 to='/'
@@ -21,7 +21,7 @@ export function AppHeader() {
                 className="flex items-center gap-3"
                 style={{ color: 'inherit', textDecoration: 'none' }}
               >
-                <img src='/Hdir_logo.svg' alt='Helsedirektoratet' className="h-10" />
+                <img src='/Hdir_logo.svg' alt='Helsedirektoratet' className="h-8" />
               </Link>
 
               <div className="flex gap-3 items-center">
@@ -52,7 +52,7 @@ export function AppHeader() {
                   }}
                 >
                   Søk
-                <IoSearch />
+                <IoSearch size={18} />
                 </Button>
                 <Button
                   variant='secondary'
@@ -80,7 +80,7 @@ export function AppHeader() {
                     e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
                   }}
                 >
-                  <IoMenu />
+                  <IoMenu size={18} />
                   Meny
                 </Button>
               </div>
