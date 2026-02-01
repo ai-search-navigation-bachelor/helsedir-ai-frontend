@@ -32,9 +32,9 @@ export function ContentDetail() {
     ? [
         { label: 'Forside', href: '/' },
         {
-          label: effectiveSearchQuery.toUpperCase(),
+          label: effectiveSearchQuery,
           href: `/search?query=${encodeURIComponent(effectiveSearchQuery)}`,
-          icon: <MagnifyingGlassIcon style={{ width: '16px', height: '16px' }} />
+          icon: <MagnifyingGlassIcon style={{ width: '18px', height: '18px' }} />
         },
         { label: content?.title || 'Laster...', href: '#' }
       ]

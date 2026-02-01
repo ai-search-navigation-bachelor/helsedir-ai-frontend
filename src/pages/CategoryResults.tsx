@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams, useNavigate, useParams } from 'react-router-dom'
+import { useSearchParams, useParams } from 'react-router-dom'
 import {
   Alert,
   Button,
@@ -10,7 +10,6 @@ import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
 
 import { useCategorySearchQuery } from '../hooks/queries/useCategorySearchQuery'
 import { ResultItem } from '../components/search'
-import { SearchForm } from '../components/ui/SearchForm'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { useSearchStore } from '../stores/searchStore'
 import type { BreadcrumbItem } from '../types/components'
@@ -18,23 +17,26 @@ import type { BreadcrumbItem } from '../types/components'
 export function CategoryResults() {
   const { category = '' } = useParams<{ category: string }>()
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
 
   const searchQuery = searchParams.get('query') || ''
   const searchId = useSearchStore((state) => state.searchId)
 
   const effectiveSearchId = searchId || ''
-  
+
   const [itemsToShow, setItemsToShow] = useState(20)
+
+  // Helper function to capitalize category name
+  const formatCategoryName = (cat: string) => {
+    return cat
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
 
   const { data, isLoading, error } = useCategorySearchQuery(searchQuery, category, {
     search_id: effectiveSearchId,
     enabled: !!searchQuery.trim() && !!category && !!effectiveSearchId,
   })
-
-  function handleSearch(query: string) {
-    navigate(`/search?query=${encodeURIComponent(query)}`)
-  }
 
   function handleLoadMore() {
     setItemsToShow(prev => prev + 20)
@@ -45,22 +47,17 @@ export function CategoryResults() {
 
   const breadcrumbItems: BreadcrumbItem[] = [
     { label: 'Forside', href: '/' },
-    { 
-      label: searchQuery.toUpperCase(), 
+    {
+      label: searchQuery,
       href: `/search?query=${encodeURIComponent(searchQuery)}`,
-      icon: <MagnifyingGlassIcon style={{ width: '16px', height: '16px' }} />
+      icon: <MagnifyingGlassIcon style={{ width: '18px', height: '18px' }} />
     },
-    { label: data?.category || category, href: '#' }
+    { label: formatCategoryName(data?.category || category), href: '#' }
   ]
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
       <Breadcrumb items={breadcrumbItems} />
-
-      <SearchForm
-        initialValue={searchQuery}
-        onSubmit={handleSearch}
-      />
 
       {/* Loading State */}
       {isLoading && (
@@ -83,14 +80,14 @@ export function CategoryResults() {
         <>
           {/* Header */}
           <div style={{ marginBottom: '24px' }}>
-            <h1 style={{ 
-              fontSize: '28px', 
-              fontWeight: '700', 
-              color: '#0f172a', 
+            <h1 style={{
+              fontSize: '28px',
+              fontWeight: '700',
+              color: '#0f172a',
               margin: 0,
               marginBottom: '4px'
             }}>
-              {(data.category || category).split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+              {formatCategoryName(data.category || category)}
             </h1>
             <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
               {data.total} treff

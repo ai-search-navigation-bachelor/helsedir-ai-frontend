@@ -18,7 +18,7 @@ export function AppLayout() {
           style={{
             maxWidth: '1200px',
             marginInline: 'auto',
-            padding: '1.5rem 1rem',
+            padding: '0.75rem 1rem',
           }}
         >
           <main id='main-content'>
