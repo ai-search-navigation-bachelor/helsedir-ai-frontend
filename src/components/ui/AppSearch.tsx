@@ -5,7 +5,6 @@ import {
   Alert,
   Card,
   CardBlock,
-  Details,
   Heading,
   Paragraph,
   Search,
@@ -64,39 +63,7 @@ export function AppSearch({
     setResult(null)
   }
 
-  function htmlToText(value: string): string {
-    if (!value) return ''
-    try {
-      const doc = new DOMParser().parseFromString(value, 'text/html')
-      return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim()
-    } catch {
-      return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-    }
-  }
-
-  function parseKoder(value: string | null | undefined): Record<string, string[]> | null {
-    if (!value) return null
-    try {
-      const parsed = JSON.parse(value) as unknown
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        const record = parsed as Record<string, unknown>
-        const out: Record<string, string[]> = {}
-        for (const [key, v] of Object.entries(record)) {
-          if (Array.isArray(v) && v.every((x) => typeof x === 'string')) {
-            out[key] = v as string[]
-          }
-        }
-        return Object.keys(out).length > 0 ? out : null
-      }
-      return null
-    } catch {
-      return null
-    }
-  }
-
   function ResultCard({ item }: { item: SearchResultItem }) {
-    const preview = item.tekst ? htmlToText(item.tekst) : ''
-    const koder = parseKoder(item.koder)
     const isClickable = Boolean(onSelectResult)
 
     return (
@@ -106,28 +73,20 @@ export function AppSearch({
       >
         <CardBlock className='app-search__card-block'>
           <Heading level={3} data-size='md' style={{ margin: 0 }}>
-            {item.tittel}
+            {item.title}
           </Heading>
 
           <div className='app-search__tags'>
-            {item.infoType && <Tag variant='outline'>{item.infoType}</Tag>}
-            {koder &&
-              Object.entries(koder).flatMap(([key, values]) =>
-                values.map((v) => (
-                  <Tag key={`${item.id}-${key}-${v}`} variant='outline'>
-                    {key}: {v}
-                  </Tag>
-                )),
-              )}
+            <Tag variant='outline'>{item.info_type}</Tag>
+            {item.score && (
+              <Tag variant='outline'>Score: {item.score.toFixed(2)}</Tag>
+            )}
           </div>
 
-          {preview && (
-            <Details onClick={(e) => e.stopPropagation()}>
-              <Details.Summary>Vis tekst</Details.Summary>
-              <Details.Content>
-                <Paragraph style={{ margin: 0 }}>{preview}</Paragraph>
-              </Details.Content>
-            </Details>
+          {item.explanation && (
+            <Paragraph data-size='sm' style={{ color: '#666', margin: 0 }}>
+              {item.explanation}
+            </Paragraph>
           )}
         </CardBlock>
       </Card>

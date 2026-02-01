@@ -1,117 +1,118 @@
-export type SearchResultItem = {
-  url: string
-  id: string
-  tittel: string
-  tekst?: string | null
-  infoId?: string
-  infoType?: string
-  koder?: string | null
-  maalgruppe?: unknown[]
-}
+/**
+ * Search API
+ * Handles general search and content retrieval
+ */
 
-export type SearchApiResult = {
+import { API_ENDPOINTS } from './config'
+import { httpRequest, buildUrl } from './httpClient'
+import type { SearchResultBase, PaginatedResponse, BaseRequestOptions, ContentDetail, InfoResultItem } from './types'
+
+/**
+ * Search result item
+ */
+export type SearchResultItem = SearchResultBase
+
+/**
+ * Search API result
+ */
+export interface SearchApiResult extends PaginatedResponse {
   results: SearchResultItem[]
 }
 
-export type InfoResultItem = {
-  id: string
-  tittel: string
-  tekst?: string | null
-  intro?: string
-  infoId?: string
-  infoType?: string
-  url: string
-  forstPublisert?: string
-  sistFagligOppdatert?: string
-  children?: InfoResultItem[]
-}
-
-export type InfoSearchApiResult = {
-  results: InfoResultItem[]
-}
-
-export type SearchApiOptions = {
-  signal?: AbortSignal
+/**
+ * Search options
+ */
+export interface SearchApiOptions extends BaseRequestOptions {
   depth?: number
+  offset?: number
+  limit?: number
+  search_id?: string
 }
 
-function getSearchEndpoint(): string {
-  const envEndpoint = import.meta.env.VITE_SEARCH_ENDPOINT as string | undefined
-  if (envEndpoint && envEndpoint.trim().length > 0) return envEndpoint
-  return 'https://helsedir-ai-backend.onrender.com/helsedir/search'
+/**
+ * Empty search response for invalid queries
+ */
+function emptySearchResponse(): SearchApiResult {
+  return {
+    results: [],
+    query: '',
+    total: 0,
+    offset: 0,
+    limit: 10,
+    search_id: '',
+    has_next: false,
+    has_prev: false,
+  }
 }
 
+/**
+ * General search
+ */
 export async function searchApi(
   query: string,
-  { signal }: SearchApiOptions = {},
+  { signal, offset = 0, limit = 10, role, search_id }: SearchApiOptions = {},
 ): Promise<SearchApiResult> {
   const trimmed = query.trim()
-  if (!trimmed) return { results: [] }
+  
+  if (!trimmed) {
+    return emptySearchResponse()
+  }
 
-  const endpoint = getSearchEndpoint()
-
-  const url = endpoint.startsWith('http')
-    ? new URL(endpoint)
-    : new URL(endpoint, window.location.origin)
-  url.searchParams.set('QueryText', trimmed)
-
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-    signal,
+  const url = buildUrl(API_ENDPOINTS.search, {
+    query: trimmed,
+    offset,
+    limit,
+    role,
+    search_id,
   })
 
-  if (!response.ok) {
-    throw new Error(`Search failed: ${response.status} ${response.statusText}`)
-  }
-
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    return response.json() as Promise<SearchApiResult>
-  }
-
-  throw new Error('Search failed: expected JSON response')
+  return httpRequest<SearchApiResult>(url, { signal })
 }
 
-function getInfobitEndpoint(): string {
-  const envEndpoint = import.meta.env.VITE_INFOBIT_ENDPOINT as string | undefined
-  if (envEndpoint && envEndpoint.trim().length > 0) return envEndpoint
-  return 'https://helsedir-ai-backend.onrender.com/helsedir/infobit'
+/**
+ * Get content by ID
+ */
+export async function getContentApi(
+  contentId: string,
+  searchId?: string,
+  { signal }: SearchApiOptions = {},
+): Promise<ContentDetail> {
+  const trimmed = contentId.trim()
+  
+  if (!trimmed) {
+    throw new Error('Content ID is required')
+  }
+
+  const url = buildUrl(`${API_ENDPOINTS.content}/${encodeURIComponent(trimmed)}`, {
+    search_id: searchId,
+  })
+
+  return httpRequest<ContentDetail>(url, { signal })
 }
 
+/**
+ * @deprecated Use getContentApi instead
+ * Get infobit by ID (legacy endpoint)
+ */
 export async function getInfobitApi(
   infobitId: string,
   { signal, depth = 2 }: SearchApiOptions = {},
 ): Promise<InfoResultItem> {
   const trimmed = infobitId.trim()
-  if (!trimmed) throw new Error('Infobit ID is required')
-
-  const endpoint = getInfobitEndpoint()
   
-  const url = endpoint.startsWith('http')
-    ? new URL(`${endpoint}/${encodeURIComponent(trimmed)}`)
-    : new URL(`${endpoint}/${encodeURIComponent(trimmed)}`, window.location.origin)
-  url.searchParams.set('include_children', 'true')
-  url.searchParams.set('depth', String(depth))
+  if (!trimmed) {
+    throw new Error('Infobit ID is required')
+  }
 
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-    signal,
+  // Legacy endpoint for backwards compatibility
+  const legacyEndpoint = 'http://129.241.150.141:8000/helsedir/infobit'
+  const url = buildUrl(`${legacyEndpoint}/${encodeURIComponent(trimmed)}`, {
+    include_children: true,
+    depth,
   })
 
-  if (!response.ok) {
-    throw new Error(`Infobit fetch failed: ${response.status} ${response.statusText}`)
-  }
-
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    return response.json() as Promise<InfoResultItem>
-  }
-
-  throw new Error('Infobit fetch failed: expected JSON response')
+  return httpRequest<InfoResultItem>(url, { signal })
 }
+
+// Re-export shared types for convenience
+export type { ContentDetail, InfoResultItem } from './types'
