@@ -111,7 +111,7 @@ body {
 }
 
 .site-header__button {
-  border-radius: 999px;
+  border-radius: 99px;
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
@@ -119,6 +119,19 @@ body {
   min-width: 0;
   flex-shrink: 0;
   white-space: nowrap;
+  background-color: var(--ds-color-hvit-surface-default) !important;
+  border: 2px solid var(--ds-color-logobla-1-base-hover) !important;
+  color: var(--ds-color-logobla-1-text-default) !important;
+}
+
+.site-header__button:hover,
+.site-header__button:focus-visible {
+  background-color: var(--ds-color-logobla-1-base-hover) !important;
+  color: var(--ds-color-logobla-1-base-contrast-default) !important;
+}
+
+.site-header__button:active {
+  background-color: var(--ds-color-logobla-1-base-active) !important;
 }
 
 /* Search shell system */

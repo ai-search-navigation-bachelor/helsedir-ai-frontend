@@ -38,24 +38,6 @@ export function AppHeader() {
                   }}
                   aria-label='Søk'
                   className='site-header__button'
-                  style={{
-                    backgroundColor: ds.color('hvit', 'surface-default'),
-                    border: `2px solid ${ds.color('logobla-1', 'base-hover')}`,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
-                    e.currentTarget.style.color = ds.color('logobla-1', 'base-contrast-default')
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('hvit', 'surface-default')
-                    e.currentTarget.style.color = ds.color('logobla-1', 'text-default')
-                  }}
-                  onMouseDown={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-active')
-                  }}
-                  onMouseUp={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
-                  }}
                 >
                   Søk
                   <IoSearch size={18} />
@@ -64,24 +46,6 @@ export function AppHeader() {
                   variant='secondary'
                   aria-label='Meny'
                   className='site-header__button'
-                  style={{
-                    backgroundColor: ds.color('hvit', 'surface-default'),
-                    border: `2px solid ${ds.color('logobla-1', 'base-hover')}`,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
-                    e.currentTarget.style.color = ds.color('logobla-1', 'base-contrast-default')
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('hvit', 'surface-default')
-                    e.currentTarget.style.color = ds.color('logobla-1', 'text-default')
-                  }}
-                  onMouseDown={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-active')
-                  }}
-                  onMouseUp={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
-                  }}
                 >
                   <IoMenu size={18} />
                   Meny
