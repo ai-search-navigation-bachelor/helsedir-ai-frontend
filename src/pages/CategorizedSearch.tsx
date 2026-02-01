@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Alert,
@@ -8,6 +8,7 @@ import {
 
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery';
 import { TemaSideCard, RetningslinjeCard, RegularCategoryCard } from '../components/search';
+import { CategorySidebar } from '../components/search/CategorySidebar';
 import { SearchForm } from '../components/ui/SearchForm';
 import { FilterBar } from '../components/ui/FilterBar';
 import { useSearchStore } from '../stores/searchStore';
@@ -18,7 +19,7 @@ import {
 
 /**
  * Categorized Search Page
- * Displays search results organized by categories with different card styles
+ * Displays search results organized by categories with sidebar navigation
  */
 export function CategorizedSearch() {
   const [searchParams] = useSearchParams();
@@ -27,6 +28,9 @@ export function CategorizedSearch() {
 
   const setSearchData = useSearchStore((state) => state.setSearchData);
   const filters = useSearchStore((state) => state.filters);
+
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const { data, isLoading, error } = useCategorizedSearchQuery(searchQuery, {
     enabled: !!searchQuery.trim(),
@@ -67,16 +71,67 @@ export function CategorizedSearch() {
   }, [data]);
 
   // Combine all categories (priority first, then others)
-  const allCategories = [
+  const allCategories = useMemo(() => [
     ...(data?.priority_categories || []),
     ...(data?.other_categories || [])
-  ];
+  ], [data?.priority_categories, data?.other_categories]);
+
+  // Track active category with intersection observer
+  useEffect(() => {
+    if (allCategories.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const categoryId = entry.target.id.replace('category-', '');
+            setActiveCategory(categoryId);
+          }
+        });
+      },
+      { rootMargin: '-20% 0px -70% 0px', threshold: 0.1 }
+    );
+
+    allCategories.forEach((cat) => {
+      const element = document.getElementById(`category-${cat.category}`);
+      if (element) observer.observe(element);
+    });
+
+    return () => observer.disconnect();
+  }, [allCategories]);
+
+  // Scroll to category when clicked in sidebar
+  const handleCategoryClick = (categoryId: string) => {
+    const element = document.getElementById(`category-${categoryId}`);
+    if (element) {
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - 100; // 100px offset from top
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Toggle collapse for a category (only for regular categories, not temaside/retningslinje)
+  const toggleCollapse = (categoryId: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
 
   // Render appropriate card component based on category type
   function renderCategoryCard(category: typeof allCategories[0]) {
     const { category: categoryId } = category;
 
-    // Use specialized card for Temaside
+    // Use specialized card for Temaside (always expanded, no collapse)
     if (categoryId === TEMASIDE_CATEGORY) {
       return (
         <TemaSideCard
@@ -88,7 +143,7 @@ export function CategorizedSearch() {
       );
     }
 
-    // Use specialized card for Retningslinje
+    // Use specialized card for Retningslinje (always expanded, no collapse)
     if (categoryId === RETNINGSLINJE_CATEGORY) {
       return (
         <RetningslinjeCard
@@ -100,13 +155,16 @@ export function CategorizedSearch() {
       );
     }
 
-    // Use regular card for all other categories
+    // Use regular card for all other categories (collapsible)
+    const isCollapsed = collapsedCategories.has(categoryId);
     return (
       <RegularCategoryCard
         key={categoryId}
         category={category}
         searchQuery={searchQuery}
         searchId={data?.search_id}
+        isExpanded={!isCollapsed}
+        onToggle={() => toggleCollapse(categoryId)}
       />
     );
   }
@@ -152,9 +210,24 @@ export function CategorizedSearch() {
               <p className="text-slate-600">Ingen resultater funnet for "{searchQuery}"</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-6">
-              {/* Dynamically render all categories returned by API */}
-              {allCategories.map(renderCategoryCard)}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '280px 1fr',
+                gap: '32px',
+              }}
+            >
+              {/* Left sidebar - Category navigation */}
+              <CategorySidebar
+                categories={allCategories}
+                activeCategory={activeCategory}
+                onCategoryClick={handleCategoryClick}
+              />
+
+              {/* Right content - Category cards */}
+              <div className="flex flex-col">
+                {allCategories.map(renderCategoryCard)}
+              </div>
             </div>
           )}
         </>
