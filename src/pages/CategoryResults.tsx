@@ -56,7 +56,7 @@ export function CategoryResults() {
   ]
 
   return (
-    <div className="max-w-screen-xl mx-auto px-8 py-8">
+    <div className="max-w-screen-xl mx-auto px-8 pt-4 pb-8">
       <Breadcrumb items={breadcrumbItems} />
 
       {/* Loading State */}
