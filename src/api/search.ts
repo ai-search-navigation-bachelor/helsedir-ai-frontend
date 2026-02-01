@@ -17,7 +17,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://129.241.150.141:80
  * Categorized search options
  */
 export interface CategorizedSearchOptions extends BaseRequestOptions {
-  tema?: string
+  tema?: string[]
   innholdstype?: string
 }
 
@@ -84,7 +84,7 @@ export async function searchCategorized(
   const url = buildUrl(`${BASE_URL}/search/categorized`, {
     query: trimmed,
     role,
-    tema,
+    tema: tema && tema.length > 0 ? tema.join(',') : undefined,
     innholdstype,
   })
 

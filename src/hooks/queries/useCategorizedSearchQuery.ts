@@ -5,7 +5,7 @@ import type { CategorizedSearchResponse } from '../../types'
 export type UseCategorizedSearchQueryOptions = {
   enabled?: boolean
   role?: string
-  tema?: string
+  tema?: string[]
   innholdstype?: string
 }
 

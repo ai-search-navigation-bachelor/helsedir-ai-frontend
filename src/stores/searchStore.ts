@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export interface SearchFilters {
-  tema?: string
+  tema?: string[]
 }
 
 interface SearchState {
