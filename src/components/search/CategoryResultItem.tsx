@@ -1,29 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
 import { ChevronRightIcon } from '@navikt/aksel-icons';
-import { getContent } from '../../api';
-import type { ContentDetail } from '../../types';
-import { useSearchStore } from '../../stores/searchStore';
 
 export interface CategoryResultItemProps {
   result: { id: string; title: string };
-  searchId?: string;
   variant: 'temaside' | 'retningslinje' | 'regular';
 }
 
-export function CategoryResultItem({ result, searchId, variant }: CategoryResultItemProps) {
-  const storedSearchId = useSearchStore((state) => state.searchId);
-  const effectiveSearchId = searchId || storedSearchId || undefined;
-  
-  const shouldFetch = variant !== 'temaside';
-
-  const { data: content } = useQuery<ContentDetail, Error>({
-    queryKey: ['content', result.id, effectiveSearchId],
-    queryFn: async () => getContent(result.id, effectiveSearchId),
-    enabled: shouldFetch,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  const rootLinkTitle = content?.links?.find((link) => link.rel === 'root')?.tittel;
+export function CategoryResultItem({ result, variant }: CategoryResultItemProps) {
 
   if (variant === 'temaside') {
     return (

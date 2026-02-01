@@ -124,7 +124,7 @@ export function FilterBar() {
                   <Checkbox
                     checked={selectedTemas.includes(tema.value)}
                     onChange={() => handleTemaToggle(tema.value)}
-                    size="sm"
+                    aria-label={tema.label}
                   />
                   <span className="text-xs text-slate-700 leading-tight">{tema.label}</span>
                 </label>

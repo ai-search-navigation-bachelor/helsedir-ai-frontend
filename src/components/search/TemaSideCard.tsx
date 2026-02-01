@@ -3,8 +3,6 @@ import type { CategoryGroup } from '../../types';
 
 export function TemaSideCard(props: {
   category: CategoryGroup;
-  searchQuery: string;
-  searchId?: string;
 }) {
   return (
     <div id={`category-${props.category.category}`} className="mb-6">

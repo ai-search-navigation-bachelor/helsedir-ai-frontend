@@ -35,7 +35,6 @@ export function CategorizedSearch() {
   const { data, isLoading, error } = useCategorizedSearchQuery(searchQuery, {
     enabled: !!searchQuery.trim(),
     tema: filters.tema,
-    innholdstype: filters.innholdstype,
   });
 
   // Store search_id in Zustand when data is received
@@ -137,8 +136,6 @@ export function CategorizedSearch() {
         <TemaSideCard
           key={categoryId}
           category={category}
-          searchQuery={searchQuery}
-          searchId={data?.search_id}
         />
       );
     }
@@ -149,8 +146,6 @@ export function CategorizedSearch() {
         <RetningslinjeCard
           key={categoryId}
           category={category}
-          searchQuery={searchQuery}
-          searchId={data?.search_id}
         />
       );
     }
