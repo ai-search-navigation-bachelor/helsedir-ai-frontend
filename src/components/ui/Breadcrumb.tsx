@@ -13,7 +13,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
         {items.map((item, index) => {
           const isLast = index === items.length - 1
           const content = (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'underline' }}>
+            <span className="inline-flex items-center gap-1.5 underline">
               {item.label}
               {item.icon}
             </span>
@@ -22,7 +22,7 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
           return (
             <Breadcrumbs.Item key={index}>
               {isLast ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <span className="inline-flex items-center gap-1.5">
                   {item.label}
                   {item.icon}
                 </span>

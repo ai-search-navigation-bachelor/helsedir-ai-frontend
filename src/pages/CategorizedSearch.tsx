@@ -87,12 +87,14 @@ export function CategorizedSearch() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <SearchForm
-        initialValue={searchQuery}
-        onSubmit={handleSearch}
-        onClear={handleClear}
-      />
+    <div className="max-w-screen-xl mx-auto px-4 py-8">
+      <div className="mt-6">
+        <SearchForm
+          initialValue={searchQuery}
+          onSubmit={handleSearch}
+          onClear={handleClear}
+        />
+      </div>
 
       {isLoading && (
         <div className="flex justify-center py-12">
@@ -123,7 +125,7 @@ export function CategorizedSearch() {
               <p className="text-slate-600">Ingen resultater funnet for "{searchQuery}"</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="flex flex-col gap-6">
               {/* Box 1: Temaside - Always show (mock if not in DB) */}
               {temasideCategory && (
                 <TemaSideCard category={temasideCategory} searchQuery={searchQuery} searchId={data.search_id} />

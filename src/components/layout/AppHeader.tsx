@@ -14,31 +14,17 @@ export function AppHeader() {
       <div style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}>
         <header>
           <CardBlock style={{ padding: '2rem 1rem' }}>
-            <div
-              style={{
-                maxWidth: '1100px',
-                marginInline: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '1.5rem',
-              }}
-            >
+            <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-6">
               <Link
                 to='/'
                 aria-label='Helsedirektoratet'
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                }}
+                className="flex items-center gap-3"
+                style={{ color: 'inherit', textDecoration: 'none' }}
               >
-                <img src='/Hdir_logo.svg' alt='Helsedirektoratet' height={40} />
+                <img src='/Hdir_logo.svg' alt='Helsedirektoratet' className="h-10" />
               </Link>
 
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <div className="flex gap-3 items-center">
                 <Button
                   variant='secondary'
                   style={{

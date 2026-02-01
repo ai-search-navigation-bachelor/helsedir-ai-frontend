@@ -13,18 +13,9 @@ export function AppLayout() {
       <SkipLink href='#main-content'>Hopp til hovedinnhold</SkipLink>
       <AppHeader />
       {!isHome && (
-        <CardBlock
-          asChild
-          style={{
-            maxWidth: '1200px',
-            marginInline: 'auto',
-            padding: '0.75rem 1rem',
-          }}
-        >
-          <main id='main-content'>
-            <Outlet />
-          </main>
-        </CardBlock>
+        <main id='main-content'>
+          <Outlet />
+        </main>
       )}
       {isHome && (
         <main id='main-content'>

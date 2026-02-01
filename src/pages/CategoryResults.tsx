@@ -56,12 +56,12 @@ export function CategoryResults() {
   ]
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+    <div className="max-w-screen-xl mx-auto px-4 py-8">
       <Breadcrumb items={breadcrumbItems} />
 
       {/* Loading State */}
       {isLoading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '48px' }}>
+        <div className="flex justify-center py-12">
           <Spinner aria-label="Laster..." />
         </div>
       )}
@@ -79,37 +79,25 @@ export function CategoryResults() {
       {data && !isLoading && !error && (
         <>
           {/* Header */}
-          <div style={{ marginBottom: '24px' }}>
-            <h1 style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              color: '#0f172a',
-              margin: 0,
-              marginBottom: '4px'
-            }}>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-slate-900 mb-1 m-0">
               {formatCategoryName(data.category || category)}
             </h1>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+            <p className="text-sm text-slate-500 m-0">
               {data.total} treff
             </p>
           </div>
 
           {/* Results List */}
           {data.results.length === 0 ? (
-            <div style={{
-              padding: '48px',
-              textAlign: 'center',
-              backgroundColor: '#f8fafc',
-              borderRadius: '12px',
-              border: '1px solid #e2e8f0'
-            }}>
+            <div className="py-12 text-center bg-slate-50 rounded-xl border border-slate-200">
               <Paragraph style={{ color: '#64748b', margin: 0 }}>
                 Ingen resultater funnet
               </Paragraph>
             </div>
           ) : (
             <>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="flex flex-col gap-3">
                 {visibleResults.map((result) => (
                   <ResultItem key={result.id} result={result} />
                 ))}
@@ -117,9 +105,9 @@ export function CategoryResults() {
 
               {/* Load More Button */}
               {hasMore && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
-                  <Button 
-                    variant="secondary" 
+                <div className="flex justify-center mt-8">
+                  <Button
+                    variant="secondary"
                     onClick={handleLoadMore}
                     data-size="lg"
                   >

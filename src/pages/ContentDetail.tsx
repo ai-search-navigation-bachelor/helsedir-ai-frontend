@@ -41,7 +41,7 @@ export function ContentDetail() {
     : []
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+    <div className="max-w-screen-xl mx-auto px-4 py-8">
       {effectiveSearchQuery ? (
         <Breadcrumb items={breadcrumbItems} />
       ) : (
@@ -55,7 +55,7 @@ export function ContentDetail() {
       )}
 
       {isLoading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+        <div className="flex justify-center py-10">
           <Spinner aria-label="Laster innhold..." />
         </div>
       )}

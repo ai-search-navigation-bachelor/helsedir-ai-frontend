@@ -10,15 +10,11 @@ interface HomeSearchFormProps {
 
 export function HomeSearchForm({ query, onQueryChange, onSubmit }: HomeSearchFormProps) {
   return (
-    <div 
-      style={{ 
-        backgroundColor: colors.headerBg,
-        padding: '2rem 1rem',
-        minHeight: '100px',
-        borderBottomRightRadius: '50px',
-      }}
+    <div
+      className="px-4 py-8 min-h-[100px] rounded-br-[50px]"
+      style={{ backgroundColor: colors.headerBg }}
     >
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div className="max-w-screen-xl mx-auto">
         <Label htmlFor="home-search" style={{ fontWeight: 'bold' }}>
           Hva leter du etter?
         </Label>
