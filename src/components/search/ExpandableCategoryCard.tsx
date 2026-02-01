@@ -1,27 +1,18 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@digdir/designsystemet-react';
-import { ChevronRightIcon, ChevronDownIcon } from '@navikt/aksel-icons';
-import type { CategoryGroup } from '../../api/categorized';
-import { CategoryResultItem } from './CategoryResultItem';
+import { useState } from 'react'
+import { ChevronDownIcon } from '@navikt/aksel-icons'
+import { Heading, Link, Button } from '@digdir/designsystemet-react'
+import type { CategoryGroup } from '../../api/categorized'
 
-type Variant = 'temaside' | 'retningslinje';
-
-const UI = {
-  showMore: 'Vis flere',
-  showLess: 'Vis færre',
-  articles: 'artikler',
-  hits: 'treff',
-};
+type Variant = 'temaside' | 'retningslinje'
 
 export interface ExpandableCategoryCardProps {
-  category: CategoryGroup;
-  searchQuery: string;
-  searchId?: string;
-  variant: Variant;
-  badgeSuffix?: string;
-  previewCount?: number;
-  subtitle?: string;
+  category: CategoryGroup
+  searchQuery: string
+  searchId?: string
+  variant: Variant
+  badgeSuffix?: string
+  previewCount?: number
+  subtitle?: string
 }
 
 export function ExpandableCategoryCard({
@@ -29,198 +20,79 @@ export function ExpandableCategoryCard({
   searchQuery,
   searchId,
   variant,
-  badgeSuffix = UI.articles,
-  previewCount = 3,
+  badgeSuffix = 'artikler',
+  previewCount = 0,
   subtitle,
 }: ExpandableCategoryCardProps) {
-  const navigate = useNavigate();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isHoveringHeader, setIsHoveringHeader] = useState(false);
-  const [isHoveringButton, setIsHoveringButton] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false)
 
-  const navigateToCategory = () => {
-    // For expandable cards (Temaside/Retningslinje), navigate to first result if available
-    const firstResult = category.results?.[0];
-    if (firstResult) {
-      navigate(`/content/${firstResult.id}`);
-    } else if (searchId) {
-      // Fallback to category page if no results
-      navigate(
-        `/category/${encodeURIComponent(category.category)}?query=${encodeURIComponent(searchQuery)}`
-      );
-    }
-  };
+  const items = category.results ?? []
+  const topResult = items[0]
+  const remainingItems = items.slice(1)
 
-  const visibleResults = useMemo(() => {
-    const base = category.results ?? [];
-    if (isExpanded) return base;
-    return base.slice(0, Math.max(0, previewCount));
-  }, [category.results, isExpanded, previewCount]);
-
-  const title = category.display_name;
-  const sub = subtitle ?? category.display_name;
+  if (!topResult) return null
 
   return (
-    <div
-      style={{
-        overflow: 'hidden',
-        borderRadius: '16px',
-        border: '2px solid #cbd5e1',
-        backgroundColor: '#f0f9ff',
-        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-      }}
-    >
-      {/* Header */}
-      <button
-        type="button"
-        onClick={navigateToCategory}
-        onMouseEnter={() => setIsHoveringHeader(true)}
-        onMouseLeave={() => setIsHoveringHeader(false)}
-        style={{
-          position: 'relative',
-          display: 'block',
-          width: '100%',
-          textAlign: 'left',
-          padding: '20px 24px',
-          backgroundColor: isHoveringHeader ? '#dbeafe' : '#e0f2fe',
-          borderBottom: '2px solid #cbd5e1',
-          border: 'none',
-          cursor: 'pointer',
-          transition: 'background-color 0.2s',
-        }}
+    <div className="bg-white border border-slate-200 rounded-lg p-5 mb-6">
+      {/* Category name and count */}
+      <div className="mb-4 pb-3 border-b border-slate-200">
+        <div className="font-semibold text-slate-900 text-lg mb-1">
+          {category.display_name}
+        </div>
+        <div className="text-sm text-slate-500">
+          {category.count} treff
+        </div>
+      </div>
+
+      {/* Top result - best match */}
+      <Link
+        href={`/content/${topResult.id}`}
+        className="block p-3 border border-slate-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all no-underline mb-4"
+        style={{ textDecoration: 'none' }}
       >
-        {/* Left marker */}
-        <span
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            bottom: 0,
-            width: '4px',
-            backgroundColor: '#2563eb',
-          }}
-        />
-
-        {/* Badge */}
-        <div style={{ position: 'absolute', left: '20px', top: '16px' }}>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              borderRadius: '9999px',
-              padding: '4px 12px',
-              fontSize: '12px',
-              fontWeight: '500',
-              backgroundColor: 'white',
-              color: '#334155',
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            {category.count} {badgeSuffix}
-          </span>
+        <div className="font-medium text-slate-900 mb-1">
+          {topResult.title}
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-          <div style={{ flex: 1, textAlign: 'center' }}>
-            <h3 style={{ fontSize: '24px', fontWeight: '600', color: '#0f172a', lineHeight: '1.2', margin: 0 }}>
-              {title}
-            </h3>
-            <p style={{ fontSize: '14px', fontWeight: '600', color: '#334155', marginTop: '4px' }}>
-              {sub}
-            </p>
-          </div>
-          <ChevronRightIcon style={{ width: '20px', height: '20px', color: '#475569', flexShrink: 0 }} />
+        <div className="text-sm text-slate-500">
+          Hentet fra: {category.display_name}
         </div>
-      </button>
+      </Link>
 
-      {/* List - Show when expanded or previewCount > 0 */}
-      {(category.results && category.results.length > 0) && (
-        <div style={{ padding: '16px' }}>
-          {visibleResults.length > 0 && (
-            <div
-              style={{
-                borderRadius: '12px',
-                backgroundColor: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                padding: '12px',
-                marginBottom: '12px',
-              }}
+      {/* Expandable list of remaining results */}
+      {isExpanded && remainingItems.length > 0 && (
+        <div className="space-y-3 mb-3">
+          {remainingItems.map((result) => (
+            <Link
+              key={result.id}
+              href={`/content/${result.id}`}
+              className="block p-3 border border-slate-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all no-underline"
+              style={{ textDecoration: 'none' }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {visibleResults.map((result) => (
-                  <a
-                    key={result.id}
-                    href={`/content/${result.id}`}
-                    style={{
-                      display: 'block',
-                      borderRadius: '12px',
-                      border: '1px solid #e2e8f0',
-                      backgroundColor: 'white',
-                      padding: '12px 16px',
-                      textDecoration: 'none',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#f8fafc';
-                      e.currentTarget.style.borderColor = '#cbd5e1';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'white';
-                      e.currentTarget.style.borderColor = '#e2e8f0';
-                    }}
-                  >
-                    <CategoryResultItem result={result} searchId={searchId} variant={variant} />
-                  </a>
-                ))}
+              <div className="font-medium text-slate-900 mb-1">
+                {result.title}
               </div>
-            </div>
-          )}
-
-          {/* Footer controls - Always show if there are results */}
-          <button
-            type="button"
-            onClick={() => setIsExpanded((v) => !v)}
-            onMouseEnter={() => setIsHoveringButton(true)}
-            onMouseLeave={() => setIsHoveringButton(false)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: isHoveringButton ? '#1e40af' : '#1d4ed8',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '12px',
-              borderRadius: '8px',
-              transition: 'color 0.2s',
-              width: '100%',
-            }}
-            aria-expanded={isExpanded}
-          >
-              {isExpanded ? UI.showLess : UI.showMore}
-            <ChevronDownIcon
-              style={{
-                width: '16px',
-                height: '16px',
-                transition: 'transform 0.2s',
-                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-              }}
-            />
-          </button>
-
-          {/* Optional: "Vis flere (n til)" button */}
-          {isExpanded && category.count > (category.results?.length ?? 0) && (
-            <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
-              <Button variant="tertiary" data-size="sm" onClick={navigateToCategory}>
-                Vis flere ({category.count - (category.results?.length ?? 0)} til)
-              </Button>
-            </div>
-          )}
+              <div className="text-sm text-slate-500">
+                Hentet fra: {category.display_name}
+              </div>
+            </Link>
+          ))}
         </div>
       )}
+
+      {/* Show more/less button */}
+      {remainingItems.length > 0 && (
+        <Button
+          variant="tertiary"
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{ marginTop: isExpanded ? '0' : '12px', padding: 0 }}
+          className="text-sm flex items-center gap-2"
+        >
+          {isExpanded ? 'Vis færre' : `Vis flere (${remainingItems.length})`}
+          <ChevronDownIcon
+            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          />
+        </Button>
+      )}
     </div>
-  );
+  )
 }
