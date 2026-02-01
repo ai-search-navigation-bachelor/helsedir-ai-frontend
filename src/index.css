@@ -343,11 +343,6 @@ body {
   background-color: #334155;
 }
 
-/* Always show scrollbar on home page */
-body.home-page {
-  overflow-y: scroll;
-}
-
 /* Styling for HTML-innhold fra API */
 .content-html h2 {
   font-size: 24px;
