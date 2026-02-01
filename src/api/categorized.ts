@@ -10,7 +10,7 @@ import type { SearchResultBase, BaseRequestOptions } from './types'
 /**
  * Category result item
  */
-export interface CategoryResult extends SearchResultBase {}
+export type CategoryResult = SearchResultBase
 
 /**
  * Category group
@@ -38,7 +38,7 @@ export interface CategorizedSearchResponse {
 /**
  * Categorized search options
  */
-export interface CategorizedSearchOptions extends BaseRequestOptions {}
+export type CategorizedSearchOptions = BaseRequestOptions
 
 /**
  * Empty response for invalid queries

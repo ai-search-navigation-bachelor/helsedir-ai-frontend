@@ -5,7 +5,6 @@ import {
   Alert,
   Card,
   CardBlock,
-  Details,
   Heading,
   Paragraph,
   Search,

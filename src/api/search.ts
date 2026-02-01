@@ -10,7 +10,7 @@ import type { SearchResultBase, PaginatedResponse, BaseRequestOptions, ContentDe
 /**
  * Search result item
  */
-export interface SearchResultItem extends SearchResultBase {}
+export type SearchResultItem = SearchResultBase
 
 /**
  * Search API result
