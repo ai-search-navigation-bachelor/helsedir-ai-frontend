@@ -33,7 +33,7 @@ export function ExpandableCategoryCard({
   if (!topResult) return null
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-5 mb-6">
+    <div className="bg-white border-2 border-slate-300 rounded-lg p-5 mb-6">
       {/* Category name and count */}
       <div className="mb-4 pb-3 border-b border-slate-200">
         <div className="font-semibold text-slate-900 text-lg mb-1">
@@ -47,10 +47,10 @@ export function ExpandableCategoryCard({
       {/* Top result - best match */}
       <Link
         href={`/content/${topResult.id}`}
-        className="block p-3 border border-slate-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all no-underline mb-4"
+        className="block py-5 px-5 -mx-5 mb-3 bg-slate-50 hover:bg-blue-100 border-l-4 border-slate-300 hover:border-blue-500 transition-all no-underline"
         style={{ textDecoration: 'none' }}
       >
-        <div className="font-medium text-slate-900 mb-1">
+        <div className="font-semibold text-slate-900 mb-2 text-lg">
           {topResult.title}
         </div>
         <div className="text-sm text-slate-500">
@@ -60,15 +60,15 @@ export function ExpandableCategoryCard({
 
       {/* Expandable list of remaining results */}
       {isExpanded && remainingItems.length > 0 && (
-        <div className="space-y-3 mb-3">
+        <div className="space-y-2 mb-3">
           {remainingItems.map((result) => (
             <Link
               key={result.id}
               href={`/content/${result.id}`}
-              className="block p-3 border border-slate-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all no-underline"
+              className="block p-4 -mx-5 px-5 bg-slate-50 hover:bg-blue-100 border-l-4 border-slate-300 hover:border-blue-500 transition-all no-underline"
               style={{ textDecoration: 'none' }}
             >
-              <div className="font-medium text-slate-900 mb-1">
+              <div className="font-semibold text-slate-900 mb-1 text-base">
                 {result.title}
               </div>
               <div className="text-sm text-slate-500">
