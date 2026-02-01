@@ -16,15 +16,18 @@ export function AppHeader() {
         style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}
       >
         <header>
-          <CardBlock style={{ padding: '2.5rem 6rem 2rem 6rem' }}>
+          <CardBlock style={{ padding: '2rem' }}>
             <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-6">
               <Link
                 to='/'
                 aria-label='Helsedirektoratet'
-                className="flex items-center gap-3"
+                className="flex items-center gap-3 flex-shrink-0"
                 style={{ color: 'inherit', textDecoration: 'none' }}
               >
-                <img src='/Hdir_logo.svg' alt='Helsedirektoratet' className="h-8" />
+                <picture>
+                  <source srcSet='/hdir_logo_small.svg' media='(max-width: 580px)' />
+                  <img src='/Hdir_logo.svg' alt='Helsedirektoratet' className="h-8" />
+                </picture>
               </Link>
 
               <div className="flex gap-3 items-center">
