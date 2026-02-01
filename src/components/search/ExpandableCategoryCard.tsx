@@ -87,7 +87,7 @@ export function ExpandableCategoryCard({
           style={{ marginTop: isExpanded ? '0' : '12px', padding: 0 }}
           className="text-sm flex items-center gap-2"
         >
-          {isExpanded ? 'Vis færre' : `Vis alle (${category.count})`}
+          {isExpanded ? 'Vis færre' : `Vis resten (${category.count - 1})`}
           <ChevronDownIcon
             className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
           />

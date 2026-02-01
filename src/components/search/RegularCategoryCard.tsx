@@ -29,17 +29,18 @@ export function RegularCategoryCard({ category, searchQuery, searchId }: Regular
         className="flex items-center justify-between w-full group px-4 py-4 bg-slate-50 hover:bg-blue-50 border-b border-slate-200 hover:border-blue-300 transition-all"
       >
         <div className="text-left">
-          <Heading level={2} data-size="sm" style={{ margin: 0, marginBottom: '4px' }} className="group-hover:text-blue-600 transition-colors">
-            {category.display_name}
+          <Heading level={2} data-size="sm" style={{ margin: 0 }} className="group-hover:text-blue-600 transition-colors">
+            {category.display_name} ({category.count})
           </Heading>
-          <div className="text-sm text-slate-500">
-            Topp 3 av {category.count} treff
-          </div>
         </div>
         <ArrowRightIcon className="w-5 h-5 text-slate-500 group-hover:text-blue-600 group-hover:translate-x-1 transition-all flex-shrink-0" />
       </button>
 
       <div className="p-5">
+        {/* Top 3 label */}
+        <div className="text-sm text-slate-500 font-medium mb-3">
+          Topp 3
+        </div>
 
         {/* List of results */}
         <div className="space-y-3">
