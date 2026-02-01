@@ -1,6 +1,6 @@
 import { Heading, Spinner } from '@digdir/designsystemet-react'
 import type { TableOfContentsProps } from '../../types/components'
-import type { NestedContent } from '../../api/types'
+import type { NestedContent } from '../../types'
 
 export function TableOfContents({
   chapters,

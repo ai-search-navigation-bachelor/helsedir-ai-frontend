@@ -3,49 +3,29 @@
  * Central export point for all API functionality
  */
 
-// Core utilities
-export { API_ENDPOINTS, DEFAULT_HEADERS } from './config'
-export { httpRequest, buildUrl, ApiError } from './httpClient'
-export type { HttpRequestOptions } from './httpClient'
-
-// Shared types
-export type {
-  SearchResultBase,
-  PaginatedResponse,
-  BaseRequestOptions,
-  ContentDetail,
-  InfoResultItem,
-} from './types'
-
-// Categorized search
+// Search operations
 export {
-  searchCategorizedApi,
-} from './categorized'
+  searchCategorized,
+  searchCategory,
+  search,
+} from './search'
 export type {
-  CategoryResult,
-  CategoryGroup,
-  CategorizedSearchResponse,
   CategorizedSearchOptions,
-} from './categorized'
-
-// Category search
-export {
-  searchCategoryApi,
-} from './categorySearch'
-export type {
-  CategorySearchResult,
-  CategorySearchResponse,
   CategorySearchOptions,
-} from './categorySearch'
+  SearchOptions,
+} from './search'
 
-// General search and content
+// Content operations
+export { getContent, getInfobit } from './content'
+export type { ContentOptions } from './content'
+
+// External Helsedirektoratet API
 export {
-  searchApi,
-  getContentApi,
-  getInfobitApi,
-} from './search'
+  fetchHelsedirContent,
+  fetchMultipleHelsedirContent,
+  fetchChapterWithSubchapters,
+} from './helsedir'
 export type {
-  SearchResultItem,
-  SearchApiResult,
-  SearchApiOptions,
-} from './search'
+  HelselinkContent,
+  ChapterWithSubchapters,
+} from './helsedir'

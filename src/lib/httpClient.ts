@@ -3,7 +3,12 @@
  * Centralized HTTP request handling with consistent error handling and response parsing
  */
 
-import { DEFAULT_HEADERS } from './config'
+/**
+ * Default request headers
+ */
+const DEFAULT_HEADERS = {
+  Accept: 'application/json',
+} as const
 
 /**
  * API Error with status code
@@ -41,7 +46,7 @@ export function buildUrl(
   params?: Record<string, string | number | boolean | undefined>,
 ): URL {
   const url = new URL(baseUrl)
-  
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -49,7 +54,7 @@ export function buildUrl(
       }
     })
   }
-  
+
   return url
 }
 
@@ -109,7 +114,7 @@ export async function httpRequest<T>(
       })
       throw error
     }
-    
+
     if (error instanceof Error) {
       // Don't log abort errors (from React Strict Mode in dev)
       if (error.name !== 'AbortError') {
@@ -117,7 +122,7 @@ export async function httpRequest<T>(
       }
       throw new ApiError(error.message)
     }
-    
+
     throw error
   }
 }

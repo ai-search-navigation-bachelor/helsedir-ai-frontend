@@ -1,6 +1,6 @@
 import { ChevronDownIcon, ChevronRightIcon } from '@navikt/aksel-icons'
 import DOMPurify from 'dompurify'
-import type { NestedContent } from '../../api/types'
+import type { NestedContent } from '../../types'
 
 interface ChapterAccordionProps {
   chapter: NestedContent

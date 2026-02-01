@@ -11,8 +11,8 @@ import {
   Tag,
 } from '@digdir/designsystemet-react'
 
-import type { SearchApiResult, SearchResultItem } from '../../api/search'
-import { searchApi } from '../../api/search'
+import { search } from '../../api'
+import type { SearchResponse, SearchResult } from '../../types'
 
 export type AppSearchProps = {
   label?: string
@@ -28,7 +28,7 @@ export function AppSearch({
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<SearchApiResult | null>(null)
+  const [result, setResult] = useState<SearchResponse | null>(null)
 
   const abortRef = useRef<AbortController | null>(null)
 
@@ -46,7 +46,7 @@ export function AppSearch({
     setError(null)
 
     try {
-      const data = await searchApi(trimmed, { signal: controller.signal })
+      const data = await search(trimmed, { signal: controller.signal })
       setResult(data)
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return
@@ -63,18 +63,20 @@ export function AppSearch({
     setResult(null)
   }
 
-  function ResultCard({ item }: { item: SearchResultItem }) {
+  function ResultCard({ item }: { item: SearchResult }) {
+    const isClickable = Boolean(onSelectResult)
+
     return (
       <Card
         onClick={() => onSelectResult?.(item.id)}
-        style={{ cursor: onSelectResult ? 'pointer' : 'default' }}
+        className={`app-search__card ${isClickable ? 'is-clickable' : ''}`}
       >
-        <CardBlock style={{ display: 'grid', gap: '0.5rem', padding: '1rem' }}>
+        <CardBlock className='app-search__card-block'>
           <Heading level={3} data-size='md' style={{ margin: 0 }}>
             {item.title}
           </Heading>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div className='app-search__tags'>
             <Tag variant='outline'>{item.info_type}</Tag>
             {item.score && (
               <Tag variant='outline'>Score: {item.score.toFixed(2)}</Tag>
@@ -92,7 +94,7 @@ export function AppSearch({
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: 'grid', gap: '0.75rem' }}>
+    <form onSubmit={onSubmit} className='app-search'>
       <Search>
         <Search.Input
           aria-label={label}
@@ -119,7 +121,7 @@ export function AppSearch({
       )}
 
       {result != null && !error && (
-        <div style={{ display: 'grid', gap: '0.75rem' }}>
+        <div className='app-search__results'>
           <Paragraph data-size='sm' style={{ margin: 0 }}>
             Treff: {result.results.length}
           </Paragraph>

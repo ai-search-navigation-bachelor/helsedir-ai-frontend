@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useParams } from 'react-router-dom'
 import {
   Alert,
   Button,
@@ -10,32 +10,33 @@ import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
 
 import { useCategorySearchQuery } from '../hooks/queries/useCategorySearchQuery'
 import { ResultItem } from '../components/search'
-import { SearchForm } from '../components/ui/SearchForm'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { useSearchStore } from '../stores/searchStore'
 import type { BreadcrumbItem } from '../types/components'
 
 export function CategoryResults() {
+  const { category = '' } = useParams<{ category: string }>()
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
-  
+
   const searchQuery = searchParams.get('query') || ''
-  const category = searchParams.get('category') || ''
-  const searchId = searchParams.get('search_id') || ''
-  
-  const storedSearchId = useSearchStore((state) => state.searchId)
-  const effectiveSearchId = searchId || storedSearchId || ''
-  
+  const searchId = useSearchStore((state) => state.searchId)
+
+  const effectiveSearchId = searchId || ''
+
   const [itemsToShow, setItemsToShow] = useState(20)
+
+  // Helper function to capitalize category name
+  const formatCategoryName = (cat: string) => {
+    return cat
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
 
   const { data, isLoading, error } = useCategorySearchQuery(searchQuery, category, {
     search_id: effectiveSearchId,
     enabled: !!searchQuery.trim() && !!category && !!effectiveSearchId,
   })
-
-  function handleSearch(query: string) {
-    navigate(`/search?query=${encodeURIComponent(query)}`)
-  }
 
   function handleLoadMore() {
     setItemsToShow(prev => prev + 20)
@@ -46,26 +47,21 @@ export function CategoryResults() {
 
   const breadcrumbItems: BreadcrumbItem[] = [
     { label: 'Forside', href: '/' },
-    { 
-      label: searchQuery.toUpperCase(), 
+    {
+      label: searchQuery,
       href: `/search?query=${encodeURIComponent(searchQuery)}`,
-      icon: <MagnifyingGlassIcon style={{ width: '16px', height: '16px' }} />
+      icon: <MagnifyingGlassIcon style={{ width: '18px', height: '18px' }} />
     },
-    { label: data?.category || category, href: '#' }
+    { label: formatCategoryName(data?.category || category), href: '#' }
   ]
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
+    <div className="max-w-screen-xl mx-auto px-8 pt-4 pb-8">
       <Breadcrumb items={breadcrumbItems} />
-
-      <SearchForm
-        initialValue={searchQuery}
-        onSubmit={handleSearch}
-      />
 
       {/* Loading State */}
       {isLoading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '48px' }}>
+        <div className="flex justify-center py-12">
           <Spinner aria-label="Laster..." />
         </div>
       )}
@@ -83,37 +79,25 @@ export function CategoryResults() {
       {data && !isLoading && !error && (
         <>
           {/* Header */}
-          <div style={{ marginBottom: '24px' }}>
-            <h1 style={{ 
-              fontSize: '28px', 
-              fontWeight: '700', 
-              color: '#0f172a', 
-              margin: 0,
-              marginBottom: '4px'
-            }}>
-              {(data.category || category).split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-slate-900 mb-1 m-0">
+              {formatCategoryName(data.category || category)}
             </h1>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+            <p className="text-sm text-slate-500 m-0">
               {data.total} treff
             </p>
           </div>
 
           {/* Results List */}
           {data.results.length === 0 ? (
-            <div style={{
-              padding: '48px',
-              textAlign: 'center',
-              backgroundColor: '#f8fafc',
-              borderRadius: '12px',
-              border: '1px solid #e2e8f0'
-            }}>
+            <div className="py-12 text-center bg-slate-50 rounded-xl border border-slate-200">
               <Paragraph style={{ color: '#64748b', margin: 0 }}>
                 Ingen resultater funnet
               </Paragraph>
             </div>
           ) : (
             <>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="flex flex-col gap-3">
                 {visibleResults.map((result) => (
                   <ResultItem key={result.id} result={result} />
                 ))}
@@ -121,9 +105,9 @@ export function CategoryResults() {
 
               {/* Load More Button */}
               {hasMore && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
-                  <Button 
-                    variant="secondary" 
+                <div className="flex justify-center mt-8">
+                  <Button
+                    variant="secondary"
                     onClick={handleLoadMore}
                     data-size="lg"
                   >

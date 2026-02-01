@@ -18,3 +18,19 @@ export const CATEGORY_ORDER = [
   REGELVERK_CATEGORY,
   RAD_CATEGORY,
 ]
+
+/**
+ * Available tema filters
+ */
+export const TEMA_OPTIONS = [
+  { value: 'diagnose-og-behandling', label: 'Diagnose og behandling' },
+  { value: 'psykisk-helse-rus-avhengighet', label: 'Psykisk helse, rus og avhengighet' },
+  { value: 'forebygging-og-levevaner', label: 'Forebygging og levevaner' },
+  { value: 'svangerskap-fodsel-barsel', label: 'Svangerskap, fødsel og barsel' },
+  { value: 'organisering-og-tjenestetilbud', label: 'Organisering og tjenestetilbud' },
+  { value: 'digitalisering-og-e-helse', label: 'Digitalisering og e-helse' },
+  { value: 'lov-og-forskrift', label: 'Lov og forskrift' },
+  { value: 'helseberedskap', label: 'Helseberedskap' },
+  { value: 'autorisasjon-og-spesialistutdanning', label: 'Autorisasjon og spesialistutdanning' },
+  { value: 'tilskudd-og-finansiering', label: 'Tilskudd og finansiering' },
+] as const

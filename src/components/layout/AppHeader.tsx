@@ -11,90 +11,43 @@ import { IoSearch, IoMenu } from 'react-icons/io5'
 export function AppHeader() {
   return (
     <>
-      <div style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}>
+      <div
+        className='site-header'
+        style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}
+      >
         <header>
-          <CardBlock style={{ padding: '2rem 1rem' }}>
-            <div
-              style={{
-                maxWidth: '1100px',
-                marginInline: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '1.5rem',
-              }}
-            >
+          <CardBlock style={{ padding: '2rem' }}>
+            <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-6">
               <Link
                 to='/'
                 aria-label='Helsedirektoratet'
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  textDecoration: 'none',
-                  color: 'inherit',
-                }}
+                className="flex items-center gap-3 flex-shrink-0"
+                style={{ color: 'inherit', textDecoration: 'none' }}
               >
-                <img src='/Hdir_logo.svg' alt='Helsedirektoratet' height={40} />
+                <picture>
+                  <source srcSet='/hdir_logo_small.svg' media='(max-width: 580px)' />
+                  <img src='/Hdir_logo.svg' alt='Helsedirektoratet' className="h-8" />
+                </picture>
               </Link>
 
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <div className="flex gap-3 items-center">
                 <Button
                   variant='secondary'
-                  style={{
-                    borderRadius: '999px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    backgroundColor: ds.color('hvit', 'surface-default'),
-                    border: `2px solid ${ds.color('logobla-1', 'base-hover')}`,
-                    transition: 'all 0.2s ease',
+                  onClick={() => {
+                    window.dispatchEvent(new Event('toggleSearch'))
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
-                    e.currentTarget.style.color = ds.color('logobla-1', 'base-contrast-default')
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('hvit', 'surface-default')
-                    e.currentTarget.style.color = ds.color('logobla-1', 'text-default')
-                  }}
-                  onMouseDown={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-active')
-                  }}
-                  onMouseUp={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
-                  }}
+                  aria-label='Søk'
+                  className='site-header__button'
                 >
                   Søk
-                <IoSearch />
+                  <IoSearch size={18} />
                 </Button>
                 <Button
                   variant='secondary'
-                  style={{
-                    borderRadius: '999px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    backgroundColor: ds.color('hvit', 'surface-default'),
-                    border: `2px solid ${ds.color('logobla-1', 'base-hover')}`,
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
-                    e.currentTarget.style.color = ds.color('logobla-1', 'base-contrast-default')
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('hvit', 'surface-default')
-                    e.currentTarget.style.color = ds.color('logobla-1', 'text-default')
-                  }}
-                  onMouseDown={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-active')
-                  }}
-                  onMouseUp={(e) => {
-                    e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-hover')
-                  }}
+                  aria-label='Meny'
+                  className='site-header__button'
                 >
-                  <IoMenu />
+                  <IoMenu size={18} />
                   Meny
                 </Button>
               </div>

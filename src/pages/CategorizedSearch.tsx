@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Alert,
@@ -8,29 +8,34 @@ import {
 
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery';
 import { TemaSideCard, RetningslinjeCard, RegularCategoryCard } from '../components/search';
+import { CategorySidebar } from '../components/search/CategorySidebar';
 import { SearchForm } from '../components/ui/SearchForm';
+import { FilterBar } from '../components/ui/FilterBar';
 import { useSearchStore } from '../stores/searchStore';
 import {
   TEMASIDE_CATEGORY,
   RETNINGSLINJE_CATEGORY,
-  ANBEFALINGER_CATEGORY,
-  REGELVERK_CATEGORY,
-  RAD_CATEGORY,
 } from '../constants/categories';
 
 /**
  * Categorized Search Page
- * Displays search results organized by categories with different card styles
+ * Displays search results organized by categories with sidebar navigation
  */
 export function CategorizedSearch() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const searchQuery = searchParams.get('query') || '';
-  
+
   const setSearchData = useSearchStore((state) => state.setSearchData);
+  const filters = useSearchStore((state) => state.filters);
+
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const { data, isLoading, error } = useCategorizedSearchQuery(searchQuery, {
     enabled: !!searchQuery.trim(),
+    tema: filters.tema,
+    innholdstype: filters.innholdstype,
   });
 
   // Store search_id in Zustand when data is received
@@ -40,59 +45,144 @@ export function CategorizedSearch() {
     }
   }, [data?.search_id, searchQuery, setSearchData]);
 
-  // Create mock Temaside if not in database
-  const temasideCategory =
-    data?.priority_categories.find((cat) => cat.category === TEMASIDE_CATEGORY) ||
-    data?.other_categories.find((cat) => cat.category === TEMASIDE_CATEGORY) ||
-    (data ? {
-      category: TEMASIDE_CATEGORY,
-      display_name: 'Temaside',
-      count: 0,
-      results: [],
-    } : undefined);
+  // DEBUG: Log full API response
+  useEffect(() => {
+    if (data) {
+      console.log('=== FULL API RESPONSE ===');
+      console.log('Query:', data.query);
+      console.log('Total results:', data.total);
+      console.log('Search ID:', data.search_id);
+      console.log('Min score:', data.min_score);
+      console.log('\nPRIORITY CATEGORIES:', data.priority_categories.length);
+      data.priority_categories.forEach((cat, idx) => {
+        console.log(`  ${idx + 1}. "${cat.category}" - ${cat.display_name} (${cat.count} results, ${cat.results.length} previews)`);
+      });
+      console.log('\nOTHER CATEGORIES:', data.other_categories.length);
+      data.other_categories.forEach((cat, idx) => {
+        console.log(`  ${idx + 1}. "${cat.category}" - ${cat.display_name} (${cat.count} results, ${cat.results.length} previews)`);
+      });
+      console.log('\nALL CATEGORIES COMBINED:');
+      const allCats = [...data.priority_categories, ...data.other_categories];
+      allCats.forEach((cat, idx) => {
+        console.log(`  ${idx + 1}. "${cat.category}" - ${cat.display_name} (${cat.count} results)`);
+      });
+      console.log('========================\n');
+    }
+  }, [data]);
 
-  const retningslinjeCategory =
-    data?.priority_categories.find((cat) => cat.category === RETNINGSLINJE_CATEGORY) ||
-    data?.other_categories.find((cat) => cat.category === RETNINGSLINJE_CATEGORY);
+  // Combine all categories (priority first, then others)
+  const allCategories = useMemo(() => [
+    ...(data?.priority_categories || []),
+    ...(data?.other_categories || [])
+  ], [data?.priority_categories, data?.other_categories]);
 
-  // Get exactly the 3 other categories in order: Anbefalinger, Regelverk, Råd
-  const allCategories = [...(data?.priority_categories || []), ...(data?.other_categories || [])];
-  
-  // Debug: Log available categories
-  if (data) {
-    console.log('Available categories:', allCategories.map(cat => `"${cat.category}"`));
-    console.log('Looking for:', { ANBEFALINGER_CATEGORY, REGELVERK_CATEGORY, RAD_CATEGORY });
-  }
-  
-  const anbefalingerCategory = allCategories.find((cat) => cat.category === ANBEFALINGER_CATEGORY);
-  const regelverkCategory = allCategories.find((cat) => cat.category === REGELVERK_CATEGORY);
-  const radCategory = allCategories.find((cat) => cat.category === RAD_CATEGORY);
+  // Track active category with intersection observer
+  useEffect(() => {
+    if (allCategories.length === 0) return;
 
-  if (data) {
-    console.log('Found categories:', {
-      anbefalinger: anbefalingerCategory?.category || 'NOT FOUND',
-      regelverk: regelverkCategory?.category || 'NOT FOUND',
-      rad: radCategory?.category || 'NOT FOUND',
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const categoryId = entry.target.id.replace('category-', '');
+            setActiveCategory(categoryId);
+          }
+        });
+      },
+      { rootMargin: '-20% 0px -70% 0px', threshold: 0.1 }
+    );
+
+    allCategories.forEach((cat) => {
+      const element = document.getElementById(`category-${cat.category}`);
+      if (element) observer.observe(element);
     });
-  }
 
-  const bottomThreeCategories = [anbefalingerCategory, regelverkCategory, radCategory].filter(Boolean);
+    return () => observer.disconnect();
+  }, [allCategories]);
+
+  // Scroll to category when clicked in sidebar
+  const handleCategoryClick = (categoryId: string) => {
+    const element = document.getElementById(`category-${categoryId}`);
+    if (element) {
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - 100; // 100px offset from top
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Toggle collapse for a category (only for regular categories, not temaside/retningslinje)
+  const toggleCollapse = (categoryId: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
+
+  // Render appropriate card component based on category type
+  function renderCategoryCard(category: typeof allCategories[0]) {
+    const { category: categoryId } = category;
+
+    // Use specialized card for Temaside (always expanded, no collapse)
+    if (categoryId === TEMASIDE_CATEGORY) {
+      return (
+        <TemaSideCard
+          key={categoryId}
+          category={category}
+          searchQuery={searchQuery}
+          searchId={data?.search_id}
+        />
+      );
+    }
+
+    // Use specialized card for Retningslinje (always expanded, no collapse)
+    if (categoryId === RETNINGSLINJE_CATEGORY) {
+      return (
+        <RetningslinjeCard
+          key={categoryId}
+          category={category}
+          searchQuery={searchQuery}
+          searchId={data?.search_id}
+        />
+      );
+    }
+
+    // Use regular card for all other categories (collapsible)
+    const isCollapsed = collapsedCategories.has(categoryId);
+    return (
+      <RegularCategoryCard
+        key={categoryId}
+        category={category}
+        searchQuery={searchQuery}
+        searchId={data?.search_id}
+        isExpanded={!isCollapsed}
+        onToggle={() => toggleCollapse(categoryId)}
+      />
+    );
+  }
 
   function handleSearch(query: string) {
     navigate(`/search?query=${encodeURIComponent(query)}`)
   }
 
-  function handleClear() {
-    navigate('/search')
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <SearchForm
-        initialValue={searchQuery}
-        onSubmit={handleSearch}
-        onClear={handleClear}
-      />
+    <div className="max-w-screen-xl mx-auto px-8 py-8">
+      <div className="mt-6">
+        <SearchForm
+          initialValue={searchQuery}
+          onSubmit={handleSearch}
+        />
+      </div>
+
+      {searchQuery && <FilterBar />}
 
       {isLoading && (
         <div className="flex justify-center py-12">
@@ -110,11 +200,8 @@ export function CategorizedSearch() {
         <>
           {/* Search Results Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-slate-900 mb-1">
-              {searchQuery.toUpperCase()}
-            </h1>
             <p className="text-sm text-slate-500">
-              {data.total} treff på {searchQuery.toUpperCase()}
+              {data.total} treff på {searchQuery}
             </p>
           </div>
 
@@ -123,21 +210,24 @@ export function CategorizedSearch() {
               <p className="text-slate-600">Ingen resultater funnet for "{searchQuery}"</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {/* Box 1: Temaside - Always show (mock if not in DB) */}
-              {temasideCategory && (
-                <TemaSideCard category={temasideCategory} searchQuery={searchQuery} searchId={data.search_id} />
-              )}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '280px 1fr',
+                gap: '32px',
+              }}
+            >
+              {/* Left sidebar - Category navigation */}
+              <CategorySidebar
+                categories={allCategories}
+                activeCategory={activeCategory}
+                onCategoryClick={handleCategoryClick}
+              />
 
-              {/* Box 2: Retningslinje */}
-              {retningslinjeCategory && (
-                <RetningslinjeCard category={retningslinjeCategory} searchQuery={searchQuery} searchId={data.search_id} />
-              )}
-
-              {/* Boxes 3-5: Anbefalinger, Regelverk, Råd */}
-              {bottomThreeCategories.map((category) => (
-                <RegularCategoryCard key={category.category} category={category} searchQuery={searchQuery} searchId={data.search_id} />
-              ))}
+              {/* Right content - Category cards */}
+              <div className="flex flex-col">
+                {allCategories.map(renderCategoryCard)}
+              </div>
             </div>
           )}
         </>
