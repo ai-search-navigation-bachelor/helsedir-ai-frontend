@@ -174,7 +174,7 @@ export function CategorizedSearch() {
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-8 py-8">
+    <div className="max-w-screen-xl mx-auto px-8 py-8" style={{ overflow: 'visible' }}>
       <div className="mt-6">
         <SearchForm
           initialValue={searchQuery}
@@ -215,6 +215,8 @@ export function CategorizedSearch() {
                 display: 'grid',
                 gridTemplateColumns: '280px 1fr',
                 gap: '32px',
+                alignItems: 'start',
+                overflow: 'visible'
               }}
             >
               {/* Left sidebar - Category navigation */}
