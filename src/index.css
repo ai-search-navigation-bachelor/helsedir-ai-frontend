@@ -1,4 +1,85 @@
 @import "tailwindcss";
+@import "../design-tokens-build/theme.css";
+
+@theme {
+  /* logobla-2 - Primary brand color (most used) */
+  --color-logobla-2-bg-default: var(--ds-color-logobla-2-background-default);
+  --color-logobla-2-bg-tinted: var(--ds-color-logobla-2-background-tinted);
+  --color-logobla-2-surface-default: var(--ds-color-logobla-2-surface-default);
+  --color-logobla-2-surface-tinted: var(--ds-color-logobla-2-surface-tinted);
+  --color-logobla-2-surface-hover: var(--ds-color-logobla-2-surface-hover);
+  --color-logobla-2-surface-active: var(--ds-color-logobla-2-surface-active);
+  --color-logobla-2-border-subtle: var(--ds-color-logobla-2-border-subtle);
+  --color-logobla-2-border-default: var(--ds-color-logobla-2-border-default);
+  --color-logobla-2-text-subtle: var(--ds-color-logobla-2-text-subtle);
+  --color-logobla-2-text-default: var(--ds-color-logobla-2-text-default);
+  --color-logobla-2-base-default: var(--ds-color-logobla-2-base-default);
+  --color-logobla-2-base-hover: var(--ds-color-logobla-2-base-hover);
+  --color-logobla-2-base-active: var(--ds-color-logobla-2-base-active);
+  --color-logobla-2-contrast: var(--ds-color-logobla-2-base-contrast-default);
+  
+  /* logobla-1 - Secondary brand color */
+  --color-logobla-1-bg-default: var(--ds-color-logobla-1-background-default);
+  --color-logobla-1-bg-tinted: var(--ds-color-logobla-1-background-tinted);
+  --color-logobla-1-surface-default: var(--ds-color-logobla-1-surface-default);
+  --color-logobla-1-surface-tinted: var(--ds-color-logobla-1-surface-tinted);
+  --color-logobla-1-surface-hover: var(--ds-color-logobla-1-surface-hover);
+  --color-logobla-1-surface-active: var(--ds-color-logobla-1-surface-active);
+  --color-logobla-1-border-subtle: var(--ds-color-logobla-1-border-subtle);
+  --color-logobla-1-border-default: var(--ds-color-logobla-1-border-default);
+  --color-logobla-1-text-subtle: var(--ds-color-logobla-1-text-subtle);
+  --color-logobla-1-text-default: var(--ds-color-logobla-1-text-default);
+  --color-logobla-1-base-default: var(--ds-color-logobla-1-base-default);
+  --color-logobla-1-base-hover: var(--ds-color-logobla-1-base-hover);
+  --color-logobla-1-base-active: var(--ds-color-logobla-1-base-active);
+  --color-logobla-1-contrast: var(--ds-color-logobla-1-base-contrast-default);
+  
+  /* bla-1 - Support color */
+  --color-bla-1-bg-default: var(--ds-color-bla-1-background-default);
+  --color-bla-1-bg-tinted: var(--ds-color-bla-1-background-tinted);
+  --color-bla-1-surface-tinted: var(--ds-color-bla-1-surface-tinted);
+  --color-bla-1-border-subtle: var(--ds-color-bla-1-border-subtle);
+  --color-bla-1-border-default: var(--ds-color-bla-1-border-default);
+  --color-bla-1-text-subtle: var(--ds-color-bla-1-text-subtle);
+  --color-bla-1-text-default: var(--ds-color-bla-1-text-default);
+  --color-bla-1-base-default: var(--ds-color-bla-1-base-default);
+  
+  /* bla-2 - Support color */
+  --color-bla-2-bg-default: var(--ds-color-bla-2-background-default);
+  --color-bla-2-bg-tinted: var(--ds-color-bla-2-background-tinted);
+  --color-bla-2-surface-tinted: var(--ds-color-bla-2-surface-tinted);
+  --color-bla-2-border-subtle: var(--ds-color-bla-2-border-subtle);
+  --color-bla-2-border-default: var(--ds-color-bla-2-border-default);
+  --color-bla-2-text-subtle: var(--ds-color-bla-2-text-subtle);
+  --color-bla-2-text-default: var(--ds-color-bla-2-text-default);
+  
+  /* bla-3 - Support color */
+  --color-bla-3-bg-default: var(--ds-color-bla-3-background-default);
+  --color-bla-3-bg-tinted: var(--ds-color-bla-3-background-tinted);
+  --color-bla-3-surface-tinted: var(--ds-color-bla-3-surface-tinted);
+  --color-bla-3-border-subtle: var(--ds-color-bla-3-border-subtle);
+  --color-bla-3-text-default: var(--ds-color-bla-3-text-default);
+  
+  /* hvit - White/Light colors */
+  --color-hvit-bg-default: var(--ds-color-hvit-background-default);
+  --color-hvit-surface-default: var(--ds-color-hvit-surface-default);
+  --color-hvit-surface-hover: var(--ds-color-hvit-surface-hover);
+  --color-hvit-border-subtle: var(--ds-color-hvit-border-subtle);
+  --color-hvit-border-default: var(--ds-color-hvit-border-default);
+  
+  /* neutral - Neutral grays */
+  --color-neutral-bg-default: var(--ds-color-neutral-background-default);
+  --color-neutral-surface-default: var(--ds-color-neutral-surface-default);
+  --color-neutral-border-subtle: var(--ds-color-neutral-border-subtle);
+  --color-neutral-border-default: var(--ds-color-neutral-border-default);
+  --color-neutral-text-subtle: var(--ds-color-neutral-text-subtle);
+  --color-neutral-text-default: var(--ds-color-neutral-text-default);
+  --color-neutral-base-default: var(--ds-color-neutral-base-default);
+  
+  /* svart - Black/Dark colors */
+  --color-svart-base-default: var(--ds-color-svart-base-default);
+  --color-svart-text-default: var(--ds-color-svart-text-default);
+}
 
 html {
   scrollbar-gutter: stable;
