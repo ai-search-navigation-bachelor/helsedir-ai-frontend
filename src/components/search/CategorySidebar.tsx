@@ -16,8 +16,22 @@ export function CategorySidebar({ categories, activeCategory, onCategoryClick }:
   }
 
   return (
-    <aside>
-      <div className="bg-white border border-slate-200 rounded-lg p-4">
+    <div 
+      style={{
+        position: 'sticky',
+        top: '20px',
+        height: 'calc(100vh - 20px)',
+        alignSelf: 'flex-start'
+      }}
+    >
+      <div 
+        className="bg-white border border-slate-200 rounded-lg p-4"
+        style={{
+          height: '100%',
+          overflowY: 'auto',
+          overflowX: 'hidden'
+        }}
+      >
         {/* Scroll to top button */}
         <button
           onClick={scrollToTop}
@@ -61,6 +75,6 @@ export function CategorySidebar({ categories, activeCategory, onCategoryClick }:
           </ul>
         </nav>
       </div>
-    </aside>
+    </div>
   )
 }

@@ -37,12 +37,12 @@ export function AppLayout() {
       <AppHeader />
       {isSearchVisible && !isHome && <Home isSearchBar />}
       {!isHome && (
-        <main id='main-content'>
+        <main id='main-content' style={{ overflow: 'visible' }}>
           <Outlet />
         </main>
       )}
       {isHome && (
-        <main id='main-content' className='page-shell__main page-shell__main--home'>
+        <main id='main-content' className='page-shell__main page-shell__main--home' style={{ overflow: 'visible' }}>
           <Outlet />
         </main>
       )}
