@@ -43,10 +43,28 @@ export interface NestedContent {
   id: string
   type?: string
   tittel?: string
+  kortTittel?: string
   title?: string
   tekst?: string
   body?: string
   intro?: string
+  kortIntro?: string
+  status?: string
+  sistOppdatert?: string
+  sistFagligOppdatert?: string
+  data?: {
+    styrke?: string
+    praktisk?: string
+    rasjonale?: string
+    nokkelInfo?: {
+      fordelerogulemper?: string
+      verdierogpreferanser?: string
+    }
+  }
+  tekniskeData?: {
+    infoType?: string
+    subtype?: string
+  }
   lenker?: NestedContentLink[]
   children?: NestedContent[]
 }

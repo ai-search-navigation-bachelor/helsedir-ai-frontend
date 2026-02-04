@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
 import { ChevronDownIcon, ChevronRightIcon } from '@navikt/aksel-icons'
@@ -37,6 +37,13 @@ function getNodeTitle(node: NestedContent, fallback = 'Uten tittel') {
 function getNodeType(node: NestedContent) {
   if (!node.type) return ''
   return node.type.trim().toLowerCase()
+}
+
+function formatDateLabel(value?: string) {
+  if (!value) return ''
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return value
+  return parsed.toLocaleDateString('nb-NO')
 }
 
 function toNodeId(chapterIndex: number, path: number[]) {
@@ -103,7 +110,6 @@ function buildPageTree(entries: Array<ChapterEntry & { chapter: NestedContent }>
 export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
-  const contentStartRef = useRef<HTMLDivElement | null>(null)
 
   const childrenLinks = useMemo(
     () => content.links?.filter((link) => link.rel === 'barn' && Boolean(link.href)) ?? [],
@@ -155,10 +161,10 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
   const activePage = selectedPage ?? pageTree.pagesById.get(pageTree.rootIds[0] || '')
 
   const selectedAncestorIds = (() => {
-    if (!selectedPage) return new Set<string>()
+    if (!activePage) return new Set<string>()
 
     const ids = new Set<string>()
-    let current = selectedPage
+    let current = activePage
     while (current.parentId) {
       ids.add(current.parentId)
       current = pageTree.pagesById.get(current.parentId) ?? current
@@ -189,10 +195,6 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
       }
       return next
     })
-
-    if (contentStartRef.current) {
-      contentStartRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
   }
 
   const toggleExpanded = (pageId: string) => {
@@ -216,29 +218,59 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
     key: string,
     depth = 0,
   ): React.ReactNode => {
+    const type = getNodeType(item)
+    const isRecommendation = type.includes('anbefaling')
     const title = getNodeTitle(item)
     const intro = item.intro || ''
     const body = item.tekst || item.body || ''
     const children = item.children || []
 
-    const type = getNodeType(item)
-    const isRecommendation = type.includes('anbefaling')
+    const strength = item.data?.styrke || ''
+    const status = item.status || ''
+    const updated = formatDateLabel(item.sistOppdatert || item.sistFagligOppdatert)
+    const shortIntro = item.kortIntro || ''
+    const practical = item.data?.praktisk || ''
+    const rationale = item.data?.rasjonale || ''
+    const tradeoffs = item.data?.nokkelInfo?.fordelerogulemper || ''
+    const preferences = item.data?.nokkelInfo?.verdierogpreferanser || ''
 
     return (
-      <details key={key} className="mb-2 rounded-md border border-slate-200 bg-white">
+      <details key={key} className="mb-3 rounded-lg border border-slate-200 bg-white">
         <summary
-          className="cursor-pointer list-none px-3 py-2 text-sm font-semibold text-slate-800 hover:underline"
+          className="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
           style={{ paddingLeft: `${12 + depth * 12}px` }}
         >
-          {isRecommendation && (
-            <span className="mr-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-sky-700">
-              Anbefaling
-            </span>
-          )}
-          {title}
+          <div className="flex items-start gap-2">
+            <ChevronRightIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+            <div className="min-w-0">
+              <div className="mb-1 flex flex-wrap items-center gap-1">
+
+                {strength && (
+                  <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
+                    {strength}
+                  </span>
+                )}
+              </div>
+              <span className="block whitespace-normal break-words leading-6">{title}</span>
+            </div>
+          </div>
         </summary>
 
-        <div className="px-3 pb-3 pt-1" style={{ paddingLeft: `${12 + depth * 12}px` }}>
+        <div className="px-3 pb-4 pt-1" style={{ paddingLeft: `${34 + depth * 12}px` }}>
+          {(status || updated) && (
+            <p className="mb-2 mt-0 text-xs text-slate-500">
+              {status && <span>{status}</span>}
+              {status && updated && <span> · </span>}
+              {updated && <span>Oppdatert {updated}</span>}
+            </p>
+          )}
+
+          {shortIntro && (
+            <Paragraph style={{ marginTop: 0, marginBottom: 8, color: '#334155' }}>
+              {shortIntro}
+            </Paragraph>
+          )}
+
           {intro && (
             <Paragraph style={{ marginTop: 0, marginBottom: 8, color: '#475569' }}>
               {intro}
@@ -250,6 +282,54 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
               className="content-html text-sm leading-6 text-slate-800"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }}
             />
+          )}
+
+          {practical && (
+            <details className="mt-3 rounded-md border border-slate-200 bg-slate-50">
+              <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
+                Praktisk
+              </summary>
+              <div
+                className="content-html px-3 pb-3 text-sm leading-6 text-slate-800"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(practical) }}
+              />
+            </details>
+          )}
+
+          {rationale && (
+            <details className="mt-2 rounded-md border border-slate-200 bg-slate-50">
+              <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
+                Rasjonale
+              </summary>
+              <div
+                className="content-html px-3 pb-3 text-sm leading-6 text-slate-800"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rationale) }}
+              />
+            </details>
+          )}
+
+          {tradeoffs && (
+            <details className="mt-2 rounded-md border border-slate-200 bg-slate-50">
+              <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
+                Fordeler og ulemper
+              </summary>
+              <div
+                className="content-html px-3 pb-3 text-sm leading-6 text-slate-800"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tradeoffs) }}
+              />
+            </details>
+          )}
+
+          {preferences && (
+            <details className="mt-2 rounded-md border border-slate-200 bg-slate-50">
+              <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
+                Verdier og preferanser
+              </summary>
+              <div
+                className="content-html px-3 pb-3 text-sm leading-6 text-slate-800"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preferences) }}
+              />
+            </details>
           )}
 
           {children.length > 0 && (
@@ -295,7 +375,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
 
                     const hasChildren = page.childrenIds.length > 0
                     const isExpanded = expandedIds.has(page.id)
-                    const isSelected = selectedPage?.id === page.id
+                    const isSelected = activePage?.id === page.id
                     const isAncestor = selectedAncestorIds.has(page.id)
                     const textColor = isSelected
                       ? 'text-blue-800'
@@ -332,6 +412,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
                             onClick={() => handleSelectPage(page.id)}
                             className={`min-w-0 flex-1 py-0.5 text-left text-[1.05rem] leading-7 whitespace-normal break-words ${isSelected ? '' : 'hover:text-slate-800'} hover:underline ${textColor} ${fontWeight}`}
                           >
+                            <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
                             {page.title}
                           </button>
                         </div>
@@ -370,8 +451,6 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
         </aside>
 
         <section className="min-w-0">
-          <div ref={contentStartRef} />
-
           {chaptersLoading && (
             <div className="flex justify-center py-12">
               <Spinner aria-label="Laster kapitler..." />
@@ -407,7 +486,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
               {activePage.recommendationChildren.length > 0 && (
                 <section className="mt-8">
                   <Heading level={3} data-size="sm" style={{ marginBottom: 12 }}>
-                    Anbefalinger
+                    {activePage.recommendationChildren.length === 1 ? 'Anbefaling' : 'Anbefalinger'}
                   </Heading>
                   <div>
                     {activePage.recommendationChildren.map((item, index) =>
