@@ -41,6 +41,7 @@ export interface NestedContentLink {
  */
 export interface NestedContent {
   id: string
+  type?: string
   tittel?: string
   title?: string
   tekst?: string
