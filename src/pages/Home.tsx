@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { HomeSearchForm } from '../components/ui/HomeSearchForm'
+import { CategoryButtons } from '../components/ui/CategoryButtons'
 
 type HomeProps = {
   isSearchBar?: boolean
@@ -50,12 +51,28 @@ export function Home({ isSearchBar = false }: HomeProps) {
     navigate(`/search?query=${encodeURIComponent(trimmed)}`)
   }
 
+  // If used as search bar only, render just the search form
+  if (isSearchBar) {
+    return (
+      <HomeSearchForm 
+        ref={searchInputRef}
+        query={query}
+        onQueryChange={setQuery}
+        onSubmit={onSubmit}
+      />
+    )
+  }
+
+  // Full home page with search and category buttons
   return (
-    <HomeSearchForm 
-      ref={searchInputRef}
-      query={query}
-      onQueryChange={setQuery}
-      onSubmit={onSubmit}
-    />
+    <div>
+      <HomeSearchForm 
+        ref={searchInputRef}
+        query={query}
+        onQueryChange={setQuery}
+        onSubmit={onSubmit}
+      />
+      <CategoryButtons />
+    </div>
   )
 }
