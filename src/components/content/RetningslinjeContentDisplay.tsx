@@ -74,7 +74,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
         <aside className="border-slate-200 lg:border-r lg:pr-6">
           {entries.length === 0 ? (
             <Paragraph style={{ marginBottom: 0, color: '#64748b' }}>
-              Ingen barnesider registrert pa denne retningslinjen.
+              Ingen barnesider registrert på denne retningslinjen.
             </Paragraph>
           ) : (
             <SidebarTree
