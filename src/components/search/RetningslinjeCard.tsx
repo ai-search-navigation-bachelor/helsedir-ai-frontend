@@ -7,14 +7,6 @@ export function RetningslinjeCard(props: {
   searchId?: string;
 }) {
   return (
-    <ExpandableCategoryCard
-      category={props.category}
-      searchQuery={props.searchQuery}
-      searchId={props.searchId}
-      variant="retningslinje"
-      badgeSuffix="artikler"
-      subtitle="Nasjonal faglig retningslinje"
-      previewCount={3}
-    />
+    <ExpandableCategoryCard category={props.category} />
   );
 }

@@ -11,14 +11,6 @@ export function FilterBar() {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Ensure filters are initialized on mount
-  useEffect(() => {
-    if (filters.tema === undefined) {
-      // tema: undefined means all temas are selected (no filter)
-      // This is the default state - no need to change anything
-    }
-  }, [])
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -124,7 +116,7 @@ export function FilterBar() {
                   <Checkbox
                     checked={selectedTemas.includes(tema.value)}
                     onChange={() => handleTemaToggle(tema.value)}
-                    size="sm"
+                    aria-label={tema.label}
                   />
                   <span className="text-xs text-slate-700 leading-tight">{tema.label}</span>
                 </label>

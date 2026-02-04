@@ -3,26 +3,12 @@ import { ChevronDownIcon } from '@navikt/aksel-icons'
 import { Link, Button } from '@digdir/designsystemet-react'
 import type { CategoryGroup } from '../../types'
 
-type Variant = 'temaside' | 'retningslinje'
-
 export interface ExpandableCategoryCardProps {
   category: CategoryGroup
-  searchQuery: string
-  searchId?: string
-  variant: Variant
-  badgeSuffix?: string
-  previewCount?: number
-  subtitle?: string
 }
 
 export function ExpandableCategoryCard({
   category,
-  searchQuery,
-  searchId,
-  variant,
-  badgeSuffix = 'artikler',
-  previewCount = 0,
-  subtitle,
 }: ExpandableCategoryCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 

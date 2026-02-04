@@ -42,7 +42,7 @@ export function CategoryResultItem({ result, searchId, variant }: CategoryResult
         </h4>
 
         <p style={{ fontSize: '14px', color: '#64748b', marginTop: '4px', margin: '4px 0 0 0' }}>
-          <span style={{ fontWeight: '500', color: '#334155' }}>Hentet fra:</span> ...
+          <span style={{ fontWeight: '500', color: '#334155' }}>Hentet fra:</span> {rootLinkTitle || '...'}
         </p>
       </div>
 

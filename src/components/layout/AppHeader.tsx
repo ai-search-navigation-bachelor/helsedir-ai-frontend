@@ -4,7 +4,7 @@ import {
 } from '@digdir/designsystemet-react'
 import { Link } from 'react-router-dom'
 
-import { colors, ds } from '../../styles/dsTokens'
+import { colors } from '../../styles/dsTokens'
 
 import { IoSearch, IoMenu } from 'react-icons/io5'
 
