@@ -4,7 +4,6 @@ import {
   Alert,
   Paragraph,
   Spinner,
-  Tabs,
 } from '@digdir/designsystemet-react';
 
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery';
@@ -12,12 +11,11 @@ import { useSearchStore } from '../stores/searchStore';
 import { FilterBar } from '../components/ui/FilterBar';
 import { SearchForm } from '../components/ui/SearchForm';
 import {
-  TEMASIDE_CATEGORY,
-  RETNINGSLINJE_CATEGORY,
-  ANBEFALINGER_CATEGORY,
-  REGELVERK_CATEGORY,
-  RAD_CATEGORY,
-} from '../constants/categories';
+  SearchCategoryTabs,
+  SearchResultsList,
+  SearchEmptyState,
+  FIXED_CATEGORIES,
+} from '../components/new-search';
 
 /**
  * New Search Page
@@ -43,15 +41,6 @@ export function SearchPage() {
       setSearchData(data.search_id, searchQuery);
     }
   }, [data?.search_id, searchQuery, setSearchData]);
-
-  // Hardcoded category order
-  const FIXED_CATEGORIES = [
-    { id: TEMASIDE_CATEGORY, label: 'Temaside' },
-    { id: RETNINGSLINJE_CATEGORY, label: 'Nasjonalfaglig retningslinje' },
-    { id: ANBEFALINGER_CATEGORY, label: 'Anbefalinger' },
-    { id: REGELVERK_CATEGORY, label: 'Regelverk' },
-    { id: RAD_CATEGORY, label: 'Råd' },
-  ];
 
   // Combine all categories
   const allCategories = useMemo(() => [
@@ -126,19 +115,13 @@ export function SearchPage() {
     setSearchParams({ query: searchQuery, category: value });
   };
 
+  // Early return for empty search
   if (!searchQuery.trim()) {
     return (
-      <div className="max-w-screen-xl mx-auto px-6 py-8">
-        <SearchForm
-          initialValue=""
-          onSubmit={handleSearchSubmit}
-          onClear={handleSearchClear}
-          placeholder="Søk..."
-        />
-        <Alert>
-          <Paragraph>Skriv inn et søkeord for å starte søket.</Paragraph>
-        </Alert>
-      </div>
+      <SearchEmptyState
+        onSubmit={handleSearchSubmit}
+        onClear={handleSearchClear}
+      />
     );
   }
 
@@ -172,67 +155,17 @@ export function SearchPage() {
       {/* Results */}
       {!isLoading && !error && data && (
         <>
-          {/* Category Tabs */}
-          <div className="mb-6">
-            <Tabs value={activeTab} onChange={handleTabChange}>
-              <Tabs.List>
-                <Tabs.Tab value="all">
-                  Alle
-                  <span className="ml-2 text-gray-600">{categoryCounts['all'] || 0}</span>
-                </Tabs.Tab>
-                
-                {FIXED_CATEGORIES.map(category => (
-                  <Tabs.Tab key={category.id} value={category.id}>
-                    {category.label}
-                    <span className="ml-2 text-gray-600">{categoryCounts[category.id] || 0}</span>
-                  </Tabs.Tab>
-                ))}
-              </Tabs.List>
-            </Tabs>
-          </div>
+          <SearchCategoryTabs
+            activeTab={activeTab}
+            categoryCounts={categoryCounts}
+            onTabChange={handleTabChange}
+          />
 
-          {/* Results Count */}
-          <div className="mb-6">
-            <Paragraph className="text-gray-700">
-              {sortedResults.length} treff på {searchQuery}
-            </Paragraph>
-          </div>
-
-          {/* Results List */}
-          {sortedResults.length === 0 ? (
-            <Alert>
-              <Paragraph>Ingen resultater funnet i denne kategorien.</Paragraph>
-            </Alert>
-          ) : (
-            <div className="space-y-4">
-              {sortedResults.map((result, index) => (
-                <div
-                  key={`${result.id}-${index}`}
-                  className="bg-white border-l-4 border-blue-500 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/content/${result.id}?search_id=${data.search_id}`)}
-                >
-                  {/* Category Label */}
-                  <div className="mb-2">
-                    <span className="inline-block px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 rounded-full">
-                      {result.categoryName}
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {result.title}
-                  </h3>
-
-                  {/* Explanation if available */}
-                  {result.explanation && (
-                    <p className="text-gray-700 line-clamp-2">
-                      {result.explanation}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          <SearchResultsList
+            results={sortedResults}
+            searchQuery={searchQuery}
+            searchId={data.search_id}
+          />
         </>
       )}
     </div>
