@@ -57,6 +57,7 @@ export const ds = {
 export const colors = {
   headerBg: '#e6f2f6',
   headerFg: ds.color('logobla-2', 'base-contrast-default'),
+  footerBg: '#005F73',
 
   surface: ds.color('neutral', 'surface-default'),
   surfaceTinted: ds.color('neutral', 'surface-tinted'),
