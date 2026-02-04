@@ -46,7 +46,7 @@ export function SidebarTree({
               type="button"
               onClick={() => onToggleExpanded(page.id)}
               className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-700 hover:bg-slate-100"
-              aria-label={isExpanded ? 'Lukk kategori' : 'Aapne kategori'}
+              aria-label={isExpanded ? 'Lukk kategori' : 'Åpne kategori'}
             >
               {isExpanded ? (
                 <ChevronDownIcon className="h-4 w-4" />
