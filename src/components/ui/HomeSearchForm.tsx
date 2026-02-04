@@ -56,7 +56,7 @@ export const HomeSearchForm = forwardRef<HTMLInputElement, HomeSearchFormProps>(
                   type="button"
                   onClick={handleClear}
                   className="absolute right-14 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-slate-100 transition-colors"
-                  aria-label="Tom"
+                  aria-label="Tøm"
                 >
                   <XMarkIcon className="w-5 h-5 text-slate-500" />
                 </button>
