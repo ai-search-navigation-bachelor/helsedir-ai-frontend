@@ -33,7 +33,6 @@ export function SearchResultsList({ results, searchQuery, searchId }: SearchResu
               key={`${result.id}-${index}`}
               result={result}
               searchId={searchId}
-              index={index}
             />
           ))}
         </div>

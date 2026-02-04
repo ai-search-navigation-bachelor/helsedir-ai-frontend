@@ -7,10 +7,9 @@ interface SearchResultCardProps {
     categoryId: string;
   };
   searchId?: string;
-  index: number;
 }
 
-export function SearchResultCard({ result, searchId, index }: SearchResultCardProps) {
+export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -22,7 +21,6 @@ export function SearchResultCard({ result, searchId, index }: SearchResultCardPr
 
   return (
     <div
-      key={`${result.id}-${index}`}
       className="bg-white border-l-4 border-blue-500 p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
       onClick={handleClick}
     >

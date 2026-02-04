@@ -4,8 +4,8 @@
 The new `SearchPage` component is a modern replacement for `CategorizedSearch` with a cleaner, tab-based interface for browsing search results by category.
 
 ## Route
-- **URL**: `/search-new?query=<search-term>&category=<category-id>`
-- **Example**: `/search-new?query=adhd&category=all`
+- **URL**: `/search?query=<search-term>&category=<category-id>`
+- **Example**: `/search?query=adhd&category=all`
 
 ## Quick Start
 
@@ -16,7 +16,7 @@ To test the new search page:
    npm run dev
    ```
 
-2. Navigate to: `http://localhost:5173/search-new?query=adhd`
+2. Navigate to: `http://localhost:5173/search?query=adhd`
 
 3. Try the following:
    - Enter a search query
@@ -94,12 +94,12 @@ To test the new search page:
 
 ## Navigation
 
-The old `CategorizedSearch` route (`/search`) remains unchanged to avoid merge conflicts. The new page is accessible at `/search-new`.
+The new `SearchPage` has replaced the old `CategorizedSearch` and is now the default search page at the `/search` route. The old components and pages have been removed:
+- Deleted `src/components/search/` folder
+- Deleted `src/pages/CategorizedSearch.tsx`
+- Deleted `src/pages/CategoryResults.tsx`
 
-To switch to the new page as the default:
-1. Change the route in [App.tsx](src/App.tsx) from `search-new` to `search`
-2. Rename or remove the old `CategorizedSearch` route
-3. Update any navigation links throughout the app
+All navigation throughout the app now uses the new SearchPage component.
 
 ## Styling
 
