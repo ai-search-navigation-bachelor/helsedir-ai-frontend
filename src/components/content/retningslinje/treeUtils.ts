@@ -113,8 +113,10 @@ export function getSelectedAncestorIds(
 
   while (current.parentId) {
     ids.add(current.parentId)
-    current = pagesById.get(current.parentId) ?? current
-    if (!current.parentId) break
+    current = pagesById.get(current.parentId)
+    if (!current) {
+      break
+    }
   }
 
   return ids
