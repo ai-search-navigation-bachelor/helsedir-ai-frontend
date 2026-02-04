@@ -92,7 +92,7 @@ export async function fetchChapterWithSubchapters(
   
   // Check if chapter has children (subchapters)
   // Handle both 'lenker' (external API) and 'links' (backend API)
-  const allLinks = (chapter.lenker || (chapter as Record<string, unknown>).links) as Array<{rel: string, href?: string}> | undefined
+  const allLinks = (chapter.lenker || (chapter as Record<string, unknown>).links) as Array<{rel: string, href?: string, type?: string}> | undefined
   const childrenLinks = allLinks?.filter(link => link.rel === 'barn') || []
   
   if (childrenLinks.length > 0) {
@@ -102,7 +102,7 @@ export async function fetchChapterWithSubchapters(
         try {
           // RECURSIVELY fetch each subchapter and its children
           const subchapter = await fetchChapterWithSubchapters(link.href, signal, depth + 1, maxDepth)
-          children.push(subchapter)
+          children.push({ ...subchapter, type: subchapter.type || link.type })
         } catch (error) {
           // Ignore AbortErrors (expected when navigating away)
           if (error instanceof Error && error.name !== 'AbortError') {

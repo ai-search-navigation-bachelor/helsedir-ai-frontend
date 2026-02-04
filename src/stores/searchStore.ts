@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 
 export interface SearchFilters {
   tema?: string[]
+  innholdstype?: string
 }
 
 interface SearchState {

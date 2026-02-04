@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 
-import { CardBlock, SkipLink } from '@digdir/designsystemet-react'
+import { SkipLink } from '@digdir/designsystemet-react'
 
 import { AppHeader } from './AppHeader'
 import { AppFooter } from './AppFooter'
