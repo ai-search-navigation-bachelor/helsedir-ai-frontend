@@ -131,7 +131,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
           {!isChaptersLoading && failedEntries.length > 0 && (
             <Alert data-color="warning" className="mt-6">
               <Paragraph style={{ marginTop: 0 }}>
-                {failedEntries.length} barnesider kunne ikke lastes fra Helsedirektoratet API akkurat na.
+                {failedEntries.length} barnesider kunne ikke lastes fra Helsedirektoratet API akkurat nå.
               </Paragraph>
             </Alert>
           )}
