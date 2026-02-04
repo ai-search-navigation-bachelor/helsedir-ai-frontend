@@ -107,7 +107,7 @@ export function SearchPage() {
   // Handle search clear
   const handleSearchClear = () => {
     setSearchParams({});
-    navigate('/search-new');
+    navigate('/search');
   };
 
   // Handle tab change
