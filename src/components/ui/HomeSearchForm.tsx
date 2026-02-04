@@ -38,8 +38,8 @@ export const HomeSearchForm = forwardRef<HTMLInputElement, HomeSearchFormProps>(
                 type="text"
                 id="home-search"
                 name="query"
-                aria-label="Sok"
-                placeholder="Sok etter innhold..."
+                aria-label="Søk"
+                placeholder="Søk etter innhold..."
                 value={query}
                 onChange={(e) => onQueryChange(e.target.value)}
                 onFocus={() => setIsFocused(true)}
