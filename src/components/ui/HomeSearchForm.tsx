@@ -72,7 +72,7 @@ export const HomeSearchForm = forwardRef<HTMLInputElement, HomeSearchFormProps>(
                   backgroundColor: isHoveringIcon ? '#f1f5f9' : 'transparent',
                   border: isHoveringIcon ? '1px solid #cbd5e1' : '1px solid transparent',
                 }}
-                aria-label="Sok"
+                aria-label="Søk"
               >
                 <MagnifyingGlassIcon className="w-5 h-5 text-slate-600" />
               </button>
