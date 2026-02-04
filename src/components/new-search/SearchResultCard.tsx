@@ -36,8 +36,8 @@ export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
         {result.title}
       </h3>
 
-      {/* Explanation if available */}
-      {result.explanation && (
+      {/* Explanation if available (exclude keyword/semantic scoring) */}
+      {result.explanation && !result.explanation.toLowerCase().includes('keyword') && !result.explanation.toLowerCase().includes('semantic') && (
         <p className="text-gray-700 line-clamp-2">
           {result.explanation}
         </p>

@@ -27,13 +27,14 @@ export function SearchResultsList({ results, searchQuery, searchId }: SearchResu
           <Paragraph>Ingen resultater funnet i denne kategorien.</Paragraph>
         </Alert>
       ) : (
-        <div className="space-y-4">
+        <div className="divide-y divide-gray-200">
           {results.map((result, index) => (
-            <SearchResultCard
-              key={`${result.id}-${index}`}
-              result={result}
-              searchId={searchId}
-            />
+            <div key={`${result.id}-${index}`} className="py-4 first:pt-0">
+              <SearchResultCard
+                result={result}
+                searchId={searchId}
+              />
+            </div>
           ))}
         </div>
       )}
