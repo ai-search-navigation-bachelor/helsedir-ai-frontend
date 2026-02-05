@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Heading } from "@digdir/designsystemet-react";
-import { findNodeByPath, splitIntoColumns } from "./temasiderTree";
+import { findNodeByPath, splitIntoColumns } from "../../lib/temasider/temasiderTree";
 
 function stripPrefix(pathname: string) {
   return pathname.replace(/^\/temasider/, "") || "/";

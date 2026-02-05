@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Heading } from "@digdir/designsystemet-react";
-import { getTopLevelTemasider } from "./temasiderTree";
+import { getTopLevelTemasider } from "../../lib/temasider/temasiderTree";
 
 export function TemasideIndexPage() {
   const top = getTopLevelTemasider();
