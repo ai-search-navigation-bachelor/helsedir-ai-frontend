@@ -39,7 +39,7 @@ export function TemasideHubPage() {
   const categoryIcon = categoryIcons[node.path];
 
   return (
-    <div className="mx-auto max-w-[1600px] px-8 py-6">
+    <div className="max-w-screen-xl mx-auto px-6 py-6">
       <div className="flex items-center gap-4 mb-16">
         {categoryIcon && (
           <img src={categoryIcon} alt="" className="w-16 h-16" />
@@ -48,9 +48,9 @@ export function TemasideHubPage() {
       </div>
 
       {isHub ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-14">
+        <div className="flex flex-wrap gap-x-12 gap-y-14">
           {node.children.map((section) => (
-            <section key={section.path} className="space-y-5">
+            <section key={section.path} className="space-y-7 flex-1 min-w-[250px] max-w-[350px]">
               <Heading level={2} data-size="md" className="font-bold text-gray-900 text-xl">
                 {section.title}
               </Heading>
