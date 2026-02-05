@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Heading } from "@digdir/designsystemet-react";
-import { getTopLevelTemasider } from "../../lib/temasider/temasiderTree";
+import { getTopLevelTemasider } from "../../lib/temaside/temasiderTree";
 
 export function TemasideIndexPage() {
   const top = getTopLevelTemasider();
@@ -13,7 +13,7 @@ export function TemasideIndexPage() {
         {top.map((t) => (
           <Link
             key={t.path}
-            to={`/temasider${t.path}`}
+            to={`/temaside${t.path}`}
             className="rounded-lg border border-slate-200 bg-white p-4 hover:bg-slate-50"
           >
             {t.title}

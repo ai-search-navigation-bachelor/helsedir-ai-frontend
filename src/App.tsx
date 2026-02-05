@@ -10,7 +10,7 @@ function App() {
         <Route index element={<Home />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="content/:id" element={<ContentDetail />} />
-        <Route path="temasider">
+        <Route path="temaside">
           <Route index element={<TemasideIndexPage />} />
           <Route path="*" element={<TemasideHubPage />} />
         </Route>

@@ -1,9 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import { Heading } from "@digdir/designsystemet-react";
-import { findNodeByPath, splitIntoColumns } from "../../lib/temasider/temasiderTree";
+import { ChevronRightIcon } from '@navikt/aksel-icons';
+import { findNodeByPath, splitIntoColumns } from "../../lib/temaside/temasiderTree";
 
 function stripPrefix(pathname: string) {
-  return pathname.replace(/^\/temasider/, "") || "/";
+  return pathname.replace(/^\/temaside/, "") || "/";
 }
 
 export function TemasideHubPage() {
@@ -27,7 +28,7 @@ export function TemasideHubPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-6">
-      <Heading level={1} data-size="lg">{node.title}</Heading>
+      <Heading level={1} data-size="lg" className="font-bold">{node.title}</Heading>
 
       {isHub ? (
         <div className="mt-8 space-y-10">
@@ -37,7 +38,7 @@ export function TemasideHubPage() {
 
             return (
               <section key={section.path}>
-                <Heading level={2} data-size="md">{section.title}</Heading>
+                <Heading level={2} data-size="md" className="font-bold">{section.title}</Heading>
 
                 <div className="mt-4 grid gap-10 md:grid-cols-2">
                   {cols.map((col, idx) => (
@@ -45,11 +46,11 @@ export function TemasideHubPage() {
                       {col.map((item) => (
                         <Link
                           key={item.path}
-                          to={`/temasider${item.path}`}
+                          to={`/temaside${item.path}`}
                           className="flex items-center justify-between border-b border-slate-200 py-4 hover:bg-slate-50 px-2 rounded"
                         >
-                          <span>{item.title}</span>
-                          <span aria-hidden>→</span>
+                          <span className="font-semibold">{item.title}</span>
+                          <ChevronRightIcon className="h-5 w-5 text-blue-600" aria-hidden />
                         </Link>
                       ))}
                     </div>
