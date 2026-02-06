@@ -3,6 +3,21 @@
 ## Overview
 The new `SearchPage` component is a modern replacement for `CategorizedSearch` with a cleaner, tab-based interface for browsing search results by category.
 
+## Component Structure
+
+### Search Components
+Located in `src/components/content/search/`:
+- `SearchCategoryTabs.tsx` - Tab navigation with hardcoded categories
+- `SearchResultCard.tsx` - Individual result card component
+- `SearchResultsList.tsx` - Results list with count display
+- `SearchEmptyState.tsx` - Empty state when no search query
+- `index.ts` - Barrel export for easy imports
+
+### Home Page Components
+Located in `src/components/ui/`:
+- `CategoryButtons.tsx` - Category navigation grid for homepage
+- `HomeSearchForm.tsx` - Main search form on homepage
+
 ## Route
 - **URL**: `/search?query=<search-term>&category=<category-id>`
 - **Example**: `/search?query=adhd&category=all`

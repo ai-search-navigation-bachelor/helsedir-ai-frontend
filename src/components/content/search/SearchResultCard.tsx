@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import type { SearchResult } from '../../types';
+import type { SearchResult } from '../../../types';
 
 interface SearchResultCardProps {
   result: SearchResult & {
