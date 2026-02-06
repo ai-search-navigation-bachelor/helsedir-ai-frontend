@@ -5,8 +5,7 @@
 
 import { httpRequest, buildUrl } from '../lib/httpClient'
 import type { BaseRequestOptions, ContentDetail, InfoResultItem } from '../types'
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://129.241.150.141:8000'
+import { BACKEND_BASE_URL } from './backendBaseUrl'
 
 /**
  * Content request options
@@ -29,7 +28,7 @@ export async function getContent(
     throw new Error('Content ID is required')
   }
 
-  const url = buildUrl(`${BASE_URL}/content/${encodeURIComponent(trimmed)}`, {
+  const url = buildUrl(`${BACKEND_BASE_URL}/content/${encodeURIComponent(trimmed)}`, {
     search_id: searchId,
   })
 
@@ -51,7 +50,7 @@ export async function getInfobit(
   }
 
   // Legacy endpoint for backwards compatibility
-  const url = buildUrl(`${BASE_URL}/helsedir/infobit/${encodeURIComponent(trimmed)}`, {
+  const url = buildUrl(`${BACKEND_BASE_URL}/helsedir/infobit/${encodeURIComponent(trimmed)}`, {
     include_children: true,
     depth,
   })
