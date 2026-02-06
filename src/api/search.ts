@@ -11,7 +11,7 @@ import type {
   SearchResponse,
 } from '../types'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://129.241.150.141:8000'
+import { BACKEND_BASE_URL } from './backendBaseUrl'
 
 /**
  * Categorized search options
@@ -81,7 +81,7 @@ export async function searchCategorized(
     return emptyCategorizedResponse(trimmed)
   }
 
-  const url = buildUrl(`${BASE_URL}/search/categorized`, {
+  const url = buildUrl(`${BACKEND_BASE_URL}/search/categorized`, {
     query: trimmed,
     role,
     tema: tema && tema.length > 0 ? tema.join(',') : undefined,
@@ -105,7 +105,7 @@ export async function searchCategory(
     throw new Error('Query, category, and search_id are required')
   }
 
-  const url = buildUrl(`${BASE_URL}/search/category`, {
+  const url = buildUrl(`${BACKEND_BASE_URL}/search/category`, {
     query: trimmed,
     category,
     search_id,
@@ -128,7 +128,7 @@ export async function search(
     return emptySearchResponse()
   }
 
-  const url = buildUrl(`${BASE_URL}/search`, {
+  const url = buildUrl(`${BACKEND_BASE_URL}/search`, {
     query: trimmed,
     offset,
     limit,

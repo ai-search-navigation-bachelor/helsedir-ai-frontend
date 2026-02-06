@@ -109,14 +109,11 @@ export function getSelectedAncestorIds(
   if (!activePage) return new Set<string>()
 
   const ids = new Set<string>()
-  let current = activePage
+  let current: PageNode | undefined = activePage
 
-  while (current.parentId) {
+  while (current?.parentId) {
     ids.add(current.parentId)
     current = pagesById.get(current.parentId)
-    if (!current) {
-      break
-    }
   }
 
   return ids

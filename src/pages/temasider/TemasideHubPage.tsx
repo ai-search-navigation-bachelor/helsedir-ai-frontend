@@ -1,7 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { Heading } from "@digdir/designsystemet-react";
 import { ChevronRightIcon } from '@navikt/aksel-icons';
-import { findNodeByPath, splitIntoColumns } from "../../lib/temasider/temasiderTree";
+import { findNodeByPath, splitIntoColumns } from "../../lib/temaside/temasiderTree";
+import type { ThemeNode } from "../../lib/temaside/temasiderTree";
 
 function stripPrefix(pathname: string) {
   return pathname.replace(/^\/temasider/, "") || "/";
@@ -32,7 +33,7 @@ export function TemasideHubPage() {
 
       {isHub ? (
         <div className="mt-8 space-y-10">
-          {node.children.map((section) => {
+          {node.children.map((section: ThemeNode) => {
             const items = section.children;
             const cols = splitIntoColumns(items, 2);
 
@@ -41,9 +42,9 @@ export function TemasideHubPage() {
                 <Heading level={2} data-size="md" className="font-bold">{section.title}</Heading>
 
                 <div className="mt-4 grid gap-10 md:grid-cols-2">
-                  {cols.map((col, idx) => (
+                  {cols.map((col: ThemeNode[], idx: number) => (
                     <div key={idx}>
-                      {col.map((item) => (
+                      {col.map((item: ThemeNode) => (
                         <Link
                           key={item.path}
                           to={`/temasider${item.path}`}
