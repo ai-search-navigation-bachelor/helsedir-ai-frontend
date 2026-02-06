@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/@digdir/designsystemet/dist/config.schema.json",
+  "outDir": "./design-tokens",
+  "themes": {
+    "theme": {
+      "colors": {
+        "main": {
+          "logobla-1": "#025169",
+          "logobla-2": "#047FA4",
+          "hvit": "#ffffff"
+        },
+        "support": {
+          "bla-1": "#0069E8",
+          "bla-2": "#80A6D6",
+          "bla-3": "#F0F5FF",
+          "gronn-1": "#366558",
+          "gronn-2": "#95DBCA",
+          "gronn-3": "#EBF5F2",
+          "gul-1": "#FFBF00",
+          "gul-2": "#FFE187",
+          "gul-3": "#FFF9E6",
+          "lilla-1": "#7C145C",
+          "lilla-2": "#DBB5ED",
+          "lilla-3": "#FCF3F9",
+          "svart": "#000000"
+        },
+        "neutral": "#212121"
+      },
+      "borderRadius": 4
+    }
+  }
+}

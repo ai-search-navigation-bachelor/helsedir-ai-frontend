@@ -1,0 +1,78 @@
+import { useState, useEffect, useRef, type FormEvent } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { HomeSearchForm } from '../components/ui/HomeSearchForm'
+import { CategoryButtons } from '../components/ui/CategoryButtons'
+
+type HomeProps = {
+  isSearchBar?: boolean
+}
+
+export function Home({ isSearchBar = false }: HomeProps) {
+  const [query, setQuery] = useState('')
+  const navigate = useNavigate()
+  const location = useLocation()
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const isHome = location.pathname === '/'
+
+  useEffect(() => {
+    // Auto-focus when opened as search bar from header or when on home page
+    if (searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current?.focus()
+      }, 100)
+    }
+  }, [isSearchBar])
+
+  useEffect(() => {
+    // Listen for search toggle event on home page
+    const handleSearchFocus = () => {
+      if (isHome && searchInputRef.current) {
+        setTimeout(() => {
+          searchInputRef.current?.focus()
+        }, 100)
+      }
+    }
+    window.addEventListener('toggleSearch', handleSearchFocus)
+    return () => window.removeEventListener('toggleSearch', handleSearchFocus)
+  }, [isHome])
+
+  // Add home-page class to body on mount, remove on unmount
+  useEffect(() => {
+    document.body.classList.add('home-page')
+    return () => {
+      document.body.classList.remove('home-page')
+    }
+  }, [])
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const trimmed = query.trim()
+    if (!trimmed) return
+    navigate(`/search?query=${encodeURIComponent(trimmed)}`)
+  }
+
+  // If used as search bar only, render just the search form
+  if (isSearchBar) {
+    return (
+      <HomeSearchForm 
+        ref={searchInputRef}
+        query={query}
+        onQueryChange={setQuery}
+        onSubmit={onSubmit}
+      />
+    )
+  }
+
+  // Full home page with search and category buttons
+  return (
+    <div>
+      <HomeSearchForm 
+        ref={searchInputRef}
+        query={query}
+        onQueryChange={setQuery}
+        onSubmit={onSubmit}
+      />
+      <CategoryButtons />
+    </div>
+  )
+}
