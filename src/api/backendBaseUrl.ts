@@ -14,6 +14,8 @@ function normalizeBaseUrl(value: string): string {
   return trimmed.replace(/\/+$/, '')
 }
 
+const resolvedBaseUrl = import.meta.env.VITE_API_BASE_URL
+
 export const BACKEND_BASE_URL = normalizeBaseUrl(
-  import.meta.env.VITE_API_BASE_URL || DEFAULT_BACKEND_BASE_URL,
+  resolvedBaseUrl || (import.meta.env.PROD ? '/api' : DEFAULT_BACKEND_BASE_URL),
 )
