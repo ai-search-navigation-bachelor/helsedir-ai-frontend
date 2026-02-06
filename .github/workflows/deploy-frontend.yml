@@ -31,7 +31,10 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build
+        env:
+          VITE_HELSEDIR_API_KEY: ${{ secrets.VITE_HELSEDIR_API_KEY }}
+          VITE_HELSEDIR_API_URL: ${{ secrets.VITE_HELSEDIR_API_URL }}
+        run: npm run build   
 
       - name: Deploy dist -> /var/www/app
         run: |
