@@ -1,5 +1,5 @@
 import { Alert, Paragraph } from '@digdir/designsystemet-react';
-import { SearchForm } from '../ui/SearchForm';
+import { SearchForm } from '../../ui/SearchForm';
 
 interface SearchEmptyStateProps {
   onSubmit: (query: string) => void;

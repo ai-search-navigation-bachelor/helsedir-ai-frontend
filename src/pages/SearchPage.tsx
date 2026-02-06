@@ -15,7 +15,7 @@ import {
   SearchResultsList,
   SearchEmptyState,
   FIXED_CATEGORIES,
-} from '../components/new-search';
+} from '../components/content/search';
 
 /**
  * New Search Page

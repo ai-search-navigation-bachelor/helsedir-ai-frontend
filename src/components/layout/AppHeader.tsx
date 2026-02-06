@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Button,
   CardBlock,
@@ -5,10 +6,13 @@ import {
 import { Link } from 'react-router-dom'
 
 import { colors } from '../../styles/dsTokens'
+import { MenuDropdown } from '../ui/MenuDropdown'
 
-import { IoSearch, IoMenu } from 'react-icons/io5'
+import { IoSearch, IoMenu, IoClose } from 'react-icons/io5'
 
 export function AppHeader() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
   return (
     <>
       <div
@@ -44,16 +48,19 @@ export function AppHeader() {
                 </Button>
                 <Button
                   variant='secondary'
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
                   aria-label='Meny'
+                  aria-expanded={isMenuOpen}
                   className='site-header__button'
                 >
-                  <IoMenu size={18} />
+                  {isMenuOpen ? <IoClose size={18} /> : <IoMenu size={18} />}
                   Meny
                 </Button>
               </div>
             </div>
           </CardBlock>
         </header>
+        <MenuDropdown isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       </div>
     </>
   )
