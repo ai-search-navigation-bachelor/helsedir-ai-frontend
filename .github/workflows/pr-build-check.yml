@@ -1,0 +1,66 @@
+name: PR Build Check
+
+on:
+  pull_request:
+    branches: ["dev"]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      run_build:
+        description: "Run npm run build (manual only)"
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: pr-build-check-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  prebuild-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+  build:
+    if: github.event_name == 'workflow_dispatch' && (inputs.run_build == true || inputs.run_build == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: prebuild-checks
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        env:
+          VITE_API_BASE_URL: /api
+          VITE_HELSEDIR_API_KEY: ci-placeholder
+        run: npm run build
