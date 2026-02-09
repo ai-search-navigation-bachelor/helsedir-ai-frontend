@@ -7,6 +7,20 @@ Currently, two official plugins are available:
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
+## Backend configuration (.env)
+
+The frontend reads the backend base URL from `VITE_API_BASE_URL`.
+
+- Default (current): point directly to a backend (useful for local dev):
+  - `VITE_API_BASE_URL=http://129.241.150.141:8000`
+- VM/prod (HTTPS frontend + backend on localhost): set a relative path and let your reverse proxy forward it:
+  - `VITE_API_BASE_URL=/api`
+
+When using `VITE_API_BASE_URL=/api` in local development, you can also set:
+- `VITE_API_PROXY_TARGET=http://localhost:8000` (or another backend URL)
+
+This enables local dev to mimic the same-origin setup used in prod.
+
 ## React Compiler
 
 The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).

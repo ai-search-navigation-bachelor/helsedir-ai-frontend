@@ -45,7 +45,19 @@ export function buildUrl(
   baseUrl: string,
   params?: Record<string, string | number | boolean | undefined>,
 ): URL {
-  const url = new URL(baseUrl)
+  const url = (() => {
+    try {
+      return new URL(baseUrl)
+    } catch {
+      // Allow relative URLs (e.g. "/api/search") by resolving against current origin
+      // This enables same-origin deployments behind a reverse proxy.
+      const origin =
+        typeof window !== 'undefined' && window.location
+          ? window.location.origin
+          : 'http://localhost'
+      return new URL(baseUrl, origin)
+    }
+  })()
 
   if (params) {
     Object.entries(params).forEach(([key, value]) => {

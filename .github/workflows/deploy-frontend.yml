@@ -1,0 +1,60 @@
+name: Deploy frontend
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+concurrency:
+  group: deploy-frontend-main
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, prod]
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          clean: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Validate build environment
+        env:
+          VITE_API_BASE_URL: /api
+          VITE_HELSEDIR_API_KEY: ${{ secrets.VITE_HELSEDIR_API_KEY }}
+        run: |
+          test -n "$VITE_API_BASE_URL" || (echo "Missing VITE_API_BASE_URL" && exit 1)
+          test -n "$VITE_HELSEDIR_API_KEY" || (echo "Missing VITE_HELSEDIR_API_KEY secret" && exit 1)
+
+      - name: Build
+        env:
+          VITE_API_BASE_URL: /api
+          VITE_HELSEDIR_API_KEY: ${{ secrets.VITE_HELSEDIR_API_KEY }}
+        run: npm run build   
+
+      - name: Deploy dist -> /var/www/app
+        run: |
+          sudo rsync -a --delete dist/ /var/www/app/
+          sudo chown -R www-data:www-data /var/www/app
+
+      - name: Nginx config test + reload
+        run: |
+          sudo nginx -t
+          sudo systemctl reload nginx
+
+      - name: Smoke test
+        run: |
+          curl -fsS https://vm.idatg2901-v26-helsdir.iaas.iik.ntnu.no/ >/dev/null
+          curl -fsS https://vm.idatg2901-v26-helsdir.iaas.iik.ntnu.no/api/health >/dev/null
