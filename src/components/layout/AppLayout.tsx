@@ -10,18 +10,26 @@ import { Home } from '../../pages/Home'
 export function AppLayout() {
   const location = useLocation()
   const isHome = location.pathname === '/'
-  const [isSearchVisible, setIsSearchVisible] = useState(isHome)
+  const isSearchPage = location.pathname === '/search'
+  const [isSearchVisible, setIsSearchVisible] = useState(isHome || isSearchPage)
 
   useEffect(() => {
-    // Update search bar visibility based on route
-    setIsSearchVisible(isHome)
-  }, [isHome])
+    // Open search by default on home and search page, close on other pages.
+    setIsSearchVisible(isHome || isSearchPage)
+  }, [isHome, isSearchPage])
 
   useEffect(() => {
+    const isSearchPinnedOpen = isHome || isSearchPage
+
     const handleSearchToggle = () => {
+      if (isSearchPinnedOpen) {
+        setIsSearchVisible(true)
+        return
+      }
       setIsSearchVisible((prev) => !prev)
     }
     const handleSearchClose = () => {
+      if (isSearchPinnedOpen) return
       setIsSearchVisible(false)
     }
     window.addEventListener('toggleSearch', handleSearchToggle)
@@ -30,7 +38,7 @@ export function AppLayout() {
       window.removeEventListener('toggleSearch', handleSearchToggle)
       window.removeEventListener('closeSearch', handleSearchClose)
     }
-  }, [])
+  }, [isHome, isSearchPage])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
