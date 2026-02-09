@@ -521,6 +521,23 @@ body {
   text-decoration: underline !important;
 }
 
+.recommendation-nav__button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.recommendation-nav__button:hover {
+  color: #0f172a !important;
+  text-decoration: underline !important;
+}
+
+.recommendation-nav__button--active {
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
+}
+
 .chapter-accordion__title,
 .chapter-accordion__subtitle {
   transition: color 0.2s ease, text-decoration-color 0.2s ease;

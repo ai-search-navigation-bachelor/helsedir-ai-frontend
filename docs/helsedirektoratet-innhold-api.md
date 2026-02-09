@@ -205,6 +205,29 @@ Tolking:
 - Endepunktene finnes, men stabiliteten varierer.
 - Legg inn retry/backoff i klienten.
 
+## 9.1 Viktig observasjon for anbefaling/rad i frontend (verifisert 2026-02-09)
+
+Ved kall mot prosjektets backend-endepunkt `GET /content/{id}` returneres en normalisert modell:
+
+- `id`, `title`, `body`, `content_type`, `links`
+- men ikke utvidede anbefalingsfelt som `data.styrke`, `data.praktisk`, `data.rasjonale`, `data.nokkelInfo`
+
+Konsekvens:
+
+- For rik visning av anbefaling/rad må frontend hente direkte fra Helsedirektoratet API med type-endepunkt:
+  - `GET /innhold/anbefalinger/{id}` for `content_type=anbefaling`
+  - `GET /innhold/rad/{id}` for `content_type=rad`
+  - `GET /innhold/pakkeforlop-anbefalinger/{id}` for `content_type=pakkeforlop-anbefaling`
+
+Eksempler verifisert 2026-02-09:
+
+- Backend:
+  - `GET http://129.241.150.141:8000/content/0006-0002-2422fdad-c242-4175-921d-a7218670bbb4` (`content_type=anbefaling`)
+  - `GET http://129.241.150.141:8000/content/0006-0023-8ed73637-ebdb-4125-9d49-6a4b4b300050` (`content_type=rad`)
+- Direkte API:
+  - `GET /innhold/anbefalinger/0006-0002-2422fdad-c242-4175-921d-a7218670bbb4` (inkluderer `data.*`)
+  - `GET /innhold/rad/0006-0023-8ed73637-ebdb-4125-9d49-6a4b4b300050` (inkluderer `data.*`)
+
 ## 10. Anbefalt strategi i deres frontend/backend
 
 1. Start med `GET /innhold/innhold?infoTyper=<produkttype>`.

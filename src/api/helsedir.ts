@@ -4,6 +4,13 @@
  */
 
 const API_KEY = import.meta.env.VITE_HELSEDIR_API_KEY || ''
+const HELSEDIR_API_URL = (import.meta.env.VITE_HELSEDIR_API_URL || '')
+
+const HELSEDIR_ENDPOINT_BY_CONTENT_TYPE: Record<string, string> = {
+  anbefaling: 'anbefalinger',
+  rad: 'rad',
+  'pakkeforlop-anbefaling': 'pakkeforlop-anbefalinger',
+}
 
 /**
  * Response structure from Helsedirektoratet API
@@ -60,6 +67,25 @@ export async function fetchHelsedirContent(
   }
 
   return response.json()
+}
+
+export function getHelsedirEndpointByContentType(contentType: string): string | null {
+  const normalizedType = contentType.trim().toLowerCase()
+  return HELSEDIR_ENDPOINT_BY_CONTENT_TYPE[normalizedType] || null
+}
+
+export async function fetchHelsedirContentByTypeAndId(
+  contentType: string,
+  id: string,
+  signal?: AbortSignal,
+): Promise<HelselinkContent> {
+  const endpoint = getHelsedirEndpointByContentType(contentType)
+  if (!endpoint) {
+    throw new Error(`Ukjent Helsedirektoratet endpoint for innholdstype: ${contentType}`)
+  }
+
+  const href = `${HELSEDIR_API_URL}/innhold/${endpoint}/${encodeURIComponent(id)}`
+  return fetchHelsedirContent(href, signal)
 }
 
 /**

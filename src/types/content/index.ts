@@ -50,8 +50,10 @@ export interface NestedContent {
   intro?: string
   kortIntro?: string
   status?: string
+  forstPublisert?: string
   sistOppdatert?: string
   sistFagligOppdatert?: string
+  url?: string
   data?: {
     styrke?: string
     praktisk?: string
