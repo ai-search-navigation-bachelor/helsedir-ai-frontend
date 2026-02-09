@@ -50,26 +50,29 @@ export function PageContent({
       )}
 
       {showChildNavigation && (
-        <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <Heading level={3} data-size="sm" style={{ marginBottom: 8 }}>
+        <section className="mt-6">
+          <Heading level={3} data-size="sm" style={{ marginBottom: 10 }}>
             {activePage.childrenIds.length === 1 ? 'Kapittel' : 'Kapitler'}
           </Heading>
-          <ul className="m-0 list-none space-y-2 p-0">
+          <ul className="m-0 list-none p-0">
             {activePage.childrenIds.map((childId) => {
               const child = pagesById.get(childId)
               if (!child) return null
 
               return (
-                <li key={child.id}>
+                <li key={child.id} className="border-b border-slate-100 last:border-b-0">
                   <button
                     type="button"
                     onClick={() => onSelectPage(child.id)}
-                    className="retningslinje-child-nav__button flex w-full items-start gap-2 rounded-md border border-transparent bg-white px-3 py-2 text-left text-slate-700 transition"
+                    className="retningslinje-child-nav__button flex w-full items-start justify-between gap-3 px-1 py-2.5 text-left text-slate-700 transition"
                   >
                     <span className="min-w-0">
-                      <span className="retningslinje-child-nav__number mr-2 text-sm text-slate-400">{child.numbering}</span>
-                      <span className="retningslinje-child-nav__title break-words">{child.title}</span>
+                      <span className="retningslinje-child-nav__number mr-2 min-w-[3.2rem] text-sm text-slate-400">
+                        {child.numbering}
+                      </span>
+                      <span className="retningslinje-child-nav__title min-w-0 break-words">{child.title}</span>
                     </span>
+                    <span aria-hidden="true" className="retningslinje-child-nav__affordance">→</span>
                   </button>
                 </li>
               )
