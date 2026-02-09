@@ -30,6 +30,29 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
   const selectedPage = pageTree.pagesById.get(selectedPageId || '')
   const activePage = selectedPage ?? pageTree.pagesById.get(pageTree.rootIds[0] || '')
   const selectedAncestorIds = getSelectedAncestorIds(pageTree.pagesById, activePage)
+  const orderedPageIds = useMemo(() => {
+    const ordered: string[] = []
+
+    const visit = (pageId: string) => {
+      const page = pageTree.pagesById.get(pageId)
+      if (!page) return
+
+      ordered.push(pageId)
+      page.childrenIds.forEach((childId) => visit(childId))
+    }
+
+    pageTree.rootIds.forEach((rootId) => visit(rootId))
+    return ordered
+  }, [pageTree])
+  const activePageIndex = activePage ? orderedPageIds.indexOf(activePage.id) : -1
+  const previousPage =
+    activePageIndex > 0
+      ? pageTree.pagesById.get(orderedPageIds[activePageIndex - 1])
+      : undefined
+  const nextPage =
+    activePageIndex >= 0 && activePageIndex < orderedPageIds.length - 1
+      ? pageTree.pagesById.get(orderedPageIds[activePageIndex + 1])
+      : undefined
 
   const handleSelectPage = (pageId: string) => {
     setSelectedPageId(pageId)
@@ -118,6 +141,8 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
               activePage={activePage}
               pagesById={pageTree.pagesById}
               onSelectPage={handleSelectPage}
+              previousPage={previousPage}
+              nextPage={nextPage}
             />
           )}
 

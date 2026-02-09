@@ -8,12 +8,16 @@ interface PageContentProps {
   activePage: PageNode
   pagesById: Map<string, PageNode>
   onSelectPage: (pageId: string) => void
+  previousPage?: PageNode
+  nextPage?: PageNode
 }
 
 export function PageContent({
   activePage,
   pagesById,
   onSelectPage,
+  previousPage,
+  nextPage,
 }: PageContentProps) {
   const hasIntro = hasVisibleContent(activePage.node.intro)
   const hasBody = hasVisibleContent(activePage.node.tekst || activePage.node.body)
@@ -89,6 +93,38 @@ export function PageContent({
             ))}
           </div>
         </section>
+      )}
+
+      {(previousPage || nextPage) && (
+        <nav aria-label="Navigasjon mellom kapitler" className="mt-8 border-t border-slate-200 pt-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {previousPage ? (
+              <button
+                type="button"
+                onClick={() => onSelectPage(previousPage.id)}
+                className="retningslinje-page-nav__button retningslinje-page-nav__button--prev"
+                aria-label={`Gå til forrige kapittel ${previousPage.numbering}`}
+              >
+                <span aria-hidden="true" className="retningslinje-page-nav__icon">←</span>
+                <span className="retningslinje-page-nav__label">Forrige</span>
+                <span className="retningslinje-page-nav__number">{previousPage.numbering}</span>
+              </button>
+            ) : null}
+
+            {nextPage ? (
+              <button
+                type="button"
+                onClick={() => onSelectPage(nextPage.id)}
+                className="retningslinje-page-nav__button retningslinje-page-nav__button--next"
+                aria-label={`Gå til neste kapittel ${nextPage.numbering}`}
+              >
+                <span className="retningslinje-page-nav__label">Neste</span>
+                <span className="retningslinje-page-nav__number">{nextPage.numbering}</span>
+                <span aria-hidden="true" className="retningslinje-page-nav__icon">→</span>
+              </button>
+            ) : null}
+          </div>
+        </nav>
       )}
     </article>
   )
