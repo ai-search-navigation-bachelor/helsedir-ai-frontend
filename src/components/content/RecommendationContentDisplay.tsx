@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
-import { Alert, Heading, Link, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { useNavigate } from 'react-router-dom'
 import {
   fetchHelsedirContentByTypeAndId,
   getHelsedirEndpointByContentType,
@@ -22,9 +23,7 @@ const TYPE_LABEL_BY_CONTENT_TYPE: Record<string, string> = {
 }
 
 const LINK_LABEL_BY_REL: Record<string, string> = {
-  forelder: 'Overordnet kapittel',
   root: 'Rotpublikasjon',
-  publikasjon: 'Publikasjon',
 }
 
 function hasVisibleContent(value?: string) {
@@ -47,7 +46,22 @@ function getTypeLabel(contentType: string) {
   return TYPE_LABEL_BY_CONTENT_TYPE[contentType] || 'Innhold'
 }
 
+function getContentIdFromHref(href?: string) {
+  if (!href) return null
+
+  try {
+    const parsed = new URL(href)
+    const segments = parsed.pathname.split('/').filter(Boolean)
+    return segments[segments.length - 1] || null
+  } catch {
+    const normalized = href.split('?')[0].replace(/\/+$/, '')
+    const segments = normalized.split('/').filter(Boolean)
+    return segments[segments.length - 1] || null
+  }
+}
+
 export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
+  const navigate = useNavigate()
   const normalizedType = content.content_type.trim().toLowerCase()
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
 
@@ -186,6 +200,17 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
     () => content.links?.filter((link) => Boolean(link.href)) || [],
     [content.links],
   )
+  const contextualNavigationLinks = useMemo(
+    () =>
+      supportingLinks
+        .filter((link) => link.rel === 'root')
+        .map((link) => ({
+          ...link,
+          contentId: getContentIdFromHref(link.href),
+        }))
+        .filter((link) => Boolean(link.contentId)),
+    [supportingLinks],
+  )
 
   const typeLabel = getTypeLabel(normalizedType)
 
@@ -241,6 +266,33 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
             </div>
           )}
 
+          {contextualNavigationLinks.length > 0 && (
+            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
+                Gå til publikasjon
+              </Heading>
+              <ul className="m-0 list-none space-y-1 p-0">
+                {contextualNavigationLinks.map((link) => {
+                  const label =
+                    link.tittel ||
+                    LINK_LABEL_BY_REL[link.rel] ||
+                    `${link.rel.charAt(0).toUpperCase()}${link.rel.slice(1)}`
+                  return (
+                    <li key={`contextual-${link.rel}-${link.href}`}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/content/${link.contentId}`)}
+                        className="recommendation-nav__button w-full py-1 text-left text-sm text-slate-700"
+                      >
+                        {label}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          )}
+
           {metadataItems.length > 0 && (
             <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
@@ -260,29 +312,6 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
               </ul>
             </section>
           )}
-
-          {supportingLinks.length > 0 && (
-            <section className="border-t border-slate-200 pt-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
-                Relaterte lenker
-              </Heading>
-              <ul className="m-0 list-none space-y-1 p-0">
-                {supportingLinks.map((link) => {
-                  const label =
-                    link.tittel ||
-                    LINK_LABEL_BY_REL[link.rel] ||
-                    `${link.rel.charAt(0).toUpperCase()}${link.rel.slice(1)}`
-                  return (
-                    <li key={`${link.rel}-${link.href}`}>
-                      <Link href={link.href} className="text-sm">
-                        {label}
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-          )}
         </aside>
 
         <section className="min-w-0 space-y-8">
@@ -295,11 +324,7 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
           )}
 
           {sections.map((section) => (
-            <article
-              key={section.id}
-              id={section.id}
-              className="scroll-mt-20"
-            >
+            <article key={section.id} id={section.id} className="scroll-mt-20">
               <Heading level={2} data-size="md" style={{ marginTop: 0, marginBottom: 12 }}>
                 {section.title}
               </Heading>

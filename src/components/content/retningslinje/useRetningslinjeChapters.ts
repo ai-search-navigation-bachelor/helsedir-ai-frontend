@@ -18,11 +18,6 @@ export function useRetningslinjeChapters({
     [links]
   )
 
-  const supportingLinks = useMemo(
-    () => links?.filter((link) => link.rel !== 'barn' && Boolean(link.href)) ?? [],
-    [links]
-  )
-
   const childrenKey = useMemo(
     () => childrenLinks.map((link) => link.href).join(','),
     [childrenLinks]
@@ -63,7 +58,6 @@ export function useRetningslinjeChapters({
 
   return {
     childrenLinks,
-    supportingLinks,
     entries,
     loadedChapters,
     failedEntries,

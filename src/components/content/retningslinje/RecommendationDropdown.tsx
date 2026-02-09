@@ -1,6 +1,7 @@
-import DOMPurify from 'dompurify'
+﻿import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Paragraph } from '@digdir/designsystemet-react'
+import { useNavigate } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { formatDateLabel, getNodeTitle } from './treeUtils'
 
@@ -15,10 +16,10 @@ export function RecommendationDropdown({
   itemKey,
   depth = 0,
 }: RecommendationDropdownProps) {
+  const navigate = useNavigate()
   const title = getNodeTitle(item)
   const intro = item.intro || ''
   const body = item.tekst || item.body || ''
-  const children = item.children || []
 
   const strength = item.data?.styrke || ''
   const status = item.status || ''
@@ -28,6 +29,7 @@ export function RecommendationDropdown({
   const rationale = item.data?.rasjonale || ''
   const tradeoffs = item.data?.nokkelInfo?.fordelerogulemper || ''
   const preferences = item.data?.nokkelInfo?.verdierogpreferanser || ''
+  const hasStandalonePage = Boolean(item.id)
 
   return (
     <details key={itemKey} className="mb-3 rounded-lg border border-slate-200 bg-white">
@@ -35,18 +37,34 @@ export function RecommendationDropdown({
         className="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
         style={{ paddingLeft: `${12 + depth * 12}px` }}
       >
-        <div className="flex items-start gap-2">
-          <ChevronRightIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-          <div className="min-w-0">
-            <div className="mb-1 flex flex-wrap items-center gap-1">
-              {strength && (
-                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
-                  {strength}
-                </span>
-              )}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-start gap-2">
+            <ChevronRightIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+            <div className="min-w-0">
+              <div className="mb-1 flex flex-wrap items-center gap-1">
+                {strength && (
+                  <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
+                    {strength}
+                  </span>
+                )}
+              </div>
+              <span className="block whitespace-normal break-words leading-6">{title}</span>
             </div>
-            <span className="block whitespace-normal break-words leading-6">{title}</span>
           </div>
+
+          {hasStandalonePage && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                navigate(`/content/${item.id}`)
+              }}
+              className="recommendation-open-page__button recommendation-open-page__button--compact"
+            >
+              Åpne side
+            </button>
+          )}
         </div>
       </summary>
 
@@ -126,18 +144,6 @@ export function RecommendationDropdown({
           </details>
         )}
 
-        {children.length > 0 && (
-          <div className="mt-2">
-            {children.map((child, index) => (
-              <RecommendationDropdown
-                key={`${itemKey}-${child.id || index}`}
-                item={child}
-                itemKey={`${itemKey}-${child.id || index}`}
-                depth={depth + 1}
-              />
-            ))}
-          </div>
-        )}
       </div>
     </details>
   )

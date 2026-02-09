@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
-import { Alert, Heading, Link, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'
 import type { ContentDisplayProps } from '../../types/pages'
 import { PageContent } from './retningslinje/PageContent'
 import { SidebarTree } from './retningslinje/SidebarTree'
@@ -19,7 +19,6 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
     entries,
     loadedChapters,
     failedEntries,
-    supportingLinks,
     isChaptersLoading,
   } = useRetningslinjeChapters({
     contentId: content.id,
@@ -111,22 +110,6 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
             />
           )}
 
-          {supportingLinks.length > 0 && (
-            <div className="mt-6 border-t border-slate-200 pt-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
-                Relaterte lenker
-              </Heading>
-              <ul className="m-0 list-none space-y-1 p-0">
-                {supportingLinks.map((link) => (
-                  <li key={`${link.rel}-${link.href}`}>
-                    <Link href={link.href} className="text-sm">
-                      {link.tittel || link.rel}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </aside>
 
         <section className="min-w-0">
