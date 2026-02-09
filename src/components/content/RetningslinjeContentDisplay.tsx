@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { useSearchParams } from 'react-router-dom'
 import type { ContentDisplayProps } from '../../types/pages'
 import { PageContent } from './retningslinje/PageContent'
 import { SidebarTree } from './retningslinje/SidebarTree'
@@ -12,8 +13,9 @@ import {
 import { useRetningslinjeChapters } from './retningslinje/useRetningslinjeChapters'
 
 export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
-  const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const sectionFromUrl = searchParams.get('section')
 
   const {
     entries,
@@ -26,9 +28,17 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
   })
 
   const pageTree = useMemo(() => buildPageTree(loadedChapters), [loadedChapters])
-  const selectedPage = pageTree.pagesById.get(selectedPageId || '')
+  const selectedPage = pageTree.pagesById.get(sectionFromUrl || '')
   const activePage = selectedPage ?? pageTree.pagesById.get(pageTree.rootIds[0] || '')
   const selectedAncestorIds = getSelectedAncestorIds(pageTree.pagesById, activePage)
+  const effectiveExpandedIds = useMemo(() => {
+    const next = new Set(expandedIds)
+    if (!activePage) return next
+
+    const ancestorIds = getAncestorIds(pageTree.pagesById, activePage.id)
+    ancestorIds.forEach((id) => next.add(id))
+    return next
+  }, [expandedIds, activePage, pageTree.pagesById])
   const orderedPageIds = useMemo(() => {
     const ordered: string[] = []
 
@@ -53,8 +63,22 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
       ? pageTree.pagesById.get(orderedPageIds[activePageIndex + 1])
       : undefined
 
+  const updateSectionQuery = useCallback(
+    (pageId: string, replace = true) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.set('section', pageId)
+          return next
+        },
+        { replace },
+      )
+    },
+    [setSearchParams],
+  )
+
   const handleSelectPage = (pageId: string) => {
-    setSelectedPageId(pageId)
+    updateSectionQuery(pageId)
 
     const page = pageTree.pagesById.get(pageId)
     setExpandedIds(() => {
@@ -65,6 +89,16 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
       return next
     })
   }
+
+  useEffect(() => {
+    const fallbackId = activePage?.id
+    if (!fallbackId) return
+
+    if (sectionFromUrl === fallbackId) return
+    if (sectionFromUrl && pageTree.pagesById.has(sectionFromUrl)) return
+
+    updateSectionQuery(fallbackId, true)
+  }, [activePage?.id, sectionFromUrl, pageTree.pagesById, updateSectionQuery])
 
   const toggleExpanded = (pageId: string) => {
     const page = pageTree.pagesById.get(pageId)
@@ -102,7 +136,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
             <SidebarTree
               rootIds={pageTree.rootIds}
               pagesById={pageTree.pagesById}
-              expandedIds={expandedIds}
+              expandedIds={effectiveExpandedIds}
               activePageId={activePage?.id}
               selectedAncestorIds={selectedAncestorIds}
               onToggleExpanded={toggleExpanded}
