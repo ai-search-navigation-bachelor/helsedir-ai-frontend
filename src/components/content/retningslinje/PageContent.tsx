@@ -60,11 +60,11 @@ export function PageContent({
                   <button
                     type="button"
                     onClick={() => onSelectPage(child.id)}
-                    className="flex w-full items-start gap-2 rounded-md border border-transparent bg-white px-3 py-2 text-left text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+                    className="retningslinje-child-nav__button flex w-full items-start gap-2 rounded-md border border-transparent bg-white px-3 py-2 text-left text-slate-700 transition"
                   >
                     <span className="min-w-0">
-                      <span className="mr-2 text-sm text-slate-400">{child.numbering}</span>
-                      <span className="break-words">{child.title}</span>
+                      <span className="retningslinje-child-nav__number mr-2 text-sm text-slate-400">{child.numbering}</span>
+                      <span className="retningslinje-child-nav__title break-words">{child.title}</span>
                     </span>
                   </button>
                 </li>
