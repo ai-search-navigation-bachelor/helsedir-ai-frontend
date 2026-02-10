@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
-import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useNavigate } from 'react-router-dom'
 import {
   fetchHelsedirContentByTypeAndId,
@@ -10,6 +10,7 @@ import {
 import type { NestedContent } from '../../types'
 import type { ContentDisplayProps } from '../../types/pages'
 import { ContentPageHeader } from './ContentPageHeader'
+import { RecommendationAsideLoadingSkeleton } from './ContentSkeletons'
 
 interface ContentSection {
   id: string
@@ -253,9 +254,7 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
           )}
 
           {isEnrichedLoading && (
-            <div className="flex justify-center py-2">
-              <Spinner aria-label="Laster anbefalingsdetaljer..." />
-            </div>
+            <RecommendationAsideLoadingSkeleton />
           )}
 
           {contextualNavigationLinks.length > 0 && (

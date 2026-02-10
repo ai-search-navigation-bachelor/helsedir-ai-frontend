@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
-import { Spinner } from '@digdir/designsystemet-react'
 import { fetchChapterWithSubchapters } from '../../api'
 import type { NestedContent } from '../../types'
 import type { ContentDisplayProps } from '../../types/pages'
 import { ChapterAccordion } from './ChapterAccordion'
 import { ContentPageHeader } from './ContentPageHeader'
+import { GenericChaptersLoadingSkeleton } from './ContentSkeletons'
 import { TableOfContents } from './TableOfContents'
 
 export function GenericContentDisplay({ content }: ContentDisplayProps) {
@@ -141,11 +141,7 @@ export function GenericContentDisplay({ content }: ContentDisplayProps) {
               />
             )}
 
-            {chaptersLoading && (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
-                <Spinner aria-label="Laster kapitler..." />
-              </div>
-            )}
+            {chaptersLoading && <GenericChaptersLoadingSkeleton />}
 
             {!chaptersLoading && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
-import { Alert, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useSearchParams } from 'react-router-dom'
 import type { ContentDisplayProps } from '../../types/pages'
 import { ContentPageHeader } from './ContentPageHeader'
+import { ContentBodyLoadingSkeleton, ContentSidebarLoadingSkeleton } from './ContentSkeletons'
 import { PageContent } from './retningslinje/PageContent'
 import { SidebarTree } from './retningslinje/SidebarTree'
 import {
@@ -122,7 +123,9 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
 
       <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
         <aside className="border-slate-200 lg:border-r lg:pr-6">
-          {entries.length === 0 ? (
+          {isChaptersLoading ? (
+            <ContentSidebarLoadingSkeleton />
+          ) : entries.length === 0 ? (
             <Paragraph style={{ marginBottom: 0, color: '#64748b' }}>
               Ingen barnesider registrert på denne retningslinjen.
             </Paragraph>
@@ -141,11 +144,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
         </aside>
 
         <section className="min-w-0">
-          {isChaptersLoading && (
-            <div className="flex justify-center py-12">
-              <Spinner aria-label="Laster kapitler..." />
-            </div>
-          )}
+          {isChaptersLoading && <ContentBodyLoadingSkeleton />}
 
           {!isChaptersLoading && activePage && (
             <PageContent
