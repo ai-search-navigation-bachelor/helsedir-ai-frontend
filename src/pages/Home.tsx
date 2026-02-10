@@ -37,7 +37,7 @@ type HomeInnerProps = {
 function HomeInner({ isSearchBar, isHome, isSearchPage, initialQuery }: HomeInnerProps) {
   const [query, setQuery] = useState(initialQuery)
   const navigate = useNavigate()
-  const [, setSearchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -78,7 +78,9 @@ function HomeInner({ isSearchBar, isHome, isSearchPage, initialQuery }: HomeInne
     if (!trimmed) return
 
     if (isSearchPage) {
-      setSearchParams({ query: trimmed })
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.set('query', trimmed)
+      setSearchParams(nextParams)
       return
     }
 

@@ -1,20 +1,32 @@
-﻿# Helsedirektoratet Innhold-API (for KI-agenter)
+# Helsedirektoratet Innhold-API (for KI-agenter)
 
-Oppdatert: 2026-02-09
+Oppdatert: 2026-02-10
 
-Dette dokumentet er en praktisk oversikt for prosjektet deres: etterligne helsedirektoratet.no med bedre sok/navigasjon.
+Dette dokumentet er en praktisk oversikt for prosjektet deres: etterligne helsedirektoratet.no med bedre søk/navigasjon.
 
 ## 1. Base URL og autentisering
 
-- Prod base: `https://api.helsedirektoratet.no/innhold`
-- QA base: `https://api-qa.helsedirektoratet.no/innhold`
+Frontend henter base-URL fra miljøvariabel:
+
+- `VITE_HELSEDIR_API_URL` i `.env.local` (eller annet `.env`-miljø)
 - Header: `Ocp-Apim-Subscription-Key: <subscription-key>`
 - Format: `Accept: application/json`
+
+Eksempler på verdi for `VITE_HELSEDIR_API_URL`:
+
+- Prod: `https://api.helsedirektoratet.no`
+- QA: `https://api-qa.helsedirektoratet.no`
+- Demo: bruk demo-URL-en dere har fått (settes i `.env.local`)
+
+Merk:
+
+- Klienten normaliserer base-URL både med og uten `/innhold`.
+- For type+id-kall (anbefaling/råd/pakkeforløp-anbefaling) må `VITE_HELSEDIR_API_URL` være satt.
 
 Viktig:
 
 - Ikke legg API-nokler i repo/dokumentasjon.
-- Bruk `.env.local` og miljo-variabler.
+- Bruk `.env.local` og miljø-variabler.
 
 ## 2. Viktigste prinsipp: bruk innholdsendepunktet som inngang
 
@@ -45,12 +57,12 @@ Normerende innhold er bygd hierarkisk:
 Vanlig traversering i API:
 
 - hent toppnode(r)
-- folg `links` med `rel = barn`
-- bruk `rel = forelder`/`root` for oppover-navigation
+- følg `links` med `rel = barn`
+- bruk `rel = forelder`/`root` for oppover-navigasjon
 
 ## 4. Mest relevante endepunkter for deres prosjekt
 
-Dette er de viktigste for hovedinnhold pa helsedirektoratet.no:
+Dette er de viktigste for hovedinnhold på helsedirektoratet.no:
 
 - `GET /innhold/innhold`
 - `GET /innhold/innhold/{id}`
@@ -101,7 +113,7 @@ Eksempler:
 - `aktiviteter`, `artikler`, `filer`, `informasjoner`, `kapitler`, `seksjoner`, `publikasjoner`, `referanser`, `nyheter`, `konferanser`
 - LIS-serien (`lis-laeringsmal`, `lis-spesialiteter`, osv.)
 - legemiddel/utstyr/kvalitetsindikatorer (`legemidler`, `legemiddelvirkestoff`, `medisinskutstyr`, `kvalitetsindikatorer`)
-- sok-endepunkt: `GET /innhold/sok/infobit`
+- søk-endepunkt: `GET /innhold/sok/infobit`
 
 Ta disse inn bare hvis dere faktisk trenger dem i produktet.
 
@@ -109,7 +121,7 @@ Ta disse inn bare hvis dere faktisk trenger dem i produktet.
 
 Fra offisiell side:
 
-- `infoTyper` (teknisk navn pa innholdstype)
+- `infoTyper` (teknisk navn på innholdstype)
 - `kodeverk`
 - `kode`
 - kombinasjoner av disse
@@ -144,11 +156,11 @@ Direkte relevante tekniske navn:
 - `veileder`
 - `veiledning`
 
-Ogsa tilgjengelig i oversikten (kan bli relevante):
+Også tilgjengelig i oversikten (kan bli relevante):
 
 - `artikkel`, `nyhet`, `kapittel`, `referanse`, `fil`, `statistikk`, `generisk-produkt`, `generisk-normerende-enhet`
 
-## 8. Responsstruktur dere bor forvente
+## 8. Responsstruktur dere bør forvente
 
 Et typisk objekt (forkortet) fra `GET /innhold/innhold?infoTyper=...`:
 
@@ -231,9 +243,9 @@ Eksempler verifisert 2026-02-09:
 ## 10. Anbefalt strategi i deres frontend/backend
 
 1. Start med `GET /innhold/innhold?infoTyper=<produkttype>`.
-2. Bruk `links(rel=barn)` for a bygge strukturtre.
+2. Bruk `links(rel=barn)` for å bygge strukturtre.
 3. Hent detaljer med `{id}`-endepunkter ved behov.
-4. Behold originale API-felter i lagring (unnga tidlig hard normalisering).
+4. Behold originale API-felter i lagring (unngå tidlig hard normalisering).
 5. Legg cache + retry + timeout policy rundt eksterne kall.
 
 ## 11. Kilder

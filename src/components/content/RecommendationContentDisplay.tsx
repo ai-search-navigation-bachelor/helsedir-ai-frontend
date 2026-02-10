@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
 import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'

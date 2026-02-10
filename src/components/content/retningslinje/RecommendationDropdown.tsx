@@ -1,4 +1,4 @@
-﻿import DOMPurify from 'dompurify'
+import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Paragraph } from '@digdir/designsystemet-react'
 import { useNavigate } from 'react-router-dom'
@@ -10,6 +10,8 @@ interface RecommendationDropdownProps {
   itemKey: string
   depth?: number
 }
+
+const MAX_RECOMMENDATION_DEPTH = 8
 
 export function RecommendationDropdown({
   item,
@@ -142,6 +144,19 @@ export function RecommendationDropdown({
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preferences) }}
             />
           </details>
+        )}
+
+        {depth < MAX_RECOMMENDATION_DEPTH && item.children && item.children.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {item.children.map((child, index) => (
+              <RecommendationDropdown
+                key={`${itemKey}-child-${child.id || index}`}
+                item={child}
+                itemKey={`${itemKey}-child-${child.id || index}`}
+                depth={depth + 1}
+              />
+            ))}
+          </div>
         )}
 
       </div>
