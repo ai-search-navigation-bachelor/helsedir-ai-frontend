@@ -102,6 +102,7 @@ function HomeInner({ isSearchBar, isHome, isSearchPage, initialQuery }: HomeInne
         onQueryChange={setQuery}
         onSubmit={onSubmit}
         onClear={onClear}
+        inHeaderBar={isSearchBar}
       />
     )
   }
@@ -115,6 +116,7 @@ function HomeInner({ isSearchBar, isHome, isSearchPage, initialQuery }: HomeInne
         onQueryChange={setQuery}
         onSubmit={onSubmit}
         onClear={onClear}
+        inHeaderBar={false}
       />
       <CategoryButtons />
     </div>

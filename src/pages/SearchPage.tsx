@@ -14,6 +14,7 @@ import {
   SearchEmptyState,
   FIXED_CATEGORIES,
 } from '../components/content/search';
+import { TEMASIDE_CATEGORY } from '../constants/categories';
 
 /**
  * New Search Page
@@ -66,11 +67,14 @@ export function SearchPage() {
 
   // Filter results based on active tab
   const filteredResults = useMemo(() => {
+    const resolveCategoryName = (categoryId: string, displayName: string) =>
+      categoryId === TEMASIDE_CATEGORY ? categoryId : displayName;
+
     if (activeTab === 'all') {
       return allCategories.flatMap((cat) =>
         cat.results.map((result) => ({
           ...result,
-          categoryName: cat.display_name,
+          categoryName: resolveCategoryName(cat.category, cat.display_name),
           categoryId: cat.category,
         }))
       );
@@ -80,7 +84,7 @@ export function SearchPage() {
     return (
       category?.results.map((result) => ({
         ...result,
-        categoryName: category.display_name,
+        categoryName: resolveCategoryName(category.category, category.display_name),
         categoryId: category.category,
       })) || []
     );

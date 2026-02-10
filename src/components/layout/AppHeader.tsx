@@ -1,57 +1,68 @@
-import { useState } from 'react'
-import {
-  Button,
-  CardBlock,
-} from '@digdir/designsystemet-react'
-import { Link } from 'react-router-dom'
+import { useState } from "react";
+import { Button, CardBlock } from "@digdir/designsystemet-react";
+import { Link } from "react-router-dom";
 
-import { colors } from '../../styles/dsTokens'
-import { MenuDropdown } from '../ui/MenuDropdown'
+import { colors } from "../../styles/dsTokens";
+import { MenuDropdown } from "../ui/MenuDropdown";
 
-import { IoSearch, IoMenu, IoClose } from 'react-icons/io5'
+import { IoSearch, IoMenu, IoClose } from "react-icons/io5";
 
 export function AppHeader() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <>
       <div
-        className='site-header'
+        className="site-header"
         style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}
       >
         <header>
-          <CardBlock style={{ padding: '2rem' }}>
+          <CardBlock
+            style={{
+              paddingLeft: "2rem",
+              paddingRight: "2rem",
+              paddingTop: "3.2rem",
+              paddingBottom: "0.8rem",
+            }}
+          >
             <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-6">
               <Link
-                to='/'
-                aria-label='Helsedirektoratet'
+                to="/"
+                aria-label="Helsedirektoratet"
                 className="flex items-center gap-3 flex-shrink-0"
-                style={{ color: 'inherit', textDecoration: 'none' }}
+                style={{ color: "inherit", textDecoration: "none" }}
               >
                 <picture>
-                  <source srcSet='/hdir_logo_small.svg' media='(max-width: 580px)' />
-                  <img src='/Hdir_logo.svg' alt='Helsedirektoratet' className="h-8" />
+                  <source
+                    srcSet="/hdir_logo_small.svg"
+                    media="(max-width: 580px)"
+                  />
+                  <img
+                    src="/Hdir_logo.svg"
+                    alt="Helsedirektoratet"
+                    className="h-8"
+                  />
                 </picture>
               </Link>
 
               <div className="flex gap-3 items-center">
                 <Button
-                  variant='secondary'
+                  variant="secondary"
                   onClick={() => {
-                    window.dispatchEvent(new Event('toggleSearch'))
+                    window.dispatchEvent(new Event("toggleSearch"));
                   }}
-                  aria-label='Søk'
-                  className='site-header__button'
+                  aria-label="Søk"
+                  className="site-header__button"
                 >
                   Søk
                   <IoSearch size={18} />
                 </Button>
                 <Button
-                  variant='secondary'
+                  variant="secondary"
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  aria-label='Meny'
+                  aria-label="Meny"
                   aria-expanded={isMenuOpen}
-                  className='site-header__button'
+                  className="site-header__button"
                 >
                   {isMenuOpen ? <IoClose size={18} /> : <IoMenu size={18} />}
                   Meny
@@ -60,8 +71,11 @@ export function AppHeader() {
             </div>
           </CardBlock>
         </header>
-        <MenuDropdown isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+        <MenuDropdown
+          isOpen={isMenuOpen}
+          onClose={() => setIsMenuOpen(false)}
+        />
       </div>
     </>
-  )
+  );
 }

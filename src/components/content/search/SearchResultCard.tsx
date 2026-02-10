@@ -1,5 +1,7 @@
-import { useNavigate } from 'react-router-dom';
-import type { SearchResult } from '../../../types';
+import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { IoArrowForward } from "react-icons/io5";
+import type { SearchResult } from "../../../types";
 
 interface SearchResultCardProps {
   result: SearchResult & {
@@ -11,37 +13,151 @@ interface SearchResultCardProps {
 
 export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
   const navigate = useNavigate();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [openChildGroupKey, setOpenChildGroupKey] = useState<string | null>(
+    null,
+  );
+  const isTemaside = result.info_type === "temaside";
+  const childGroups = Array.isArray(result.children) ? result.children : [];
+  const cardTitle = isTemaside
+    ? result.title.toLocaleUpperCase("nb-NO")
+    : result.title;
+  const categoryLabel = result.categoryName.toLocaleUpperCase("nb-NO");
 
-  const handleClick = () => {
-    const url = searchId 
+  const handleClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (openChildGroupKey) {
+      event.stopPropagation();
+      setOpenChildGroupKey(null);
+      return;
+    }
+
+    const url = searchId
       ? `/content/${result.id}?search_id=${searchId}`
       : `/content/${result.id}`;
     navigate(url);
   };
 
+  const handleChildClick = (
+    id: string,
+    event: MouseEvent<HTMLButtonElement>,
+  ) => {
+    event.stopPropagation();
+    const url = searchId
+      ? `/content/${id}?search_id=${searchId}`
+      : `/content/${id}`;
+    navigate(url);
+  };
+
+  const handleChildGroupToggle = (
+    groupKey: string,
+    event: MouseEvent<HTMLButtonElement>,
+  ) => {
+    event.stopPropagation();
+    setOpenChildGroupKey((prev) => (prev === groupKey ? null : groupKey));
+  };
+
+  useEffect(() => {
+    if (!openChildGroupKey) return;
+
+    const handleOutsidePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (cardRef.current?.contains(target)) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      setOpenChildGroupKey(null);
+    };
+
+    document.addEventListener("pointerdown", handleOutsidePointerDown, true);
+    return () => {
+      document.removeEventListener(
+        "pointerdown",
+        handleOutsidePointerDown,
+        true,
+      );
+    };
+  }, [openChildGroupKey]);
+
   return (
     <div
+      ref={cardRef}
       className="bg-white border-l-4 border-blue-500 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
       onClick={handleClick}
     >
       {/* Category Label */}
-      <div className="mb-1.5">
-        <span className="inline-block px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-50 rounded-full">
-          {result.categoryName}
+      <div className="mb-2">
+        <span className="inline-block px-2.5 py-0.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-md">
+          {categoryLabel}
         </span>
       </div>
 
       {/* Title */}
-      <h3 className="text-lg font-semibold text-gray-900 mb-1.5 leading-snug">
-        {result.title}
+      <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-snug">
+        {cardTitle}
       </h3>
 
-      {/* Explanation if available (exclude keyword/semantic scoring) */}
-      {result.explanation && !result.explanation.toLowerCase().includes('keyword') && !result.explanation.toLowerCase().includes('semantic') && (
-        <p className="text-sm text-gray-700 line-clamp-2">
-          {result.explanation}
-        </p>
+      {isTemaside && childGroups.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {childGroups.map((group) => {
+            const items = Array.isArray(group.items) ? group.items : [];
+            const groupKey = `${result.id}-${group.info_type}`;
+            const isPinnedOpen = openChildGroupKey === groupKey;
+            return (
+              <div
+                key={groupKey}
+                className="relative group/child inline-block"
+              >
+                <button
+                  type="button"
+                  onClick={(event) => handleChildGroupToggle(groupKey, event)}
+                  className="inline-flex min-w-[12rem] max-w-full items-center justify-between gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 cursor-pointer"
+                >
+                  <span className="font-semibold text-slate-600 shrink-0">
+                    {group.display_name}
+                  </span>
+                  <IoArrowForward className="h-3.5 w-3.5 text-sky-700 shrink-0" />
+                </button>
+
+                {items.length > 0 && (
+                  <div
+                    className={`${isPinnedOpen ? "block" : "hidden group-hover/child:block group-focus-within/child:block"} absolute left-0 top-full mt-0 md:left-full md:top-[-0.35rem] md:mt-0 md:ml-0 z-20 w-[min(36rem,90vw)] rounded-lg border border-slate-200 bg-white shadow-lg px-2 py-1`}
+                  >
+                    <div className="space-y-1">
+                      {items.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={(event) => handleChildClick(item.id, event)}
+                          className="group/item w-full rounded-md border border-transparent px-2 py-1.5 text-left text-sm text-sky-800 hover:bg-sky-50 hover:border-sky-200 cursor-pointer"
+                        >
+                          <span className="inline-flex w-full items-center justify-between gap-2">
+                            <span className="truncate group-hover/item:underline">
+                              {item.title}
+                            </span>
+                            <IoArrowForward className="h-3.5 w-3.5 shrink-0 text-sky-700" />
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
+
+      {/* Explanation if available (exclude keyword/semantic scoring) */}
+      {!isTemaside &&
+        result.explanation &&
+        !result.explanation.toLowerCase().includes("keyword") &&
+        !result.explanation.toLowerCase().includes("semantic") &&
+        !result.explanation.toLowerCase().includes("fuzzy match") && (
+          <p className="text-sm text-gray-700 line-clamp-2">
+            {result.explanation}
+          </p>
+        )}
     </div>
   );
 }
