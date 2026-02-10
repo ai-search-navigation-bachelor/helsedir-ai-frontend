@@ -24,6 +24,8 @@ export {
   fetchHelsedirContent,
   fetchMultipleHelsedirContent,
   fetchChapterWithSubchapters,
+  fetchHelsedirContentByTypeAndId,
+  getHelsedirEndpointByContentType,
 } from './helsedir'
 export type {
   HelselinkContent,

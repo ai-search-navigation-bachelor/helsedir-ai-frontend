@@ -45,7 +45,7 @@ export function SidebarTree({
             <button
               type="button"
               onClick={() => onToggleExpanded(page.id)}
-              className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-700 hover:bg-slate-100"
+              className="mt-0.5 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded text-slate-700 hover:bg-slate-100"
               aria-label={isExpanded ? 'Lukk kategori' : 'Åpne kategori'}
             >
               {isExpanded ? (
@@ -61,7 +61,7 @@ export function SidebarTree({
           <button
             type="button"
             onClick={() => onSelectPage(page.id)}
-            className={`min-w-0 flex-1 py-0.5 text-left text-[1.05rem] leading-7 whitespace-normal break-words ${isSelected ? '' : 'hover:text-slate-800'} hover:underline ${textColor} ${fontWeight}`}
+            className={`sidebar-tree__item-button min-w-0 flex-1 cursor-pointer py-0.5 text-left text-[1.05rem] leading-7 whitespace-normal break-words transition-colors ${textColor} ${fontWeight}`}
           >
             <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
             {page.title}

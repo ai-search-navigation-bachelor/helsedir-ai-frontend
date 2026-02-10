@@ -1,5 +1,6 @@
 export { ChapterAccordion } from './ChapterAccordion'
 export { ContentDisplay } from './ContentDisplay'
 export { GenericContentDisplay } from './GenericContentDisplay'
+export { RecommendationContentDisplay } from './RecommendationContentDisplay'
 export { RetningslinjeContentDisplay } from './RetningslinjeContentDisplay'
 export { TableOfContents } from './TableOfContents'

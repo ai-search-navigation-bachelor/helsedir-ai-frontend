@@ -12,6 +12,13 @@ export interface SearchResult {
   info_type: string
   score: number
   explanation?: string
+  children?: SearchResultChildGroup[] | null
+}
+
+export interface SearchResultChildGroup {
+  info_type: string
+  display_name: string
+  items: SearchResult[]
 }
 
 /**

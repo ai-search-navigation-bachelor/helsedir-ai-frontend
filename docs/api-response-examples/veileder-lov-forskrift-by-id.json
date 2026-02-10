@@ -1,0 +1,124 @@
+﻿{
+    "id":  "0006-0021-f3a4e42b-e872-4b68-a111-6b96faf0cd42",
+    "tittel":  "Veileder til forskrift om ledelse og kvalitetsforbedring i helse- og omsorgstjenesten",
+    "kortTittel":  "Ledelse og kvalitetsforbedring i helse- og omsorgstjenesten",
+    "tekst":  "\u003ch3\u003e\u0026nbsp;\u003c/h3\u003e\n\n\u003col\u003e\n\u003c/ol\u003e\n",
+    "intro":  "",
+    "kortIntro":  "",
+    "gruppeId":  "",
+    "koder":  null,
+    "tema":  [
+                 "Meld-uonsket-hendelse",
+                 "Kommunale helse- og omsorgstjenester",
+                 "Pasientsikkerhet",
+                 "Velferdsteknologi"
+             ],
+    "eier":  [
+
+             ],
+    "opprettet":  "2019-03-07T12:57",
+    "forstPublisert":  "2017-02-17T07:33",
+    "sistOppdatert":  "2025-04-15T08:55",
+    "sistFagligOppdatert":  "2018-10-29T10:18",
+    "status":  "Gjeldende",
+    "maalgruppe":  null,
+    "spraak":  "no",
+    "redaksjonelleier":  [
+
+                         ],
+    "fagansvarlig":  [
+
+                     ],
+    "fagansvarligMedAvdeling":  [
+
+                                ],
+    "arkivreferanse":  "",
+    "bidragsyter":  [
+
+                    ],
+    "bidragsytersRolle":  "",
+    "data":  {
+
+             },
+    "tekniskeData":  {
+                         "infoId":  "f3a4e42b-e872-4b68-a111-6b96faf0cd42",
+                         "infoType":  "veileder-lov-forskrift",
+                         "subtype":  ""
+                     },
+    "links":  [
+                  {
+                      "rel":  "barn",
+                      "type":  "kapittel",
+                      "tittel":  "Formål og virkeområde",
+                      "href":  "https://api.helsedirektoratet.no/innhold/kapitler/0006-0041-58b812f2-a9e2-4b3b-b9c4-33b32107f0c7",
+                      "strukturId":  "0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure"
+                  },
+                  {
+                      "rel":  "barn",
+                      "type":  "kapittel",
+                      "tittel":  "Styringssystem - ansvar og definisjon",
+                      "href":  "https://api.helsedirektoratet.no/innhold/kapitler/0006-0041-e5c545cf-b8a8-4bc0-bcc2-d109b64a1712",
+                      "strukturId":  "0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure"
+                  },
+                  {
+                      "rel":  "barn",
+                      "type":  "kapittel",
+                      "tittel":  "Omfang og dokumentasjon",
+                      "href":  "https://api.helsedirektoratet.no/innhold/kapitler/0006-0041-5b7f47e3-59ab-4947-af41-507082f10b12",
+                      "strukturId":  "0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure"
+                  },
+                  {
+                      "rel":  "barn",
+                      "type":  "kapittel",
+                      "tittel":  "Planlegge",
+                      "href":  "https://api.helsedirektoratet.no/innhold/kapitler/0006-0041-5567f5a0-8f45-4afb-a1a2-e5c7a4749698",
+                      "strukturId":  "0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure"
+                  },
+                  {
+                      "rel":  "barn",
+                      "type":  "kapittel",
+                      "tittel":  "Gjennomføre",
+                      "href":  "https://api.helsedirektoratet.no/innhold/kapitler/0006-0041-1e38d804-f3b6-41ef-ae3a-5d10500e31a7",
+                      "strukturId":  "0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure"
+                  },
+                  {
+                      "rel":  "barn",
+                      "type":  "kapittel",
+                      "tittel":  "Evaluere",
+                      "href":  "https://api.helsedirektoratet.no/innhold/kapitler/0006-0041-431ba874-9259-43f4-b846-a26e1ee62898",
+                      "strukturId":  "0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure"
+                  },
+                  {
+                      "rel":  "barn",
+                      "type":  "kapittel",
+                      "tittel":  "Korrigere",
+                      "href":  "https://api.helsedirektoratet.no/innhold/kapitler/0006-0041-b271e848-06a8-4cbb-8de3-73e3159c99c3",
+                      "strukturId":  "0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure"
+                  },
+                  {
+                      "rel":  "barn",
+                      "type":  "kapittel",
+                      "tittel":  "Om veilederen",
+                      "href":  "https://api.helsedirektoratet.no/innhold/kapitler/0006-0041-ac773cfd-f6b3-40ef-99b3-ea36853ce9c2",
+                      "strukturId":  "0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure"
+                  },
+                  {
+                      "rel":  "root",
+                      "type":  "veileder-lov-forskrift",
+                      "tittel":  "Veileder til forskrift om ledelse og kvalitetsforbedring i helse- og omsorgstjenesten",
+                      "href":  "https://api.helsedirektoratet.no/innhold/veileder-lov-forskrift/0006-0021-f3a4e42b-e872-4b68-a111-6b96faf0cd42",
+                      "strukturId":  "0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure"
+                  },
+                  {
+                      "rel":  "publikasjon",
+                      "type":  "veileder-lov-forskrift",
+                      "tittel":  null,
+                      "href":  "https://api.helsedirektoratet.no/innhold/publikasjoner/0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure",
+                      "strukturId":  "0006-f3a4e42b-e872-4b68-a111-6b96faf0cd42-structure"
+                  }
+              ],
+    "attachments":  null,
+    "url":  "https://www.helsedirektoratet.no/veiledere/ledelse-og-kvalitetsforbedring-i-helse-og-omsorgstjenesten",
+    "dokumentType":  "Infobit",
+    "sistImportertTilHapi":  "2025-09-13T05:17:31.5812659+00:00"
+}
