@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
-import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useNavigate } from 'react-router-dom'
 import {
   fetchHelsedirContentByTypeAndId,
@@ -9,6 +9,8 @@ import {
 } from '../../api'
 import type { NestedContent } from '../../types'
 import type { ContentDisplayProps } from '../../types/pages'
+import { ContentPageHeader } from './ContentPageHeader'
+import { RecommendationAsideLoadingSkeleton } from './ContentSkeletons'
 
 interface ContentSection {
   id: string
@@ -216,16 +218,7 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-            {typeLabel}
-          </span>
-        </div>
-        <Heading level={1} data-size="xl" style={{ marginBottom: 0 }}>
-          {content.title}
-        </Heading>
-      </header>
+      <ContentPageHeader typeLabel={typeLabel} title={content.title} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
         <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
@@ -261,9 +254,7 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
           )}
 
           {isEnrichedLoading && (
-            <div className="flex justify-center py-2">
-              <Spinner aria-label="Laster anbefalingsdetaljer..." />
-            </div>
+            <RecommendationAsideLoadingSkeleton />
           )}
 
           {contextualNavigationLinks.length > 0 && (

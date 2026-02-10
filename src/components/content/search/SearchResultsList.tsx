@@ -1,17 +1,21 @@
-import { Alert, Paragraph } from '@digdir/designsystemet-react';
-import { SearchResultCard } from './SearchResultCard';
-import type { SearchResult } from '../../../types';
+import { Alert, Paragraph } from "@digdir/designsystemet-react";
+import { SearchResultCard } from "./SearchResultCard";
+import type { SearchResult } from "../../../types";
 
 interface SearchResultsListProps {
-  results: Array<SearchResult & {
-    categoryName: string;
-    categoryId: string;
-  }>;
+  results: Array<
+    SearchResult & {
+      categoryName: string;
+      categoryId: string;
+    }
+  >;
   searchQuery: string;
-  searchId?: string;
 }
 
-export function SearchResultsList({ results, searchQuery, searchId }: SearchResultsListProps) {
+export function SearchResultsList({
+  results,
+  searchQuery,
+}: SearchResultsListProps) {
   return (
     <>
       {/* Results Count */}
@@ -29,11 +33,8 @@ export function SearchResultsList({ results, searchQuery, searchId }: SearchResu
       ) : (
         <div className="divide-y divide-gray-200">
           {results.map((result, index) => (
-            <div key={`${result.id}-${index}`} className="py-3 first:pt-0">
-              <SearchResultCard
-                result={result}
-                searchId={searchId}
-              />
+            <div key={`${result.id}-${index}`} className="py-4 first:pt-0">
+              <SearchResultCard result={result} />
             </div>
           ))}
         </div>

@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
-import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'
-import { useSearchParams } from 'react-router-dom'
+import { Alert, Paragraph } from '@digdir/designsystemet-react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useContentNavigationStore } from '../../stores'
 import type { ContentDisplayProps } from '../../types/pages'
+import { ContentPageHeader } from './ContentPageHeader'
+import { ContentBodyLoadingSkeleton, ContentSidebarLoadingSkeleton } from './ContentSkeletons'
 import { PageContent } from './retningslinje/PageContent'
 import { SidebarTree } from './retningslinje/SidebarTree'
 import {
@@ -12,10 +15,46 @@ import {
 } from './retningslinje/treeUtils'
 import { useRetningslinjeChapters } from './retningslinje/useRetningslinjeChapters'
 
+function getSectionIdFromLocationState(state: unknown) {
+  if (!state || typeof state !== 'object') return null
+  const sectionId = (state as { sectionId?: unknown }).sectionId
+  if (typeof sectionId !== 'string') return null
+  const trimmed = sectionId.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function toLocationStateObject(state: unknown) {
+  if (!state || typeof state !== 'object') return {}
+  return state as Record<string, unknown>
+}
+
 export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
-  const sectionFromUrl = searchParams.get('section')
+  const sectionByContentId = useContentNavigationStore((state) => state.sectionByContentId)
+  const setSectionForContent = useContentNavigationStore((state) => state.setSectionForContent)
+  const storedSectionId = sectionByContentId[content.id] || null
+  const locationSectionId = useMemo(
+    () => getSectionIdFromLocationState(location.state),
+    [location.state]
+  )
+  const legacySectionId = useMemo(() => {
+    const sectionId = new URLSearchParams(location.search).get('section')
+    if (!sectionId) return null
+    const trimmed = sectionId.trim()
+    return trimmed.length > 0 ? trimmed : null
+  }, [location.search])
+  const searchWithoutSection = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    params.delete('section')
+    const next = params.toString()
+    return next ? `?${next}` : ''
+  }, [location.search])
+  const hasLegacySectionParam = useMemo(
+    () => new URLSearchParams(location.search).has('section'),
+    [location.search]
+  )
 
   const {
     entries,
@@ -28,8 +67,19 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
   })
 
   const pageTree = useMemo(() => buildPageTree(loadedChapters), [loadedChapters])
-  const selectedPage = pageTree.pagesById.get(sectionFromUrl || '')
-  const activePage = selectedPage ?? pageTree.pagesById.get(pageTree.rootIds[0] || '')
+  const activePage = useMemo(() => {
+    const fromLocationState =
+      locationSectionId ? pageTree.pagesById.get(locationSectionId) : undefined
+    if (fromLocationState) return fromLocationState
+
+    const fromLegacyQuery = legacySectionId ? pageTree.pagesById.get(legacySectionId) : undefined
+    if (fromLegacyQuery) return fromLegacyQuery
+
+    const fromStore = storedSectionId ? pageTree.pagesById.get(storedSectionId) : undefined
+    if (fromStore) return fromStore
+
+    return pageTree.pagesById.get(pageTree.rootIds[0] || '')
+  }, [legacySectionId, locationSectionId, pageTree, storedSectionId])
   const selectedAncestorIds = getSelectedAncestorIds(pageTree.pagesById, activePage)
   const effectiveExpandedIds = useMemo(() => {
     const next = new Set(expandedIds)
@@ -63,22 +113,33 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
       ? pageTree.pagesById.get(orderedPageIds[activePageIndex + 1])
       : undefined
 
-  const updateSectionQuery = useCallback(
+  const updateHistorySection = useCallback(
     (pageId: string, replace = true) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev)
-          next.set('section', pageId)
-          return next
+      navigate(
+        {
+          pathname: location.pathname,
+          search: searchWithoutSection,
+          hash: location.hash,
         },
-        { replace },
+        {
+          replace,
+          state: {
+            ...toLocationStateObject(location.state),
+            sectionId: pageId,
+          },
+        },
       )
     },
-    [setSearchParams],
+    [location.hash, location.pathname, location.state, navigate, searchWithoutSection],
   )
 
   const handleSelectPage = (pageId: string) => {
-    updateSectionQuery(pageId)
+    if (!pageTree.pagesById.has(pageId)) return
+
+    setSectionForContent(content.id, pageId)
+    if (locationSectionId !== pageId || hasLegacySectionParam) {
+      updateHistorySection(pageId, false)
+    }
 
     const page = pageTree.pagesById.get(pageId)
     setExpandedIds(() => {
@@ -91,14 +152,24 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
   }
 
   useEffect(() => {
-    const fallbackId = activePage?.id
-    if (!fallbackId) return
+    if (!activePage?.id) return
 
-    if (sectionFromUrl === fallbackId) return
-    if (sectionFromUrl && pageTree.pagesById.has(sectionFromUrl)) return
+    if (storedSectionId !== activePage.id) {
+      setSectionForContent(content.id, activePage.id)
+    }
 
-    updateSectionQuery(fallbackId, true)
-  }, [activePage?.id, sectionFromUrl, pageTree.pagesById, updateSectionQuery])
+    if (locationSectionId !== activePage.id || hasLegacySectionParam) {
+      updateHistorySection(activePage.id, true)
+    }
+  }, [
+    activePage?.id,
+    content.id,
+    hasLegacySectionParam,
+    locationSectionId,
+    setSectionForContent,
+    storedSectionId,
+    updateHistorySection,
+  ])
 
   const toggleExpanded = (pageId: string) => {
     const page = pageTree.pagesById.get(pageId)
@@ -117,18 +188,13 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-sky-700">Retningslinje</span>
-        </div>
-        <Heading level={1} data-size="xl" style={{ marginBottom: 0 }}>
-          {content.title}
-        </Heading>
-      </header>
+      <ContentPageHeader typeLabel="Retningslinje" title={content.title} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
         <aside className="border-slate-200 lg:border-r lg:pr-6">
-          {entries.length === 0 ? (
+          {isChaptersLoading ? (
+            <ContentSidebarLoadingSkeleton />
+          ) : entries.length === 0 ? (
             <Paragraph style={{ marginBottom: 0, color: '#64748b' }}>
               Ingen barnesider registrert på denne retningslinjen.
             </Paragraph>
@@ -147,11 +213,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
         </aside>
 
         <section className="min-w-0">
-          {isChaptersLoading && (
-            <div className="flex justify-center py-12">
-              <Spinner aria-label="Laster kapitler..." />
-            </div>
-          )}
+          {isChaptersLoading && <ContentBodyLoadingSkeleton />}
 
           {!isChaptersLoading && activePage && (
             <PageContent

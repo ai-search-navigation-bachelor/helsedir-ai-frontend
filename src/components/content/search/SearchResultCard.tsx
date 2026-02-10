@@ -8,18 +8,17 @@ interface SearchResultCardProps {
     categoryName: string;
     categoryId: string;
   };
-  searchId?: string;
 }
 
-export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
+export function SearchResultCard({ result }: SearchResultCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
   const [pinnedChildGroupKey, setPinnedChildGroupKey] = useState<string | null>(
     null,
   );
-  const [hoveredChildGroupKey, setHoveredChildGroupKey] = useState<string | null>(
-    null,
-  );
+  const [hoveredChildGroupKey, setHoveredChildGroupKey] = useState<
+    string | null
+  >(null);
   const isTemaside = result.info_type === "temaside";
   const childGroups = Array.isArray(result.children) ? result.children : [];
   const cardTitle = isTemaside
@@ -27,17 +26,8 @@ export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
     : result.title;
   const categoryLabel = result.categoryName.toLocaleUpperCase("nb-NO");
 
-  const handleClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (pinnedChildGroupKey) {
-      event.stopPropagation();
-      setPinnedChildGroupKey(null);
-      return;
-    }
-
-    const url = searchId
-      ? `/content/${result.id}?search_id=${searchId}`
-      : `/content/${result.id}`;
-    navigate(url);
+  const handleClick = () => {
+    navigate(`/content/${result.id}`);
   };
 
   const handleChildClick = (
