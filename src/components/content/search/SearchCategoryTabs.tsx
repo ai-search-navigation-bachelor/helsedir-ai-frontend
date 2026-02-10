@@ -11,7 +11,7 @@ import {
 const FIXED_CATEGORIES = [
   { id: TEMASIDE_CATEGORY, label: 'Temaside' },
   { id: RETNINGSLINJE_CATEGORY, label: 'Nasjonalfaglig retningslinje' },
-  { id: ANBEFALINGER_CATEGORY, label: 'Anbefalinger' },
+  { id: ANBEFALINGER_CATEGORY, label: 'Anbefaling' },
   { id: REGELVERK_CATEGORY, label: 'Regelverk' },
   { id: RAD_CATEGORY, label: 'Råd' },
 ];

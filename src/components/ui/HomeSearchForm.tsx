@@ -7,10 +7,11 @@ interface HomeSearchFormProps {
   onQueryChange: (query: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onClear?: () => void
+  inHeaderBar?: boolean
 }
 
 export const HomeSearchForm = forwardRef<HTMLInputElement, HomeSearchFormProps>(
-  ({ query, onQueryChange, onSubmit, onClear }, ref) => {
+  ({ query, onQueryChange, onSubmit, onClear, inHeaderBar = false }, ref) => {
     const [isHoveringIcon, setIsHoveringIcon] = useState(false)
     const [isFocused, setIsFocused] = useState(false)
     const formRef = useRef<HTMLFormElement>(null)
@@ -28,8 +29,8 @@ export const HomeSearchForm = forwardRef<HTMLInputElement, HomeSearchFormProps>(
 
     return (
       <div className="rounded-br-[50px]" style={{ backgroundColor: colors.headerBg }}>
-        <div className="max-w-screen-xl mx-auto px-8 pt-5 pb-8">
-          <label htmlFor="home-search" className="block font-bold mb-2">
+        <div className={`max-w-screen-xl mx-auto px-8 ${inHeaderBar ? 'pt-10 pb-8' : 'pt-5 pb-8'}`}>
+          <label htmlFor="home-search" className={`block font-bold ${inHeaderBar ? 'mb-4' : 'mb-2'}`}>
             Hva leter du etter?
           </label>
 

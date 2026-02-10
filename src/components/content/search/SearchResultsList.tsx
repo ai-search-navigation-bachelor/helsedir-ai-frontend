@@ -1,21 +1,26 @@
-import { Alert, Paragraph } from '@digdir/designsystemet-react';
-import { SearchResultCard } from './SearchResultCard';
-import type { SearchResult } from '../../../types';
+import { Alert, Paragraph } from "@digdir/designsystemet-react";
+import { SearchResultCard } from "./SearchResultCard";
+import type { SearchResult } from "../../../types";
 
 interface SearchResultsListProps {
-  results: Array<SearchResult & {
-    categoryName: string;
-    categoryId: string;
-  }>;
+  results: Array<
+    SearchResult & {
+      categoryName: string;
+      categoryId: string;
+    }
+  >;
   searchQuery: string;
 }
 
-export function SearchResultsList({ results, searchQuery }: SearchResultsListProps) {
+export function SearchResultsList({
+  results,
+  searchQuery,
+}: SearchResultsListProps) {
   return (
     <>
       {/* Results Count */}
-      <div className="mb-6">
-        <Paragraph className="text-gray-700">
+      <div className="mb-3">
+        <Paragraph className="text-sm text-gray-700">
           {results.length} treff på {searchQuery}
         </Paragraph>
       </div>

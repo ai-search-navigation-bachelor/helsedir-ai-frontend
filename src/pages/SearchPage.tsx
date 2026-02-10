@@ -8,13 +8,13 @@ import {
 
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery';
 import { useSearchStore } from '../stores/searchStore';
-import { FilterBar } from '../components/ui/FilterBar';
 import {
   SearchCategoryTabs,
   SearchResultsList,
   SearchEmptyState,
   FIXED_CATEGORIES,
 } from '../components/content/search';
+import { TEMASIDE_CATEGORY } from '../constants/categories';
 
 /**
  * New Search Page
@@ -28,11 +28,9 @@ export function SearchPage() {
   const searchQueryFromStore = useSearchStore((state) => state.searchQuery);
   const setSearchId = useSearchStore((state) => state.setSearchId);
   const setSearchData = useSearchStore((state) => state.setSearchData);
-  const filters = useSearchStore((state) => state.filters);
 
   const { data, isLoading, error } = useCategorizedSearchQuery(searchQuery, {
     enabled: !!searchQuery.trim(),
-    tema: filters.tema,
   });
 
   // Clear stale search_id when URL query changes
@@ -80,11 +78,14 @@ export function SearchPage() {
 
   // Filter results based on active tab
   const filteredResults = useMemo(() => {
+    const resolveCategoryName = (categoryId: string, displayName: string) =>
+      categoryId === TEMASIDE_CATEGORY ? categoryId : displayName;
+
     if (activeTab === 'all') {
       return allCategories.flatMap((cat) =>
         cat.results.map((result) => ({
           ...result,
-          categoryName: cat.display_name,
+          categoryName: resolveCategoryName(cat.category, cat.display_name),
           categoryId: cat.category,
         }))
       );
@@ -94,7 +95,7 @@ export function SearchPage() {
     return (
       category?.results.map((result) => ({
         ...result,
-        categoryName: category.display_name,
+        categoryName: resolveCategoryName(category.category, category.display_name),
         categoryId: category.category,
       })) || []
     );
@@ -121,13 +122,10 @@ export function SearchPage() {
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-6 py-8">
-      {/* Filter Bar */}
-      <FilterBar />
-
+    <div className="max-w-screen-xl mx-auto px-6 pt-2 pb-6">
       {/* Loading State */}
       {isLoading && (
-        <div className="flex justify-center items-center py-12">
+        <div className="flex justify-center items-center py-8">
           <Spinner aria-label="Laster søkeresultater..." data-size="lg" />
         </div>
       )}
