@@ -25,6 +25,8 @@ export function SearchPage() {
   const searchQuery = searchParams.get('query') || '';
   const activeTab = searchParams.get('category') || 'all';
 
+  const searchQueryFromStore = useSearchStore((state) => state.searchQuery);
+  const setSearchId = useSearchStore((state) => state.setSearchId);
   const setSearchData = useSearchStore((state) => state.setSearchData);
   const filters = useSearchStore((state) => state.filters);
 
@@ -33,10 +35,19 @@ export function SearchPage() {
     tema: filters.tema,
   });
 
+  // Clear stale search_id when URL query changes
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery || searchQueryFromStore !== trimmedQuery) {
+      setSearchId(null);
+    }
+  }, [searchQuery, searchQueryFromStore, setSearchId]);
+
   // Store search_id in Zustand when data is received
   useEffect(() => {
-    if (data?.search_id && searchQuery) {
-      setSearchData(data.search_id, searchQuery);
+    const trimmedQuery = searchQuery.trim();
+    if (data?.search_id && trimmedQuery) {
+      setSearchData(data.search_id, trimmedQuery);
     }
   }, [data?.search_id, searchQuery, setSearchData]);
 
@@ -140,7 +151,6 @@ export function SearchPage() {
           <SearchResultsList
             results={sortedResults}
             searchQuery={searchQuery}
-            searchId={data.search_id}
           />
         </>
       )}
