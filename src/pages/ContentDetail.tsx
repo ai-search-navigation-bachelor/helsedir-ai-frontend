@@ -1,10 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
-import { Button, Alert, Spinner, Paragraph } from '@digdir/designsystemet-react'
+import { Button, Alert, Paragraph } from '@digdir/designsystemet-react'
 import { getContent } from '../api'
 import { useSearchStore } from '../stores/searchStore'
 import { ContentDisplay } from '../components/content'
+import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import type { BreadcrumbItem } from '../types/components'
 
@@ -55,9 +56,7 @@ export function ContentDetail() {
       )}
 
       {isLoading && (
-        <div className="flex justify-center py-10">
-          <Spinner aria-label="Laster innhold..." />
-        </div>
+        <ContentPageLoadingSkeleton />
       )}
 
       {error && (

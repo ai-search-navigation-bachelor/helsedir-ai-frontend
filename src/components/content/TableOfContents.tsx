@@ -1,6 +1,7 @@
-import { Heading, Spinner } from '@digdir/designsystemet-react'
+import { Heading } from '@digdir/designsystemet-react'
 import type { TableOfContentsProps } from '../../types/components'
 import type { NestedContent } from '../../types'
+import { TableOfContentsLoadingSkeleton } from './ContentSkeletons'
 
 export function TableOfContents({
   chapters,
@@ -10,13 +11,7 @@ export function TableOfContents({
   isLoading = false,
 }: TableOfContentsProps) {
   if (isLoading) {
-    return (
-      <nav className="toc">
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
-          <Spinner aria-label="Laster kapitler..." />
-        </div>
-      </nav>
-    )
+    return <TableOfContentsLoadingSkeleton />
   }
 
   return (

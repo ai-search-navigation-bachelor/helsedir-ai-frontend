@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
-import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useSearchParams } from 'react-router-dom'
 import type { ContentDisplayProps } from '../../types/pages'
+import { ContentPageHeader } from './ContentPageHeader'
+import { ContentBodyLoadingSkeleton, ContentSidebarLoadingSkeleton } from './ContentSkeletons'
 import { PageContent } from './retningslinje/PageContent'
 import { SidebarTree } from './retningslinje/SidebarTree'
 import {
@@ -117,18 +119,13 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-sky-700">Retningslinje</span>
-        </div>
-        <Heading level={1} data-size="xl" style={{ marginBottom: 0 }}>
-          {content.title}
-        </Heading>
-      </header>
+      <ContentPageHeader typeLabel="Retningslinje" title={content.title} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
         <aside className="border-slate-200 lg:border-r lg:pr-6">
-          {entries.length === 0 ? (
+          {isChaptersLoading ? (
+            <ContentSidebarLoadingSkeleton />
+          ) : entries.length === 0 ? (
             <Paragraph style={{ marginBottom: 0, color: '#64748b' }}>
               Ingen barnesider registrert på denne retningslinjen.
             </Paragraph>
@@ -147,11 +144,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
         </aside>
 
         <section className="min-w-0">
-          {isChaptersLoading && (
-            <div className="flex justify-center py-12">
-              <Spinner aria-label="Laster kapitler..." />
-            </div>
-          )}
+          {isChaptersLoading && <ContentBodyLoadingSkeleton />}
 
           {!isChaptersLoading && activePage && (
             <PageContent
