@@ -14,7 +14,10 @@ interface SearchResultCardProps {
 export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
-  const [openChildGroupKey, setOpenChildGroupKey] = useState<string | null>(
+  const [pinnedChildGroupKey, setPinnedChildGroupKey] = useState<string | null>(
+    null,
+  );
+  const [hoveredChildGroupKey, setHoveredChildGroupKey] = useState<string | null>(
     null,
   );
   const isTemaside = result.info_type === "temaside";
@@ -25,9 +28,9 @@ export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
   const categoryLabel = result.categoryName.toLocaleUpperCase("nb-NO");
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (openChildGroupKey) {
+    if (pinnedChildGroupKey) {
       event.stopPropagation();
-      setOpenChildGroupKey(null);
+      setPinnedChildGroupKey(null);
       return;
     }
 
@@ -53,11 +56,24 @@ export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
     event: MouseEvent<HTMLButtonElement>,
   ) => {
     event.stopPropagation();
-    setOpenChildGroupKey((prev) => (prev === groupKey ? null : groupKey));
+    setPinnedChildGroupKey((prev) => (prev === groupKey ? null : groupKey));
+  };
+
+  const handleChildGroupHover = (groupKey: string) => {
+    if (pinnedChildGroupKey && pinnedChildGroupKey !== groupKey) {
+      setPinnedChildGroupKey(null);
+    }
+    setHoveredChildGroupKey(groupKey);
+  };
+
+  const handleChildGroupLeave = (groupKey: string) => {
+    if (hoveredChildGroupKey === groupKey) {
+      setHoveredChildGroupKey(null);
+    }
   };
 
   useEffect(() => {
-    if (!openChildGroupKey) return;
+    if (!pinnedChildGroupKey) return;
 
     const handleOutsidePointerDown = (event: PointerEvent) => {
       const target = event.target as Node | null;
@@ -66,7 +82,7 @@ export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
 
       event.preventDefault();
       event.stopPropagation();
-      setOpenChildGroupKey(null);
+      setPinnedChildGroupKey(null);
     };
 
     document.addEventListener("pointerdown", handleOutsidePointerDown, true);
@@ -77,7 +93,7 @@ export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
         true,
       );
     };
-  }, [openChildGroupKey]);
+  }, [pinnedChildGroupKey]);
 
   return (
     <div
@@ -102,26 +118,32 @@ export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
           {childGroups.map((group) => {
             const items = Array.isArray(group.items) ? group.items : [];
             const groupKey = `${result.id}-${group.info_type}`;
-            const isPinnedOpen = openChildGroupKey === groupKey;
+            const isPinnedOpen = pinnedChildGroupKey === groupKey;
+            const isHoverOpen =
+              pinnedChildGroupKey === null && hoveredChildGroupKey === groupKey;
+            const isOpen = isPinnedOpen || isHoverOpen;
             return (
               <div
                 key={groupKey}
-                className="relative group/child inline-block"
+                data-child-group-key={groupKey}
+                className="relative inline-block"
+                onMouseEnter={() => handleChildGroupHover(groupKey)}
+                onMouseLeave={() => handleChildGroupLeave(groupKey)}
               >
                 <button
                   type="button"
                   onClick={(event) => handleChildGroupToggle(groupKey, event)}
-                  className="inline-flex min-w-[12rem] max-w-full items-center justify-between gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  className="inline-flex min-w-[14.25rem] max-w-full items-center justify-between gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   <span className="font-semibold text-slate-600 shrink-0">
                     {group.display_name}
                   </span>
-                  <IoArrowForward className="h-3.5 w-3.5 text-sky-700 shrink-0" />
+                  <IoArrowForward className="h-4 w-4 text-sky-700 shrink-0" />
                 </button>
 
                 {items.length > 0 && (
                   <div
-                    className={`${isPinnedOpen ? "block" : "hidden group-hover/child:block group-focus-within/child:block"} absolute left-0 top-full mt-0 md:left-full md:top-[-0.35rem] md:mt-0 md:ml-0 z-20 w-[min(36rem,90vw)] rounded-lg border border-slate-200 bg-white shadow-lg px-2 py-1`}
+                    className={`${isOpen ? "block" : "hidden"} absolute left-0 top-full mt-0 md:left-full md:top-[-0.35rem] md:mt-0 md:ml-0 z-20 w-[min(42rem,92vw)] rounded-lg border border-slate-200 bg-white shadow-lg px-2 py-1`}
                   >
                     <div className="space-y-1">
                       {items.map((item) => (
