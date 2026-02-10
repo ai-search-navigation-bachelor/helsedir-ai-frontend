@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
-import { Heading, Spinner } from '@digdir/designsystemet-react'
+import { Spinner } from '@digdir/designsystemet-react'
 import { fetchChapterWithSubchapters } from '../../api'
 import type { NestedContent } from '../../types'
 import type { ContentDisplayProps } from '../../types/pages'
 import { ChapterAccordion } from './ChapterAccordion'
+import { ContentPageHeader } from './ContentPageHeader'
 import { TableOfContents } from './TableOfContents'
 
 export function GenericContentDisplay({ content }: ContentDisplayProps) {
@@ -106,20 +107,7 @@ export function GenericContentDisplay({ content }: ContentDisplayProps) {
   return (
     <div>
       <div style={{ marginBottom: '48px' }}>
-        <div style={{ marginBottom: '12px' }}>
-          <span style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            color: '#2563eb',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            {displayType}
-          </span>
-        </div>
-        <Heading level={1} data-size='xl' style={{ marginBottom: '20px', fontSize: '48px', fontWeight: 700 }}>
-          {content.title}
-        </Heading>
+        <ContentPageHeader typeLabel={displayType} title={content.title} />
       </div>
 
       {chapters.length > 0 ? (

@@ -9,6 +9,7 @@ import {
 } from '../../api'
 import type { NestedContent } from '../../types'
 import type { ContentDisplayProps } from '../../types/pages'
+import { ContentPageHeader } from './ContentPageHeader'
 
 interface ContentSection {
   id: string
@@ -216,16 +217,7 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-            {typeLabel}
-          </span>
-        </div>
-        <Heading level={1} data-size="xl" style={{ marginBottom: 0 }}>
-          {content.title}
-        </Heading>
-      </header>
+      <ContentPageHeader typeLabel={typeLabel} title={content.title} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
         <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
