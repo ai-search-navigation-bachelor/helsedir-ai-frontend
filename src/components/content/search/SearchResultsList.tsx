@@ -8,10 +8,9 @@ interface SearchResultsListProps {
     categoryId: string;
   }>;
   searchQuery: string;
-  searchId?: string;
 }
 
-export function SearchResultsList({ results, searchQuery, searchId }: SearchResultsListProps) {
+export function SearchResultsList({ results, searchQuery }: SearchResultsListProps) {
   return (
     <>
       {/* Results Count */}
@@ -30,10 +29,7 @@ export function SearchResultsList({ results, searchQuery, searchId }: SearchResu
         <div className="divide-y divide-gray-200">
           {results.map((result, index) => (
             <div key={`${result.id}-${index}`} className="py-4 first:pt-0">
-              <SearchResultCard
-                result={result}
-                searchId={searchId}
-              />
+              <SearchResultCard result={result} />
             </div>
           ))}
         </div>

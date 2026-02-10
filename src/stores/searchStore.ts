@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 
 export interface SearchFilters {
   tema?: string[]
@@ -10,7 +10,7 @@ interface SearchState {
   searchId: string | null
   searchQuery: string | null
   filters: SearchFilters
-  setSearchId: (searchId: string) => void
+  setSearchId: (searchId: string | null) => void
   setSearchQuery: (query: string) => void
   setSearchData: (searchId: string, query: string) => void
   setFilters: (filters: SearchFilters) => void
@@ -29,7 +29,7 @@ export const useSearchStore = create<SearchState>()(
       searchQuery: null,
       filters: {},
 
-      setSearchId: (searchId: string) => set({ searchId }),
+      setSearchId: (searchId: string | null) => set({ searchId }),
 
       setSearchQuery: (query: string) => set({ searchQuery: query }),
 
@@ -43,7 +43,8 @@ export const useSearchStore = create<SearchState>()(
       clearSearch: () => set({ searchId: null, searchQuery: null, filters: {} }),
     }),
     {
-      name: 'search-storage', // localStorage key
+      name: 'search-storage',
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 )

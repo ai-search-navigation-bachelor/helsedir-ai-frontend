@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useContentNavigationStore } from '../../stores'
 import type { ContentDisplayProps } from '../../types/pages'
 import { ContentPageHeader } from './ContentPageHeader'
 import { ContentBodyLoadingSkeleton, ContentSidebarLoadingSkeleton } from './ContentSkeletons'
@@ -14,10 +15,46 @@ import {
 } from './retningslinje/treeUtils'
 import { useRetningslinjeChapters } from './retningslinje/useRetningslinjeChapters'
 
+function getSectionIdFromLocationState(state: unknown) {
+  if (!state || typeof state !== 'object') return null
+  const sectionId = (state as { sectionId?: unknown }).sectionId
+  if (typeof sectionId !== 'string') return null
+  const trimmed = sectionId.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function toLocationStateObject(state: unknown) {
+  if (!state || typeof state !== 'object') return {}
+  return state as Record<string, unknown>
+}
+
 export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
-  const sectionFromUrl = searchParams.get('section')
+  const sectionByContentId = useContentNavigationStore((state) => state.sectionByContentId)
+  const setSectionForContent = useContentNavigationStore((state) => state.setSectionForContent)
+  const storedSectionId = sectionByContentId[content.id] || null
+  const locationSectionId = useMemo(
+    () => getSectionIdFromLocationState(location.state),
+    [location.state]
+  )
+  const legacySectionId = useMemo(() => {
+    const sectionId = new URLSearchParams(location.search).get('section')
+    if (!sectionId) return null
+    const trimmed = sectionId.trim()
+    return trimmed.length > 0 ? trimmed : null
+  }, [location.search])
+  const searchWithoutSection = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    params.delete('section')
+    const next = params.toString()
+    return next ? `?${next}` : ''
+  }, [location.search])
+  const hasLegacySectionParam = useMemo(
+    () => new URLSearchParams(location.search).has('section'),
+    [location.search]
+  )
 
   const {
     entries,
@@ -30,8 +67,19 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
   })
 
   const pageTree = useMemo(() => buildPageTree(loadedChapters), [loadedChapters])
-  const selectedPage = pageTree.pagesById.get(sectionFromUrl || '')
-  const activePage = selectedPage ?? pageTree.pagesById.get(pageTree.rootIds[0] || '')
+  const activePage = useMemo(() => {
+    const fromLocationState =
+      locationSectionId ? pageTree.pagesById.get(locationSectionId) : undefined
+    if (fromLocationState) return fromLocationState
+
+    const fromLegacyQuery = legacySectionId ? pageTree.pagesById.get(legacySectionId) : undefined
+    if (fromLegacyQuery) return fromLegacyQuery
+
+    const fromStore = storedSectionId ? pageTree.pagesById.get(storedSectionId) : undefined
+    if (fromStore) return fromStore
+
+    return pageTree.pagesById.get(pageTree.rootIds[0] || '')
+  }, [legacySectionId, locationSectionId, pageTree, storedSectionId])
   const selectedAncestorIds = getSelectedAncestorIds(pageTree.pagesById, activePage)
   const effectiveExpandedIds = useMemo(() => {
     const next = new Set(expandedIds)
@@ -65,22 +113,33 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
       ? pageTree.pagesById.get(orderedPageIds[activePageIndex + 1])
       : undefined
 
-  const updateSectionQuery = useCallback(
+  const updateHistorySection = useCallback(
     (pageId: string, replace = true) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev)
-          next.set('section', pageId)
-          return next
+      navigate(
+        {
+          pathname: location.pathname,
+          search: searchWithoutSection,
+          hash: location.hash,
         },
-        { replace },
+        {
+          replace,
+          state: {
+            ...toLocationStateObject(location.state),
+            sectionId: pageId,
+          },
+        },
       )
     },
-    [setSearchParams],
+    [location.hash, location.pathname, location.state, navigate, searchWithoutSection],
   )
 
   const handleSelectPage = (pageId: string) => {
-    updateSectionQuery(pageId)
+    if (!pageTree.pagesById.has(pageId)) return
+
+    setSectionForContent(content.id, pageId)
+    if (locationSectionId !== pageId || hasLegacySectionParam) {
+      updateHistorySection(pageId, false)
+    }
 
     const page = pageTree.pagesById.get(pageId)
     setExpandedIds(() => {
@@ -93,14 +152,24 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
   }
 
   useEffect(() => {
-    const fallbackId = activePage?.id
-    if (!fallbackId) return
+    if (!activePage?.id) return
 
-    if (sectionFromUrl === fallbackId) return
-    if (sectionFromUrl && pageTree.pagesById.has(sectionFromUrl)) return
+    if (storedSectionId !== activePage.id) {
+      setSectionForContent(content.id, activePage.id)
+    }
 
-    updateSectionQuery(fallbackId, true)
-  }, [activePage?.id, sectionFromUrl, pageTree.pagesById, updateSectionQuery])
+    if (locationSectionId !== activePage.id || hasLegacySectionParam) {
+      updateHistorySection(activePage.id, true)
+    }
+  }, [
+    activePage?.id,
+    content.id,
+    hasLegacySectionParam,
+    locationSectionId,
+    setSectionForContent,
+    storedSectionId,
+    updateHistorySection,
+  ])
 
   const toggleExpanded = (pageId: string) => {
     const page = pageTree.pagesById.get(pageId)

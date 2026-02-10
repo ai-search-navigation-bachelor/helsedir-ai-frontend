@@ -6,17 +6,13 @@ interface SearchResultCardProps {
     categoryName: string;
     categoryId: string;
   };
-  searchId?: string;
 }
 
-export function SearchResultCard({ result, searchId }: SearchResultCardProps) {
+export function SearchResultCard({ result }: SearchResultCardProps) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    const url = searchId 
-      ? `/content/${result.id}?search_id=${searchId}`
-      : `/content/${result.id}`;
-    navigate(url);
+    navigate(`/content/${result.id}`);
   };
 
   return (
