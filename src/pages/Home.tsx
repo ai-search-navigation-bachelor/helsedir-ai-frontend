@@ -8,14 +8,37 @@ type HomeProps = {
 }
 
 export function Home({ isSearchBar = false }: HomeProps) {
-  const [query, setQuery] = useState('')
-  const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const searchInputRef = useRef<HTMLInputElement>(null)
   const isHome = location.pathname === '/'
   const isSearchPage = location.pathname === '/search'
+  const [searchParams] = useSearchParams()
   const searchQueryFromUrl = searchParams.get('query') || ''
+  const querySyncKey = isSearchBar && isSearchPage ? `search:${searchQueryFromUrl}` : 'local'
+  const initialQuery = isSearchBar && isSearchPage ? searchQueryFromUrl : ''
+
+  return (
+    <HomeInner
+      key={querySyncKey}
+      isSearchBar={isSearchBar}
+      isHome={isHome}
+      isSearchPage={isSearchPage}
+      initialQuery={initialQuery}
+    />
+  )
+}
+
+type HomeInnerProps = {
+  isSearchBar: boolean
+  isHome: boolean
+  isSearchPage: boolean
+  initialQuery: string
+}
+
+function HomeInner({ isSearchBar, isHome, isSearchPage, initialQuery }: HomeInnerProps) {
+  const [query, setQuery] = useState(initialQuery)
+  const navigate = useNavigate()
+  const [, setSearchParams] = useSearchParams()
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     // Auto-focus when opened as search bar from header or when on home page
@@ -39,13 +62,6 @@ export function Home({ isSearchBar = false }: HomeProps) {
     window.addEventListener('toggleSearch', handleSearchFocus)
     return () => window.removeEventListener('toggleSearch', handleSearchFocus)
   }, [isHome, isSearchBar, isSearchPage])
-
-  useEffect(() => {
-    // Keep the header search field synced with /search?query=...
-    if (isSearchBar && isSearchPage) {
-      setQuery(searchQueryFromUrl)
-    }
-  }, [isSearchBar, isSearchPage, searchQueryFromUrl])
 
   // Add home-page class only on the home route
   useEffect(() => {
