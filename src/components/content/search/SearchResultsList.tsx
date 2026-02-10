@@ -15,8 +15,8 @@ export function SearchResultsList({ results, searchQuery, searchId }: SearchResu
   return (
     <>
       {/* Results Count */}
-      <div className="mb-6">
-        <Paragraph className="text-gray-700">
+      <div className="mb-3">
+        <Paragraph className="text-sm text-gray-700">
           {results.length} treff på {searchQuery}
         </Paragraph>
       </div>
@@ -29,7 +29,7 @@ export function SearchResultsList({ results, searchQuery, searchId }: SearchResu
       ) : (
         <div className="divide-y divide-gray-200">
           {results.map((result, index) => (
-            <div key={`${result.id}-${index}`} className="py-4 first:pt-0">
+            <div key={`${result.id}-${index}`} className="py-3 first:pt-0">
               <SearchResultCard
                 result={result}
                 searchId={searchId}

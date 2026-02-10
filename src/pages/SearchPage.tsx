@@ -8,7 +8,6 @@ import {
 
 import { useCategorizedSearchQuery } from '../hooks/queries/useCategorizedSearchQuery';
 import { useSearchStore } from '../stores/searchStore';
-import { FilterBar } from '../components/ui/FilterBar';
 import {
   SearchCategoryTabs,
   SearchResultsList,
@@ -26,11 +25,9 @@ export function SearchPage() {
   const activeTab = searchParams.get('category') || 'all';
 
   const setSearchData = useSearchStore((state) => state.setSearchData);
-  const filters = useSearchStore((state) => state.filters);
 
   const { data, isLoading, error } = useCategorizedSearchQuery(searchQuery, {
     enabled: !!searchQuery.trim(),
-    tema: filters.tema,
   });
 
   // Store search_id in Zustand when data is received
@@ -110,13 +107,10 @@ export function SearchPage() {
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-6 py-8">
-      {/* Filter Bar */}
-      <FilterBar />
-
+    <div className="max-w-screen-xl mx-auto px-6 pt-2 pb-6">
       {/* Loading State */}
       {isLoading && (
-        <div className="flex justify-center items-center py-12">
+        <div className="flex justify-center items-center py-8">
           <Spinner aria-label="Laster søkeresultater..." data-size="lg" />
         </div>
       )}
