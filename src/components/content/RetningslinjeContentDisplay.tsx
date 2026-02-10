@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
-import { Alert, Heading, Link, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { useSearchParams } from 'react-router-dom'
 import type { ContentDisplayProps } from '../../types/pages'
 import { PageContent } from './retningslinje/PageContent'
 import { SidebarTree } from './retningslinje/SidebarTree'
@@ -12,14 +13,14 @@ import {
 import { useRetningslinjeChapters } from './retningslinje/useRetningslinjeChapters'
 
 export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
-  const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const sectionFromUrl = searchParams.get('section')
 
   const {
     entries,
     loadedChapters,
     failedEntries,
-    supportingLinks,
     isChaptersLoading,
   } = useRetningslinjeChapters({
     contentId: content.id,
@@ -27,12 +28,57 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
   })
 
   const pageTree = useMemo(() => buildPageTree(loadedChapters), [loadedChapters])
-  const selectedPage = pageTree.pagesById.get(selectedPageId || '')
+  const selectedPage = pageTree.pagesById.get(sectionFromUrl || '')
   const activePage = selectedPage ?? pageTree.pagesById.get(pageTree.rootIds[0] || '')
   const selectedAncestorIds = getSelectedAncestorIds(pageTree.pagesById, activePage)
+  const effectiveExpandedIds = useMemo(() => {
+    const next = new Set(expandedIds)
+    if (!activePage) return next
+
+    const ancestorIds = getAncestorIds(pageTree.pagesById, activePage.id)
+    ancestorIds.forEach((id) => next.add(id))
+    return next
+  }, [expandedIds, activePage, pageTree.pagesById])
+  const orderedPageIds = useMemo(() => {
+    const ordered: string[] = []
+
+    const visit = (pageId: string) => {
+      const page = pageTree.pagesById.get(pageId)
+      if (!page) return
+
+      ordered.push(pageId)
+      page.childrenIds.forEach((childId) => visit(childId))
+    }
+
+    pageTree.rootIds.forEach((rootId) => visit(rootId))
+    return ordered
+  }, [pageTree])
+  const activePageIndex = activePage ? orderedPageIds.indexOf(activePage.id) : -1
+  const previousPage =
+    activePageIndex > 0
+      ? pageTree.pagesById.get(orderedPageIds[activePageIndex - 1])
+      : undefined
+  const nextPage =
+    activePageIndex >= 0 && activePageIndex < orderedPageIds.length - 1
+      ? pageTree.pagesById.get(orderedPageIds[activePageIndex + 1])
+      : undefined
+
+  const updateSectionQuery = useCallback(
+    (pageId: string, replace = true) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.set('section', pageId)
+          return next
+        },
+        { replace },
+      )
+    },
+    [setSearchParams],
+  )
 
   const handleSelectPage = (pageId: string) => {
-    setSelectedPageId(pageId)
+    updateSectionQuery(pageId)
 
     const page = pageTree.pagesById.get(pageId)
     setExpandedIds(() => {
@@ -43,6 +89,16 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
       return next
     })
   }
+
+  useEffect(() => {
+    const fallbackId = activePage?.id
+    if (!fallbackId) return
+
+    if (sectionFromUrl === fallbackId) return
+    if (sectionFromUrl && pageTree.pagesById.has(sectionFromUrl)) return
+
+    updateSectionQuery(fallbackId, true)
+  }, [activePage?.id, sectionFromUrl, pageTree.pagesById, updateSectionQuery])
 
   const toggleExpanded = (pageId: string) => {
     const page = pageTree.pagesById.get(pageId)
@@ -80,7 +136,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
             <SidebarTree
               rootIds={pageTree.rootIds}
               pagesById={pageTree.pagesById}
-              expandedIds={expandedIds}
+              expandedIds={effectiveExpandedIds}
               activePageId={activePage?.id}
               selectedAncestorIds={selectedAncestorIds}
               onToggleExpanded={toggleExpanded}
@@ -88,22 +144,6 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
             />
           )}
 
-          {supportingLinks.length > 0 && (
-            <div className="mt-6 border-t border-slate-200 pt-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
-                Relaterte lenker
-              </Heading>
-              <ul className="m-0 list-none space-y-1 p-0">
-                {supportingLinks.map((link) => (
-                  <li key={`${link.rel}-${link.href}`}>
-                    <Link href={link.href} className="text-sm">
-                      {link.tittel || link.rel}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </aside>
 
         <section className="min-w-0">
@@ -118,6 +158,8 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
               activePage={activePage}
               pagesById={pageTree.pagesById}
               onSelectPage={handleSelectPage}
+              previousPage={previousPage}
+              nextPage={nextPage}
             />
           )}
 

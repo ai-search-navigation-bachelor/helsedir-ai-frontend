@@ -10,18 +10,37 @@ import { Home } from '../../pages/Home'
 export function AppLayout() {
   const location = useLocation()
   const isHome = location.pathname === '/'
-  const [isSearchVisible, setIsSearchVisible] = useState(isHome)
+  const isSearchPage = location.pathname === '/search'
+  const isSearchPinnedOpen = isHome || isSearchPage
+  const layoutKey = isSearchPinnedOpen ? 'search-pinned' : 'search-free'
 
-  useEffect(() => {
-    // Update search bar visibility based on route
-    setIsSearchVisible(isHome)
-  }, [isHome])
+  return (
+    <AppLayoutInner
+      key={layoutKey}
+      isHome={isHome}
+      isSearchPinnedOpen={isSearchPinnedOpen}
+    />
+  )
+}
+
+type AppLayoutInnerProps = {
+  isHome: boolean
+  isSearchPinnedOpen: boolean
+}
+
+function AppLayoutInner({ isHome, isSearchPinnedOpen }: AppLayoutInnerProps) {
+  const [isSearchVisible, setIsSearchVisible] = useState(isSearchPinnedOpen)
 
   useEffect(() => {
     const handleSearchToggle = () => {
+      if (isSearchPinnedOpen) {
+        setIsSearchVisible(true)
+        return
+      }
       setIsSearchVisible((prev) => !prev)
     }
     const handleSearchClose = () => {
+      if (isSearchPinnedOpen) return
       setIsSearchVisible(false)
     }
     window.addEventListener('toggleSearch', handleSearchToggle)
@@ -30,7 +49,7 @@ export function AppLayout() {
       window.removeEventListener('toggleSearch', handleSearchToggle)
       window.removeEventListener('closeSearch', handleSearchClose)
     }
-  }, [])
+  }, [isSearchPinnedOpen])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

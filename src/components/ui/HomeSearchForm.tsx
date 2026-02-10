@@ -6,10 +6,11 @@ interface HomeSearchFormProps {
   query: string
   onQueryChange: (query: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
+  onClear?: () => void
 }
 
 export const HomeSearchForm = forwardRef<HTMLInputElement, HomeSearchFormProps>(
-  ({ query, onQueryChange, onSubmit }, ref) => {
+  ({ query, onQueryChange, onSubmit, onClear }, ref) => {
     const [isHoveringIcon, setIsHoveringIcon] = useState(false)
     const [isFocused, setIsFocused] = useState(false)
     const formRef = useRef<HTMLFormElement>(null)
@@ -22,6 +23,7 @@ export const HomeSearchForm = forwardRef<HTMLInputElement, HomeSearchFormProps>(
 
     function handleClear() {
       onQueryChange('')
+      onClear?.()
     }
 
     return (

@@ -8,12 +8,16 @@ interface PageContentProps {
   activePage: PageNode
   pagesById: Map<string, PageNode>
   onSelectPage: (pageId: string) => void
+  previousPage?: PageNode
+  nextPage?: PageNode
 }
 
 export function PageContent({
   activePage,
   pagesById,
   onSelectPage,
+  previousPage,
+  nextPage,
 }: PageContentProps) {
   const hasIntro = hasVisibleContent(activePage.node.intro)
   const hasBody = hasVisibleContent(activePage.node.tekst || activePage.node.body)
@@ -46,26 +50,29 @@ export function PageContent({
       )}
 
       {showChildNavigation && (
-        <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-          <Heading level={3} data-size="sm" style={{ marginBottom: 8 }}>
+        <section className="mt-6">
+          <Heading level={3} data-size="sm" style={{ marginBottom: 10 }}>
             {activePage.childrenIds.length === 1 ? 'Kapittel' : 'Kapitler'}
           </Heading>
-          <ul className="m-0 list-none space-y-2 p-0">
+          <ul className="m-0 list-none p-0">
             {activePage.childrenIds.map((childId) => {
               const child = pagesById.get(childId)
               if (!child) return null
 
               return (
-                <li key={child.id}>
+                <li key={child.id} className="border-b border-slate-100 last:border-b-0">
                   <button
                     type="button"
                     onClick={() => onSelectPage(child.id)}
-                    className="flex w-full items-start gap-2 rounded-md border border-transparent bg-white px-3 py-2 text-left text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+                    className="retningslinje-child-nav__button flex w-full items-start justify-between gap-3 px-1 py-2.5 text-left text-slate-700 transition"
                   >
                     <span className="min-w-0">
-                      <span className="mr-2 text-sm text-slate-400">{child.numbering}</span>
-                      <span className="break-words">{child.title}</span>
+                      <span className="retningslinje-child-nav__number mr-2 min-w-[3.2rem] text-sm text-slate-400">
+                        {child.numbering}
+                      </span>
+                      <span className="retningslinje-child-nav__title min-w-0 break-words">{child.title}</span>
                     </span>
+                    <span aria-hidden="true" className="retningslinje-child-nav__affordance">→</span>
                   </button>
                 </li>
               )
@@ -89,6 +96,38 @@ export function PageContent({
             ))}
           </div>
         </section>
+      )}
+
+      {(previousPage || nextPage) && (
+        <nav aria-label="Navigasjon mellom kapitler" className="mt-8 border-t border-slate-200 pt-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {previousPage ? (
+              <button
+                type="button"
+                onClick={() => onSelectPage(previousPage.id)}
+                className="retningslinje-page-nav__button retningslinje-page-nav__button--prev"
+                aria-label={`Gå til forrige kapittel ${previousPage.numbering}`}
+              >
+                <span aria-hidden="true" className="retningslinje-page-nav__icon">←</span>
+                <span className="retningslinje-page-nav__label">Forrige</span>
+                <span className="retningslinje-page-nav__number">{previousPage.numbering}</span>
+              </button>
+            ) : null}
+
+            {nextPage ? (
+              <button
+                type="button"
+                onClick={() => onSelectPage(nextPage.id)}
+                className="retningslinje-page-nav__button retningslinje-page-nav__button--next"
+                aria-label={`Gå til neste kapittel ${nextPage.numbering}`}
+              >
+                <span className="retningslinje-page-nav__label">Neste</span>
+                <span className="retningslinje-page-nav__number">{nextPage.numbering}</span>
+                <span aria-hidden="true" className="retningslinje-page-nav__icon">→</span>
+              </button>
+            ) : null}
+          </div>
+        </nav>
       )}
     </article>
   )
