@@ -1,13 +1,7 @@
-import { type FormEvent, useId, useRef, useState, forwardRef } from 'react'
+import { useId, useRef, useState, forwardRef } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon } from '@navikt/aksel-icons'
 import { colors } from '../../styles/dsTokens'
-
-interface SearchFormProps {
-  query: string
-  onQueryChange: (query: string) => void
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void
-  onClear?: () => void
-}
+import type { SearchFormProps } from '../../types/components'
 
 export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
   ({ query, onQueryChange, onSubmit, onClear }, ref) => {

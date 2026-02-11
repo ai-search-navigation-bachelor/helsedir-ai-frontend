@@ -5,7 +5,7 @@ import { SkipLink } from '@digdir/designsystemet-react'
 
 import { AppHeader } from './AppHeader'
 import { AppFooter } from './AppFooter'
-import { SearchShell } from '../ui/SearchShell'
+import { SearchShell } from '../ui'
 
 export function AppLayout() {
   const location = useLocation()
