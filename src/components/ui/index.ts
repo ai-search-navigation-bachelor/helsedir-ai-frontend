@@ -1,6 +1,6 @@
 export { Breadcrumb } from './Breadcrumb'
 export { SearchForm } from './SearchForm'
-export { HomeSearchForm } from './HomeSearchForm'
+export { SearchShell } from './SearchShell'
 export { FilterBar } from './FilterBar'
 export { CategoryButtons } from './CategoryButtons'
 export { MenuDropdown } from './MenuDropdown'
