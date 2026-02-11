@@ -101,29 +101,19 @@ export function TemasideHubPage() {
   const [query, setQuery] = useState("");
 
   const node = findNodeByPath(temaPath);
+  const isHub = Boolean(node && node.children.length > 0);
+  const categoryIcon = node ? categoryIcons[node.path] : undefined;
+  const customLayout = node ? CUSTOM_TEMASIDE_LAYOUTS[node.path] : undefined;
 
-  if (!node) {
-    return (
-      <div className="mx-auto max-w-5xl p-6">
-        <Heading level={2} data-size="md">Fant ikke temasiden</Heading>
-        <p className="mt-2">
-          Ingen mock-data for: <code>{temaPath}</code>
-        </p>
-      </div>
-    );
-  }
-
-  const isHub = node.children.length > 0;
-  const categoryIcon = categoryIcons[node.path];
-  const customLayout = CUSTOM_TEMASIDE_LAYOUTS[node.path];
-  
   // Check if category should be forced to render flat (ignoring hierarchy)
-  const shouldForceFlat = FORCE_FLAT_CATEGORIES.includes(node.path);
-  
+  const shouldForceFlat = node ? FORCE_FLAT_CATEGORIES.includes(node.path) : false;
+
   // Check if this is a flat structure (all children have no grandchildren)
-  const isFlatStructure = shouldForceFlat || node.children.every(child => child.children.length === 0);
+  const isFlatStructure = Boolean(
+    node && (shouldForceFlat || node.children.every((child) => child.children.length === 0)),
+  );
   const sections = useMemo(
-    () => buildHubSections(node, customLayout, isFlatStructure, shouldForceFlat),
+    () => (node ? buildHubSections(node, customLayout, isFlatStructure, shouldForceFlat) : []),
     [node, customLayout, isFlatStructure, shouldForceFlat],
   );
   const normalizedQuery = query.trim().toLowerCase();
@@ -144,6 +134,17 @@ export function TemasideHubPage() {
   }, [normalizedQuery, sections]);
   const totalLinks = sections.reduce((sum, section) => sum + section.links.length, 0);
   const visibleLinks = visibleSections.reduce((sum, section) => sum + section.links.length, 0);
+
+  if (!node) {
+    return (
+      <div className="mx-auto max-w-5xl p-6">
+        <Heading level={2} data-size="md">Fant ikke temasiden</Heading>
+        <p className="mt-2">
+          Ingen mock-data for: <code>{temaPath}</code>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-screen-xl mx-auto px-6 py-8 lg:py-10">
