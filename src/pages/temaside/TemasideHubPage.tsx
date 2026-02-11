@@ -5,11 +5,7 @@ import { ChevronRightIcon } from "@navikt/aksel-icons";
 import { CUSTOM_TEMASIDE_LAYOUTS, FORCE_FLAT_CATEGORIES } from "../../components/content/temaside/customLayouts";
 import { getTemasideCategoryBySlug } from "../../constants/temasider";
 import { useThemePagesQuery } from "../../hooks/queries/useThemePagesQuery";
-import { buildThemeTree, findNodeByPath, type ThemeNode } from "../../lib/temaside/temasiderTree";
-
-function normalizePath(path: string) {
-  return (path || "/").replace(/\/+$/, "") || "/";
-}
+import { buildThemeTree, findNodeByPath, normalizePath, type ThemeNode } from "../../lib/temaside/temasiderTree";
 
 type HubLink = {
   path: string;
@@ -122,6 +118,7 @@ export function TemasideHubPage() {
 
     if (category && !paths.includes(category.path)) {
       paths.push(category.path);
+      titleByPath[category.path] = category.title;
     }
 
     return buildThemeTree(paths, titleByPath);

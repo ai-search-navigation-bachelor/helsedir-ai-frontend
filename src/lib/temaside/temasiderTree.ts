@@ -11,7 +11,7 @@ function titleize(segment: string) {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-function normalizePath(path: string): string {
+export function normalizePath(path: string): string {
   return (path || '/').replace(/\/+$/, '') || '/'
 }
 
