@@ -15,9 +15,10 @@ export interface BreadcrumbItem {
  * Search form props
  */
 export interface SearchFormProps {
-  initialValue?: string
-  onSubmit: (query: string) => void
-  placeholder?: string
+  query: string
+  onQueryChange: (query: string) => void
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
+  onClear?: () => void
 }
 
 /**

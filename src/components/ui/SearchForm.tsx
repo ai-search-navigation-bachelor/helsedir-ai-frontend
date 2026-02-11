@@ -1,96 +1,90 @@
-import { useState, useEffect } from 'react'
+import { type FormEvent, useId, useRef, useState, forwardRef } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon } from '@navikt/aksel-icons'
+import { colors } from '../../styles/dsTokens'
 
 interface SearchFormProps {
-  initialValue: string
-  onSubmit: (query: string) => void
+  query: string
+  onQueryChange: (query: string) => void
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onClear?: () => void
-  placeholder?: string
 }
 
-export function SearchForm({
-  initialValue,
-  onSubmit,
-  onClear,
-  placeholder = 'Søk etter innhold…'
-}: SearchFormProps) {
-  const [inputValue, setInputValue] = useState(initialValue)
-  const [isHoveringIcon, setIsHoveringIcon] = useState(false)
-  const [isFocused, setIsFocused] = useState(false)
+export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
+  ({ query, onQueryChange, onSubmit, onClear }, ref) => {
+    const inputId = useId()
+    const [isHoveringIcon, setIsHoveringIcon] = useState(false)
+    const [isFocused, setIsFocused] = useState(false)
+    const formRef = useRef<HTMLFormElement>(null)
 
-  // Sync input with initial value when it changes
-  useEffect(() => {
-    setInputValue(initialValue)
-  }, [initialValue])
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const trimmed = inputValue.trim()
-    if (trimmed) {
-      onSubmit(trimmed)
+    function handleIconClick() {
+      if (query.trim()) {
+        formRef.current?.requestSubmit()
+      }
     }
-  }
 
-  function handleClear() {
-    setInputValue('')
-    onClear?.()
-  }
-
-  function handleIconClick() {
-    const trimmed = inputValue.trim()
-    if (trimmed) {
-      onSubmit(trimmed)
+    function handleClear() {
+      onQueryChange('')
+      onClear?.()
     }
-  }
 
-  return (
-    <form onSubmit={handleSubmit} className="mb-6">
-      <div className="relative">
-        <input
-          type="text"
-          name="query"
-          aria-label="Søk"
-          placeholder={placeholder}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          className="w-full px-4 py-3 pr-24 border rounded-lg text-base transition-all"
-          style={{
-            borderColor: isFocused ? '#3b82f6' : '#cbd5e1',
-            boxShadow: isFocused ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none',
-            outline: 'none'
-          }}
-        />
+    return (
+      <div className="rounded-br-[50px]" style={{ backgroundColor: colors.headerBg }}>
+        <div className="max-w-screen-xl mx-auto px-8 pt-5 pb-8">
+          <label htmlFor={inputId} className="block font-bold mb-2">
+            Hva leter du etter?
+          </label>
 
-        {/* Clear button (X) */}
-        {inputValue && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="absolute right-14 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-slate-100 transition-colors"
-            aria-label="Tøm"
-          >
-            <XMarkIcon className="w-5 h-5 text-slate-500" />
-          </button>
-        )}
+          <form ref={formRef} onSubmit={onSubmit} className="mb-6">
+            <div className="relative">
+              <input
+                ref={ref}
+                type="text"
+                id={inputId}
+                name="query"
+                aria-label="Søk"
+                placeholder="Søk etter innhold..."
+                value={query}
+                onChange={(e) => onQueryChange(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                className={`w-full px-4 py-3 pr-24 border rounded-lg text-base transition-all bg-white outline-none ${
+                  isFocused
+                    ? 'border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.1)]'
+                    : 'border-slate-300 shadow-none'
+                }`}
+              />
 
-        {/* Magnifying glass icon button */}
-        <button
-          type="button"
-          onClick={handleIconClick}
-          onMouseEnter={() => setIsHoveringIcon(true)}
-          onMouseLeave={() => setIsHoveringIcon(false)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all cursor-pointer"
-          style={{
-            backgroundColor: isHoveringIcon ? '#f1f5f9' : 'transparent',
-            border: isHoveringIcon ? '1px solid #cbd5e1' : '1px solid transparent',
-          }}
-          aria-label="Søk"
-        >
-          <MagnifyingGlassIcon className="w-5 h-5 text-slate-600" />
-        </button>
+              {query && (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="absolute right-14 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-slate-100 transition-colors"
+                  aria-label="Tøm"
+                >
+                  <XMarkIcon className="w-5 h-5 text-slate-500" />
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleIconClick}
+                onMouseEnter={() => setIsHoveringIcon(true)}
+                onMouseLeave={() => setIsHoveringIcon(false)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all cursor-pointer"
+                style={{
+                  backgroundColor: isHoveringIcon ? '#f1f5f9' : 'transparent',
+                  border: isHoveringIcon ? '1px solid #cbd5e1' : '1px solid transparent',
+                }}
+                aria-label="Søk"
+              >
+                <MagnifyingGlassIcon className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </form>
-  )
-}
+    )
+  }
+)
+
+SearchForm.displayName = 'SearchForm'

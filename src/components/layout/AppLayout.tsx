@@ -5,7 +5,7 @@ import { SkipLink } from '@digdir/designsystemet-react'
 
 import { AppHeader } from './AppHeader'
 import { AppFooter } from './AppFooter'
-import { Home } from '../../pages/Home'
+import { SearchShell } from '../ui/SearchShell'
 
 export function AppLayout() {
   const location = useLocation()
@@ -55,7 +55,7 @@ function AppLayoutInner({ isHome, isSearchPinnedOpen }: AppLayoutInnerProps) {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <SkipLink href='#main-content'>Hopp til hovedinnhold</SkipLink>
       <AppHeader />
-      {isSearchVisible && !isHome && <Home isSearchBar />}
+      {isSearchVisible && <SearchShell />}
       {!isHome && (
         <main id='main-content' style={{ overflow: 'visible', flex: 1 }}>
           <Outlet />
