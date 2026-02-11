@@ -17,35 +17,27 @@ export function AppHeader() {
         style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}
       >
         <header>
-          <CardBlock
-            style={{
-              paddingLeft: "2rem",
-              paddingRight: "2rem",
-              paddingTop: "3.2rem",
-              paddingBottom: "0.8rem",
-            }}
-          >
-            <div className="max-w-screen-xl mx-auto flex items-center justify-between gap-6">
+          <CardBlock className="site-header__card">
+            <div className="site-header__inner">
               <Link
                 to="/"
                 aria-label="Helsedirektoratet"
-                className="flex items-center gap-3 flex-shrink-0"
+                className="site-header__logo"
                 style={{ color: "inherit", textDecoration: "none" }}
               >
                 <picture>
                   <source
                     srcSet="/hdir_logo_small.svg"
-                    media="(max-width: 580px)"
+                    media="(max-width: 640px)"
                   />
                   <img
                     src="/Hdir_logo.svg"
                     alt="Helsedirektoratet"
-                    className="h-8"
                   />
                 </picture>
               </Link>
 
-              <div className="flex gap-3 items-center">
+              <div className="site-header__actions">
                 <Button
                   variant="secondary"
                   onClick={() => {

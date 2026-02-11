@@ -12,7 +12,7 @@ function App() {
         <Route path="content/:id" element={<ContentDetail />} />
         <Route path="temaside">
           <Route index element={<TemasideIndexPage />} />
-          <Route path="*" element={<TemasideHubPage />} />
+          <Route path=":category/*" element={<TemasideHubPage />} />
         </Route>
       </Route>
     </Routes>

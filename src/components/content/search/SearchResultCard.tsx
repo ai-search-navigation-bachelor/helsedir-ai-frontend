@@ -35,10 +35,7 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
     event: MouseEvent<HTMLButtonElement>,
   ) => {
     event.stopPropagation();
-    const url = searchId
-      ? `/content/${id}?search_id=${searchId}`
-      : `/content/${id}`;
-    navigate(url);
+    navigate(`/content/${id}`);
   };
 
   const handleChildGroupToggle = (
