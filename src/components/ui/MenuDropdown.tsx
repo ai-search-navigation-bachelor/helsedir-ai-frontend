@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ChevronRightIcon } from '@navikt/aksel-icons';
+import { TEMASIDE_CATEGORIES } from '../../constants/temasider';
 
 interface MenuItem {
   path: string;
@@ -8,34 +9,10 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  {
-    path: '/temaside/forebygging-diagnose-og-behandling',
-    title: 'Forebygging, diagnose og behandling',
-  },
-  {
-    path: '/temaside/digitalisering-og-e-helse',
-    title: 'Digitalisering og e-helse',
-  },
-  {
-    path: '/temaside/lov-og-forskrift',
-    title: 'Lov og forskrift',
-  },
-  {
-    path: '/temaside/helseberedskap',
-    title: 'Helseberedskap',
-  },
-  {
-    path: '/temaside/autorisasjon-og-spesialistutdanning',
-    title: 'Autorisasjon og spesialistutdanning',
-  },
-  {
-    path: '/temaside/tilskudd-og-finansiering',
-    title: 'Tilskudd og finansiering',
-  },
-  {
-    path: '/temaside/statistikk-registre-og-rapporter',
-    title: 'Statistikk, registre og rapporter',
-  },
+  ...TEMASIDE_CATEGORIES.map((category) => ({
+    path: `/temaside${category.path}`,
+    title: category.title,
+  })),
   {
     path: 'https://www.helsedirektoratet.no/om-oss',
     title: 'Om Helsedirektoratet',
