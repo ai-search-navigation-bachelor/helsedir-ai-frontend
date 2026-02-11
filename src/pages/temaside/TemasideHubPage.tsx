@@ -1,7 +1,8 @@
+import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Heading } from "@digdir/designsystemet-react";
 import { ChevronRightIcon } from '@navikt/aksel-icons';
-import { findNodeByPath } from "../../lib/temaside/temasiderTree";
+import { findNodeByPath, type ThemeNode } from "../../lib/temaside/temasiderTree";
 import { CUSTOM_TEMASIDE_LAYOUTS, FORCE_FLAT_CATEGORIES } from "../../components/content/temaside/customLayouts";
 
 // Map category paths to their SVG icons
@@ -19,11 +20,120 @@ function stripPrefix(pathname: string) {
   return pathname.replace(/^\/temaside/, "") || "/";
 }
 
+type HubLink = {
+  path: string;
+  title: string;
+};
+
+type HubSection = {
+  id: string;
+  title: string;
+  links: HubLink[];
+};
+
+function collectLeafNodes(node: ThemeNode): ThemeNode[] {
+  if (node.children.length === 0) {
+    return [node];
+  }
+
+  return node.children.flatMap(collectLeafNodes);
+}
+
+function sortByTitle(a: HubLink, b: HubLink) {
+  return a.title.localeCompare(b.title, "nb");
+}
+
+function buildHubSections(
+  node: ThemeNode,
+  customLayout: (typeof CUSTOM_TEMASIDE_LAYOUTS)[string] | undefined,
+  isFlatStructure: boolean,
+  shouldForceFlat: boolean,
+): HubSection[] {
+  if (customLayout) {
+    return customLayout.sections
+      .map((customSection) => ({
+        id: customSection.title,
+        title: customSection.title,
+        links: customSection.paths
+          .map((path) => findNodeByPath(path))
+          .filter((linkNode): linkNode is ThemeNode => Boolean(linkNode))
+          .map((linkNode) => ({ path: linkNode.path, title: linkNode.title }))
+          .sort(sortByTitle),
+      }))
+      .filter((section) => section.links.length > 0);
+  }
+
+  if (isFlatStructure) {
+    const flatNodes = shouldForceFlat
+      ? collectLeafNodes(node).filter((leaf) => leaf.path !== node.path)
+      : node.children;
+
+    const flatLinks = flatNodes
+      .map((child) => ({ path: child.path, title: child.title }))
+      .sort(sortByTitle);
+
+    return [
+      {
+        id: `${node.path}-all`,
+        title: "Alle undertemaer",
+        links: flatLinks,
+      },
+    ];
+  }
+
+  return node.children
+    .map((section) => {
+      const sectionItems = section.children.length > 0 ? section.children : [section];
+      return {
+        id: section.path,
+        title: section.title,
+        links: sectionItems
+          .map((item) => ({ path: item.path, title: item.title }))
+          .sort(sortByTitle),
+      };
+    })
+    .filter((section) => section.links.length > 0);
+}
+
 export function TemasideHubPage() {
   const { pathname } = useLocation();
   const temaPath = stripPrefix(pathname);
+  const [query, setQuery] = useState("");
 
   const node = findNodeByPath(temaPath);
+  const isHub = Boolean(node && node.children.length > 0);
+  const categoryIcon = node ? categoryIcons[node.path] : undefined;
+  const customLayout = node ? CUSTOM_TEMASIDE_LAYOUTS[node.path] : undefined;
+
+  // Check if category should be forced to render flat (ignoring hierarchy)
+  const shouldForceFlat = node ? FORCE_FLAT_CATEGORIES.includes(node.path) : false;
+
+  // Check if this is a flat structure (all children have no grandchildren)
+  const isFlatStructure = Boolean(
+    node && (shouldForceFlat || node.children.every((child) => child.children.length === 0)),
+  );
+  const sections = useMemo(
+    () => (node ? buildHubSections(node, customLayout, isFlatStructure, shouldForceFlat) : []),
+    [node, customLayout, isFlatStructure, shouldForceFlat],
+  );
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleSections = useMemo(() => {
+    if (!normalizedQuery) {
+      return sections;
+    }
+
+    return sections
+      .map((section) => {
+        const isSectionMatch = section.title.toLowerCase().includes(normalizedQuery);
+        const links = isSectionMatch
+          ? section.links
+          : section.links.filter((link) => link.title.toLowerCase().includes(normalizedQuery));
+        return { ...section, links };
+      })
+      .filter((section) => section.links.length > 0);
+  }, [normalizedQuery, sections]);
+  const totalLinks = sections.reduce((sum, section) => sum + section.links.length, 0);
+  const visibleLinks = visibleSections.reduce((sum, section) => sum + section.links.length, 0);
 
   if (!node) {
     return (
@@ -36,104 +146,119 @@ export function TemasideHubPage() {
     );
   }
 
-  const isHub = node.children.length > 0;
-  const categoryIcon = categoryIcons[node.path];
-  const customLayout = CUSTOM_TEMASIDE_LAYOUTS[node.path];
-  
-  // Check if category should be forced to render flat (ignoring hierarchy)
-  const shouldForceFlat = FORCE_FLAT_CATEGORIES.includes(node.path);
-  
-  // Check if this is a flat structure (all children have no grandchildren)
-  const isFlatStructure = shouldForceFlat || node.children.every(child => child.children.length === 0);
-
   return (
-    <div className="max-w-screen-xl mx-auto px-6 py-6">
-      <div className="flex items-center gap-4 mb-16">
-        {categoryIcon && (
-          <img src={categoryIcon} alt="" className="w-16 h-16" />
+    <div className="max-w-screen-xl mx-auto px-6 py-8 lg:py-10">
+      <header className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 lg:px-6">
+        <div className="flex items-center gap-4">
+          {categoryIcon && (
+            <img src={categoryIcon} alt="" className="w-14 h-14 lg:w-16 lg:h-16" />
+          )}
+          <div>
+            <Heading level={1} data-size="lg" className="font-bold">
+              {node.title}
+            </Heading>
+            {isHub && (
+              <p className="mt-2 text-sm text-slate-600">
+                Finn undertema raskt med søk eller bla i seksjonene under.
+              </p>
+            )}
+          </div>
+        </div>
+
+        {isHub && (
+          <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <label className="w-full md:max-w-md">
+              <span className="sr-only">Filtrer undertema</span>
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Filtrer undertema"
+                className="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm text-slate-800 placeholder:text-slate-500 focus:border-[#005F73] focus:outline-none focus:ring-2 focus:ring-[#005F73]/20"
+              />
+            </label>
+
+            <p className="text-sm text-slate-600">
+              Viser {visibleLinks} av {totalLinks} undertema
+            </p>
+          </div>
         )}
-        <Heading level={1} data-size="lg" className="font-bold">{node.title}</Heading>
-      </div>
+      </header>
 
       {isHub ? (
-        <div className="flex flex-wrap gap-x-12 gap-y-14">
-          {customLayout ? (
-            // Render custom layout sections
-            customLayout.sections.map((customSection) => (
-              <section key={customSection.title} className="space-y-7 flex-1 min-w-[250px] max-w-[350px]">
-                <Heading level={2} data-size="md" className="font-bold text-gray-900 text-xl">
-                  {customSection.title}
+        <div className="mt-6">
+          {visibleSections.length === 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-white px-5 py-10 text-center">
+              <p className="text-slate-700">Ingen treff for "{query.trim()}".</p>
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="mt-3 text-sm font-semibold text-[#005F73] hover:underline"
+              >
+                Nullstill filter
+              </button>
+            </div>
+          ) : isFlatStructure && !customLayout ? (
+            <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                <Heading level={2} data-size="md" className="font-bold text-slate-900">
+                  {visibleSections[0].title}
                 </Heading>
-
-                <ul className="space-y-3">
-                  {customSection.paths.map((path) => {
-                    const linkNode = findNodeByPath(path);
-                    if (!linkNode) return null;
-                    return (
-                      <li key={path}>
-                        <Link
-                          to={`/temaside${path}`}
-                          className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors py-3 text-base border-b border-gray-300"
-                        >
-                          <ChevronRightIcon className="h-4 w-4 flex-shrink-0 text-blue-600" aria-hidden />
-                          <span>{linkNode.title}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            ))
-          ) : isFlatStructure ? (
-            // Render flat structure - direct links without section headers
-            <div className="w-full">
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
-                {node.children.map((child) => (
-                  <li key={child.path}>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                  {visibleSections[0].links.length}
+                </span>
+              </div>
+              <ul className="grid grid-cols-1 md:grid-cols-2">
+                {visibleSections[0].links.map((item) => (
+                  <li key={item.path} className="border-b border-slate-200 last:border-b-0">
                     <Link
-                      to={`/temaside${child.path}`}
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors py-3 text-base border-b border-gray-300"
+                      to={`/temaside${item.path}`}
+                      className="flex items-start gap-2 px-5 py-3.5 text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#005F73]"
                     >
-                      <ChevronRightIcon className="h-5 w-5 flex-shrink-0 text-blue-600" aria-hidden />
-                      <span>{child.title}</span>
+                      <ChevronRightIcon className="mt-1 h-4 w-4 flex-shrink-0 text-[#005F73]" aria-hidden />
+                      <span>{item.title}</span>
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </section>
           ) : (
-            // Render default hierarchical layout
-            node.children.map((section) => (
-              <section key={section.path} className="space-y-7 flex-1 min-w-[250px] max-w-[350px]">
-                <Heading level={2} data-size="md" className="font-bold text-gray-900 text-xl">
-                  {section.title}
-                </Heading>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {visibleSections.map((section) => (
+                <section key={section.id} className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                    <Heading level={2} data-size="md" className="font-bold text-slate-900">
+                      {section.title}
+                    </Heading>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                      {section.links.length}
+                    </span>
+                  </div>
 
-                {section.children.length > 0 && (
-                  <ul className="space-y-3">
-                    {section.children.map((item) => (
-                      <li key={item.path}>
+                  <ul>
+                    {section.links.map((item) => (
+                      <li key={item.path} className="border-b border-slate-200 last:border-b-0">
                         <Link
                           to={`/temaside${item.path}`}
-                          className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors py-3 text-base border-b border-gray-300"
+                          className="flex items-start gap-2 px-5 py-3.5 text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#005F73]"
                         >
-                          <ChevronRightIcon className="h-4 w-4 flex-shrink-0 text-blue-600" aria-hidden />
+                          <ChevronRightIcon className="mt-1 h-4 w-4 flex-shrink-0 text-[#005F73]" aria-hidden />
                           <span>{item.title}</span>
                         </Link>
                       </li>
                     ))}
                   </ul>
-                )}
-              </section>
-            ))
+                </section>
+              ))}
+            </div>
           )}
         </div>
       ) : (
-        <div className="mt-6">
+        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
           <p className="text-slate-700">
-            Leaf-side (ingen under-sider i listen). Her kan dere mocke innhold senere.
+            Denne temasiden har ingen undernivå enda.
           </p>
-          <p className="mt-2">
+          <p className="mt-2 text-sm text-slate-600">
             Path: <code>{node.path}</code>
           </p>
         </div>
