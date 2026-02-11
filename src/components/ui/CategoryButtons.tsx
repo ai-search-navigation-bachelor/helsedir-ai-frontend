@@ -52,7 +52,7 @@ export function CategoryButtons() {
           <Link
             key={category.path}
             to={`/temaside${category.path}`}
-            className="flex items-center gap-5 p-6 bg-white border-b-4 rounded-lg hover:shadow-xl transition-all text-left"
+            className="flex items-center gap-5 p-6 bg-white border-b-[3px] rounded-lg hover:shadow-xl transition-all text-left"
             style={{ borderBottomColor: '#005F73' }}
           >
             <div className="flex-shrink-0">
