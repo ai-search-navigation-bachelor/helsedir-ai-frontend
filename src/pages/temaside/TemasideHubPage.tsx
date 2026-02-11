@@ -1,23 +1,14 @@
 import { useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Heading } from "@digdir/designsystemet-react";
-import { ChevronRightIcon } from '@navikt/aksel-icons';
-import { findNodeByPath, type ThemeNode } from "../../lib/temaside/temasiderTree";
+import { ChevronRightIcon } from "@navikt/aksel-icons";
 import { CUSTOM_TEMASIDE_LAYOUTS, FORCE_FLAT_CATEGORIES } from "../../components/content/temaside/customLayouts";
+import { getTemasideCategoryBySlug } from "../../constants/temasider";
+import { useThemePagesQuery } from "../../hooks/queries/useThemePagesQuery";
+import { buildThemeTree, findNodeByPath, type ThemeNode } from "../../lib/temaside/temasiderTree";
 
-// Map category paths to their SVG icons
-const categoryIcons: Record<string, string> = {
-  '/forebygging-diagnose-og-behandling': '/Forebygging_diagnose_behandling.svg',
-  '/digitalisering-og-e-helse': '/Digitalisering_E-helse.svg',
-  '/lov-og-forskrift': '/Rundskriv_Veileder_til_lov.svg',
-  '/helseberedskap': '/Helseberedskap.svg',
-  '/autorisasjon-og-spesialistutdanning': '/Autorisasjon.svg',
-  '/tilskudd-og-finansiering': '/Tilskudd.svg',
-  '/statistikk-registre-og-rapporter': '/Statistikk.svg',
-};
-
-function stripPrefix(pathname: string) {
-  return pathname.replace(/^\/temaside/, "") || "/";
+function normalizePath(path: string) {
+  return (path || "/").replace(/\/+$/, "") || "/";
 }
 
 type HubLink = {
@@ -48,6 +39,7 @@ function buildHubSections(
   customLayout: (typeof CUSTOM_TEMASIDE_LAYOUTS)[string] | undefined,
   isFlatStructure: boolean,
   shouldForceFlat: boolean,
+  lookupNodeByPath: (path: string) => ThemeNode | undefined,
 ): HubSection[] {
   if (customLayout) {
     return customLayout.sections
@@ -55,7 +47,7 @@ function buildHubSections(
         id: customSection.title,
         title: customSection.title,
         links: customSection.paths
-          .map((path) => findNodeByPath(path))
+          .map((path) => lookupNodeByPath(path))
           .filter((linkNode): linkNode is ThemeNode => Boolean(linkNode))
           .map((linkNode) => ({ path: linkNode.path, title: linkNode.title }))
           .sort(sortByTitle),
@@ -96,26 +88,86 @@ function buildHubSections(
 }
 
 export function TemasideHubPage() {
-  const { pathname } = useLocation();
-  const temaPath = stripPrefix(pathname);
+  const params = useParams();
+  const categorySlug = (params.category || "").trim().toLowerCase();
+  const subPath = params["*"] || "";
+  const temaPath = useMemo(
+    () => normalizePath(`/${[categorySlug, subPath].filter(Boolean).join("/")}`),
+    [categorySlug, subPath],
+  );
   const [query, setQuery] = useState("");
 
-  const node = findNodeByPath(temaPath);
+  const category = getTemasideCategoryBySlug(categorySlug);
+
+  const {
+    data: themePagesData,
+    isLoading,
+    isError,
+    error,
+  } = useThemePagesQuery(categorySlug, {
+    enabled: Boolean(category),
+  });
+
+  const tree = useMemo(() => {
+    if (!themePagesData) {
+      return null;
+    }
+
+    const titleByPath: Record<string, string> = {};
+    const paths = themePagesData.results.map((result) => {
+      const normalizedPath = normalizePath(result.path);
+      titleByPath[normalizedPath] = result.title;
+      return normalizedPath;
+    });
+
+    if (category && !paths.includes(category.path)) {
+      paths.push(category.path);
+    }
+
+    return buildThemeTree(paths, titleByPath);
+  }, [themePagesData, category]);
+
+  const node = useMemo(() => (tree ? findNodeByPath(tree, temaPath) : null), [tree, temaPath]);
+
+  const nodeByPath = useMemo(() => {
+    const lookup = new Map<string, ThemeNode>();
+    if (!tree) {
+      return lookup;
+    }
+
+    const addNode = (current: ThemeNode) => {
+      lookup.set(current.path, current);
+      current.children.forEach(addNode);
+    };
+
+    addNode(tree);
+    return lookup;
+  }, [tree]);
+
   const isHub = Boolean(node && node.children.length > 0);
-  const categoryIcon = node ? categoryIcons[node.path] : undefined;
+  const categoryIcon = category?.iconSrc;
   const customLayout = node ? CUSTOM_TEMASIDE_LAYOUTS[node.path] : undefined;
 
-  // Check if category should be forced to render flat (ignoring hierarchy)
   const shouldForceFlat = node ? FORCE_FLAT_CATEGORIES.includes(node.path) : false;
-
-  // Check if this is a flat structure (all children have no grandchildren)
   const isFlatStructure = Boolean(
     node && (shouldForceFlat || node.children.every((child) => child.children.length === 0)),
   );
+
   const sections = useMemo(
-    () => (node ? buildHubSections(node, customLayout, isFlatStructure, shouldForceFlat) : []),
-    [node, customLayout, isFlatStructure, shouldForceFlat],
+    () => (
+      node
+        ? buildHubSections(
+          node,
+          customLayout,
+          isFlatStructure,
+          shouldForceFlat,
+          (path) => nodeByPath.get(path),
+        )
+        : []
+    ),
+    [node, customLayout, isFlatStructure, shouldForceFlat, nodeByPath],
   );
+
   const normalizedQuery = query.trim().toLowerCase();
   const visibleSections = useMemo(() => {
     if (!normalizedQuery) {
@@ -132,15 +184,46 @@ export function TemasideHubPage() {
       })
       .filter((section) => section.links.length > 0);
   }, [normalizedQuery, sections]);
+
   const totalLinks = sections.reduce((sum, section) => sum + section.links.length, 0);
   const visibleLinks = visibleSections.reduce((sum, section) => sum + section.links.length, 0);
+
+  if (!category) {
+    return (
+      <div className="mx-auto max-w-5xl p-6">
+        <Heading level={2} data-size="md">Fant ikke temasiden</Heading>
+        <p className="mt-2">
+          Ukjent kategori for: <code>{temaPath}</code>
+        </p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-5xl p-6">
+        <Heading level={2} data-size="md">Laster temasider...</Heading>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="mx-auto max-w-5xl p-6">
+        <Heading level={2} data-size="md">Kunne ikke laste temasider</Heading>
+        <p className="mt-2 text-sm text-slate-600">
+          {error.message}
+        </p>
+      </div>
+    );
+  }
 
   if (!node) {
     return (
       <div className="mx-auto max-w-5xl p-6">
         <Heading level={2} data-size="md">Fant ikke temasiden</Heading>
         <p className="mt-2">
-          Ingen mock-data for: <code>{temaPath}</code>
+          Ingen treff for: <code>{temaPath}</code>
         </p>
       </div>
     );
