@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { SearchForm } from './SearchForm'
 
-export function SearchShell() {
+function SearchShellContent() {
   const location = useLocation()
   const navigate = useNavigate()
   const isSearchPage = location.pathname === '/search'
@@ -10,12 +10,6 @@ export function SearchShell() {
   const searchQueryFromUrl = searchParams.get('query') || ''
   const [query, setQuery] = useState(isSearchPage ? searchQueryFromUrl : '')
   const searchInputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (isSearchPage) {
-      setQuery(searchQueryFromUrl)
-    }
-  }, [isSearchPage, searchQueryFromUrl])
 
   useEffect(() => {
     if (!searchInputRef.current) return
@@ -66,4 +60,14 @@ export function SearchShell() {
       onClear={onClear}
     />
   )
+}
+
+export function SearchShell() {
+  const location = useLocation()
+  const isSearchPage = location.pathname === '/search'
+  const [searchParams] = useSearchParams()
+  const searchQueryFromUrl = searchParams.get('query') || ''
+  const querySyncKey = isSearchPage ? `search:${searchQueryFromUrl}` : 'local'
+
+  return <SearchShellContent key={querySyncKey} />
 }
