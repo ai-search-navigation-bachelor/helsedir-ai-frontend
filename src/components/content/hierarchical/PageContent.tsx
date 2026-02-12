@@ -135,7 +135,7 @@ export function PageContent({
       {activePage.expandableChildren.length > 0 && (
         <section className="mt-8">
           <Heading level={3} data-size="sm" style={{ marginBottom: 12 }}>
-            {activePage.expandableChildren.length === 1 ? 'Anbefaling' : 'Anbefalinger'}
+            {activePage.expandableChildren.length === 1 ? 'Underelement' : 'Underelementer'}
           </Heading>
           <div>
             {activePage.expandableChildren.map((item, index) => (
