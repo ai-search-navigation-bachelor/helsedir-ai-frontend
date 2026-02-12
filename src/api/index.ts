@@ -32,3 +32,7 @@ export type {
   HelselinkContent,
   ChapterWithSubchapters,
 } from './helsedir'
+
+// Theme pages
+export { getThemePages } from './themePages'
+export type { ThemePage, ThemePagesOptions, ThemePagesResponse } from './themePages'
