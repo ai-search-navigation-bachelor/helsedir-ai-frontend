@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
 import { fetchChapterWithSubchapters } from '../../api'
-import type { NestedContent } from '../../types'
+import type { ContentLink, NestedContent } from '../../types'
 import type { ContentDisplayProps } from '../../types/pages'
 import { ChapterAccordion } from './ChapterAccordion'
 import { ContentPageHeader } from './ContentPageHeader'
@@ -14,10 +14,19 @@ export function GenericContentDisplay({ content }: ContentDisplayProps) {
   const [expandedSubchapters, setExpandedSubchapters] = useState<Set<string>>(new Set())
   const [activeChapter, setActiveChapter] = useState<string | null>(null)
 
-  const childrenLinks = useMemo(
-    () => content.links?.filter((link) => link.rel === 'barn') || [],
-    [content.links]
-  )
+  const childrenLinks = useMemo(() => {
+    const dedupedByHref = new Set<string>()
+    const result: ContentLink[] = []
+
+    for (const link of content.links ?? []) {
+      if (link.rel !== 'barn' || !link.href) continue
+      if (dedupedByHref.has(link.href)) continue
+      dedupedByHref.add(link.href)
+      result.push(link)
+    }
+
+    return result
+  }, [content.links])
 
   const childrenKey = useMemo(
     () => childrenLinks.map((link) => link.href).join(','),

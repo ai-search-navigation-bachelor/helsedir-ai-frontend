@@ -13,10 +13,19 @@ export function useRetningslinjeChapters({
   contentId,
   links,
 }: UseRetningslinjeChaptersOptions) {
-  const childrenLinks = useMemo(
-    () => links?.filter((link) => link.rel === 'barn' && Boolean(link.href)) ?? [],
-    [links]
-  )
+  const childrenLinks = useMemo(() => {
+    const dedupedByHref = new Set<string>()
+    const result: ContentLink[] = []
+
+    for (const link of links ?? []) {
+      if (link.rel !== 'barn' || !link.href) continue
+      if (dedupedByHref.has(link.href)) continue
+      dedupedByHref.add(link.href)
+      result.push(link)
+    }
+
+    return result
+  }, [links])
 
   const childrenKey = useMemo(
     () => childrenLinks.map((link) => link.href).join(','),

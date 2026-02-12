@@ -3,6 +3,7 @@ import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import type { PageNode } from './types'
 import { hasVisibleContent } from './treeUtils'
 import { RecommendationDropdown } from './RecommendationDropdown'
+import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../documentUtils'
 
 interface PageContentProps {
   activePage: PageNode
@@ -21,6 +22,21 @@ export function PageContent({
 }: PageContentProps) {
   const hasIntro = hasVisibleContent(activePage.node.intro)
   const hasBody = hasVisibleContent(activePage.node.tekst || activePage.node.body)
+  const documentLinks = getDocumentLinks(activePage.node)
+  const publicationUrl = (() => {
+    const url = activePage.node.url?.trim()
+    if (!url) return null
+    return documentLinks.some((document) => document.href === url) ? null : url
+  })()
+  const normalizedNodeType =
+    (activePage.node.type || activePage.node.tekniskeData?.infoType || '').trim().toLowerCase()
+  const shouldHideHelsedirPdfLinks = normalizedNodeType === 'rapport'
+  const visibleDocumentLinks = publicationUrl && shouldHideHelsedirPdfLinks
+    ? documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
+    : documentLinks
+  const shouldShowPublicationLink =
+    Boolean(publicationUrl) && (shouldHideHelsedirPdfLinks || visibleDocumentLinks.length === 0)
+  const primaryDocument = visibleDocumentLinks[0]
   const showChildNavigation = !hasIntro && !hasBody && activePage.childrenIds.length > 0
 
   return (
@@ -47,6 +63,40 @@ export function PageContent({
             __html: DOMPurify.sanitize(activePage.node.tekst || activePage.node.body || ''),
           }}
         />
+      )}
+
+      {!hasIntro && !hasBody && (primaryDocument || shouldShowPublicationLink) && (
+        <section className="mt-6 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
+            Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
+          </Paragraph>
+          <ul className="m-0 list-none space-y-2 p-0">
+            {primaryDocument && (
+              <li>
+                <a
+                  href={primaryDocument.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                >
+                  {primaryDocument.label}
+                </a>
+              </li>
+            )}
+            {shouldShowPublicationLink && publicationUrl && (
+              <li>
+                <a
+                  href={publicationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                >
+                  Åpne side hos Helsedirektoratet
+                </a>
+              </li>
+            )}
+          </ul>
+        </section>
       )}
 
       {showChildNavigation && (

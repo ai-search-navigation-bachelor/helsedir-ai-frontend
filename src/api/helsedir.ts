@@ -52,6 +52,19 @@ function buildHelsedirContentByTypeAndIdUrl(endpoint: string, id: string) {
   return `${relativePrefix}/${path}`
 }
 
+function buildHelsedirContentByIdUrl(id: string) {
+  const path = `innhold/innhold/${encodeURIComponent(id)}`
+  const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(HELSEDIR_API_URL)
+
+  if (hasScheme) {
+    return new URL(path, `${HELSEDIR_API_URL}/`).toString()
+  }
+
+  const normalizedRelativeBase = HELSEDIR_API_URL.replace(/^\/+|\/+$/g, '')
+  const relativePrefix = normalizedRelativeBase ? `/${normalizedRelativeBase}` : ''
+  return `${relativePrefix}/${path}`
+}
+
 /**
  * Response structure from Helsedirektoratet API
  */
@@ -125,7 +138,7 @@ export async function fetchHelsedirContentByTypeAndId(
 ): Promise<HelselinkContent> {
   if (!HELSEDIR_API_URL) {
     throw new Error(
-      'Mangler VITE_HELSEDIR_API_URL i miljøvariabler. Sett base-URL i .env.local (for eksempel demo/prod/qa).',
+      'Mangler VITE_HELSEDIR_API_URL i miljovariabler. Sett base-URL i .env.local (for eksempel demo/prod/qa).',
     )
   }
 
@@ -135,6 +148,25 @@ export async function fetchHelsedirContentByTypeAndId(
   }
 
   const href = buildHelsedirContentByTypeAndIdUrl(endpoint, id)
+  return fetchHelsedirContent(href, signal)
+}
+
+export async function fetchHelsedirContentById(
+  id: string,
+  signal?: AbortSignal,
+): Promise<HelselinkContent> {
+  if (!HELSEDIR_API_URL) {
+    throw new Error(
+      'Mangler VITE_HELSEDIR_API_URL i miljovariabler. Sett base-URL i .env.local (for eksempel demo/prod/qa).',
+    )
+  }
+
+  const trimmedId = id.trim()
+  if (!trimmedId) {
+    throw new Error('Mangler id for henting av innhold fra Helsedirektoratet API.')
+  }
+
+  const href = buildHelsedirContentByIdUrl(trimmedId)
   return fetchHelsedirContent(href, signal)
 }
 
@@ -169,7 +201,13 @@ export async function fetchChapterWithSubchapters(
   // Check if chapter has children (subchapters)
   // Handle both 'lenker' (external API) and 'links' (backend API)
   const allLinks = (chapter.lenker || (chapter as Record<string, unknown>).links) as Array<{rel: string, href?: string, type?: string}> | undefined
-  const childrenLinks = allLinks?.filter(link => link.rel === 'barn') || []
+  const seenChildrenHrefs = new Set<string>()
+  const childrenLinks = (allLinks?.filter((link) => {
+    if (link.rel !== 'barn' || !link.href) return false
+    if (seenChildrenHrefs.has(link.href)) return false
+    seenChildrenHrefs.add(link.href)
+    return true
+  }) || [])
   
   if (childrenLinks.length > 0) {
     const children: ChapterWithSubchapters[] = []

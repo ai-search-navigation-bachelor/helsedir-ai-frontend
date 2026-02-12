@@ -25,6 +25,7 @@ export {
   fetchMultipleHelsedirContent,
   fetchChapterWithSubchapters,
   fetchHelsedirContentByTypeAndId,
+  fetchHelsedirContentById,
   getHelsedirEndpointByContentType,
 } from './helsedir'
 export type {
