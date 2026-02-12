@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
 import { Button, Alert, Paragraph } from '@digdir/designsystemet-react'
 import { fetchHelsedirContentById, fetchHelsedirContentByTypeAndId, getContent } from '../api'
-import { ApiError } from '../lib/httpClient'
 import { useSearchStore } from '../stores/searchStore'
 import { ContentDisplay } from '../components/content'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
@@ -11,8 +10,8 @@ import { Breadcrumb } from '../components/ui/Breadcrumb'
 import type { BreadcrumbItem } from '../types/components'
 import type { ContentDetail as ContentDetailData, ContentLink, NestedContent } from '../types'
 
-function shouldFallbackToHelsedir(error: unknown) {
-  return error instanceof ApiError && error.status === 404
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === 'AbortError'
 }
 
 function getStatusCodeFromError(error: unknown) {
@@ -24,8 +23,18 @@ function getStatusCodeFromError(error: unknown) {
 }
 
 function shouldFallbackToTypedEndpoint(error: unknown) {
+  if (isAbortError(error)) return false
   const statusCode = getStatusCodeFromError(error)
   return statusCode === 400 || statusCode === 404 || statusCode === 405
+}
+
+function hasVisibleContent(value?: string) {
+  if (!value) return false
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
+    .length > 0
 }
 
 function toContentLinks(source: NestedContent): ContentLink[] {
@@ -64,6 +73,45 @@ function mapHelsedirContentToDetail(source: NestedContent): ContentDetailData {
   }
 }
 
+function mergeContentLinks(
+  backendLinks?: ContentLink[],
+  helsedirLinks?: ContentLink[],
+) {
+  const merged: ContentLink[] = []
+  const seen = new Set<string>()
+
+  for (const link of [...(backendLinks ?? []), ...(helsedirLinks ?? [])]) {
+    const href = link.href?.trim()
+    if (!href) continue
+    const key = `${link.rel}|${link.type}|${href}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    merged.push(link)
+  }
+
+  return merged.length > 0 ? merged : undefined
+}
+
+function mergeBackendWithHelsedir(
+  backendContent: ContentDetailData,
+  helsedirContent: ContentDetailData,
+): ContentDetailData {
+  const backendBody = backendContent.body || ''
+  const shouldUseHelsedirBody = !hasVisibleContent(backendBody) && hasVisibleContent(helsedirContent.body)
+
+  return {
+    ...backendContent,
+    title: backendContent.title?.trim() || helsedirContent.title,
+    body: shouldUseHelsedirBody ? helsedirContent.body : backendBody,
+    content_type:
+      backendContent.content_type?.trim() &&
+      backendContent.content_type.trim().toLowerCase() !== 'innhold'
+        ? backendContent.content_type
+        : helsedirContent.content_type || backendContent.content_type,
+    links: mergeContentLinks(backendContent.links, helsedirContent.links),
+  }
+}
+
 export function ContentDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -82,6 +130,9 @@ export function ContentDetail() {
     queryFn: async ({ signal }) => {
       if (!id) throw new Error('ID mangler')
 
+      const fetchFromBackend = async () =>
+        getContent(id, effectiveSearchId, { signal, suppressErrorStatuses: [404] })
+
       const fetchFromHelsedir = async () => {
         try {
           const helsedirContent = await fetchHelsedirContentById(id, signal) as NestedContent
@@ -99,20 +150,27 @@ export function ContentDetail() {
         }
       }
 
-      // When we navigate from hierarchical pages, we usually have contentType in route state.
-      // In that case prefer Helsedirektoratet first to avoid expected backend 404 noise.
-      if (routeContentType) {
-        try {
-          return await fetchFromHelsedir()
-        } catch {
-          return await getContent(id, effectiveSearchId, { signal, suppressErrorStatuses: [404] })
-        }
-      }
-
       try {
-        return await getContent(id, effectiveSearchId, { signal, suppressErrorStatuses: [404] })
-      } catch (error) {
-        if (!shouldFallbackToHelsedir(error)) throw error
+        const backendContent = await fetchFromBackend()
+
+        try {
+          const helsedirContent = await fetchFromHelsedir()
+          return mergeBackendWithHelsedir(backendContent, helsedirContent)
+        } catch (helsedirError) {
+          if (isAbortError(helsedirError) || signal.aborted) {
+            throw helsedirError
+          }
+          return backendContent
+        }
+      } catch (backendError) {
+        if (isAbortError(backendError) || signal.aborted) {
+          throw backendError
+        }
+
+        if (!shouldFallbackToTypedEndpoint(backendError)) {
+          throw backendError
+        }
+
         return await fetchFromHelsedir()
       }
     },

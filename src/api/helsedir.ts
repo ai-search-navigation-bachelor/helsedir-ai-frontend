@@ -138,7 +138,7 @@ export async function fetchHelsedirContentByTypeAndId(
 ): Promise<HelselinkContent> {
   if (!HELSEDIR_API_URL) {
     throw new Error(
-      'Mangler VITE_HELSEDIR_API_URL i miljovariabler. Sett base-URL i .env.local (for eksempel demo/prod/qa).',
+      'Mangler VITE_HELSEDIR_API_URL i miljøvariabler. Sett base-URL i .env.local (for eksempel demo/prod/qa).',
     )
   }
 
@@ -157,7 +157,7 @@ export async function fetchHelsedirContentById(
 ): Promise<HelselinkContent> {
   if (!HELSEDIR_API_URL) {
     throw new Error(
-      'Mangler VITE_HELSEDIR_API_URL i miljovariabler. Sett base-URL i .env.local (for eksempel demo/prod/qa).',
+      'Mangler VITE_HELSEDIR_API_URL i miljøvariabler. Sett base-URL i .env.local (for eksempel demo/prod/qa).',
     )
   }
 
