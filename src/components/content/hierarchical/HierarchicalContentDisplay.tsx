@@ -2,19 +2,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useContentNavigationStore } from '../../stores'
-import type { ContentDisplayProps } from '../../types/pages'
-import { ContentPageHeader } from './ContentPageHeader'
-import { ContentBodyLoadingSkeleton, ContentSidebarLoadingSkeleton } from './ContentSkeletons'
-import { PageContent } from './retningslinje/PageContent'
-import { SidebarTree } from './retningslinje/SidebarTree'
+import { useContentNavigationStore } from '../../../stores'
+import type { ContentDisplayProps } from '../../../types/pages'
+import { ContentPageHeader } from '../ContentPageHeader'
+import { ContentBodyLoadingSkeleton, ContentSidebarLoadingSkeleton } from '../ContentSkeletons'
+import { PageContent } from './PageContent'
+import { SidebarTree } from './SidebarTree'
 import {
   buildPageTree,
   formatDateLabel,
   getAncestorIds,
   getSelectedAncestorIds,
-} from './retningslinje/treeUtils'
-import { useRetningslinjeChapters } from './retningslinje/useRetningslinjeChapters'
+} from './treeUtils'
+import { useHierarchicalChapters } from './useHierarchicalChapters'
 
 function getSectionIdFromLocationState(state: unknown) {
   if (!state || typeof state !== 'object') return null
@@ -29,14 +29,14 @@ function toLocationStateObject(state: unknown) {
   return state as Record<string, unknown>
 }
 
-interface RetningslinjeContentDisplayProps extends ContentDisplayProps {
+interface HierarchicalContentDisplayProps extends ContentDisplayProps {
   typeLabel?: string
 }
 
-export function RetningslinjeContentDisplay({
+export function HierarchicalContentDisplay({
   content,
   typeLabel = 'Retningslinje',
-}: RetningslinjeContentDisplayProps) {
+}: HierarchicalContentDisplayProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
@@ -69,7 +69,7 @@ export function RetningslinjeContentDisplay({
     loadedChapters,
     failedEntries,
     isChaptersLoading,
-  } = useRetningslinjeChapters({
+  } = useHierarchicalChapters({
     contentId: content.id,
     links: content.links,
   })

@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
-import { fetchChapterWithSubchapters } from '../../api'
-import type { ContentLink, NestedContent } from '../../types'
-import type { ContentDisplayProps } from '../../types/pages'
+import { fetchChapterWithSubchapters } from '../../../api'
+import type { ContentLink, NestedContent } from '../../../types'
+import type { ContentDisplayProps } from '../../../types/pages'
 import { ChapterAccordion } from './ChapterAccordion'
-import { ContentPageHeader } from './ContentPageHeader'
-import { GenericChaptersLoadingSkeleton } from './ContentSkeletons'
+import { ContentPageHeader } from '../ContentPageHeader'
+import { GenericChaptersLoadingSkeleton } from '../ContentSkeletons'
 import { TableOfContents } from './TableOfContents'
 
 export function GenericContentDisplay({ content }: ContentDisplayProps) {

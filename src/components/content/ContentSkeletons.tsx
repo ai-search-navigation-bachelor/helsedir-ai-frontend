@@ -66,7 +66,7 @@ export function ContentPageLoadingSkeleton() {
   )
 }
 
-export function RecommendationAsideLoadingSkeleton() {
+export function DetailAsideLoadingSkeleton() {
   return (
     <section className="rounded-lg border border-slate-200 bg-slate-50 p-4" aria-hidden="true">
       <div className="space-y-3">

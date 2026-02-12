@@ -1,4 +1,4 @@
-import type { ContentLink, NestedContent, NestedContentLink } from '../../types'
+import type { ContentLink, NestedContent, NestedContentLink } from '../../../types'
 
 interface DocumentLink {
   href: string

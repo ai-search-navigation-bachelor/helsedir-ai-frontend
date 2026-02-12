@@ -5,7 +5,7 @@ import {
   ANBEFALINGER_CATEGORY,
   REGELVERK_CATEGORY,
   RAD_CATEGORY,
-} from '../../../constants/categories';
+} from '../../constants/categories';
 
 // Hardcoded category order
 const FIXED_CATEGORIES = [

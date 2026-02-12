@@ -56,7 +56,7 @@ export function buildPageTree(entries: Array<ChapterEntry & { chapter: NestedCon
       depth: path.length + 1,
       parentId,
       childrenIds: [],
-      recommendationChildren: [],
+      expandableChildren: [],
       node,
     }
     pagesById.set(id, page)
@@ -72,7 +72,7 @@ export function buildPageTree(entries: Array<ChapterEntry & { chapter: NestedCon
       const childType = getNodeType(child)
 
       if (childType.includes('anbefaling') || (childType && childType !== 'kapittel')) {
-        page.recommendationChildren.push(child)
+        page.expandableChildren.push(child)
         return
       }
 

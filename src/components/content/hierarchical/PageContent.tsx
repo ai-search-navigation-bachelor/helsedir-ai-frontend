@@ -2,8 +2,8 @@ import DOMPurify from 'dompurify'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import type { PageNode } from './types'
 import { hasVisibleContent } from './treeUtils'
-import { RecommendationDropdown } from './RecommendationDropdown'
-import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../documentUtils'
+import { ExpandableSubcontent } from './ExpandableSubcontent'
+import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
 
 interface PageContentProps {
   activePage: PageNode
@@ -131,14 +131,14 @@ export function PageContent({
         </section>
       )}
 
-      {activePage.recommendationChildren.length > 0 && (
+      {activePage.expandableChildren.length > 0 && (
         <section className="mt-8">
           <Heading level={3} data-size="sm" style={{ marginBottom: 12 }}>
-            {activePage.recommendationChildren.length === 1 ? 'Anbefaling' : 'Anbefalinger'}
+            {activePage.expandableChildren.length === 1 ? 'Anbefaling' : 'Anbefalinger'}
           </Heading>
           <div>
-            {activePage.recommendationChildren.map((item, index) => (
-              <RecommendationDropdown
+            {activePage.expandableChildren.map((item, index) => (
+              <ExpandableSubcontent
                 key={`${activePage.id}-rec-${item.id || index}`}
                 item={item}
                 itemKey={`${activePage.id}-rec-${item.id || index}`}

@@ -13,7 +13,7 @@ import {
   SearchResultsList,
   SearchEmptyState,
   FIXED_CATEGORIES,
-} from '../components/content/search';
+} from '../components/search';
 import { TEMASIDE_CATEGORY } from '../constants/categories';
 
 /**

@@ -1,7 +1,7 @@
 import { Heading } from '@digdir/designsystemet-react'
-import type { TableOfContentsProps } from '../../types/components'
-import type { NestedContent } from '../../types'
-import { TableOfContentsLoadingSkeleton } from './ContentSkeletons'
+import type { TableOfContentsProps } from '../../../types/components'
+import type { NestedContent } from '../../../types'
+import { TableOfContentsLoadingSkeleton } from '../ContentSkeletons'
 
 export function TableOfContents({
   chapters,

@@ -7,11 +7,11 @@ import {
   fetchHelsedirContentById,
   fetchHelsedirContentByTypeAndId,
   getHelsedirEndpointByContentType,
-} from '../../api'
-import type { NestedContent } from '../../types'
-import type { ContentDisplayProps } from '../../types/pages'
-import { ContentPageHeader } from './ContentPageHeader'
-import { RecommendationAsideLoadingSkeleton } from './ContentSkeletons'
+} from '../../../api'
+import type { NestedContent } from '../../../types'
+import type { ContentDisplayProps } from '../../../types/pages'
+import { ContentPageHeader } from '../ContentPageHeader'
+import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
 
 interface ContentSection {
@@ -87,16 +87,16 @@ function getContentIdFromHref(href?: string) {
   }
 }
 
-interface RecommendationContentDisplayProps extends ContentDisplayProps {
+interface DetailContentDisplayProps extends ContentDisplayProps {
   typeLabelOverride?: string
   primarySectionTitle?: string
 }
 
-export function RecommendationContentDisplay({
+export function DetailContentDisplay({
   content,
   typeLabelOverride,
   primarySectionTitle = 'Hovedanbefaling',
-}: RecommendationContentDisplayProps) {
+}: DetailContentDisplayProps) {
   const navigate = useNavigate()
   const normalizedType = content.content_type.trim().toLowerCase()
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
@@ -327,7 +327,7 @@ export function RecommendationContentDisplay({
           )}
 
           {isEnrichedLoading && (
-            <RecommendationAsideLoadingSkeleton />
+            <DetailAsideLoadingSkeleton />
           )}
 
           {contextualNavigationLinks.length > 0 && (

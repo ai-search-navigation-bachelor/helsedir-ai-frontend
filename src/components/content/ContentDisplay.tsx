@@ -1,6 +1,6 @@
 import type { ContentDisplayProps } from '../../types/pages'
-import { RecommendationContentDisplay } from './RecommendationContentDisplay'
-import { RetningslinjeContentDisplay } from './RetningslinjeContentDisplay'
+import { DetailContentDisplay } from './detail/DetailContentDisplay'
+import { HierarchicalContentDisplay } from './hierarchical/HierarchicalContentDisplay'
 
 const RETNINGSLINJE_TYPES = new Set(['retningslinje', 'nasjonal-faglig-retningslinje'])
 const RECOMMENDATION_TYPES = new Set(['anbefaling', 'rad', 'pakkeforlop-anbefaling'])
@@ -29,19 +29,19 @@ export function ContentDisplay({ content }: ContentDisplayProps) {
   const typeLabel = toTypeLabel(content.content_type)
 
   if (RETNINGSLINJE_TYPES.has(normalizedType)) {
-    return <RetningslinjeContentDisplay key={content.id} content={content} typeLabel={typeLabel} />
+    return <HierarchicalContentDisplay key={content.id} content={content} typeLabel={typeLabel} />
   }
 
   if (RECOMMENDATION_TYPES.has(normalizedType)) {
-    return <RecommendationContentDisplay key={content.id} content={content} />
+    return <DetailContentDisplay key={content.id} content={content} />
   }
 
   if (childrenCount > 0) {
-    return <RetningslinjeContentDisplay key={content.id} content={content} typeLabel={typeLabel} />
+    return <HierarchicalContentDisplay key={content.id} content={content} typeLabel={typeLabel} />
   }
 
   return (
-    <RecommendationContentDisplay
+    <DetailContentDisplay
       key={content.id}
       content={content}
       typeLabelOverride={typeLabel}

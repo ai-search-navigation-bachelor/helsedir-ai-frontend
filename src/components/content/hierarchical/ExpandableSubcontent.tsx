@@ -5,19 +5,19 @@ import { useNavigate } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { formatDateLabel, getNodeTitle } from './treeUtils'
 
-interface RecommendationDropdownProps {
+interface ExpandableSubcontentProps {
   item: NestedContent
   itemKey: string
   depth?: number
 }
 
-const MAX_RECOMMENDATION_DEPTH = 8
+const MAX_SUBCONTENT_DEPTH = 8
 
-export function RecommendationDropdown({
+export function ExpandableSubcontent({
   item,
   itemKey,
   depth = 0,
-}: RecommendationDropdownProps) {
+}: ExpandableSubcontentProps) {
   const navigate = useNavigate()
   const title = getNodeTitle(item)
   const intro = item.intro || ''
@@ -146,10 +146,10 @@ export function RecommendationDropdown({
           </details>
         )}
 
-        {depth < MAX_RECOMMENDATION_DEPTH && item.children && item.children.length > 0 && (
+        {depth < MAX_SUBCONTENT_DEPTH && item.children && item.children.length > 0 && (
           <div className="mt-3 space-y-2">
             {item.children.map((child, index) => (
-              <RecommendationDropdown
+              <ExpandableSubcontent
                 key={`${itemKey}-child-${child.id || index}`}
                 item={child}
                 itemKey={`${itemKey}-child-${child.id || index}`}
