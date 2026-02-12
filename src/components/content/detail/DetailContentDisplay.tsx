@@ -280,13 +280,16 @@ export function DetailContentDisplay({
     if (!url) return null
     return documentLinks.some((document) => document.href === url) ? null : url
   }, [documentLinks, enrichedContent?.url])
-  const shouldHideHelsedirPdfLinks = normalizedType === 'rapport'
-  const visibleDocumentLinks = useMemo(() => {
-    if (!publicationUrl || !shouldHideHelsedirPdfLinks) return documentLinks
-    return documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
-  }, [documentLinks, publicationUrl, shouldHideHelsedirPdfLinks])
+  const hasMainSections = sections.length > 0
+  const hasOnlyHelsedirPdfDocuments =
+    documentLinks.length > 0 &&
+    documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
   const shouldShowPublicationLink =
-    Boolean(publicationUrl) && (shouldHideHelsedirPdfLinks || visibleDocumentLinks.length === 0)
+    Boolean(publicationUrl) && !hasMainSections && hasOnlyHelsedirPdfDocuments
+  const visibleDocumentLinks = useMemo(() => {
+    if (!shouldShowPublicationLink) return documentLinks
+    return documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
+  }, [documentLinks, shouldShowPublicationLink])
   const primaryDocument = visibleDocumentLinks[0]
 
   return (
@@ -377,7 +380,7 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {(visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
+          {sections.length > 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
             <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
                 Dokument

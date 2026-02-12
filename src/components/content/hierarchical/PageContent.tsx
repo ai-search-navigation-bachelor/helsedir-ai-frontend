@@ -28,14 +28,15 @@ export function PageContent({
     if (!url) return null
     return documentLinks.some((document) => document.href === url) ? null : url
   })()
-  const normalizedNodeType =
-    (activePage.node.type || activePage.node.tekniskeData?.infoType || '').trim().toLowerCase()
-  const shouldHideHelsedirPdfLinks = normalizedNodeType === 'rapport'
-  const visibleDocumentLinks = publicationUrl && shouldHideHelsedirPdfLinks
+  const hasMainContent = hasIntro || hasBody
+  const hasOnlyHelsedirPdfDocuments =
+    documentLinks.length > 0 &&
+    documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
+  const shouldShowPublicationLink =
+    Boolean(publicationUrl) && !hasMainContent && hasOnlyHelsedirPdfDocuments
+  const visibleDocumentLinks = shouldShowPublicationLink
     ? documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
     : documentLinks
-  const shouldShowPublicationLink =
-    Boolean(publicationUrl) && (shouldHideHelsedirPdfLinks || visibleDocumentLinks.length === 0)
   const primaryDocument = visibleDocumentLinks[0]
   const showChildNavigation = !hasIntro && !hasBody && activePage.childrenIds.length > 0
 

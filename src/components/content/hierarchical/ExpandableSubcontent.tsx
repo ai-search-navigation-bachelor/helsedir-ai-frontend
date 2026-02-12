@@ -60,7 +60,10 @@ export function ExpandableSubcontent({
               onClick={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
-                navigate(`/content/${item.id}`)
+                if (!item.id) return
+                navigate(`/content/${item.id}`, {
+                  state: item.type ? { contentType: item.type } : undefined,
+                })
               }}
               className="recommendation-open-page__button recommendation-open-page__button--compact"
             >
@@ -158,7 +161,6 @@ export function ExpandableSubcontent({
             ))}
           </div>
         )}
-
       </div>
     </details>
   )

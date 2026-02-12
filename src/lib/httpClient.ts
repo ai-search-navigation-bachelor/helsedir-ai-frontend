@@ -36,6 +36,7 @@ export interface HttpRequestOptions {
   signal?: AbortSignal
   headers?: Record<string, string>
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+  suppressErrorStatuses?: number[]
 }
 
 /**
@@ -91,7 +92,7 @@ export async function httpRequest<T>(
   url: string | URL,
   options: HttpRequestOptions = {},
 ): Promise<T> {
-  const { signal, headers = {}, method = 'GET' } = options
+  const { signal, headers = {}, method = 'GET', suppressErrorStatuses = [] } = options
 
   // Debug logging
   if (import.meta.env.DEV) {
@@ -120,10 +121,12 @@ export async function httpRequest<T>(
     return response.json() as Promise<T>
   } catch (error) {
     if (error instanceof ApiError) {
-      console.error(`API Error: ${error.message}`, {
-        status: error.status,
-        statusText: error.statusText,
-      })
+      if (!error.status || !suppressErrorStatuses.includes(error.status)) {
+        console.error(`API Error: ${error.message}`, {
+          status: error.status,
+          statusText: error.statusText,
+        })
+      }
       throw error
     }
 
