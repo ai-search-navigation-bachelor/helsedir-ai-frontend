@@ -53,6 +53,8 @@ function buildHelsedirContentByTypeAndIdUrl(endpoint: string, id: string) {
 }
 
 function buildHelsedirContentByIdUrl(id: string) {
+  // Helsedirektoratet API uses `/innhold/innhold/{id}` for generic content-by-id.
+  // The repeated `innhold` segment is intentional.
   const path = `innhold/innhold/${encodeURIComponent(id)}`
   const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(HELSEDIR_API_URL)
 

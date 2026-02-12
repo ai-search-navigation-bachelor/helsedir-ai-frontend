@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchChapterWithSubchapters } from '../../../api'
 import type { ContentLink } from '../../../types'
+import { getUniqueChildLinks } from '../shared/linkUtils'
 import type { ChapterEntry } from './types'
 
 interface UseHierarchicalChaptersOptions {
@@ -13,19 +14,7 @@ export function useHierarchicalChapters({
   contentId,
   links,
 }: UseHierarchicalChaptersOptions) {
-  const childrenLinks = useMemo(() => {
-    const dedupedByHref = new Set<string>()
-    const result: ContentLink[] = []
-
-    for (const link of links ?? []) {
-      if (link.rel !== 'barn' || !link.href) continue
-      if (dedupedByHref.has(link.href)) continue
-      dedupedByHref.add(link.href)
-      result.push(link)
-    }
-
-    return result
-  }, [links])
+  const childrenLinks = useMemo(() => getUniqueChildLinks<ContentLink>(links), [links])
 
   const childrenKey = useMemo(
     () => childrenLinks.map((link) => link.href).join(','),

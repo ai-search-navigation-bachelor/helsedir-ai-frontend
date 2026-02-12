@@ -13,6 +13,7 @@ import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
+import { hasVisibleContent } from '../shared/contentTextUtils'
 
 interface ContentSection {
   id: string
@@ -31,15 +32,6 @@ const TYPE_LABEL_BY_CONTENT_TYPE: Record<string, string> = {
 
 const LINK_LABEL_BY_REL: Record<string, string> = {
   root: 'Rotpublikasjon',
-}
-
-function hasVisibleContent(value?: string) {
-  if (!value) return false
-  const plainText = value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .trim()
-  return plainText.length > 0
 }
 
 function formatDateLabel(value?: string) {

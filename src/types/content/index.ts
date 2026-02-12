@@ -63,6 +63,7 @@ export interface NestedContent {
       fordelerogulemper?: string
       verdierogpreferanser?: string
     }
+    // API-et kan inneholde flere felter i `data` som varierer mellom innholdstyper.
     [key: string]: unknown
   }
   attachments?: Array<{

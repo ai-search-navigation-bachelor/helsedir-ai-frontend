@@ -1,9 +1,15 @@
 import type { ContentDisplayProps } from '../../types/pages'
 import { DetailContentDisplay } from './detail/DetailContentDisplay'
 import { HierarchicalContentDisplay } from './hierarchical/HierarchicalContentDisplay'
+import { countUniqueChildLinks } from './shared/linkUtils'
 
 const RETNINGSLINJE_TYPES = new Set(['retningslinje', 'nasjonal-faglig-retningslinje'])
 const RECOMMENDATION_TYPES = new Set(['anbefaling', 'rad', 'pakkeforlop-anbefaling'])
+const TYPE_SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
+  api: 'API',
+  pdf: 'PDF',
+  pico: 'PICO',
+}
 
 function toTypeLabel(contentType: string) {
   const trimmed = contentType.trim().toLowerCase()
@@ -12,20 +18,17 @@ function toTypeLabel(contentType: string) {
   return trimmed
     .split(/[-_]/)
     .filter(Boolean)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .map((segment) => {
+      const override = TYPE_SEGMENT_LABEL_OVERRIDES[segment]
+      if (override) return override
+      return segment.charAt(0).toUpperCase() + segment.slice(1)
+    })
     .join(' ')
 }
 
 export function ContentDisplay({ content }: ContentDisplayProps) {
   const normalizedType = content.content_type.trim().toLowerCase()
-  const childrenCount = (() => {
-    const uniqueChildren = new Set<string>()
-    for (const link of content.links ?? []) {
-      if (link.rel !== 'barn' || !link.href) continue
-      uniqueChildren.add(link.href)
-    }
-    return uniqueChildren.size
-  })()
+  const childrenCount = countUniqueChildLinks(content.links)
   const typeLabel = toTypeLabel(content.content_type)
 
   if (RETNINGSLINJE_TYPES.has(normalizedType)) {

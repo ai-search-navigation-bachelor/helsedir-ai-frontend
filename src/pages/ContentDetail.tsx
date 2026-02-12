@@ -7,6 +7,7 @@ import { useSearchStore } from '../stores/searchStore'
 import { ContentDisplay } from '../components/content'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
+import { hasVisibleContent } from '../components/content/shared/contentTextUtils'
 import type { BreadcrumbItem } from '../types/components'
 import type { ContentDetail as ContentDetailData, ContentLink, NestedContent } from '../types'
 
@@ -26,15 +27,6 @@ function shouldFallbackToTypedEndpoint(error: unknown) {
   if (isAbortError(error)) return false
   const statusCode = getStatusCodeFromError(error)
   return statusCode === 400 || statusCode === 404 || statusCode === 405
-}
-
-function hasVisibleContent(value?: string) {
-  if (!value) return false
-  return value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .trim()
-    .length > 0
 }
 
 function toContentLinks(source: NestedContent): ContentLink[] {
@@ -98,16 +90,17 @@ function mergeBackendWithHelsedir(
 ): ContentDetailData {
   const backendBody = backendContent.body || ''
   const shouldUseHelsedirBody = !hasVisibleContent(backendBody) && hasVisibleContent(helsedirContent.body)
+  const backendContentTypeTrimmed = backendContent.content_type?.trim()
+  const preferredBackendType =
+    backendContentTypeTrimmed && backendContentTypeTrimmed.toLowerCase() !== 'innhold'
+      ? backendContent.content_type
+      : ''
 
   return {
     ...backendContent,
     title: backendContent.title?.trim() || helsedirContent.title,
     body: shouldUseHelsedirBody ? helsedirContent.body : backendBody,
-    content_type:
-      backendContent.content_type?.trim() &&
-      backendContent.content_type.trim().toLowerCase() !== 'innhold'
-        ? backendContent.content_type
-        : helsedirContent.content_type || backendContent.content_type,
+    content_type: preferredBackendType || helsedirContent.content_type || backendContent.content_type,
     links: mergeContentLinks(backendContent.links, helsedirContent.links),
   }
 }

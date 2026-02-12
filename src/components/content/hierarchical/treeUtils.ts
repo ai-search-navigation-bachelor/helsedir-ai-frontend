@@ -1,5 +1,6 @@
 import type { NestedContent } from '../../../types'
 import type { ChapterEntry, PageNode, TreeResult } from './types'
+export { hasVisibleContent } from '../shared/contentTextUtils'
 
 export function getNodeTitle(node: NestedContent, fallback = 'Uten tittel') {
   return node.tittel || node.title || fallback
@@ -15,15 +16,6 @@ export function formatDateLabel(value?: string) {
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return value
   return parsed.toLocaleDateString('nb-NO')
-}
-
-export function hasVisibleContent(value?: string) {
-  if (!value) return false
-  const plainText = value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .trim()
-  return plainText.length > 0
 }
 
 function toNodeId(chapterIndex: number, path: number[]) {

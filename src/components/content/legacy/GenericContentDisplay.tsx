@@ -8,25 +8,17 @@ import { ChapterAccordion } from './ChapterAccordion'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { GenericChaptersLoadingSkeleton } from '../ContentSkeletons'
 import { TableOfContents } from './TableOfContents'
+import { getUniqueChildLinks } from '../shared/linkUtils'
 
 export function GenericContentDisplay({ content }: ContentDisplayProps) {
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set())
   const [expandedSubchapters, setExpandedSubchapters] = useState<Set<string>>(new Set())
   const [activeChapter, setActiveChapter] = useState<string | null>(null)
 
-  const childrenLinks = useMemo(() => {
-    const dedupedByHref = new Set<string>()
-    const result: ContentLink[] = []
-
-    for (const link of content.links ?? []) {
-      if (link.rel !== 'barn' || !link.href) continue
-      if (dedupedByHref.has(link.href)) continue
-      dedupedByHref.add(link.href)
-      result.push(link)
-    }
-
-    return result
-  }, [content.links])
+  const childrenLinks = useMemo(
+    () => getUniqueChildLinks<ContentLink>(content.links),
+    [content.links]
+  )
 
   const childrenKey = useMemo(
     () => childrenLinks.map((link) => link.href).join(','),
