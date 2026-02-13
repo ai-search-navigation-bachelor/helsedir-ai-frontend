@@ -1,9 +1,6 @@
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider'
+import { normalizePath } from '../path'
 import type { BreadcrumbItem } from '../../types/components'
-
-function normalizePath(path: string) {
-  return (path || '/').replace(/\/+$/, '') || '/'
-}
 
 export function getTemasideCategoryByPath(path: string) {
   return TEMASIDE_CATEGORIES.find((category) => category.path === path)

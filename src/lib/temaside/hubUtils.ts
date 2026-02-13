@@ -1,6 +1,7 @@
 import type { CustomLayout } from '../../components/content/temaside/customLayouts'
 import type { ThemeNode } from './temasiderTree'
 import type { BreadcrumbItem } from '../../types/components'
+import { normalizePath } from '../path'
 
 export type HubLink = {
   path: string
@@ -14,7 +15,7 @@ export type HubSection = {
 }
 
 export function normalizeTemasidePath(path: string) {
-  return (path || '/').replace(/\/+$/, '') || '/'
+  return normalizePath(path)
 }
 
 export function buildTemasidePath(categorySlug: string, subPath: string) {

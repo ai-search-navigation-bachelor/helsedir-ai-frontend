@@ -2,6 +2,7 @@ import { Heading } from '@digdir/designsystemet-react'
 import { Breadcrumb } from '../../components/ui/Breadcrumb'
 import { useTemasideHubPageModel } from '../../hooks/useTemasideHubPageModel'
 import { TemasideHubSections } from './TemasideHubSections'
+import { TemasideHubStatusView } from './TemasideHubStatusView'
 
 export function TemasideHubPage() {
   const {
@@ -26,45 +27,47 @@ export function TemasideHubPage() {
 
   if (!category) {
     return (
-      <div className="mx-auto max-w-5xl p-6">
-        <Heading level={2} data-size="md">Fant ikke temasiden</Heading>
-        <p className="mt-2">
-          Ukjent kategori for: <code>{temaPath}</code>
-        </p>
-      </div>
+      <TemasideHubStatusView
+        title="Fant ikke temasiden"
+        details={
+          <>
+            Ukjent kategori for: <code>{temaPath}</code>
+          </>
+        }
+      />
     )
   }
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-5xl p-6">
-        <Breadcrumb items={breadcrumbItems} />
-        <Heading level={2} data-size="md">Laster temasider...</Heading>
-      </div>
+      <TemasideHubStatusView
+        title="Laster temasider..."
+        breadcrumbItems={breadcrumbItems}
+      />
     )
   }
 
   if (isError) {
     return (
-      <div className="mx-auto max-w-5xl p-6">
-        <Breadcrumb items={breadcrumbItems} />
-        <Heading level={2} data-size="md">Kunne ikke laste temasider</Heading>
-        <p className="mt-2 text-sm text-slate-600">
-          {error?.message}
-        </p>
-      </div>
+      <TemasideHubStatusView
+        title="Kunne ikke laste temasider"
+        breadcrumbItems={breadcrumbItems}
+        details={error?.message}
+      />
     )
   }
 
   if (!node) {
     return (
-      <div className="mx-auto max-w-5xl p-6">
-        <Breadcrumb items={breadcrumbItems} />
-        <Heading level={2} data-size="md">Fant ikke temasiden</Heading>
-        <p className="mt-2">
-          Ingen treff for: <code>{temaPath}</code>
-        </p>
-      </div>
+      <TemasideHubStatusView
+        title="Fant ikke temasiden"
+        breadcrumbItems={breadcrumbItems}
+        details={
+          <>
+            Ingen treff for: <code>{temaPath}</code>
+          </>
+        }
+      />
     )
   }
 

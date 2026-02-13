@@ -12,37 +12,15 @@ import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedConte
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
-import { getContentIdFromHref } from '../shared/linkUtils'
 import { getDocumentLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
 import { hasVisibleContent } from '../shared/contentTextUtils'
-
-interface ContentSection {
-  id: string
-  title: string
-  html: string
-}
-
-const LINK_LABEL_BY_REL: Record<string, string> = {
-  root: 'Rotpublikasjon',
-}
-
-function formatDateLabel(value?: string) {
-  if (!value) return ''
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  return parsed.toLocaleDateString('nb-NO')
-}
-
-function normalizeMetaField(value?: string | null): string | undefined {
-  if (typeof value !== 'string') return undefined
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : undefined
-}
-
-// `null` and `undefined` are intentionally treated as "no value".
-function chooseMetaField(primary?: string | null, secondary?: string | null): string | undefined {
-  return normalizeMetaField(primary) ?? normalizeMetaField(secondary)
-}
+import {
+  buildContentSections,
+  buildContextualNavigationLinks,
+  buildMetadataItems,
+  LINK_LABEL_BY_REL,
+  type ContentSection,
+} from './detailContentModel'
 
 interface DetailContentDisplayProps extends ContentDisplayProps {
   typeLabelOverride?: string
@@ -103,49 +81,14 @@ export function DetailContentDisplay({
       ? backendPreferences
       : enrichedContent?.data?.nokkelInfo?.verdierogpreferanser || ''
 
-    const result: ContentSection[] = []
-
-    if (hasVisibleContent(mainBody)) {
-      result.push({
-        id: 'section-hovedanbefaling',
-        title: primarySectionTitle,
-        html: mainBody,
-      })
-    }
-
-    if (hasVisibleContent(practical)) {
-      result.push({
-        id: 'section-praktisk',
-        title: 'Praktisk',
-        html: practical,
-      })
-    }
-
-    if (hasVisibleContent(rationale)) {
-      result.push({
-        id: 'section-rasjonale',
-        title: 'Rasjonale',
-        html: rationale,
-      })
-    }
-
-    if (hasVisibleContent(tradeoffs)) {
-      result.push({
-        id: 'section-fordeler-ulemper',
-        title: 'Fordeler og ulemper',
-        html: tradeoffs,
-      })
-    }
-
-    if (hasVisibleContent(preferences)) {
-      result.push({
-        id: 'section-verdier-preferanser',
-        title: 'Verdier og preferanser',
-        html: preferences,
-      })
-    }
-
-    return result
+    return buildContentSections({
+      mainBody,
+      practical,
+      rationale,
+      tradeoffs,
+      preferences,
+      primarySectionTitle,
+    })
   }, [
     backendPractical,
     backendPreferences,
@@ -190,72 +133,17 @@ export function DetailContentDisplay({
     return () => observer.disconnect()
   }, [sections])
 
-  const metadataItems = useMemo(() => {
-    const items: Array<{ label: string; value: string }> = []
-    const strength = chooseMetaField(content.anbefaling_fields?.styrke, enrichedContent?.data?.styrke)
-    const status = chooseMetaField(content.status, enrichedContent?.status)
-    const firstPublishedRaw = chooseMetaField(content.forstPublisert, enrichedContent?.forstPublisert)
-    const updatedRaw = chooseMetaField(content.sistOppdatert, enrichedContent?.sistOppdatert)
-    const professionallyUpdatedRaw = chooseMetaField(
-      content.sistFagligOppdatert,
-      enrichedContent?.sistFagligOppdatert,
-    )
-    const firstPublished = firstPublishedRaw ? formatDateLabel(firstPublishedRaw) : undefined
-    const updated = updatedRaw ? formatDateLabel(updatedRaw) : undefined
-    const professionallyUpdated = professionallyUpdatedRaw
-      ? formatDateLabel(professionallyUpdatedRaw)
-      : undefined
-
-    if (strength) {
-      items.push({ label: 'Anbefalingsstyrke', value: strength })
-    }
-    if (status) {
-      items.push({ label: 'Status', value: status })
-    }
-
-    if (firstPublished) {
-      items.push({ label: 'FÃ¸rst publisert', value: firstPublished })
-    }
-
-    if (updated) {
-      items.push({ label: 'Sist oppdatert', value: updated })
-    }
-
-    if (professionallyUpdated) {
-      items.push({ label: 'Sist faglig oppdatert', value: professionallyUpdated })
-    }
-
-    return items
-  }, [
-    content.anbefaling_fields?.styrke,
-    content.forstPublisert,
-    content.sistFagligOppdatert,
-    content.sistOppdatert,
-    content.status,
-    enrichedContent,
-  ])
+  const metadataItems = useMemo(
+    () => buildMetadataItems(content, enrichedContent),
+    [content, enrichedContent],
+  )
 
   const supportingLinks = useMemo(
     () => content.links?.filter((link) => Boolean(link.href)) || [],
     [content.links],
   )
   const contextualNavigationLinks = useMemo(
-    () => {
-      const seenContentIds = new Set<string>()
-
-      return supportingLinks
-        .filter((link) => link.rel === 'root')
-        .map((link) => ({
-          ...link,
-          contentId: getContentIdFromHref(link.href),
-        }))
-        .filter((link) => Boolean(link.contentId) && link.contentId !== content.id)
-        .filter((link) => {
-          if (!link.contentId || seenContentIds.has(link.contentId)) return false
-          seenContentIds.add(link.contentId)
-          return true
-        })
-    },
+    () => buildContextualNavigationLinks(content.id, supportingLinks),
     [content.id, supportingLinks],
   )
 
@@ -325,7 +213,7 @@ export function DetailContentDisplay({
           {contextualNavigationLinks.length > 0 && (
             <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
-                GÃ¥ til publikasjon
+                Gå til publikasjon
               </Heading>
               <ul className="m-0 list-none space-y-1 p-0">
                 {contextualNavigationLinks.map((link) => {
@@ -364,7 +252,7 @@ export function DetailContentDisplay({
           {metadataItems.length > 0 && (
             <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
-                NÃ¸kkelinformasjon
+                Nøkkelinformasjon
               </Heading>
               <ul className="m-0 list-none space-y-2 p-0">
                 {metadataItems.map((item) => (
@@ -407,7 +295,7 @@ export function DetailContentDisplay({
                       rel="noopener noreferrer"
                       className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
                     >
-                      Ã…pne side hos Helsedirektoratet
+                      Åpne side hos Helsedirektoratet
                     </a>
                   </li>
                 )}
@@ -420,7 +308,7 @@ export function DetailContentDisplay({
           {enrichedError && (
             <Alert data-color="warning">
               <Paragraph style={{ marginTop: 0, marginBottom: 0 }}>
-                Kunne ikke hente utvidede innholdsdetaljer fra Helsedirektoratet API akkurat nÃ¥.
+                Kunne ikke hente utvidede innholdsdetaljer fra Helsedirektoratet API akkurat nå.
               </Paragraph>
             </Alert>
           )}
@@ -440,7 +328,7 @@ export function DetailContentDisplay({
           {sections.length === 0 && (primaryDocument || shouldShowPublicationLink) && (
             <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
-                Denne siden har ikke egen tekst. Dokumentet Ã¥pnes i ny fane.
+                Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
               </Paragraph>
               <ul className="m-0 list-none space-y-2 p-0">
                 {primaryDocument && (
@@ -463,7 +351,7 @@ export function DetailContentDisplay({
                       rel="noopener noreferrer"
                       className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
                     >
-                      Ã…pne side hos Helsedirektoratet
+                      Åpne side hos Helsedirektoratet
                     </a>
                   </li>
                 )}
