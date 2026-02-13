@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
 import { Button, Alert, Paragraph } from '@digdir/designsystemet-react'
 import { fetchHelsedirContentById, fetchHelsedirContentByTypeAndId, getContent } from '../api'
@@ -65,6 +65,31 @@ function mapHelsedirContentToDetail(source: NestedContent): ContentDetailData {
   }
 }
 
+function getNormalizedHelsedirType(source: NestedContent) {
+  return (
+    source.type?.trim().toLowerCase() ||
+    source.tekniskeData?.infoType?.trim().toLowerCase() ||
+    ''
+  )
+}
+
+function seedEnrichedContentCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  contentId: string,
+  enrichedContent: NestedContent,
+  extraTypeCandidates: string[] = [],
+) {
+  const typeCandidates = new Set<string>([
+    getNormalizedHelsedirType(enrichedContent),
+    ...extraTypeCandidates.map((type) => type.trim().toLowerCase()),
+  ])
+
+  for (const type of typeCandidates) {
+    if (!type) continue
+    queryClient.setQueryData(['enriched-content', type, contentId], enrichedContent)
+  }
+}
+
 function mergeContentLinks(
   backendLinks?: ContentLink[],
   helsedirLinks?: ContentLink[],
@@ -109,6 +134,7 @@ export function ContentDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
+  const queryClient = useQueryClient()
 
   const searchId = useSearchStore((state) => state.searchId)
   const searchQuery = useSearchStore((state) => state.searchQuery)
@@ -128,18 +154,16 @@ export function ContentDetail() {
 
       const fetchFromHelsedir = async () => {
         try {
-          const helsedirContent = await fetchHelsedirContentById(id, signal) as NestedContent
-          return mapHelsedirContentToDetail(helsedirContent)
+          return await fetchHelsedirContentById(id, signal) as NestedContent
         } catch (helsedirError) {
           if (!routeContentType || !shouldFallbackToTypedEndpoint(helsedirError)) {
             throw helsedirError
           }
-          const typedContent = await fetchHelsedirContentByTypeAndId(
+          return await fetchHelsedirContentByTypeAndId(
             routeContentType,
             id,
             signal,
           ) as NestedContent
-          return mapHelsedirContentToDetail(typedContent)
         }
       }
 
@@ -148,7 +172,16 @@ export function ContentDetail() {
 
         try {
           const helsedirContent = await fetchFromHelsedir()
-          return mergeBackendWithHelsedir(backendContent, helsedirContent)
+          const mappedHelsedirContent = mapHelsedirContentToDetail(helsedirContent)
+          const mergedContent = mergeBackendWithHelsedir(backendContent, mappedHelsedirContent)
+
+          seedEnrichedContentCache(queryClient, id, helsedirContent, [
+            routeContentType,
+            backendContent.content_type,
+            mergedContent.content_type,
+          ])
+
+          return mergedContent
         } catch (helsedirError) {
           if (isAbortError(helsedirError) || signal.aborted) {
             throw helsedirError
@@ -164,7 +197,13 @@ export function ContentDetail() {
           throw backendError
         }
 
-        return await fetchFromHelsedir()
+        const helsedirContent = await fetchFromHelsedir()
+        const mappedHelsedirContent = mapHelsedirContentToDetail(helsedirContent)
+        seedEnrichedContentCache(queryClient, id, helsedirContent, [
+          routeContentType,
+          mappedHelsedirContent.content_type,
+        ])
+        return mappedHelsedirContent
       }
     },
     enabled: !!id,
