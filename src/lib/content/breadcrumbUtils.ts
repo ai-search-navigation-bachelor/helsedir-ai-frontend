@@ -1,5 +1,5 @@
-import { TEMASIDE_CATEGORIES } from '../constants/temasider'
-import type { BreadcrumbItem } from '../types/components'
+import { TEMASIDE_CATEGORIES } from '../../constants/temasider'
+import type { BreadcrumbItem } from '../../types/components'
 
 function normalizePath(path: string) {
   return (path || '/').replace(/\/+$/, '') || '/'
