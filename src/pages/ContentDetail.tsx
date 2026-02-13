@@ -138,14 +138,16 @@ export function ContentDetail() {
 
   const searchId = useSearchStore((state) => state.searchId)
   const searchQuery = useSearchStore((state) => state.searchQuery)
-  const routeState = (location.state as { contentType?: string } | null) ?? null
+  const routeState = (location.state as { contentType?: string; fromSearch?: boolean } | null) ?? null
   const routeContentType = routeState?.contentType?.trim().toLowerCase() || ''
+  const isFromSearchRoute = routeState?.fromSearch === true
 
   const effectiveSearchId = searchId || undefined
   const effectiveSearchQuery = searchQuery || ''
+  const shouldSkipHelsedirMerge = isFromSearchRoute && Boolean(effectiveSearchId)
 
   const { data: content, isLoading, error } = useQuery({
-    queryKey: ['content', id, effectiveSearchId, routeContentType],
+    queryKey: ['content', id, effectiveSearchId, routeContentType, shouldSkipHelsedirMerge],
     queryFn: async ({ signal }) => {
       if (!id) throw new Error('ID mangler')
 
@@ -169,6 +171,10 @@ export function ContentDetail() {
 
       try {
         const backendContent = await fetchFromBackend()
+
+        if (shouldSkipHelsedirMerge) {
+          return backendContent
+        }
 
         try {
           const helsedirContent = await fetchFromHelsedir()

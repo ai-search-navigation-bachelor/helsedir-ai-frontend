@@ -26,16 +26,29 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
     : result.title;
   const categoryLabel = result.categoryName.toLocaleUpperCase("nb-NO");
 
+  const buildSearchNavigationState = (contentType?: string) => {
+    const normalizedContentType = contentType?.trim();
+    if (normalizedContentType) {
+      return { fromSearch: true, contentType: normalizedContentType };
+    }
+    return { fromSearch: true };
+  };
+
   const handleClick = () => {
-    navigate(`/content/${result.id}`);
+    navigate(`/content/${result.id}`, {
+      state: buildSearchNavigationState(result.info_type),
+    });
   };
 
   const handleChildClick = (
     id: string,
+    contentType: string | undefined,
     event: MouseEvent<HTMLButtonElement>,
   ) => {
     event.stopPropagation();
-    navigate(`/content/${id}`);
+    navigate(`/content/${id}`, {
+      state: buildSearchNavigationState(contentType),
+    });
   };
 
   const handleChildGroupToggle = (
@@ -137,7 +150,9 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
                         <button
                           key={item.id}
                           type="button"
-                          onClick={(event) => handleChildClick(item.id, event)}
+                          onClick={(event) =>
+                            handleChildClick(item.id, item.info_type, event)
+                          }
                           className="group/item w-full rounded-md border border-transparent px-2 py-1.5 text-left text-sm text-sky-800 hover:bg-sky-50 hover:border-sky-200 cursor-pointer"
                         >
                           <span className="inline-flex w-full items-center justify-between gap-2">

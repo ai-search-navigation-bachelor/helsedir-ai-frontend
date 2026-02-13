@@ -93,10 +93,24 @@ export function DetailContentDisplay({
   const normalizedType = content.content_type.trim().toLowerCase()
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const hasBodyContent = useMemo(() => hasVisibleContent(content.body), [content.body])
+  const backendPractical = content.anbefaling_fields?.praktisk || ''
+  const backendRationale = content.anbefaling_fields?.rasjonale || ''
+  const backendTradeoffs = content.anbefaling_fields?.fordeler_ulemper || ''
+  const backendPreferences = content.anbefaling_fields?.verdier_preferanser || ''
+  const hasBackendRecommendationSupplementaryContent =
+    hasVisibleContent(backendPractical) ||
+    hasVisibleContent(backendRationale) ||
+    hasVisibleContent(backendTradeoffs) ||
+    hasVisibleContent(backendPreferences)
+  const hasBackendRecommendationStrength = Boolean(content.anbefaling_fields?.styrke?.trim())
+  const hasSufficientBackendRecommendationData =
+    hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
   const shouldSkipHelsedirEnrichment = TEMASIDE_TYPES.has(normalizedType)
   const shouldAttemptEnrichment =
     !shouldSkipHelsedirEnrichment &&
-    (RECOMMENDATION_TYPES.has(normalizedType) || !hasBodyContent)
+    (RECOMMENDATION_TYPES.has(normalizedType)
+      ? !hasSufficientBackendRecommendationData
+      : !hasBodyContent)
 
   const {
     data: enrichedContent,
@@ -125,10 +139,10 @@ export function DetailContentDisplay({
 
   const sections = useMemo<ContentSection[]>(() => {
     const mainBody = hasBodyContent ? content.body : enrichedContent?.tekst || enrichedContent?.body || ''
-    const practical = enrichedContent?.data?.praktisk || ''
-    const rationale = enrichedContent?.data?.rasjonale || ''
-    const tradeoffs = enrichedContent?.data?.nokkelInfo?.fordelerogulemper || ''
-    const preferences = enrichedContent?.data?.nokkelInfo?.verdierogpreferanser || ''
+    const practical = backendPractical || enrichedContent?.data?.praktisk || ''
+    const rationale = backendRationale || enrichedContent?.data?.rasjonale || ''
+    const tradeoffs = backendTradeoffs || enrichedContent?.data?.nokkelInfo?.fordelerogulemper || ''
+    const preferences = backendPreferences || enrichedContent?.data?.nokkelInfo?.verdierogpreferanser || ''
 
     const result: ContentSection[] = []
 
@@ -173,7 +187,16 @@ export function DetailContentDisplay({
     }
 
     return result
-  }, [content.body, enrichedContent, hasBodyContent, primarySectionTitle])
+  }, [
+    backendPractical,
+    backendPreferences,
+    backendRationale,
+    backendTradeoffs,
+    content.body,
+    enrichedContent,
+    hasBodyContent,
+    primarySectionTitle,
+  ])
 
   const highlightedSectionId =
     activeSectionId && sections.some((section) => section.id === activeSectionId)
@@ -209,34 +232,43 @@ export function DetailContentDisplay({
   }, [sections])
 
   const metadataItems = useMemo(() => {
-    if (!enrichedContent) return []
-
     const items: Array<{ label: string; value: string }> = []
+    const strength = content.anbefaling_fields?.styrke || enrichedContent?.data?.styrke
+    const status = content.status || enrichedContent?.status
+    const firstPublished = formatDateLabel(content.forstPublisert || enrichedContent?.forstPublisert)
+    const updated = formatDateLabel(content.sistOppdatert || enrichedContent?.sistOppdatert)
+    const professionallyUpdated = formatDateLabel(
+      content.sistFagligOppdatert || enrichedContent?.sistFagligOppdatert,
+    )
 
-    if (enrichedContent.data?.styrke) {
-      items.push({ label: 'Anbefalingsstyrke', value: enrichedContent.data.styrke })
+    if (strength) {
+      items.push({ label: 'Anbefalingsstyrke', value: strength })
     }
-    if (enrichedContent.status) {
-      items.push({ label: 'Status', value: enrichedContent.status })
+    if (status) {
+      items.push({ label: 'Status', value: status })
     }
 
-    const firstPublished = formatDateLabel(enrichedContent.forstPublisert)
     if (firstPublished) {
       items.push({ label: 'Først publisert', value: firstPublished })
     }
 
-    const updated = formatDateLabel(enrichedContent.sistOppdatert)
     if (updated) {
       items.push({ label: 'Sist oppdatert', value: updated })
     }
 
-    const professionallyUpdated = formatDateLabel(enrichedContent.sistFagligOppdatert)
     if (professionallyUpdated) {
       items.push({ label: 'Sist faglig oppdatert', value: professionallyUpdated })
     }
 
     return items
-  }, [enrichedContent])
+  }, [
+    content.anbefaling_fields?.styrke,
+    content.forstPublisert,
+    content.sistFagligOppdatert,
+    content.sistOppdatert,
+    content.status,
+    enrichedContent,
+  ])
 
   const supportingLinks = useMemo(
     () => content.links?.filter((link) => Boolean(link.href)) || [],
@@ -268,10 +300,10 @@ export function DetailContentDisplay({
     [content.links, enrichedContent],
   )
   const publicationUrl = useMemo(() => {
-    const url = enrichedContent?.url?.trim()
+    const url = enrichedContent?.url?.trim() || content.url?.trim()
     if (!url) return null
     return documentLinks.some((document) => document.href === url) ? null : url
-  }, [documentLinks, enrichedContent?.url])
+  }, [content.url, documentLinks, enrichedContent?.url])
   const hasMainSections = sections.length > 0
   const hasOnlyHelsedirPdfDocuments =
     documentLinks.length > 0 &&
@@ -472,3 +504,4 @@ export function DetailContentDisplay({
     </div>
   )
 }
+
