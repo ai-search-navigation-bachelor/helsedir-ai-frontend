@@ -58,16 +58,29 @@ export interface NestedContent {
     styrke?: string
     praktisk?: string
     rasjonale?: string
+    fil?: string
     nokkelInfo?: {
       fordelerogulemper?: string
       verdierogpreferanser?: string
     }
+    // API-et kan inneholde flere felter i `data` som varierer mellom innholdstyper.
+    [key: string]: unknown
   }
+  attachments?: Array<{
+    href?: string
+    url?: string
+    fil?: string
+    tittel?: string
+    title?: string
+    type?: string
+    contentType?: string
+  }> | null
   tekniskeData?: {
     infoType?: string
     subtype?: string
   }
   lenker?: NestedContentLink[]
+  links?: NestedContentLink[]
   children?: NestedContent[]
 }
 

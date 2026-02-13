@@ -2,21 +2,19 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchChapterWithSubchapters } from '../../../api'
 import type { ContentLink } from '../../../types'
+import { getUniqueChildLinks } from '../shared/linkUtils'
 import type { ChapterEntry } from './types'
 
-interface UseRetningslinjeChaptersOptions {
+interface UseHierarchicalChaptersOptions {
   contentId: string
   links?: ContentLink[]
 }
 
-export function useRetningslinjeChapters({
+export function useHierarchicalChapters({
   contentId,
   links,
-}: UseRetningslinjeChaptersOptions) {
-  const childrenLinks = useMemo(
-    () => links?.filter((link) => link.rel === 'barn' && Boolean(link.href)) ?? [],
-    [links]
-  )
+}: UseHierarchicalChaptersOptions) {
+  const childrenLinks = useMemo(() => getUniqueChildLinks<ContentLink>(links), [links])
 
   const childrenKey = useMemo(
     () => childrenLinks.map((link) => link.href).join(','),
@@ -24,7 +22,7 @@ export function useRetningslinjeChapters({
   )
 
   const { data: chapterEntries, isLoading: isChaptersLoading } = useQuery<ChapterEntry[]>({
-    queryKey: ['retningslinje-chapters', contentId, childrenKey],
+    queryKey: ['hierarchical-chapters', contentId, childrenKey],
     queryFn: async ({ signal }) => {
       const entries = await Promise.all(
         childrenLinks.map(async (link, index): Promise<ChapterEntry> => {

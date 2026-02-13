@@ -1,6 +1,7 @@
-export { ChapterAccordion } from './ChapterAccordion'
+// Legacy exports kept for compatibility.
+export { ChapterAccordion } from './legacy/ChapterAccordion'
 export { ContentDisplay } from './ContentDisplay'
-export { GenericContentDisplay } from './GenericContentDisplay'
-export { RecommendationContentDisplay } from './RecommendationContentDisplay'
-export { RetningslinjeContentDisplay } from './RetningslinjeContentDisplay'
-export { TableOfContents } from './TableOfContents'
+export { GenericContentDisplay } from './legacy/GenericContentDisplay'
+export { DetailContentDisplay } from './detail/DetailContentDisplay'
+export { HierarchicalContentDisplay } from './hierarchical/HierarchicalContentDisplay'
+export { TableOfContents } from './legacy/TableOfContents'

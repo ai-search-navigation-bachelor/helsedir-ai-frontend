@@ -14,7 +14,7 @@ export interface PageNode {
   depth: number
   parentId: string | null
   childrenIds: string[]
-  recommendationChildren: NestedContent[]
+  expandableChildren: NestedContent[]
   node: NestedContent
 }
 

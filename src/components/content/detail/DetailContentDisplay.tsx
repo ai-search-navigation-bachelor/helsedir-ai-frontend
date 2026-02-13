@@ -4,19 +4,25 @@ import DOMPurify from 'dompurify'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useNavigate } from 'react-router-dom'
 import {
+  fetchHelsedirContentById,
   fetchHelsedirContentByTypeAndId,
   getHelsedirEndpointByContentType,
-} from '../../api'
-import type { NestedContent } from '../../types'
-import type { ContentDisplayProps } from '../../types/pages'
-import { ContentPageHeader } from './ContentPageHeader'
-import { RecommendationAsideLoadingSkeleton } from './ContentSkeletons'
+} from '../../../api'
+import type { NestedContent } from '../../../types'
+import type { ContentDisplayProps } from '../../../types/pages'
+import { ContentPageHeader } from '../ContentPageHeader'
+import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
+import { getDocumentLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
+import { hasVisibleContent } from '../shared/contentTextUtils'
 
 interface ContentSection {
   id: string
   title: string
   html: string
 }
+
+const RECOMMENDATION_TYPES = new Set(['anbefaling', 'rad', 'pakkeforlop-anbefaling'])
+const TEMASIDE_TYPES = new Set(['temaside', 'tema-side'])
 
 const TYPE_LABEL_BY_CONTENT_TYPE: Record<string, string> = {
   anbefaling: 'Anbefaling',
@@ -28,15 +34,6 @@ const LINK_LABEL_BY_REL: Record<string, string> = {
   root: 'Rotpublikasjon',
 }
 
-function hasVisibleContent(value?: string) {
-  if (!value) return false
-  const plainText = value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .trim()
-  return plainText.length > 0
-}
-
 function formatDateLabel(value?: string) {
   if (!value) return ''
   const parsed = new Date(value)
@@ -46,6 +43,26 @@ function formatDateLabel(value?: string) {
 
 function getTypeLabel(contentType: string) {
   return TYPE_LABEL_BY_CONTENT_TYPE[contentType] || 'Innhold'
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === 'AbortError'
+}
+
+function getStatusCodeFromError(error: unknown) {
+  if (!(error instanceof Error)) return null
+
+  const match = error.message.match(/\b(\d{3})\b/)
+  if (!match) return null
+
+  const statusCode = Number(match[1])
+  return Number.isNaN(statusCode) ? null : statusCode
+}
+
+function shouldFallbackToTypedEndpoint(error: unknown) {
+  if (isAbortError(error)) return false
+  const statusCode = getStatusCodeFromError(error)
+  return statusCode === 400 || statusCode === 404 || statusCode === 405
 }
 
 function getContentIdFromHref(href?: string) {
@@ -62,29 +79,52 @@ function getContentIdFromHref(href?: string) {
   }
 }
 
-export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
+interface DetailContentDisplayProps extends ContentDisplayProps {
+  typeLabelOverride?: string
+  primarySectionTitle?: string
+}
+
+export function DetailContentDisplay({
+  content,
+  typeLabelOverride,
+  primarySectionTitle = 'Hovedanbefaling',
+}: DetailContentDisplayProps) {
   const navigate = useNavigate()
   const normalizedType = content.content_type.trim().toLowerCase()
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
-
-  const hasEndpoint = Boolean(getHelsedirEndpointByContentType(normalizedType))
+  const hasBodyContent = useMemo(() => hasVisibleContent(content.body), [content.body])
+  const shouldSkipHelsedirEnrichment = TEMASIDE_TYPES.has(normalizedType)
+  const shouldAttemptEnrichment =
+    !shouldSkipHelsedirEnrichment &&
+    (RECOMMENDATION_TYPES.has(normalizedType) || !hasBodyContent)
 
   const {
     data: enrichedContent,
     isLoading: isEnrichedLoading,
     error: enrichedError,
   } = useQuery<NestedContent>({
-    queryKey: ['recommendation-content', normalizedType, content.id],
-    queryFn: async ({ signal }) =>
-      fetchHelsedirContentByTypeAndId(normalizedType, content.id, signal) as Promise<NestedContent>,
-    enabled: hasEndpoint,
+    queryKey: ['enriched-content', normalizedType, content.id],
+    queryFn: async ({ signal }) => {
+      try {
+        return await fetchHelsedirContentById(content.id, signal) as NestedContent
+      } catch (error) {
+        const typedEndpoint = getHelsedirEndpointByContentType(normalizedType)
+        if (!typedEndpoint || !shouldFallbackToTypedEndpoint(error)) {
+          throw error
+        }
+        return await fetchHelsedirContentByTypeAndId(
+          normalizedType,
+          content.id,
+          signal,
+        ) as NestedContent
+      }
+    },
+    enabled: Boolean(content.id) && shouldAttemptEnrichment,
     staleTime: 10 * 60 * 1000,
   })
 
   const sections = useMemo<ContentSection[]>(() => {
-    const mainBody = hasVisibleContent(content.body)
-      ? content.body
-      : enrichedContent?.tekst || enrichedContent?.body || ''
+    const mainBody = hasBodyContent ? content.body : enrichedContent?.tekst || enrichedContent?.body || ''
     const practical = enrichedContent?.data?.praktisk || ''
     const rationale = enrichedContent?.data?.rasjonale || ''
     const tradeoffs = enrichedContent?.data?.nokkelInfo?.fordelerogulemper || ''
@@ -95,7 +135,7 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
     if (hasVisibleContent(mainBody)) {
       result.push({
         id: 'section-hovedanbefaling',
-        title: 'Hovedanbefaling',
+        title: primarySectionTitle,
         html: mainBody,
       })
     }
@@ -133,7 +173,7 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
     }
 
     return result
-  }, [content.body, enrichedContent])
+  }, [content.body, enrichedContent, hasBodyContent, primarySectionTitle])
 
   const highlightedSectionId =
     activeSectionId && sections.some((section) => section.id === activeSectionId)
@@ -203,18 +243,46 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
     [content.links],
   )
   const contextualNavigationLinks = useMemo(
-    () =>
-      supportingLinks
+    () => {
+      const seenContentIds = new Set<string>()
+
+      return supportingLinks
         .filter((link) => link.rel === 'root')
         .map((link) => ({
           ...link,
           contentId: getContentIdFromHref(link.href),
         }))
-        .filter((link) => Boolean(link.contentId)),
-    [supportingLinks],
+        .filter((link) => Boolean(link.contentId) && link.contentId !== content.id)
+        .filter((link) => {
+          if (!link.contentId || seenContentIds.has(link.contentId)) return false
+          seenContentIds.add(link.contentId)
+          return true
+        })
+    },
+    [content.id, supportingLinks],
   )
 
-  const typeLabel = getTypeLabel(normalizedType)
+  const typeLabel = typeLabelOverride || getTypeLabel(normalizedType)
+  const documentLinks = useMemo(
+    () => getDocumentLinks(enrichedContent, content.links),
+    [content.links, enrichedContent],
+  )
+  const publicationUrl = useMemo(() => {
+    const url = enrichedContent?.url?.trim()
+    if (!url) return null
+    return documentLinks.some((document) => document.href === url) ? null : url
+  }, [documentLinks, enrichedContent?.url])
+  const hasMainSections = sections.length > 0
+  const hasOnlyHelsedirPdfDocuments =
+    documentLinks.length > 0 &&
+    documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
+  const shouldShowPublicationLink =
+    Boolean(publicationUrl) && !hasMainSections && hasOnlyHelsedirPdfDocuments
+  const visibleDocumentLinks = useMemo(() => {
+    if (!shouldShowPublicationLink) return documentLinks
+    return documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
+  }, [documentLinks, shouldShowPublicationLink])
+  const primaryDocument = visibleDocumentLinks[0]
 
   return (
     <div className="flex flex-col gap-8">
@@ -254,7 +322,7 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
           )}
 
           {isEnrichedLoading && (
-            <RecommendationAsideLoadingSkeleton />
+            <DetailAsideLoadingSkeleton />
           )}
 
           {contextualNavigationLinks.length > 0 && (
@@ -303,13 +371,47 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
               </ul>
             </section>
           )}
+
+          {sections.length > 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
+            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
+                Dokument
+              </Heading>
+              <ul className="m-0 list-none space-y-2 p-0">
+                {visibleDocumentLinks.map((document) => (
+                  <li key={`document-${document.href}`}>
+                    <a
+                      href={document.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                    >
+                      {document.label}
+                    </a>
+                  </li>
+                ))}
+                {shouldShowPublicationLink && publicationUrl && (
+                  <li key={`document-page-${publicationUrl}`}>
+                    <a
+                      href={publicationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                    >
+                      Åpne side hos Helsedirektoratet
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </section>
+          )}
         </aside>
 
         <section className="min-w-0 space-y-8">
           {enrichedError && (
             <Alert data-color="warning">
               <Paragraph style={{ marginTop: 0, marginBottom: 0 }}>
-                Kunne ikke hente utvidede anbefalingsdetaljer fra Helsedirektoratet API akkurat nå.
+                Kunne ikke hente utvidede innholdsdetaljer fra Helsedirektoratet API akkurat nå.
               </Paragraph>
             </Alert>
           )}
@@ -326,7 +428,41 @@ export function RecommendationContentDisplay({ content }: ContentDisplayProps) {
             </article>
           ))}
 
-          {sections.length === 0 && (
+          {sections.length === 0 && (primaryDocument || shouldShowPublicationLink) && (
+            <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
+                Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
+              </Paragraph>
+              <ul className="m-0 list-none space-y-2 p-0">
+                {primaryDocument && (
+                  <li>
+                    <a
+                      href={primaryDocument.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                    >
+                      {primaryDocument.label}
+                    </a>
+                  </li>
+                )}
+                {shouldShowPublicationLink && publicationUrl && (
+                  <li>
+                    <a
+                      href={publicationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                    >
+                      Åpne side hos Helsedirektoratet
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </section>
+          )}
+
+          {sections.length === 0 && !primaryDocument && !shouldShowPublicationLink && (
             <Paragraph style={{ marginTop: 0, color: '#64748b' }}>
               Ingen innholdsseksjoner tilgjengelig for denne siden.
             </Paragraph>

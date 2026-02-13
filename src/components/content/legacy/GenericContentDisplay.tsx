@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
-import { fetchChapterWithSubchapters } from '../../api'
-import type { NestedContent } from '../../types'
-import type { ContentDisplayProps } from '../../types/pages'
+import { fetchChapterWithSubchapters } from '../../../api'
+import type { ContentLink, NestedContent } from '../../../types'
+import type { ContentDisplayProps } from '../../../types/pages'
 import { ChapterAccordion } from './ChapterAccordion'
-import { ContentPageHeader } from './ContentPageHeader'
-import { GenericChaptersLoadingSkeleton } from './ContentSkeletons'
+import { ContentPageHeader } from '../ContentPageHeader'
+import { GenericChaptersLoadingSkeleton } from '../ContentSkeletons'
 import { TableOfContents } from './TableOfContents'
+import { getUniqueChildLinks } from '../shared/linkUtils'
 
 export function GenericContentDisplay({ content }: ContentDisplayProps) {
   const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set())
@@ -15,7 +16,7 @@ export function GenericContentDisplay({ content }: ContentDisplayProps) {
   const [activeChapter, setActiveChapter] = useState<string | null>(null)
 
   const childrenLinks = useMemo(
-    () => content.links?.filter((link) => link.rel === 'barn') || [],
+    () => getUniqueChildLinks<ContentLink>(content.links),
     [content.links]
   )
 
