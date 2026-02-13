@@ -1,14 +1,66 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Heading } from "@digdir/designsystemet-react";
 import { ChevronRightIcon } from "@navikt/aksel-icons";
 import { CUSTOM_TEMASIDE_LAYOUTS, FORCE_FLAT_CATEGORIES } from "../../components/content/temaside/customLayouts";
+import { Breadcrumb } from "../../components/ui/Breadcrumb";
 import { getTemasideCategoryBySlug } from "../../constants/temasider";
 import { useThemePagesQuery } from "../../hooks/queries/useThemePagesQuery";
 import { buildThemeTree, findNodeByPath, type ThemeNode } from "../../lib/temaside/temasiderTree";
+import { useTemasideBreadcrumbStore } from "../../stores";
+import type { BreadcrumbItem } from "../../types/components";
 
 function normalizePath(path: string) {
   return (path || "/").replace(/\/+$/, "") || "/";
+}
+
+function titleizeSegment(segment: string) {
+  const decoded = decodeURIComponent(segment || "").replace(/-/g, " ").trim();
+  if (!decoded) return "";
+  return decoded.charAt(0).toUpperCase() + decoded.slice(1);
+}
+
+function buildTemasideBreadcrumbItems(
+  temaPath: string,
+  nodeByPath: Map<string, ThemeNode>,
+  categoryTitle?: string,
+): BreadcrumbItem[] {
+  const items: BreadcrumbItem[] = [
+    { label: "Forside", href: "/" },
+    { label: "Temasider", href: "/temaside" },
+  ];
+
+  const segments = temaPath.split("/").filter(Boolean);
+  if (segments.length === 0) {
+    return items;
+  }
+
+  const categoryPath = `/${segments[0]}`;
+  const categoryNodeTitle = nodeByPath.get(categoryPath)?.title;
+  items.push({
+    label: categoryNodeTitle || categoryTitle || titleizeSegment(segments[0]) || categoryPath,
+    href: `/temaside${categoryPath}`,
+  });
+
+  // Keep breadcrumbs compact for temasider: category + current item only.
+  if (segments.length > 1) {
+    const currentNodeTitle = nodeByPath.get(temaPath)?.title;
+    const currentSegment = segments[segments.length - 1];
+    items.push({
+      label: currentNodeTitle || titleizeSegment(currentSegment) || temaPath,
+      href: `/temaside${temaPath}`,
+    });
+  }
+
+  return items;
+}
+
+function compactDetailBreadcrumbItems(items: BreadcrumbItem[]): BreadcrumbItem[] {
+  if (items.length <= 4) {
+    return items;
+  }
+
+  return [...items.slice(0, 3), items[items.length - 1]];
 }
 
 type HubLink = {
@@ -98,6 +150,8 @@ export function TemasideHubPage() {
   const [query, setQuery] = useState("");
 
   const category = getTemasideCategoryBySlug(categorySlug);
+  const trailByPath = useTemasideBreadcrumbStore((state) => state.trailByPath);
+  const setTrail = useTemasideBreadcrumbStore((state) => state.setTrail);
 
   const {
     data: themePagesData,
@@ -187,6 +241,19 @@ export function TemasideHubPage() {
 
   const totalLinks = sections.reduce((sum, section) => sum + section.links.length, 0);
   const visibleLinks = visibleSections.reduce((sum, section) => sum + section.links.length, 0);
+  const generatedBreadcrumbItems = useMemo(
+    () => buildTemasideBreadcrumbItems(temaPath, nodeByPath, category?.title),
+    [temaPath, nodeByPath, category?.title],
+  );
+  const breadcrumbItems = trailByPath[temaPath] || generatedBreadcrumbItems;
+  const buildTrailForLinkedPath = (path: string) =>
+    compactDetailBreadcrumbItems(buildTemasideBreadcrumbItems(path, nodeByPath, category?.title));
+
+  useEffect(() => {
+    if (generatedBreadcrumbItems.length > 1) {
+      setTrail(temaPath, generatedBreadcrumbItems);
+    }
+  }, [generatedBreadcrumbItems, setTrail, temaPath]);
 
   if (!category) {
     return (
@@ -202,6 +269,7 @@ export function TemasideHubPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-5xl p-6">
+        <Breadcrumb items={breadcrumbItems} />
         <Heading level={2} data-size="md">Laster temasider...</Heading>
       </div>
     );
@@ -210,6 +278,7 @@ export function TemasideHubPage() {
   if (isError) {
     return (
       <div className="mx-auto max-w-5xl p-6">
+        <Breadcrumb items={breadcrumbItems} />
         <Heading level={2} data-size="md">Kunne ikke laste temasider</Heading>
         <p className="mt-2 text-sm text-slate-600">
           {error.message}
@@ -221,6 +290,7 @@ export function TemasideHubPage() {
   if (!node) {
     return (
       <div className="mx-auto max-w-5xl p-6">
+        <Breadcrumb items={breadcrumbItems} />
         <Heading level={2} data-size="md">Fant ikke temasiden</Heading>
         <p className="mt-2">
           Ingen treff for: <code>{temaPath}</code>
@@ -231,6 +301,8 @@ export function TemasideHubPage() {
 
   return (
     <div className="max-w-screen-xl mx-auto px-6 py-8 lg:py-10">
+      <Breadcrumb items={breadcrumbItems} />
+
       <header className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 lg:px-6">
         <div className="flex items-center gap-4">
           {categoryIcon && (
@@ -296,6 +368,7 @@ export function TemasideHubPage() {
                   <li key={item.path} className="border-b border-slate-200 last:border-b-0">
                     <Link
                       to={`/temaside${item.path}`}
+                      onClick={() => setTrail(item.path, buildTrailForLinkedPath(item.path))}
                       className="flex items-start gap-2 px-5 py-3.5 text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#005F73]"
                     >
                       <ChevronRightIcon className="mt-1 h-4 w-4 flex-shrink-0 text-[#005F73]" aria-hidden />
@@ -323,6 +396,7 @@ export function TemasideHubPage() {
                       <li key={item.path} className="border-b border-slate-200 last:border-b-0">
                         <Link
                           to={`/temaside${item.path}`}
+                          onClick={() => setTrail(item.path, buildTrailForLinkedPath(item.path))}
                           className="flex items-start gap-2 px-5 py-3.5 text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#005F73]"
                         >
                           <ChevronRightIcon className="mt-1 h-4 w-4 flex-shrink-0 text-[#005F73]" aria-hidden />

@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Paragraph } from '@digdir/designsystemet-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { formatDateLabel, getNodeTitle } from './treeUtils'
 
@@ -38,6 +38,8 @@ export function ExpandableSubcontent({
   depth = 0,
 }: ExpandableSubcontentProps) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { id: currentContentId } = useParams<{ id: string }>()
   const title = getNodeTitle(item)
   const intro = item.intro || ''
   const body = item.tekst || item.body || ''
@@ -86,7 +88,11 @@ export function ExpandableSubcontent({
                 if (!item.id) return
                 const normalizedContentType = item.type?.trim()
                 navigate(`/content/${item.id}`, {
-                  state: normalizedContentType ? { contentType: normalizedContentType } : undefined,
+                  state: {
+                    ...(location.state as Record<string, unknown> | null),
+                    sourceContentId: currentContentId,
+                    ...(normalizedContentType ? { contentType: normalizedContentType } : {}),
+                  },
                 })
               }}
               className="recommendation-open-page__button recommendation-open-page__button--compact"

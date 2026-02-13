@@ -12,9 +12,30 @@ import {
   SearchCategoryTabs,
   SearchResultsList,
   SearchEmptyState,
-  FIXED_CATEGORIES,
 } from '../components/search';
-import { TEMASIDE_CATEGORY } from '../constants/categories';
+import {
+  SEARCH_SUBCATEGORY_LABELS,
+  SEARCH_MAIN_CATEGORIES,
+  getMainCategoryBySubcategory,
+} from '../constants/categories';
+
+const MAIN_CATEGORY_IDS: ReadonlySet<string> = new Set(
+  SEARCH_MAIN_CATEGORIES.map((category) => category.id),
+);
+
+function isMainCategoryId(value: string): value is (typeof SEARCH_MAIN_CATEGORIES)[number]['id'] {
+  return MAIN_CATEGORY_IDS.has(value);
+}
+
+const MAIN_TAB_ORDER = [
+  'temaside',
+  'retningslinjer',
+  'faglige-rad',
+  'veiledere',
+  'rundskriv',
+  'lovfortolkning',
+  'statistikk-og-rapporter',
+] as const;
 
 /**
  * New Search Page
@@ -23,7 +44,12 @@ import { TEMASIDE_CATEGORY } from '../constants/categories';
 export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('query') || '';
-  const activeTab = searchParams.get('category') || 'all';
+  const rawCategory = (searchParams.get('category') || 'all').trim().toLowerCase();
+  const activeTab = useMemo(() => {
+    if (rawCategory === 'all') return 'all';
+    if (isMainCategoryId(rawCategory)) return rawCategory;
+    return getMainCategoryBySubcategory(rawCategory) || 'all';
+  }, [rawCategory]);
 
   const searchQueryFromStore = useSearchStore((state) => state.searchQuery);
   const setSearchId = useSearchStore((state) => state.setSearchId);
@@ -49,57 +75,100 @@ export function SearchPage() {
     }
   }, [data?.search_id, searchQuery, setSearchData]);
 
-  // Combine all categories
   const allCategories = useMemo(
     () => [...(data?.priority_categories || []), ...(data?.other_categories || [])],
     [data?.priority_categories, data?.other_categories]
   );
 
-  // Get category counts (including 0 for categories with no results)
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-
-    // Initialize all hardcoded categories with 0
-    FIXED_CATEGORIES.forEach((cat) => {
-      counts[cat.id] = 0;
-    });
-
-    // Count actual preview results (not total count from API)
     allCategories.forEach((cat) => {
       counts[cat.category] = cat.results.length;
     });
-
-    // Calculate total from actual displayed results
     const total = allCategories.reduce((sum, cat) => sum + cat.results.length, 0);
     counts.all = total;
-
     return counts;
   }, [allCategories]);
 
-  // Filter results based on active tab
-  const filteredResults = useMemo(() => {
-    const resolveCategoryName = (categoryId: string, displayName: string) =>
-      categoryId === TEMASIDE_CATEGORY ? categoryId : displayName;
+  const categoryLabels = useMemo(() => {
+    const labels: Record<string, string> = { ...SEARCH_SUBCATEGORY_LABELS };
+    allCategories.forEach((categoryGroup) => {
+      labels[categoryGroup.category] = categoryGroup.display_name || categoryGroup.category;
+    });
+    return labels;
+  }, [allCategories]);
 
+  const tabs = useMemo(
+    () => {
+      const byId = new Map(SEARCH_MAIN_CATEGORIES.map((category) => [category.id, category]));
+      return MAIN_TAB_ORDER.map((id) => byId.get(id)).filter(Boolean).map((category) => ({
+        id: category!.id,
+        label: category!.label,
+      }));
+    },
+    [],
+  );
+
+  const mainCategoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+
+    SEARCH_MAIN_CATEGORIES.forEach((mainCategory) => {
+      counts[mainCategory.id] = mainCategory.subcategoryIds.reduce(
+        (sum, subcategoryId) => sum + (categoryCounts[subcategoryId] || 0),
+        0,
+      );
+    });
+
+    counts.all = Object.values(counts).reduce((sum, value) => sum + value, 0);
+    return counts;
+  }, [categoryCounts]);
+
+  const activeTabLabel = useMemo(() => {
+    if (activeTab === 'all') {
+      return 'Alle';
+    }
+    return tabs.find((tab) => tab.id === activeTab)?.label || '';
+  }, [activeTab, tabs]);
+
+  const filteredResults = useMemo(() => {
     if (activeTab === 'all') {
       return allCategories.flatMap((cat) =>
         cat.results.map((result) => ({
           ...result,
-          categoryName: resolveCategoryName(cat.category, cat.display_name),
+          categoryName: categoryLabels[cat.category] || cat.display_name || cat.category,
           categoryId: cat.category,
         }))
       );
     }
 
-    const category = allCategories.find((cat) => cat.category === activeTab);
-    return (
-      category?.results.map((result) => ({
-        ...result,
-        categoryName: resolveCategoryName(category.category, category.display_name),
-        categoryId: category.category,
-      })) || []
+    const selectedMainCategory = SEARCH_MAIN_CATEGORIES.find((category) => category.id === activeTab);
+    if (!selectedMainCategory) {
+      return [];
+    }
+
+    const allowedSubcategories = new Set<string>(selectedMainCategory.subcategoryIds);
+
+    return allCategories
+      .filter((cat) => allowedSubcategories.has(cat.category))
+      .flatMap((cat) =>
+        cat.results.map((result) => ({
+          ...result,
+          categoryName: categoryLabels[cat.category] || cat.display_name || cat.category,
+          categoryId: cat.category,
+        })),
+      );
+  }, [activeTab, allCategories, categoryLabels]);
+
+  useEffect(() => {
+    if (rawCategory === activeTab) return;
+    setSearchParams(
+      {
+        query: searchQuery,
+        category: activeTab,
+      },
+      { replace: true },
     );
-  }, [activeTab, allCategories]);
+  }, [activeTab, rawCategory, searchQuery, setSearchParams]);
 
   // Sort results by score
   const sortedResults = useMemo(() => {
@@ -111,12 +180,13 @@ export function SearchPage() {
     });
   }, [filteredResults]);
 
-  // Handle tab change
   const handleTabChange = (value: string) => {
-    setSearchParams({ query: searchQuery, category: value });
+    setSearchParams({
+      query: searchQuery,
+      category: value,
+    });
   };
 
-  // Early return for empty search
   if (!searchQuery.trim()) {
     return <SearchEmptyState />;
   }
@@ -142,13 +212,16 @@ export function SearchPage() {
         <>
           <SearchCategoryTabs
             activeTab={activeTab}
-            categoryCounts={categoryCounts}
+            tabs={tabs}
+            categoryCounts={mainCategoryCounts}
             onTabChange={handleTabChange}
           />
 
           <SearchResultsList
             results={sortedResults}
             searchQuery={searchQuery}
+            activeTab={activeTab}
+            activeTabLabel={activeTabLabel}
           />
         </>
       )}
