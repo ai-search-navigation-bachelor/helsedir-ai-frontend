@@ -3,13 +3,13 @@ import { TEMASIDE_CATEGORIES } from '../../constants/temasider';
 
 export function CategoryButtons() {
   return (
-    <div className="w-full max-w-screen-xl mx-auto px-10 md:px-14 lg:px-16 py-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <section className="w-full max-w-6xl mx-auto px-6 md:px-10 lg:px-12 py-14 md:py-16">
+      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-7 md:grid-cols-2 md:gap-8">
         {TEMASIDE_CATEGORIES.map((category) => (
           <Link
             key={category.path}
             to={`/temaside${category.path}`}
-            className="flex items-center gap-5 p-6 bg-white border-b-[3px] rounded-lg hover:shadow-xl transition-all text-left"
+            className="flex items-center gap-5 rounded-xl border-b-[3px] bg-white p-7 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl"
             style={{ borderBottomColor: '#005F73' }}
           >
             <div className="flex-shrink-0">
@@ -25,6 +25,6 @@ export function CategoryButtons() {
           </Link>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

@@ -13,11 +13,11 @@ export function SearchCategoryTabs({
 }: SearchCategoryTabsProps) {
   return (
     <div className="mb-5 border-b border-slate-300 pb-2">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
         <button
           type="button"
           onClick={() => onTabChange('all')}
-          className={`inline-flex items-center gap-1.5 border-b-2 px-0.5 py-1 text-sm transition-colors ${
+          className={`inline-flex items-center gap-1.5 border-b-2 px-1.5 py-2 text-[0.95rem] font-medium transition-colors ${
             activeTab === 'all'
               ? 'border-[#0062BA] text-[#0062BA]'
               : 'border-transparent text-slate-700 hover:text-slate-900'
@@ -32,7 +32,7 @@ export function SearchCategoryTabs({
             key={tab.id}
             type="button"
             onClick={() => onTabChange(tab.id)}
-            className={`inline-flex items-center gap-1.5 border-b-2 px-0.5 py-1 text-sm transition-colors ${
+            className={`inline-flex items-center gap-1.5 border-b-2 px-1.5 py-2 text-[0.95rem] font-medium transition-colors ${
               activeTab === tab.id
                 ? 'border-[#0062BA] text-[#0062BA]'
                 : 'border-transparent text-slate-700 hover:text-slate-900'

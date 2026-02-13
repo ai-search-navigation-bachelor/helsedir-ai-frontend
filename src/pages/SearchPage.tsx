@@ -123,6 +123,13 @@ export function SearchPage() {
     return counts;
   }, [categoryCounts]);
 
+  const activeTabLabel = useMemo(() => {
+    if (activeTab === 'all') {
+      return 'Alle';
+    }
+    return tabs.find((tab) => tab.id === activeTab)?.label || '';
+  }, [activeTab, tabs]);
+
   const filteredResults = useMemo(() => {
     if (activeTab === 'all') {
       return allCategories.flatMap((cat) =>
@@ -213,6 +220,8 @@ export function SearchPage() {
           <SearchResultsList
             results={sortedResults}
             searchQuery={searchQuery}
+            activeTab={activeTab}
+            activeTabLabel={activeTabLabel}
           />
         </>
       )}

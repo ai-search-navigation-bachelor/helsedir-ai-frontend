@@ -12,7 +12,7 @@ export const RAD_CATEGORY = 'veileder-lov-forskrift'
 export const SEARCH_MAIN_CATEGORIES = [
   {
     id: 'retningslinjer',
-    label: 'Retningslinjer',
+    label: 'Retningslinje',
     subcategoryIds: [
       'retningslinje',
       'nasjonalt-forlop',
@@ -57,7 +57,7 @@ export const SEARCH_MAIN_CATEGORIES = [
   },
   {
     id: 'statistikk-og-rapporter',
-    label: 'Statistikk og rapporter',
+    label: 'Statistikk og rapport',
     subcategoryIds: ['rapport', 'statistikkelement', 'statistikk'],
   },
   {
