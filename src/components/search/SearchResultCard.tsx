@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { IoArrowForward } from "react-icons/io5";
 import type { SearchResult } from "../../types";
 
@@ -8,10 +8,15 @@ interface SearchResultCardProps {
     categoryName: string;
     categoryId: string;
   };
+  searchQuery: string;
+  sourceTemasideId?: string;
 }
 
-export function SearchResultCard({ result }: SearchResultCardProps) {
-  const navigate = useNavigate();
+export function SearchResultCard({
+  result,
+  searchQuery,
+  sourceTemasideId,
+}: SearchResultCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [pinnedChildGroupKey, setPinnedChildGroupKey] = useState<string | null>(
     null,
@@ -24,19 +29,8 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
   const cardTitle = isTemaside
     ? result.title.toLocaleUpperCase("nb-NO")
     : result.title;
-  const categoryLabel = result.categoryName.toLocaleUpperCase("nb-NO");
-
-  const handleClick = () => {
-    navigate(`/content/${result.id}`);
-  };
-
-  const handleChildClick = (
-    id: string,
-    event: MouseEvent<HTMLButtonElement>,
-  ) => {
-    event.stopPropagation();
-    navigate(`/content/${id}`);
-  };
+  const categoryLabel = result.categoryName;
+  const contentHref = `/content/${result.id}`;
 
   const handleChildGroupToggle = (
     groupKey: string,
@@ -85,23 +79,47 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
   return (
     <div
       ref={cardRef}
-      className="bg-white border-l-4 border-blue-500 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-      onClick={handleClick}
+      className="relative bg-white border-l-4 border-blue-500 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
     >
+      <Link
+        to={contentHref}
+        state={{
+          fromSearch: true,
+          searchQuery,
+          sourceTemasideId,
+          sourceContentId: sourceTemasideId,
+          sourceContentTitle: sourceTemasideId ? undefined : result.title,
+          searchCategoryId: result.categoryId,
+          searchCategoryName: result.categoryName,
+        }}
+        aria-label={`Åpne ${result.title}`}
+        className="absolute inset-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005F73]"
+      />
+
       {/* Category Label */}
-      <div className="mb-2">
+      <div className="relative z-10 mb-2 pointer-events-none">
         <span className="inline-block px-2.5 py-0.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-md">
           {categoryLabel}
         </span>
       </div>
 
-      {/* Title */}
-      <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-snug">
+      <h3 className="relative z-10 pointer-events-none text-lg font-semibold text-gray-900 mb-2 leading-snug">
         {cardTitle}
       </h3>
 
+      {/* Explanation if available (exclude keyword/semantic scoring) */}
+      {!isTemaside &&
+        result.explanation &&
+        !result.explanation.toLowerCase().includes("keyword") &&
+        !result.explanation.toLowerCase().includes("semantic") &&
+        !result.explanation.toLowerCase().includes("fuzzy match") && (
+          <p className="relative z-10 pointer-events-none text-sm text-gray-700 line-clamp-2">
+            {result.explanation}
+          </p>
+        )}
+
       {isTemaside && childGroups.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="relative z-20 mt-2 flex flex-wrap gap-2">
           {childGroups.map((group) => {
             const items = Array.isArray(group.items) ? group.items : [];
             const groupKey = `${result.id}-${group.info_type}`;
@@ -134,10 +152,18 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
                   >
                     <div className="space-y-1">
                       {items.map((item) => (
-                        <button
+                        <Link
                           key={item.id}
-                          type="button"
-                          onClick={(event) => handleChildClick(item.id, event)}
+                          to={`/content/${item.id}`}
+                          state={{
+                            fromSearch: true,
+                            searchQuery,
+                            sourceTemasideId: result.id,
+                            sourceContentId: result.id,
+                            sourceContentTitle: result.title,
+                            searchCategoryId: group.info_type,
+                            searchCategoryName: group.display_name,
+                          }}
                           className="group/item w-full rounded-md border border-transparent px-2 py-1.5 text-left text-sm text-sky-800 hover:bg-sky-50 hover:border-sky-200 cursor-pointer"
                         >
                           <span className="inline-flex w-full items-center justify-between gap-2">
@@ -146,7 +172,7 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
                             </span>
                             <IoArrowForward className="h-3.5 w-3.5 shrink-0 text-sky-700" />
                           </span>
-                        </button>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -156,17 +182,6 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
           })}
         </div>
       )}
-
-      {/* Explanation if available (exclude keyword/semantic scoring) */}
-      {!isTemaside &&
-        result.explanation &&
-        !result.explanation.toLowerCase().includes("keyword") &&
-        !result.explanation.toLowerCase().includes("semantic") &&
-        !result.explanation.toLowerCase().includes("fuzzy match") && (
-          <p className="text-sm text-gray-700 line-clamp-2">
-            {result.explanation}
-          </p>
-        )}
     </div>
   );
 }

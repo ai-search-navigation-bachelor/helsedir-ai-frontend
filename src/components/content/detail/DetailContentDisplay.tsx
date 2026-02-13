@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   fetchHelsedirContentById,
   fetchHelsedirContentByTypeAndId,
@@ -90,6 +90,7 @@ export function DetailContentDisplay({
   primarySectionTitle = 'Hovedanbefaling',
 }: DetailContentDisplayProps) {
   const navigate = useNavigate()
+  const location = useLocation()
   const normalizedType = content.content_type.trim().toLowerCase()
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const hasBodyContent = useMemo(() => hasVisibleContent(content.body), [content.body])
@@ -340,7 +341,15 @@ export function DetailContentDisplay({
                     <li key={`contextual-${link.rel}-${link.href}`}>
                       <button
                         type="button"
-                        onClick={() => navigate(`/content/${link.contentId}`)}
+                        onClick={() =>
+                          navigate(`/content/${link.contentId}`, {
+                            state: {
+                              ...(location.state as Record<string, unknown> | null),
+                              sourceContentId: content.id,
+                              sourceContentTitle: content.title,
+                            },
+                          })
+                        }
                         className="recommendation-nav__button w-full py-1 text-left text-sm text-slate-700"
                       >
                         {label}

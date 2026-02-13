@@ -1,10 +1,19 @@
 import { Link } from "react-router-dom";
 import { Heading } from "@digdir/designsystemet-react";
+import { Breadcrumb } from "../../components/ui/Breadcrumb";
 import { TEMASIDE_CATEGORIES } from "../../constants/temasider";
+import type { BreadcrumbItem } from "../../types/components";
 
 export function TemasideIndexPage() {
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: "Forside", href: "/" },
+    { label: "Temasider", href: "/temaside" },
+  ];
+
   return (
     <div className="max-w-screen-xl mx-auto px-6 py-8 lg:py-10">
+      <Breadcrumb items={breadcrumbItems} />
+
       <header className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 lg:px-6">
         <Heading level={1} data-size="lg" className="font-bold">
           Temasider
