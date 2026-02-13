@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useContentNavigationStore } from '../../../stores'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
-import { ContentBodyLoadingSkeleton, ContentSidebarLoadingSkeleton } from '../ContentSkeletons'
+import { ContentBodyLoadingSkeleton } from '../ContentSkeletons'
 import { PageContent } from './PageContent'
 import { SidebarTree } from './SidebarTree'
 import {
@@ -74,20 +74,42 @@ export function HierarchicalContentDisplay({
     links: content.links,
   })
 
-  const pageTree = useMemo(() => buildPageTree(loadedChapters), [loadedChapters])
+  const pageTree = useMemo(() => buildPageTree(entries), [entries])
   const activePage = useMemo(() => {
+    const asSelectable = (page?: ReturnType<typeof pageTree.pagesById.get>) =>
+      page && !page.isPlaceholder ? page : undefined
+
     const fromLocationState =
-      locationSectionId ? pageTree.pagesById.get(locationSectionId) : undefined
+      locationSectionId ? asSelectable(pageTree.pagesById.get(locationSectionId)) : undefined
     if (fromLocationState) return fromLocationState
 
-    const fromLegacyQuery = legacySectionId ? pageTree.pagesById.get(legacySectionId) : undefined
+    const fromLegacyQuery = legacySectionId
+      ? asSelectable(pageTree.pagesById.get(legacySectionId))
+      : undefined
     if (fromLegacyQuery) return fromLegacyQuery
 
-    const fromStore = storedSectionId ? pageTree.pagesById.get(storedSectionId) : undefined
+    const fromStore = storedSectionId
+      ? asSelectable(pageTree.pagesById.get(storedSectionId))
+      : undefined
     if (fromStore) return fromStore
 
-    return pageTree.pagesById.get(pageTree.rootIds[0] || '')
-  }, [legacySectionId, locationSectionId, pageTree, storedSectionId])
+    const firstRootId = pageTree.rootIds[0]
+    const firstRootPage = firstRootId ? asSelectable(pageTree.pagesById.get(firstRootId)) : undefined
+    if (firstRootPage) return firstRootPage
+
+    // Keep waiting for chapter 1 while loading to avoid jumping between chapters.
+    if (isChaptersLoading) {
+      return undefined
+    }
+
+    // If chapter 1 failed, fall back to the first loaded chapter after loading is complete.
+    const firstLoadedRootId = pageTree.rootIds.find((rootId) => {
+      const rootPage = pageTree.pagesById.get(rootId)
+      return Boolean(rootPage) && !rootPage?.isPlaceholder
+    })
+
+    return firstLoadedRootId ? pageTree.pagesById.get(firstLoadedRootId) : undefined
+  }, [isChaptersLoading, legacySectionId, locationSectionId, pageTree, storedSectionId])
   const selectedAncestorIds = getSelectedAncestorIds(pageTree.pagesById, activePage)
   const effectiveExpandedIds = useMemo(() => {
     const next = new Set(expandedIds)
@@ -142,14 +164,14 @@ export function HierarchicalContentDisplay({
   )
 
   const handleSelectPage = (pageId: string) => {
-    if (!pageTree.pagesById.has(pageId)) return
+    const page = pageTree.pagesById.get(pageId)
+    if (!page || page.isPlaceholder) return
 
     setSectionForContent(content.id, pageId)
-    if (locationSectionId !== pageId || hasLegacySectionParam) {
+    if (!isChaptersLoading && (locationSectionId !== pageId || hasLegacySectionParam)) {
       updateHistorySection(pageId, false)
     }
 
-    const page = pageTree.pagesById.get(pageId)
     setExpandedIds(() => {
       const next = getAncestorIds(pageTree.pagesById, pageId)
       if (page && page.childrenIds.length > 0) {
@@ -160,6 +182,7 @@ export function HierarchicalContentDisplay({
   }
 
   useEffect(() => {
+    if (isChaptersLoading) return
     if (!activePage?.id) return
 
     if (storedSectionId !== activePage.id) {
@@ -173,6 +196,7 @@ export function HierarchicalContentDisplay({
     activePage?.id,
     content.id,
     hasLegacySectionParam,
+    isChaptersLoading,
     locationSectionId,
     setSectionForContent,
     storedSectionId,
@@ -228,9 +252,7 @@ export function HierarchicalContentDisplay({
 
       <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
         <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
-          {isChaptersLoading ? (
-            <ContentSidebarLoadingSkeleton />
-          ) : entries.length === 0 ? (
+          {entries.length === 0 ? (
             <Paragraph style={{ marginBottom: 0, color: '#64748b' }}>
               Ingen barnesider registrert på denne siden.
             </Paragraph>
@@ -244,6 +266,11 @@ export function HierarchicalContentDisplay({
               onToggleExpanded={toggleExpanded}
               onSelectPage={handleSelectPage}
             />
+          )}
+          {isChaptersLoading && loadedChapters.length > 0 && (
+            <Paragraph data-size="sm" style={{ marginTop: 0, marginBottom: 0, color: '#64748b' }}>
+              Laster flere kapitler i bakgrunnen...
+            </Paragraph>
           )}
 
           {metadataItems.length > 0 && (
@@ -269,9 +296,9 @@ export function HierarchicalContentDisplay({
         </aside>
 
         <section className="min-w-0">
-          {isChaptersLoading && <ContentBodyLoadingSkeleton />}
+          {isChaptersLoading && !activePage && <ContentBodyLoadingSkeleton />}
 
-          {!isChaptersLoading && activePage && (
+          {activePage && (
             <PageContent
               activePage={activePage}
               pagesById={pageTree.pagesById}
@@ -281,7 +308,7 @@ export function HierarchicalContentDisplay({
             />
           )}
 
-          {!isChaptersLoading && !activePage && content.body && (
+          {!activePage && content.body && (
             <div
               className="content-html text-base leading-7 text-slate-800"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.body) }}
@@ -300,3 +327,4 @@ export function HierarchicalContentDisplay({
     </div>
   )
 }
+
