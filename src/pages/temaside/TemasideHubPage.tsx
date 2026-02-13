@@ -31,19 +31,36 @@ function buildTemasideBreadcrumbItems(
   ];
 
   const segments = temaPath.split("/").filter(Boolean);
-  let runningPath = "";
+  if (segments.length === 0) {
+    return items;
+  }
 
-  segments.forEach((segment, index) => {
-    runningPath += `/${segment}`;
-    const nodeTitle = nodeByPath.get(runningPath)?.title;
-    const fallbackTitle = index === 0 && categoryTitle ? categoryTitle : titleizeSegment(segment);
-    items.push({
-      label: nodeTitle || fallbackTitle || runningPath,
-      href: `/temaside${runningPath}`,
-    });
+  const categoryPath = `/${segments[0]}`;
+  const categoryNodeTitle = nodeByPath.get(categoryPath)?.title;
+  items.push({
+    label: categoryNodeTitle || categoryTitle || titleizeSegment(segments[0]) || categoryPath,
+    href: `/temaside${categoryPath}`,
   });
 
+  // Keep breadcrumbs compact for temasider: category + current item only.
+  if (segments.length > 1) {
+    const currentNodeTitle = nodeByPath.get(temaPath)?.title;
+    const currentSegment = segments[segments.length - 1];
+    items.push({
+      label: currentNodeTitle || titleizeSegment(currentSegment) || temaPath,
+      href: `/temaside${temaPath}`,
+    });
+  }
+
   return items;
+}
+
+function compactDetailBreadcrumbItems(items: BreadcrumbItem[]): BreadcrumbItem[] {
+  if (items.length <= 4) {
+    return items;
+  }
+
+  return [...items.slice(0, 3), items[items.length - 1]];
 }
 
 type HubLink = {
@@ -229,6 +246,8 @@ export function TemasideHubPage() {
     [temaPath, nodeByPath, category?.title],
   );
   const breadcrumbItems = trailByPath[temaPath] || generatedBreadcrumbItems;
+  const buildTrailForLinkedPath = (path: string) =>
+    compactDetailBreadcrumbItems(buildTemasideBreadcrumbItems(path, nodeByPath, category?.title));
 
   useEffect(() => {
     if (generatedBreadcrumbItems.length > 1) {
@@ -349,6 +368,7 @@ export function TemasideHubPage() {
                   <li key={item.path} className="border-b border-slate-200 last:border-b-0">
                     <Link
                       to={`/temaside${item.path}`}
+                      onClick={() => setTrail(item.path, buildTrailForLinkedPath(item.path))}
                       className="flex items-start gap-2 px-5 py-3.5 text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#005F73]"
                     >
                       <ChevronRightIcon className="mt-1 h-4 w-4 flex-shrink-0 text-[#005F73]" aria-hidden />
@@ -376,6 +396,7 @@ export function TemasideHubPage() {
                       <li key={item.path} className="border-b border-slate-200 last:border-b-0">
                         <Link
                           to={`/temaside${item.path}`}
+                          onClick={() => setTrail(item.path, buildTrailForLinkedPath(item.path))}
                           className="flex items-start gap-2 px-5 py-3.5 text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#005F73]"
                         >
                           <ChevronRightIcon className="mt-1 h-4 w-4 flex-shrink-0 text-[#005F73]" aria-hidden />
