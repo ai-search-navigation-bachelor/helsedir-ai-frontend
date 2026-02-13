@@ -1,41 +1,24 @@
 import type { ContentDisplayProps } from '../../types/pages'
+import {
+  isRecommendationContentType,
+  isRetningslinjeContentType,
+  normalizeContentType,
+  toContentTypeLabel,
+} from '../../constants/content'
 import { DetailContentDisplay } from './detail/DetailContentDisplay'
 import { HierarchicalContentDisplay } from './hierarchical/HierarchicalContentDisplay'
 import { countUniqueChildLinks } from './shared/linkUtils'
 
-const RETNINGSLINJE_TYPES = new Set(['retningslinje', 'nasjonal-faglig-retningslinje'])
-const RECOMMENDATION_TYPES = new Set(['anbefaling', 'rad', 'pakkeforlop-anbefaling'])
-const TYPE_SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
-  api: 'API',
-  pdf: 'PDF',
-  pico: 'PICO',
-}
-
-function toTypeLabel(contentType: string) {
-  const trimmed = contentType.trim().toLowerCase()
-  if (!trimmed) return 'Innhold'
-
-  return trimmed
-    .split(/[-_]/)
-    .filter(Boolean)
-    .map((segment) => {
-      const override = TYPE_SEGMENT_LABEL_OVERRIDES[segment]
-      if (override) return override
-      return segment.charAt(0).toUpperCase() + segment.slice(1)
-    })
-    .join(' ')
-}
-
 export function ContentDisplay({ content }: ContentDisplayProps) {
-  const normalizedType = content.content_type.trim().toLowerCase()
+  const normalizedType = normalizeContentType(content.content_type)
   const childrenCount = countUniqueChildLinks(content.links)
-  const typeLabel = toTypeLabel(content.content_type)
+  const typeLabel = toContentTypeLabel(content.content_type)
 
-  if (RETNINGSLINJE_TYPES.has(normalizedType)) {
+  if (isRetningslinjeContentType(normalizedType)) {
     return <HierarchicalContentDisplay key={content.id} content={content} typeLabel={typeLabel} />
   }
 
-  if (RECOMMENDATION_TYPES.has(normalizedType)) {
+  if (isRecommendationContentType(normalizedType)) {
     return <DetailContentDisplay key={content.id} content={content} />
   }
 

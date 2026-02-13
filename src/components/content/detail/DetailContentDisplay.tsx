@@ -1,17 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+﻿import { useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
-  fetchHelsedirContentById,
-  fetchHelsedirContentByTypeAndId,
-  getHelsedirEndpointByContentType,
-} from '../../../api'
-import type { NestedContent } from '../../../types'
+  getDetailContentTypeLabel,
+  isRecommendationContentType,
+  isTemasideContentType,
+  normalizeContentType,
+} from '../../../constants/content'
+import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
+import { getContentIdFromHref } from '../shared/linkUtils'
 import { getDocumentLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
 import { hasVisibleContent } from '../shared/contentTextUtils'
 
@@ -19,15 +20,6 @@ interface ContentSection {
   id: string
   title: string
   html: string
-}
-
-const RECOMMENDATION_TYPES = new Set(['anbefaling', 'rad', 'pakkeforlop-anbefaling'])
-const TEMASIDE_TYPES = new Set(['temaside', 'tema-side'])
-
-const TYPE_LABEL_BY_CONTENT_TYPE: Record<string, string> = {
-  anbefaling: 'Anbefaling',
-  rad: 'Råd',
-  'pakkeforlop-anbefaling': 'Pakkeforløp-anbefaling',
 }
 
 const LINK_LABEL_BY_REL: Record<string, string> = {
@@ -39,44 +31,6 @@ function formatDateLabel(value?: string) {
   const parsed = new Date(value)
   if (Number.isNaN(parsed.getTime())) return value
   return parsed.toLocaleDateString('nb-NO')
-}
-
-function getTypeLabel(contentType: string) {
-  return TYPE_LABEL_BY_CONTENT_TYPE[contentType] || 'Innhold'
-}
-
-function isAbortError(error: unknown) {
-  return error instanceof Error && error.name === 'AbortError'
-}
-
-function getStatusCodeFromError(error: unknown) {
-  if (!(error instanceof Error)) return null
-
-  const match = error.message.match(/\b(\d{3})\b/)
-  if (!match) return null
-
-  const statusCode = Number(match[1])
-  return Number.isNaN(statusCode) ? null : statusCode
-}
-
-function shouldFallbackToTypedEndpoint(error: unknown) {
-  if (isAbortError(error)) return false
-  const statusCode = getStatusCodeFromError(error)
-  return statusCode === 400 || statusCode === 404 || statusCode === 405
-}
-
-function getContentIdFromHref(href?: string) {
-  if (!href) return null
-
-  try {
-    const parsed = new URL(href)
-    const segments = parsed.pathname.split('/').filter(Boolean)
-    return segments[segments.length - 1] || null
-  } catch {
-    const normalized = href.split('?')[0].replace(/\/+$/, '')
-    const segments = normalized.split('/').filter(Boolean)
-    return segments[segments.length - 1] || null
-  }
 }
 
 function normalizeMetaField(value?: string | null): string | undefined {
@@ -102,7 +56,7 @@ export function DetailContentDisplay({
 }: DetailContentDisplayProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const normalizedType = content.content_type.trim().toLowerCase()
+  const normalizedType = normalizeContentType(content.content_type)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const hasBodyContent = useMemo(() => hasVisibleContent(content.body), [content.body])
   const backendPractical = content.anbefaling_fields?.praktisk || ''
@@ -117,10 +71,10 @@ export function DetailContentDisplay({
   const hasBackendRecommendationStrength = Boolean(content.anbefaling_fields?.styrke?.trim())
   const hasSufficientBackendRecommendationData =
     hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
-  const shouldSkipHelsedirEnrichment = TEMASIDE_TYPES.has(normalizedType)
+  const shouldSkipHelsedirEnrichment = isTemasideContentType(normalizedType)
   const shouldAttemptEnrichment =
     !shouldSkipHelsedirEnrichment &&
-    (RECOMMENDATION_TYPES.has(normalizedType)
+    (isRecommendationContentType(normalizedType)
       ? !hasSufficientBackendRecommendationData
       : !hasBodyContent)
 
@@ -128,25 +82,10 @@ export function DetailContentDisplay({
     data: enrichedContent,
     isLoading: isEnrichedLoading,
     error: enrichedError,
-  } = useQuery<NestedContent>({
-    queryKey: ['enriched-content', normalizedType, content.id],
-    queryFn: async ({ signal }) => {
-      try {
-        return await fetchHelsedirContentById(content.id, signal) as NestedContent
-      } catch (error) {
-        const typedEndpoint = getHelsedirEndpointByContentType(normalizedType)
-        if (!typedEndpoint || !shouldFallbackToTypedEndpoint(error)) {
-          throw error
-        }
-        return await fetchHelsedirContentByTypeAndId(
-          normalizedType,
-          content.id,
-          signal,
-        ) as NestedContent
-      }
-    },
-    enabled: Boolean(content.id) && shouldAttemptEnrichment,
-    staleTime: 10 * 60 * 1000,
+  } = useEnrichedContentQuery({
+    contentId: content.id,
+    contentType: normalizedType,
+    enabled: shouldAttemptEnrichment,
   })
 
   const sections = useMemo<ContentSection[]>(() => {
@@ -275,7 +214,7 @@ export function DetailContentDisplay({
     }
 
     if (firstPublished) {
-      items.push({ label: 'Først publisert', value: firstPublished })
+      items.push({ label: 'FÃ¸rst publisert', value: firstPublished })
     }
 
     if (updated) {
@@ -320,7 +259,7 @@ export function DetailContentDisplay({
     [content.id, supportingLinks],
   )
 
-  const typeLabel = typeLabelOverride || getTypeLabel(normalizedType)
+  const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
   const documentLinks = useMemo(
     () => getDocumentLinks(enrichedContent, content.links),
     [content.links, enrichedContent],
@@ -386,7 +325,7 @@ export function DetailContentDisplay({
           {contextualNavigationLinks.length > 0 && (
             <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
-                Gå til publikasjon
+                GÃ¥ til publikasjon
               </Heading>
               <ul className="m-0 list-none space-y-1 p-0">
                 {contextualNavigationLinks.map((link) => {
@@ -425,7 +364,7 @@ export function DetailContentDisplay({
           {metadataItems.length > 0 && (
             <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
-                Nøkkelinformasjon
+                NÃ¸kkelinformasjon
               </Heading>
               <ul className="m-0 list-none space-y-2 p-0">
                 {metadataItems.map((item) => (
@@ -468,7 +407,7 @@ export function DetailContentDisplay({
                       rel="noopener noreferrer"
                       className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
                     >
-                      Åpne side hos Helsedirektoratet
+                      Ã…pne side hos Helsedirektoratet
                     </a>
                   </li>
                 )}
@@ -481,7 +420,7 @@ export function DetailContentDisplay({
           {enrichedError && (
             <Alert data-color="warning">
               <Paragraph style={{ marginTop: 0, marginBottom: 0 }}>
-                Kunne ikke hente utvidede innholdsdetaljer fra Helsedirektoratet API akkurat nå.
+                Kunne ikke hente utvidede innholdsdetaljer fra Helsedirektoratet API akkurat nÃ¥.
               </Paragraph>
             </Alert>
           )}
@@ -501,7 +440,7 @@ export function DetailContentDisplay({
           {sections.length === 0 && (primaryDocument || shouldShowPublicationLink) && (
             <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
-                Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
+                Denne siden har ikke egen tekst. Dokumentet Ã¥pnes i ny fane.
               </Paragraph>
               <ul className="m-0 list-none space-y-2 p-0">
                 {primaryDocument && (
@@ -524,7 +463,7 @@ export function DetailContentDisplay({
                       rel="noopener noreferrer"
                       className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
                     >
-                      Åpne side hos Helsedirektoratet
+                      Ã…pne side hos Helsedirektoratet
                     </a>
                   </li>
                 )}
@@ -542,4 +481,5 @@ export function DetailContentDisplay({
     </div>
   )
 }
+
 

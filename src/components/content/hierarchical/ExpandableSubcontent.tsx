@@ -5,13 +5,13 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { formatDateLabel, getNodeTitle } from './treeUtils'
 
+const MAX_SUBCONTENT_DEPTH = 8
+
 interface ExpandableSubcontentProps {
   item: NestedContent
   itemKey: string
   depth?: number
 }
-
-const MAX_SUBCONTENT_DEPTH = 8
 
 function getNodeType(node: NestedContent) {
   return (

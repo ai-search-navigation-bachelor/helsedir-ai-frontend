@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useContentNavigationStore } from '../../../stores'
+import { useHierarchicalChapters } from '../../../hooks/queries/useHierarchicalChapters'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { ContentBodyLoadingSkeleton } from '../ContentSkeletons'
@@ -14,7 +15,6 @@ import {
   getAncestorIds,
   getSelectedAncestorIds,
 } from './treeUtils'
-import { useHierarchicalChapters } from './useHierarchicalChapters'
 
 function getSectionIdFromLocationState(state: unknown) {
   if (!state || typeof state !== 'object') return null

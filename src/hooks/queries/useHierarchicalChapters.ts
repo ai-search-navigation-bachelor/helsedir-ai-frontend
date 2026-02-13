@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
-import { fetchChapterWithSubchapters } from '../../../api'
-import type { ContentLink } from '../../../types'
-import { getUniqueChildLinks } from '../shared/linkUtils'
-import type { ChapterEntry } from './types'
+import { fetchChapterWithSubchapters } from '../../api'
+import type { ContentLink } from '../../types'
+import { getUniqueChildLinks } from '../../components/content/shared/linkUtils'
+import type { ChapterEntry } from '../../components/content/hierarchical/types'
 
 interface UseHierarchicalChaptersOptions {
   contentId: string
