@@ -1,4 +1,5 @@
 import { Alert, Paragraph } from "@digdir/designsystemet-react";
+import { useMemo } from "react";
 import { SearchResultCard } from "./SearchResultCard";
 import type { SearchResult } from "../../../types";
 
@@ -20,6 +21,30 @@ export function SearchResultsList({
   activeTab = "all",
   activeTabLabel,
 }: SearchResultsListProps) {
+  const sourceTemasideByContentId = useMemo(() => {
+    const map = new Map<string, string>();
+
+    results.forEach((result) => {
+      if (result.info_type !== "temaside" || !Array.isArray(result.children)) {
+        return;
+      }
+
+      result.children.forEach((group) => {
+        if (!Array.isArray(group.items)) {
+          return;
+        }
+
+        group.items.forEach((item) => {
+          if (!map.has(item.id)) {
+            map.set(item.id, result.id);
+          }
+        });
+      });
+    });
+
+    return map;
+  }, [results]);
+
   const normalizedLabel = (activeTabLabel || "").trim().toLocaleLowerCase("nb-NO");
   const resultsLabel =
     activeTab === "all" || !normalizedLabel
@@ -44,7 +69,11 @@ export function SearchResultsList({
         <div className="divide-y divide-gray-200">
           {results.map((result, index) => (
             <div key={`${result.id}-${index}`} className="py-4 first:pt-0">
-              <SearchResultCard result={result} />
+              <SearchResultCard
+                result={result}
+                searchQuery={searchQuery}
+                sourceTemasideId={sourceTemasideByContentId.get(result.id)}
+              />
             </div>
           ))}
         </div>

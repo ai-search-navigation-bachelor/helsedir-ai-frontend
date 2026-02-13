@@ -8,9 +8,15 @@ interface SearchResultCardProps {
     categoryName: string;
     categoryId: string;
   };
+  searchQuery: string;
+  sourceTemasideId?: string;
 }
 
-export function SearchResultCard({ result }: SearchResultCardProps) {
+export function SearchResultCard({
+  result,
+  searchQuery,
+  sourceTemasideId,
+}: SearchResultCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [pinnedChildGroupKey, setPinnedChildGroupKey] = useState<string | null>(
     null,
@@ -77,6 +83,15 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
     >
       <Link
         to={contentHref}
+        state={{
+          fromSearch: true,
+          searchQuery,
+          sourceTemasideId,
+          sourceContentId: sourceTemasideId,
+          sourceContentTitle: sourceTemasideId ? undefined : result.title,
+          searchCategoryId: result.categoryId,
+          searchCategoryName: result.categoryName,
+        }}
         aria-label={`Åpne ${result.title}`}
         className="absolute inset-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005F73]"
       />
@@ -140,6 +155,15 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
                         <Link
                           key={item.id}
                           to={`/content/${item.id}`}
+                          state={{
+                            fromSearch: true,
+                            searchQuery,
+                            sourceTemasideId: result.id,
+                            sourceContentId: result.id,
+                            sourceContentTitle: result.title,
+                            searchCategoryId: group.info_type,
+                            searchCategoryName: group.display_name,
+                          }}
                           className="group/item w-full rounded-md border border-transparent px-2 py-1.5 text-left text-sm text-sky-800 hover:bg-sky-50 hover:border-sky-200 cursor-pointer"
                         >
                           <span className="inline-flex w-full items-center justify-between gap-2">

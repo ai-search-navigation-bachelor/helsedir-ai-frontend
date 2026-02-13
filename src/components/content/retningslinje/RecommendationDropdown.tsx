@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Paragraph } from '@digdir/designsystemet-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { formatDateLabel, getNodeTitle } from './treeUtils'
 
@@ -19,6 +19,8 @@ export function RecommendationDropdown({
   depth = 0,
 }: RecommendationDropdownProps) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { id: currentContentId } = useParams<{ id: string }>()
   const title = getNodeTitle(item)
   const intro = item.intro || ''
   const body = item.tekst || item.body || ''
@@ -60,7 +62,12 @@ export function RecommendationDropdown({
               onClick={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
-                navigate(`/content/${item.id}`)
+                navigate(`/content/${item.id}`, {
+                  state: {
+                    ...(location.state as Record<string, unknown> | null),
+                    sourceContentId: currentContentId,
+                  },
+                })
               }}
               className="recommendation-open-page__button recommendation-open-page__button--compact"
             >
