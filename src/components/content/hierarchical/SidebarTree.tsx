@@ -65,6 +65,7 @@ export function SidebarTree({
 
           <button
             type="button"
+            disabled={isPlaceholder}
             onClick={() => {
               if (!isPlaceholder) {
                 onSelectPage(page.id)
