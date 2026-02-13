@@ -1,7 +1,7 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Alert, Paragraph } from '@digdir/designsystemet-react'
-import { getContent } from '../api'
+import { fetchHelsedirContentById, fetchHelsedirContentByTypeAndId, getContent } from '../api'
 import {
   getMainCategoryBySubcategory,
   SEARCH_MAIN_CATEGORIES,
@@ -13,7 +13,27 @@ import { useTemasideBreadcrumbStore } from '../stores'
 import { ContentDisplay } from '../components/content'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
+import { hasVisibleContent } from '../components/content/shared/contentTextUtils'
 import type { BreadcrumbItem } from '../types/components'
+import type { ContentDetail as ContentDetailData, ContentLink, NestedContent } from '../types'
+
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === 'AbortError'
+}
+
+function getStatusCodeFromError(error: unknown) {
+  if (!(error instanceof Error)) return null
+  const match = error.message.match(/\b(\d{3})\b/)
+  if (!match) return null
+  const statusCode = Number(match[1])
+  return Number.isNaN(statusCode) ? null : statusCode
+}
+
+function shouldFallbackToTypedEndpoint(error: unknown) {
+  if (isAbortError(error)) return false
+  const statusCode = getStatusCodeFromError(error)
+  return statusCode === 400 || statusCode === 404 || statusCode === 405
+}
 
 function normalizePath(path: string) {
   return (path || '/').replace(/\/+$/, '') || '/'
@@ -33,6 +53,107 @@ function getContentIdFromHref(href?: string | null): string | null {
   }
 }
 
+function toContentLinks(source: NestedContent): ContentLink[] {
+  const rawLinks = [...(source.links ?? []), ...(source.lenker ?? [])]
+  const seen = new Set<string>()
+  const result: ContentLink[] = []
+
+  for (const link of rawLinks) {
+    const href = link.href?.trim()
+    if (!href || seen.has(href)) continue
+    seen.add(href)
+    result.push({
+      rel: link.rel || 'related',
+      type: link.type || 'link',
+      tittel: link.tittel || 'Lenke',
+      href,
+      strukturId: undefined,
+    })
+  }
+
+  return result
+}
+
+function mapHelsedirContentToDetail(source: NestedContent): ContentDetailData {
+  const contentType =
+    source.type?.trim().toLowerCase() ||
+    source.tekniskeData?.infoType?.trim().toLowerCase() ||
+    'innhold'
+
+  return {
+    id: source.id,
+    title: source.tittel || source.title || source.id,
+    body: source.tekst || source.body || '',
+    content_type: contentType,
+    links: toContentLinks(source),
+  }
+}
+
+function getNormalizedHelsedirType(source: NestedContent) {
+  return (
+    source.type?.trim().toLowerCase() ||
+    source.tekniskeData?.infoType?.trim().toLowerCase() ||
+    ''
+  )
+}
+
+function seedEnrichedContentCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  contentId: string,
+  enrichedContent: NestedContent,
+  extraTypeCandidates: string[] = [],
+) {
+  const typeCandidates = new Set<string>([
+    getNormalizedHelsedirType(enrichedContent),
+    ...extraTypeCandidates.map((type) => type.trim().toLowerCase()),
+  ])
+
+  for (const type of typeCandidates) {
+    if (!type) continue
+    queryClient.setQueryData(['enriched-content', type, contentId], enrichedContent)
+  }
+}
+
+function mergeContentLinks(
+  backendLinks?: ContentLink[],
+  helsedirLinks?: ContentLink[],
+) {
+  const merged: ContentLink[] = []
+  const seen = new Set<string>()
+
+  for (const link of [...(backendLinks ?? []), ...(helsedirLinks ?? [])]) {
+    const href = link.href?.trim()
+    if (!href) continue
+    const key = `${link.rel}|${link.type}|${href}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    merged.push(link)
+  }
+
+  return merged.length > 0 ? merged : undefined
+}
+
+function mergeBackendWithHelsedir(
+  backendContent: ContentDetailData,
+  helsedirContent: ContentDetailData,
+): ContentDetailData {
+  const backendBody = backendContent.body || ''
+  const shouldUseHelsedirBody = !hasVisibleContent(backendBody) && hasVisibleContent(helsedirContent.body)
+  const backendContentTypeTrimmed = backendContent.content_type?.trim()
+  const preferredBackendType =
+    backendContentTypeTrimmed && backendContentTypeTrimmed.toLowerCase() !== 'innhold'
+      ? backendContent.content_type
+      : ''
+
+  return {
+    ...backendContent,
+    title: backendContent.title?.trim() || helsedirContent.title,
+    body: shouldUseHelsedirBody ? helsedirContent.body : backendBody,
+    content_type: preferredBackendType || helsedirContent.content_type || backendContent.content_type,
+    links: mergeContentLinks(backendContent.links, helsedirContent.links),
+  }
+}
+
 function getTemasideCategoryByPath(path: string) {
   return TEMASIDE_CATEGORIES.find((category) => category.path === path)
 }
@@ -41,42 +162,30 @@ function getTemasideCategoryPathFromContentLinks(
   links: Array<{ rel: string; href: string }> | undefined,
 ): string | null {
   const parentHref = links?.find((link) => link.rel === 'forelder')?.href
-  if (!parentHref) {
-    return null
-  }
+  if (!parentHref) return null
 
   const segments = normalizePath(parentHref).split('/').filter(Boolean)
-  if (segments.length === 0) {
-    return null
-  }
+  if (segments.length === 0) return null
 
   return `/${segments[0]}`
 }
 
 function getSourceTemasideIdFromLocationState(state: unknown): string | null {
-  if (!state || typeof state !== 'object') {
-    return null
-  }
+  if (!state || typeof state !== 'object') return null
 
   const sourceTemasideId = (state as { sourceTemasideId?: unknown }).sourceTemasideId
-  if (typeof sourceTemasideId !== 'string') {
-    return null
-  }
+  if (typeof sourceTemasideId !== 'string') return null
 
   const trimmed = sourceTemasideId.trim()
   return trimmed.length > 0 ? trimmed : null
 }
 
 function getSearchQueryFromLocationState(state: unknown): string | null {
-  if (!state || typeof state !== 'object') {
-    return null
-  }
+  if (!state || typeof state !== 'object') return null
 
   const fromSearch = (state as { fromSearch?: unknown }).fromSearch
   const searchQuery = (state as { searchQuery?: unknown }).searchQuery
-  if (fromSearch !== true || typeof searchQuery !== 'string') {
-    return null
-  }
+  if (fromSearch !== true || typeof searchQuery !== 'string') return null
 
   const trimmed = searchQuery.trim()
   return trimmed.length > 0 ? trimmed : null
@@ -112,9 +221,7 @@ function getSearchCategoryContextFromLocationState(
 function getSourceContentContextFromLocationState(
   state: unknown,
 ): { id: string | null; title: string | null } {
-  if (!state || typeof state !== 'object') {
-    return { id: null, title: null }
-  }
+  if (!state || typeof state !== 'object') return { id: null, title: null }
 
   const rawSourceContentId = (state as { sourceContentId?: unknown }).sourceContentId
   const rawSourceContentTitle = (state as { sourceContentTitle?: unknown }).sourceContentTitle
@@ -135,8 +242,11 @@ export function ContentDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
+  const queryClient = useQueryClient()
 
   const searchId = useSearchStore((state) => state.searchId)
+  const routeState = (location.state as { contentType?: string } | null) ?? null
+  const routeContentType = routeState?.contentType?.trim().toLowerCase() || ''
   const temasideTrailByPath = useTemasideBreadcrumbStore((state) => state.trailByPath)
   const temasideLastPath = useTemasideBreadcrumbStore((state) => state.lastPath)
 
@@ -149,14 +259,71 @@ export function ContentDetail() {
     getSourceContentContextFromLocationState(location.state)
 
   const { data: content, isLoading, error } = useQuery({
-    queryKey: ['content', id, effectiveSearchId],
+    queryKey: ['content', id, effectiveSearchId, routeContentType],
     queryFn: async ({ signal }) => {
       if (!id) throw new Error('ID mangler')
-      return getContent(id, effectiveSearchId, { signal })
+
+      const fetchFromBackend = async () =>
+        getContent(id, effectiveSearchId, { signal, suppressErrorStatuses: [404] })
+
+      const fetchFromHelsedir = async () => {
+        try {
+          return await fetchHelsedirContentById(id, signal) as NestedContent
+        } catch (helsedirError) {
+          if (!routeContentType || !shouldFallbackToTypedEndpoint(helsedirError)) {
+            throw helsedirError
+          }
+          return await fetchHelsedirContentByTypeAndId(
+            routeContentType,
+            id,
+            signal,
+          ) as NestedContent
+        }
+      }
+
+      try {
+        const backendContent = await fetchFromBackend()
+
+        try {
+          const helsedirContent = await fetchFromHelsedir()
+          const mappedHelsedirContent = mapHelsedirContentToDetail(helsedirContent)
+          const mergedContent = mergeBackendWithHelsedir(backendContent, mappedHelsedirContent)
+
+          seedEnrichedContentCache(queryClient, id, helsedirContent, [
+            routeContentType,
+            backendContent.content_type,
+            mergedContent.content_type,
+          ])
+
+          return mergedContent
+        } catch (helsedirError) {
+          if (isAbortError(helsedirError) || signal.aborted) {
+            throw helsedirError
+          }
+          return backendContent
+        }
+      } catch (backendError) {
+        if (isAbortError(backendError) || signal.aborted) {
+          throw backendError
+        }
+
+        if (!shouldFallbackToTypedEndpoint(backendError)) {
+          throw backendError
+        }
+
+        const helsedirContent = await fetchFromHelsedir()
+        const mappedHelsedirContent = mapHelsedirContentToDetail(helsedirContent)
+        seedEnrichedContentCache(queryClient, id, helsedirContent, [
+          routeContentType,
+          mappedHelsedirContent.content_type,
+        ])
+        return mappedHelsedirContent
+      }
     },
     enabled: !!id,
     staleTime: 10 * 60 * 1000,
   })
+
   const { data: sourceTemasideContent } = useQuery({
     queryKey: ['content', sourceTemasideId, effectiveSearchId],
     queryFn: async ({ signal }) => {
@@ -166,6 +333,7 @@ export function ContentDetail() {
     enabled: Boolean(sourceTemasideId && sourceTemasideId !== id),
     staleTime: 10 * 60 * 1000,
   })
+
   const { data: sourceContentForBreadcrumb } = useQuery({
     queryKey: ['content', sourceContentId, effectiveSearchId],
     queryFn: async ({ signal }) => {
@@ -187,6 +355,7 @@ export function ContentDetail() {
         { label: content.title, href: '#' },
       ]
     : []
+
   const searchMainCategoryId = searchCategoryId
     ? getMainCategoryBySubcategory(searchCategoryId)
     : undefined
@@ -198,10 +367,12 @@ export function ContentDetail() {
       ? SEARCH_SUBCATEGORY_LABELS[searchCategoryId as keyof typeof SEARCH_SUBCATEGORY_LABELS]
       : undefined
   )
+
   const rootLink = content?.links?.find((link) => link.rel === 'root')
   const parentLink = content?.links?.find((link) => link.rel === 'forelder')
   const rootContentId = getContentIdFromHref(rootLink?.href)
   const parentContentId = getContentIdFromHref(parentLink?.href)
+
   const linkHierarchyBreadcrumbItems: BreadcrumbItem[] =
     content && (rootContentId || parentContentId)
       ? [
@@ -218,39 +389,31 @@ export function ContentDetail() {
           { label: content.title, href: '#' },
         ]
       : []
+
   const searchHierarchyBreadcrumbItems: BreadcrumbItem[] =
     content && searchReturnQuery && content.content_type !== 'temaside'
       ? [
           { label: 'Forside', href: '/' },
           { label: 'Søk', href: '#' },
           ...(searchMainCategoryId && searchMainCategoryLabel
-            ? [
-                {
-                  label: searchMainCategoryLabel,
-                  href: '#',
-                },
-              ]
+            ? [{ label: searchMainCategoryLabel, href: '#' }]
             : []),
           ...(searchCategoryId && searchSubcategoryLabel && searchCategoryId !== searchMainCategoryId
-            ? [
-                {
-                  label: searchSubcategoryLabel,
-                  href: '#',
-                },
-              ]
+            ? [{ label: searchSubcategoryLabel, href: '#' }]
             : []),
           { label: content.title, href: '#' },
         ]
       : []
+
   const temasideCategoryPath = getTemasideCategoryPathFromContentLinks(content?.links)
   const temasideCategory = temasideCategoryPath
     ? getTemasideCategoryByPath(temasideCategoryPath)
     : undefined
+
   const temasideCanonicalBreadcrumbItems: BreadcrumbItem[] =
     content?.content_type === 'temaside' && temasideCategoryPath
       ? [
           { label: 'Forside', href: '/' },
-          { label: 'Temasider', href: '/temaside' },
           {
             label: temasideCategory?.title || content.title,
             href: `/temaside${temasideCategoryPath}`,
@@ -260,15 +423,16 @@ export function ContentDetail() {
             : []),
         ]
       : []
+
   const sourceTemasideCategoryPath = getTemasideCategoryPathFromContentLinks(sourceTemasideContent?.links)
   const sourceTemasideCategory = sourceTemasideCategoryPath
     ? getTemasideCategoryByPath(sourceTemasideCategoryPath)
     : undefined
+
   const relatedTemasideBreadcrumbItems: BreadcrumbItem[] =
     content && content.content_type !== 'temaside' && sourceTemasideContent && sourceTemasideCategoryPath
       ? [
           { label: 'Forside', href: '/' },
-          { label: 'Temasider', href: '/temaside' },
           {
             label: sourceTemasideCategory?.title || sourceTemasideContent.title,
             href: `/temaside${sourceTemasideCategoryPath}`,
@@ -277,7 +441,9 @@ export function ContentDetail() {
           { label: content.title, href: '#' },
         ]
       : []
+
   const sourceContentTitle = sourceContentTitleFromState || sourceContentForBreadcrumb?.title || null
+
   const extendedTemasideBreadcrumbItems: BreadcrumbItem[] =
     content &&
     content.content_type !== 'temaside' &&
@@ -289,7 +455,6 @@ export function ContentDetail() {
     sourceContentTitle
       ? [
           { label: 'Forside', href: '/' },
-          { label: 'Temasider', href: '/temaside' },
           {
             label: sourceTemasideCategory?.title || sourceTemasideContent.title,
             href: `/temaside${sourceTemasideCategoryPath}`,
@@ -300,16 +465,22 @@ export function ContentDetail() {
         ]
       : []
 
+  const sanitizeTemasideItems = (items: BreadcrumbItem[]) =>
+    items.filter((item) => item.label.toLowerCase() !== 'temasider')
+
   const temasideBreadcrumbItems: BreadcrumbItem[] =
     !searchReturnQuery && temasideLastPath && temasideTrailByPath[temasideLastPath]
       ? [
-          ...temasideTrailByPath[temasideLastPath].slice(
-            0,
-            Math.max(temasideTrailByPath[temasideLastPath].length - 1, 0),
+          ...sanitizeTemasideItems(
+            temasideTrailByPath[temasideLastPath].slice(
+              0,
+              Math.max(temasideTrailByPath[temasideLastPath].length - 1, 0),
+            ),
           ),
           { label: content?.title || 'Laster...', href: '#' },
         ]
       : []
+
   const activeBreadcrumbItems =
     temasideCanonicalBreadcrumbItems.length > 0
       ? temasideCanonicalBreadcrumbItems
@@ -326,19 +497,9 @@ export function ContentDetail() {
                 : fallbackBreadcrumbItems
 
   return (
-    <div className="max-w-screen-xl mx-auto px-8 pt-4 pb-8">
+    <div className="max-w-screen-xl mx-auto px-6 pt-10 pb-8">
       {activeBreadcrumbItems.length > 0 ? (
-        <Breadcrumb
-          items={activeBreadcrumbItems}
-          leadingAction={
-            searchReturnQuery
-              ? {
-                  label: 'Til søkeresultat',
-                  href: `/search?query=${encodeURIComponent(searchReturnQuery)}`,
-                }
-              : undefined
-          }
-        />
+        <Breadcrumb items={activeBreadcrumbItems} />
       ) : (
         <Button
           variant='tertiary'

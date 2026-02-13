@@ -5,19 +5,38 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { formatDateLabel, getNodeTitle } from './treeUtils'
 
-interface RecommendationDropdownProps {
+interface ExpandableSubcontentProps {
   item: NestedContent
   itemKey: string
   depth?: number
 }
 
-const MAX_RECOMMENDATION_DEPTH = 8
+const MAX_SUBCONTENT_DEPTH = 8
 
-export function RecommendationDropdown({
+function getNodeType(node: NestedContent) {
+  return (
+    node.type ||
+    node.tekniskeData?.subtype ||
+    node.tekniskeData?.infoType ||
+    ''
+  ).trim().toLowerCase()
+}
+
+function isReferenceNode(node: NestedContent) {
+  const normalizedType = getNodeType(node)
+  return normalizedType.includes('referanse')
+}
+
+function isPicoNode(node: NestedContent) {
+  const normalizedType = getNodeType(node)
+  return normalizedType.includes('pico')
+}
+
+export function ExpandableSubcontent({
   item,
   itemKey,
   depth = 0,
-}: RecommendationDropdownProps) {
+}: ExpandableSubcontentProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { id: currentContentId } = useParams<{ id: string }>()
@@ -33,7 +52,11 @@ export function RecommendationDropdown({
   const rationale = item.data?.rasjonale || ''
   const tradeoffs = item.data?.nokkelInfo?.fordelerogulemper || ''
   const preferences = item.data?.nokkelInfo?.verdierogpreferanser || ''
-  const hasStandalonePage = Boolean(item.id)
+  const hasStandalonePage = Boolean(item.id) && !isReferenceNode(item) && !isPicoNode(item)
+  const children = item.children ?? []
+  const picoChildren = children.filter((child) => isPicoNode(child))
+  const referenceChildren = children.filter((child) => isReferenceNode(child))
+  const nestedChildren = children.filter((child) => !isReferenceNode(child) && !isPicoNode(child))
 
   return (
     <details key={itemKey} className="mb-3 rounded-lg border border-slate-200 bg-white">
@@ -62,10 +85,12 @@ export function RecommendationDropdown({
               onClick={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
+                if (!item.id) return
                 navigate(`/content/${item.id}`, {
                   state: {
                     ...(location.state as Record<string, unknown> | null),
                     sourceContentId: currentContentId,
+                    ...(item.type ? { contentType: item.type } : {}),
                   },
                 })
               }}
@@ -153,10 +178,50 @@ export function RecommendationDropdown({
           </details>
         )}
 
-        {depth < MAX_RECOMMENDATION_DEPTH && item.children && item.children.length > 0 && (
+        {referenceChildren.length > 0 && (
+          <details className="mt-2 rounded-md border border-slate-200 bg-slate-50">
+            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
+              Referanser
+            </summary>
+            <div className="px-3 pb-3">
+              <ul className="m-0 list-disc space-y-2 pl-5">
+                {referenceChildren.map((reference, index) => (
+                  <li
+                    key={`${itemKey}-reference-${reference.id || index}`}
+                    className="text-sm leading-6 text-slate-800"
+                  >
+                    {getNodeTitle(reference)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
+        )}
+
+        {picoChildren.length > 0 && (
+          <details className="mt-2 rounded-md border border-slate-200 bg-slate-50">
+            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
+              PICO-er
+            </summary>
+            <div className="px-3 pb-3">
+              <ul className="m-0 list-disc space-y-2 pl-5">
+                {picoChildren.map((pico, index) => (
+                  <li
+                    key={`${itemKey}-pico-${pico.id || index}`}
+                    className="text-sm leading-6 text-slate-800"
+                  >
+                    {getNodeTitle(pico)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
+        )}
+
+        {depth < MAX_SUBCONTENT_DEPTH && nestedChildren.length > 0 && (
           <div className="mt-3 space-y-2">
-            {item.children.map((child, index) => (
-              <RecommendationDropdown
+            {nestedChildren.map((child, index) => (
+              <ExpandableSubcontent
                 key={`${itemKey}-child-${child.id || index}`}
                 item={child}
                 itemKey={`${itemKey}-child-${child.id || index}`}
@@ -165,7 +230,6 @@ export function RecommendationDropdown({
             ))}
           </div>
         )}
-
       </div>
     </details>
   )

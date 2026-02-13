@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { IoArrowForward } from "react-icons/io5";
-import type { SearchResult } from "../../../types";
+import type { SearchResult } from "../../types";
 
 interface SearchResultCardProps {
   result: SearchResult & {

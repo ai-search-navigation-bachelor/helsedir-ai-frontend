@@ -1,7 +1,7 @@
 import { Alert, Paragraph } from "@digdir/designsystemet-react";
 import { useMemo } from "react";
 import { SearchResultCard } from "./SearchResultCard";
-import type { SearchResult } from "../../../types";
+import type { SearchResult } from "../../types";
 
 interface SearchResultsListProps {
   results: Array<

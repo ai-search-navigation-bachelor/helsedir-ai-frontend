@@ -12,6 +12,7 @@ import { BACKEND_BASE_URL } from './backendBaseUrl'
  */
 export interface ContentOptions extends BaseRequestOptions {
   depth?: number
+  suppressErrorStatuses?: number[]
 }
 
 /**
@@ -20,7 +21,7 @@ export interface ContentOptions extends BaseRequestOptions {
 export async function getContent(
   contentId: string,
   searchId?: string,
-  { signal }: BaseRequestOptions = {},
+  { signal, suppressErrorStatuses }: ContentOptions = {},
 ): Promise<ContentDetail> {
   const trimmed = contentId.trim()
 
@@ -32,7 +33,7 @@ export async function getContent(
     search_id: searchId,
   })
 
-  return httpRequest<ContentDetail>(url, { signal })
+  return httpRequest<ContentDetail>(url, { signal, suppressErrorStatuses })
 }
 
 /**

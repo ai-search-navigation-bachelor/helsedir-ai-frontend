@@ -78,7 +78,7 @@ export function SidebarTree({
   }
 
   return (
-    <nav aria-label="Retningslinje sider">
+    <nav aria-label="Innholdssider">
       <ul className="m-0 list-none border-t border-slate-200 p-0">
         {rootIds.map((rootId) => renderNode(rootId))}
       </ul>

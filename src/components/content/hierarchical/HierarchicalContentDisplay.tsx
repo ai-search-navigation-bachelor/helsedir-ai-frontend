@@ -1,19 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
-import { Alert, Paragraph } from '@digdir/designsystemet-react'
+import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useContentNavigationStore } from '../../stores'
-import type { ContentDisplayProps } from '../../types/pages'
-import { ContentPageHeader } from './ContentPageHeader'
-import { ContentBodyLoadingSkeleton, ContentSidebarLoadingSkeleton } from './ContentSkeletons'
-import { PageContent } from './retningslinje/PageContent'
-import { SidebarTree } from './retningslinje/SidebarTree'
+import { useContentNavigationStore } from '../../../stores'
+import type { ContentDisplayProps } from '../../../types/pages'
+import { ContentPageHeader } from '../ContentPageHeader'
+import { ContentBodyLoadingSkeleton, ContentSidebarLoadingSkeleton } from '../ContentSkeletons'
+import { PageContent } from './PageContent'
+import { SidebarTree } from './SidebarTree'
 import {
   buildPageTree,
+  formatDateLabel,
   getAncestorIds,
   getSelectedAncestorIds,
-} from './retningslinje/treeUtils'
-import { useRetningslinjeChapters } from './retningslinje/useRetningslinjeChapters'
+} from './treeUtils'
+import { useHierarchicalChapters } from './useHierarchicalChapters'
 
 function getSectionIdFromLocationState(state: unknown) {
   if (!state || typeof state !== 'object') return null
@@ -28,7 +29,14 @@ function toLocationStateObject(state: unknown) {
   return state as Record<string, unknown>
 }
 
-export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
+interface HierarchicalContentDisplayProps extends ContentDisplayProps {
+  typeLabel?: string
+}
+
+export function HierarchicalContentDisplay({
+  content,
+  typeLabel = 'Retningslinje',
+}: HierarchicalContentDisplayProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
@@ -61,7 +69,7 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
     loadedChapters,
     failedEntries,
     isChaptersLoading,
-  } = useRetningslinjeChapters({
+  } = useHierarchicalChapters({
     contentId: content.id,
     links: content.links,
   })
@@ -186,17 +194,45 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
     })
   }
 
+  const metadataItems = useMemo(() => {
+    if (!activePage?.node) return []
+
+    const items: Array<{ label: string; value: string }> = []
+    const node = activePage.node
+
+    if (node.status) {
+      items.push({ label: 'Status', value: node.status })
+    }
+
+    const firstPublished = formatDateLabel(node.forstPublisert)
+    if (firstPublished) {
+      items.push({ label: 'Først publisert', value: firstPublished })
+    }
+
+    const updated = formatDateLabel(node.sistOppdatert)
+    if (updated) {
+      items.push({ label: 'Sist oppdatert', value: updated })
+    }
+
+    const professionallyUpdated = formatDateLabel(node.sistFagligOppdatert)
+    if (professionallyUpdated) {
+      items.push({ label: 'Sist faglig oppdatert', value: professionallyUpdated })
+    }
+
+    return items
+  }, [activePage])
+
   return (
     <div className="flex flex-col gap-8">
-      <ContentPageHeader typeLabel="Retningslinje" title={content.title} />
+      <ContentPageHeader typeLabel={typeLabel} title={content.title} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
-        <aside className="border-slate-200 lg:border-r lg:pr-6">
+        <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
           {isChaptersLoading ? (
             <ContentSidebarLoadingSkeleton />
           ) : entries.length === 0 ? (
             <Paragraph style={{ marginBottom: 0, color: '#64748b' }}>
-              Ingen barnesider registrert på denne retningslinjen.
+              Ingen barnesider registrert på denne siden.
             </Paragraph>
           ) : (
             <SidebarTree
@@ -208,6 +244,26 @@ export function RetningslinjeContentDisplay({ content }: ContentDisplayProps) {
               onToggleExpanded={toggleExpanded}
               onSelectPage={handleSelectPage}
             />
+          )}
+
+          {metadataItems.length > 0 && (
+            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
+                Nøkkelinformasjon
+              </Heading>
+              <ul className="m-0 list-none space-y-2 p-0">
+                {metadataItems.map((item) => (
+                  <li key={item.label}>
+                    <Paragraph
+                      data-size="sm"
+                      style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}
+                    >
+                      <span className="font-semibold">{item.label}:</span> {item.value}
+                    </Paragraph>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
 
         </aside>

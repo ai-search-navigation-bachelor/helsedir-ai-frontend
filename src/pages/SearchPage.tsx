@@ -12,7 +12,7 @@ import {
   SearchCategoryTabs,
   SearchResultsList,
   SearchEmptyState,
-} from '../components/content/search';
+} from '../components/search';
 import {
   SEARCH_SUBCATEGORY_LABELS,
   SEARCH_MAIN_CATEGORIES,
