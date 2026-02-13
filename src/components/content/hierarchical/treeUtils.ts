@@ -1,4 +1,5 @@
 import type { NestedContent } from '../../../types'
+export { formatDateLabel } from '../../../lib/content/date'
 import type { ChapterEntry, PageNode, TreeResult } from './types'
 export { hasVisibleContent } from '../shared/contentTextUtils'
 
@@ -9,13 +10,6 @@ export function getNodeTitle(node: NestedContent, fallback = 'Uten tittel') {
 export function getNodeType(node: NestedContent) {
   if (!node.type) return ''
   return node.type.trim().toLowerCase()
-}
-
-export function formatDateLabel(value?: string) {
-  if (!value) return ''
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  return parsed.toLocaleDateString('nb-NO')
 }
 
 function toNodeId(chapterIndex: number, path: number[]) {
