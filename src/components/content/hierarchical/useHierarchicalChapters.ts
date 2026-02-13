@@ -45,29 +45,25 @@ export function useHierarchicalChapters({
     })),
   })
 
-  const entries: ChapterEntry[] = useMemo(
-    () =>
-      childrenLinks.map((link, index) => {
-        const query = chapterQueries[index]
-        if (!query) return { index, link }
-        if (!link.href) return { index, link, fetchError: 'Mangler href i barnelenke' }
-        if (query.data) return { index, link, chapter: query.data }
-        if (
-          !query.isPending &&
-          query.error &&
-          !isCancellationError(query.error)
-        ) {
-          return {
-            index,
-            link,
-            fetchError:
-              query.error instanceof Error ? query.error.message : 'Ukjent feil',
-          }
-        }
-        return { index, link }
-      }),
-    [chapterQueries, childrenLinks],
-  )
+  const entries: ChapterEntry[] = childrenLinks.map((link, index) => {
+    const query = chapterQueries[index]
+    if (!query) return { index, link }
+    if (!link.href) return { index, link, fetchError: 'Mangler href i barnelenke' }
+    if (query.data) return { index, link, chapter: query.data }
+    if (
+      !query.isPending &&
+      query.error &&
+      !isCancellationError(query.error)
+    ) {
+      return {
+        index,
+        link,
+        fetchError:
+          query.error instanceof Error ? query.error.message : 'Ukjent feil',
+      }
+    }
+    return { index, link }
+  })
   const isChaptersLoading = chapterQueries.some((query) => query.isPending || query.isFetching)
   const loadedChapters = entries.filter(
     (entry): entry is ChapterEntry & { chapter: NonNullable<ChapterEntry['chapter']> } => Boolean(entry.chapter)

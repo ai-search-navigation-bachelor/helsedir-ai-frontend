@@ -85,6 +85,7 @@ function normalizeMetaField(value?: string | null): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined
 }
 
+// `null` and `undefined` are intentionally treated as "no value".
 function chooseMetaField(primary?: string | null, secondary?: string | null): string | undefined {
   return normalizeMetaField(primary) ?? normalizeMetaField(secondary)
 }
@@ -325,7 +326,7 @@ export function DetailContentDisplay({
     [content.links, enrichedContent],
   )
   const publicationUrl = useMemo(() => {
-    const url = enrichedContent?.url?.trim() || content.url?.trim()
+    const url = content.url?.trim() || enrichedContent?.url?.trim()
     if (!url) return null
     return documentLinks.some((document) => document.href === url) ? null : url
   }, [content.url, documentLinks, enrichedContent?.url])

@@ -34,6 +34,7 @@ export interface ContentDetail {
     rasjonale?: string
     fordeler_ulemper?: string
     verdier_preferanser?: string
+    // Backend can return additional recommendation fields not yet shown in UI.
     kvalitet_dokumentasjon?: string
     ressurshensyn?: string
     styrke?: string

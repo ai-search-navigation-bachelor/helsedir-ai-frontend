@@ -217,19 +217,18 @@ Tolking:
 - Endepunktene finnes, men stabiliteten varierer.
 - Legg inn retry/backoff i klienten.
 
-## 9.1 Viktig observasjon for anbefaling/rad i frontend (verifisert 2026-02-09)
+## 9.1 Viktig observasjon for anbefaling/rad i frontend (oppdatert 2026-02-13)
 
 Ved kall mot prosjektets backend-endepunkt `GET /content/{id}` returneres en normalisert modell:
 
 - `id`, `title`, `body`, `content_type`, `links`
-- men ikke utvidede anbefalingsfelt som `data.styrke`, `data.praktisk`, `data.rasjonale`, `data.nokkelInfo`
+- og (for anbefaling/råd der tilgjengelig) `anbefaling_fields` med f.eks.
+  `praktisk`, `rasjonale`, `fordeler_ulemper`, `verdier_preferanser`, `styrke`
 
 Konsekvens:
 
-- For rik visning av anbefaling/rad må frontend hente direkte fra Helsedirektoratet API med type-endepunkt:
-  - `GET /innhold/anbefalinger/{id}` for `content_type=anbefaling`
-  - `GET /innhold/rad/{id}` for `content_type=rad`
-  - `GET /innhold/pakkeforlop-anbefalinger/{id}` for `content_type=pakkeforlop-anbefaling`
+- Frontend bruker backend-felter først.
+- Frontend henter fortsatt direkte fra Helsedirektoratet API ved behov (fallback/enrichment), spesielt når backend mangler utvidede felt.
 
 Eksempler verifisert 2026-02-09:
 
