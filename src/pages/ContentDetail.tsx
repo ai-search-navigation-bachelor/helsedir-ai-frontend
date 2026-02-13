@@ -7,7 +7,6 @@ import { useSearchStore } from '../stores/searchStore'
 import { ContentDisplay } from '../components/content'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
-import { hasVisibleContent } from '../components/content/shared/contentTextUtils'
 import type { BreadcrumbItem } from '../types/components'
 import type { ContentDetail as ContentDetailData, ContentLink, NestedContent } from '../types'
 
@@ -90,46 +89,6 @@ function seedEnrichedContentCache(
   }
 }
 
-function mergeContentLinks(
-  backendLinks?: ContentLink[],
-  helsedirLinks?: ContentLink[],
-) {
-  const merged: ContentLink[] = []
-  const seen = new Set<string>()
-
-  for (const link of [...(backendLinks ?? []), ...(helsedirLinks ?? [])]) {
-    const href = link.href?.trim()
-    if (!href) continue
-    const key = `${link.rel}|${link.type}|${href}`
-    if (seen.has(key)) continue
-    seen.add(key)
-    merged.push(link)
-  }
-
-  return merged.length > 0 ? merged : undefined
-}
-
-function mergeBackendWithHelsedir(
-  backendContent: ContentDetailData,
-  helsedirContent: ContentDetailData,
-): ContentDetailData {
-  const backendBody = backendContent.body || ''
-  const shouldUseHelsedirBody = !hasVisibleContent(backendBody) && hasVisibleContent(helsedirContent.body)
-  const backendContentTypeTrimmed = backendContent.content_type?.trim()
-  const preferredBackendType =
-    backendContentTypeTrimmed && backendContentTypeTrimmed.toLowerCase() !== 'innhold'
-      ? backendContent.content_type
-      : ''
-
-  return {
-    ...backendContent,
-    title: backendContent.title?.trim() || helsedirContent.title,
-    body: shouldUseHelsedirBody ? helsedirContent.body : backendBody,
-    content_type: preferredBackendType || helsedirContent.content_type || backendContent.content_type,
-    links: mergeContentLinks(backendContent.links, helsedirContent.links),
-  }
-}
-
 export function ContentDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -138,16 +97,14 @@ export function ContentDetail() {
 
   const searchId = useSearchStore((state) => state.searchId)
   const searchQuery = useSearchStore((state) => state.searchQuery)
-  const routeState = (location.state as { contentType?: string; fromSearch?: boolean } | null) ?? null
+  const routeState = (location.state as { contentType?: string } | null) ?? null
   const routeContentType = routeState?.contentType?.trim().toLowerCase() || ''
-  const isFromSearchRoute = routeState?.fromSearch === true
 
   const effectiveSearchId = searchId || undefined
   const effectiveSearchQuery = searchQuery || ''
-  const shouldSkipHelsedirMerge = isFromSearchRoute && Boolean(effectiveSearchId)
 
   const { data: content, isLoading, error } = useQuery({
-    queryKey: ['content', id, effectiveSearchId, routeContentType, shouldSkipHelsedirMerge],
+    queryKey: ['content', id, effectiveSearchId, routeContentType],
     queryFn: async ({ signal }) => {
       if (!id) throw new Error('ID mangler')
 
@@ -170,30 +127,7 @@ export function ContentDetail() {
       }
 
       try {
-        const backendContent = await fetchFromBackend()
-
-        if (shouldSkipHelsedirMerge) {
-          return backendContent
-        }
-
-        try {
-          const helsedirContent = await fetchFromHelsedir()
-          const mappedHelsedirContent = mapHelsedirContentToDetail(helsedirContent)
-          const mergedContent = mergeBackendWithHelsedir(backendContent, mappedHelsedirContent)
-
-          seedEnrichedContentCache(queryClient, id, helsedirContent, [
-            routeContentType,
-            backendContent.content_type,
-            mergedContent.content_type,
-          ])
-
-          return mergedContent
-        } catch (helsedirError) {
-          if (isAbortError(helsedirError) || signal.aborted) {
-            throw helsedirError
-          }
-          return backendContent
-        }
+        return await fetchFromBackend()
       } catch (backendError) {
         if (isAbortError(backendError) || signal.aborted) {
           throw backendError

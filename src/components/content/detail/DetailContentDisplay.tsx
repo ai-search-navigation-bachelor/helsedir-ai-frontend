@@ -372,7 +372,14 @@ export function DetailContentDisplay({
                     <li key={`contextual-${link.rel}-${link.href}`}>
                       <button
                         type="button"
-                        onClick={() => navigate(`/content/${link.contentId}`)}
+                        onClick={() => {
+                          const normalizedContentType = link.type?.trim()
+                          navigate(`/content/${link.contentId}`, {
+                            state: normalizedContentType
+                              ? { contentType: normalizedContentType }
+                              : undefined,
+                          })
+                        }}
                         className="recommendation-nav__button w-full py-1 text-left text-sm text-slate-700"
                       >
                         {label}

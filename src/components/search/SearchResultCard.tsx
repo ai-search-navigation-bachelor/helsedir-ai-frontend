@@ -26,17 +26,17 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
     : result.title;
   const categoryLabel = result.categoryName.toLocaleUpperCase("nb-NO");
 
-  const buildSearchNavigationState = (contentType?: string) => {
+  const buildContentNavigationState = (contentType?: string) => {
     const normalizedContentType = contentType?.trim();
     if (normalizedContentType) {
-      return { fromSearch: true, contentType: normalizedContentType };
+      return { contentType: normalizedContentType };
     }
-    return { fromSearch: true };
+    return undefined;
   };
 
   const handleClick = () => {
     navigate(`/content/${result.id}`, {
-      state: buildSearchNavigationState(result.info_type),
+      state: buildContentNavigationState(result.info_type),
     });
   };
 
@@ -47,7 +47,7 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
   ) => {
     event.stopPropagation();
     navigate(`/content/${id}`, {
-      state: buildSearchNavigationState(contentType),
+      state: buildContentNavigationState(contentType),
     });
   };
 

@@ -84,8 +84,9 @@ export function ExpandableSubcontent({
                 event.preventDefault()
                 event.stopPropagation()
                 if (!item.id) return
+                const normalizedContentType = item.type?.trim()
                 navigate(`/content/${item.id}`, {
-                  state: item.type ? { contentType: item.type } : undefined,
+                  state: normalizedContentType ? { contentType: normalizedContentType } : undefined,
                 })
               }}
               className="recommendation-open-page__button recommendation-open-page__button--compact"
