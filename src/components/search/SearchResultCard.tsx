@@ -91,12 +91,12 @@ export function SearchResultCard({
           sourceContentTitle: sourceTemasideId ? undefined : result.title,
           searchCategoryId: result.categoryId,
           searchCategoryName: result.categoryName,
+          contentType: result.info_type,
         }}
         aria-label={`Åpne ${result.title}`}
         className="absolute inset-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005F73]"
       />
 
-      {/* Category Label */}
       <div className="relative z-10 mb-2 pointer-events-none">
         <span className="inline-block px-2.5 py-0.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-md">
           {categoryLabel}
@@ -107,7 +107,6 @@ export function SearchResultCard({
         {cardTitle}
       </h3>
 
-      {/* Explanation if available (exclude keyword/semantic scoring) */}
       {!isTemaside &&
         result.explanation &&
         !result.explanation.toLowerCase().includes("keyword") &&
@@ -127,6 +126,7 @@ export function SearchResultCard({
             const isHoverOpen =
               pinnedChildGroupKey === null && hoveredChildGroupKey === groupKey;
             const isOpen = isPinnedOpen || isHoverOpen;
+
             return (
               <div
                 key={groupKey}
@@ -163,6 +163,7 @@ export function SearchResultCard({
                             sourceContentTitle: result.title,
                             searchCategoryId: group.info_type,
                             searchCategoryName: group.display_name,
+                            contentType: item.info_type,
                           }}
                           className="group/item w-full rounded-md border border-transparent px-2 py-1.5 text-left text-sm text-sky-800 hover:bg-sky-50 hover:border-sky-200 cursor-pointer"
                         >

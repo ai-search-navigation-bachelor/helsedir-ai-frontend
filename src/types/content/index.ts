@@ -24,6 +24,21 @@ export interface ContentDetail {
   content_type: string
   target_groups?: string[]
   links?: ContentLink[]
+  status?: string
+  forstPublisert?: string
+  sistOppdatert?: string
+  sistFagligOppdatert?: string
+  url?: string
+  anbefaling_fields?: {
+    praktisk?: string
+    rasjonale?: string
+    fordeler_ulemper?: string
+    verdier_preferanser?: string
+    // Backend can return additional recommendation fields not yet shown in UI.
+    kvalitet_dokumentasjon?: string
+    ressurshensyn?: string
+    styrke?: string
+  }
 }
 
 /**

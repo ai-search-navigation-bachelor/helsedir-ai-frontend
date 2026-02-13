@@ -1,25 +1,13 @@
 /**
  * Page-level type definitions
  */
+import type { ContentDetail } from './content'
 
 /**
  * Content display props
  */
 export interface ContentDisplayProps {
-  content: {
-    id: string
-    title: string
-    body: string
-    content_type: string
-    target_groups?: string[]
-    links?: Array<{
-      rel: string
-      type: string
-      tittel: string
-      href: string
-      strukturId?: string
-    }>
-  }
+  content: ContentDetail
 }
 
 /**

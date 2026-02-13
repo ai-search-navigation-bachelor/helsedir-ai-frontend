@@ -29,7 +29,7 @@ function toNumbering(chapterIndex: number, path: number[]) {
   return [chapterIndex + 1, ...path.map((part) => part + 1)].join('.')
 }
 
-export function buildPageTree(entries: Array<ChapterEntry & { chapter: NestedContent }>): TreeResult {
+export function buildPageTree(entries: ChapterEntry[]): TreeResult {
   const pagesById = new Map<string, PageNode>()
   const rootIds: string[] = []
 
@@ -73,7 +73,33 @@ export function buildPageTree(entries: Array<ChapterEntry & { chapter: NestedCon
   }
 
   entries.forEach((entry) => {
-    addNode(entry.index, entry.chapter, [], null, entry.link.tittel || 'Uten tittel')
+    if (entry.chapter) {
+      addNode(entry.index, entry.chapter, [], null, entry.link.tittel || 'Uten tittel')
+      return
+    }
+
+    const id = toNodeId(entry.index, [])
+    const title = entry.link.tittel || 'Uten tittel'
+    const placeholderNode: NestedContent = {
+      id: entry.link.href || `placeholder-${entry.index}`,
+      tittel: title,
+      type: entry.link.type || 'kapittel',
+    }
+
+    pagesById.set(id, {
+      id,
+      title,
+      numbering: toNumbering(entry.index, []),
+      depth: 1,
+      parentId: null,
+      childrenIds: [],
+      expandableChildren: [],
+      node: placeholderNode,
+      isPlaceholder: true,
+      placeholderStatus: entry.fetchError ? 'error' : 'loading',
+      placeholderError: entry.fetchError,
+    })
+    rootIds.push(id)
   })
 
   return { rootIds, pagesById }

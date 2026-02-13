@@ -25,6 +25,9 @@ export function SidebarTree({
     if (!page) return null
 
     const hasChildren = page.childrenIds.length > 0
+    const isPlaceholder = page.isPlaceholder === true
+    const placeholderStatus = page.placeholderStatus || 'loading'
+    const isPlaceholderError = isPlaceholder && placeholderStatus === 'error'
     const isExpanded = expandedIds.has(page.id)
     const isSelected = activePageId === page.id
     const isAncestor = selectedAncestorIds.has(page.id)
@@ -41,7 +44,17 @@ export function SidebarTree({
           className="flex items-start gap-1 py-2"
           style={{ paddingLeft: `${(page.depth - 1) * 14}px` }}
         >
-          {hasChildren ? (
+          {isPlaceholder ? (
+            <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center" aria-hidden="true">
+              {isPlaceholderError ? (
+                <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-100 text-[10px] font-semibold text-amber-700">
+                  !
+                </span>
+              ) : (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-500" />
+              )}
+            </span>
+          ) : hasChildren ? (
             <button
               type="button"
               onClick={() => onToggleExpanded(page.id)}
@@ -60,8 +73,17 @@ export function SidebarTree({
 
           <button
             type="button"
-            onClick={() => onSelectPage(page.id)}
-            className={`sidebar-tree__item-button min-w-0 flex-1 cursor-pointer py-0.5 text-left text-[1.05rem] leading-7 whitespace-normal break-words transition-colors ${textColor} ${fontWeight}`}
+            disabled={isPlaceholder}
+            onClick={() => {
+              if (!isPlaceholder) {
+                onSelectPage(page.id)
+              }
+            }}
+            className={`sidebar-tree__item-button min-w-0 flex-1 py-0.5 text-left text-[1.05rem] leading-7 whitespace-normal break-words transition-colors ${textColor} ${fontWeight} ${
+              isPlaceholderError ? 'cursor-not-allowed' : isPlaceholder ? 'cursor-progress' : 'cursor-pointer'
+            }`}
+            aria-disabled={isPlaceholder}
+            title={isPlaceholderError ? page.placeholderError || 'Kunne ikke laste kapittel' : undefined}
           >
             <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
             {page.title}

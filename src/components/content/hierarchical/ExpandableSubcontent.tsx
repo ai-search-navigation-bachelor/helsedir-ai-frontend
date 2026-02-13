@@ -86,11 +86,12 @@ export function ExpandableSubcontent({
                 event.preventDefault()
                 event.stopPropagation()
                 if (!item.id) return
+                const normalizedContentType = item.type?.trim()
                 navigate(`/content/${item.id}`, {
                   state: {
                     ...(location.state as Record<string, unknown> | null),
                     sourceContentId: currentContentId,
-                    ...(item.type ? { contentType: item.type } : {}),
+                    ...(normalizedContentType ? { contentType: normalizedContentType } : {}),
                   },
                 })
               }}
