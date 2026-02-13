@@ -168,7 +168,7 @@ export function HierarchicalContentDisplay({
     if (!page || page.isPlaceholder) return
 
     setSectionForContent(content.id, pageId)
-    if (!isChaptersLoading && (locationSectionId !== pageId || hasLegacySectionParam)) {
+    if (locationSectionId !== pageId || hasLegacySectionParam) {
       updateHistorySection(pageId, false)
     }
 
@@ -182,7 +182,6 @@ export function HierarchicalContentDisplay({
   }
 
   useEffect(() => {
-    if (isChaptersLoading) return
     if (!activePage?.id) return
 
     if (storedSectionId !== activePage.id) {
@@ -196,7 +195,6 @@ export function HierarchicalContentDisplay({
     activePage?.id,
     content.id,
     hasLegacySectionParam,
-    isChaptersLoading,
     locationSectionId,
     setSectionForContent,
     storedSectionId,

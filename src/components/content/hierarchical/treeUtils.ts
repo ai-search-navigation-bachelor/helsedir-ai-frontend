@@ -96,6 +96,8 @@ export function buildPageTree(entries: ChapterEntry[]): TreeResult {
       expandableChildren: [],
       node: placeholderNode,
       isPlaceholder: true,
+      placeholderStatus: entry.fetchError ? 'error' : 'loading',
+      placeholderError: entry.fetchError,
     })
     rootIds.push(id)
   })

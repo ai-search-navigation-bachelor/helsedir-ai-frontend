@@ -26,6 +26,8 @@ export function SidebarTree({
 
     const hasChildren = page.childrenIds.length > 0
     const isPlaceholder = page.isPlaceholder === true
+    const placeholderStatus = page.placeholderStatus || 'loading'
+    const isPlaceholderError = isPlaceholder && placeholderStatus === 'error'
     const isExpanded = expandedIds.has(page.id)
     const isSelected = activePageId === page.id
     const isAncestor = selectedAncestorIds.has(page.id)
@@ -44,7 +46,13 @@ export function SidebarTree({
         >
           {isPlaceholder ? (
             <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center" aria-hidden="true">
-              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-500" />
+              {isPlaceholderError ? (
+                <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-100 text-[10px] font-semibold text-amber-700">
+                  !
+                </span>
+              ) : (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-500" />
+              )}
             </span>
           ) : hasChildren ? (
             <button
@@ -72,9 +80,10 @@ export function SidebarTree({
               }
             }}
             className={`sidebar-tree__item-button min-w-0 flex-1 py-0.5 text-left text-[1.05rem] leading-7 whitespace-normal break-words transition-colors ${textColor} ${fontWeight} ${
-              isPlaceholder ? 'cursor-progress' : 'cursor-pointer'
+              isPlaceholderError ? 'cursor-not-allowed' : isPlaceholder ? 'cursor-progress' : 'cursor-pointer'
             }`}
             aria-disabled={isPlaceholder}
+            title={isPlaceholderError ? page.placeholderError || 'Kunne ikke laste kapittel' : undefined}
           >
             <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
             {page.title}

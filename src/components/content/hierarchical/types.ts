@@ -17,6 +17,8 @@ export interface PageNode {
   expandableChildren: NestedContent[]
   node: NestedContent
   isPlaceholder?: boolean
+  placeholderStatus?: 'loading' | 'error'
+  placeholderError?: string
 }
 
 export interface TreeResult {

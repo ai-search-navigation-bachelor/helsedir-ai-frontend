@@ -79,6 +79,16 @@ function getContentIdFromHref(href?: string) {
   }
 }
 
+function normalizeMetaField(value?: string | null): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+function chooseMetaField(primary?: string | null, secondary?: string | null): string | undefined {
+  return normalizeMetaField(primary) ?? normalizeMetaField(secondary)
+}
+
 interface DetailContentDisplayProps extends ContentDisplayProps {
   typeLabelOverride?: string
   primarySectionTitle?: string
@@ -139,10 +149,18 @@ export function DetailContentDisplay({
 
   const sections = useMemo<ContentSection[]>(() => {
     const mainBody = hasBodyContent ? content.body : enrichedContent?.tekst || enrichedContent?.body || ''
-    const practical = backendPractical || enrichedContent?.data?.praktisk || ''
-    const rationale = backendRationale || enrichedContent?.data?.rasjonale || ''
-    const tradeoffs = backendTradeoffs || enrichedContent?.data?.nokkelInfo?.fordelerogulemper || ''
-    const preferences = backendPreferences || enrichedContent?.data?.nokkelInfo?.verdierogpreferanser || ''
+    const practical = hasVisibleContent(backendPractical)
+      ? backendPractical
+      : enrichedContent?.data?.praktisk || ''
+    const rationale = hasVisibleContent(backendRationale)
+      ? backendRationale
+      : enrichedContent?.data?.rasjonale || ''
+    const tradeoffs = hasVisibleContent(backendTradeoffs)
+      ? backendTradeoffs
+      : enrichedContent?.data?.nokkelInfo?.fordelerogulemper || ''
+    const preferences = hasVisibleContent(backendPreferences)
+      ? backendPreferences
+      : enrichedContent?.data?.nokkelInfo?.verdierogpreferanser || ''
 
     const result: ContentSection[] = []
 
@@ -233,13 +251,19 @@ export function DetailContentDisplay({
 
   const metadataItems = useMemo(() => {
     const items: Array<{ label: string; value: string }> = []
-    const strength = content.anbefaling_fields?.styrke || enrichedContent?.data?.styrke
-    const status = content.status || enrichedContent?.status
-    const firstPublished = formatDateLabel(content.forstPublisert || enrichedContent?.forstPublisert)
-    const updated = formatDateLabel(content.sistOppdatert || enrichedContent?.sistOppdatert)
-    const professionallyUpdated = formatDateLabel(
-      content.sistFagligOppdatert || enrichedContent?.sistFagligOppdatert,
+    const strength = chooseMetaField(content.anbefaling_fields?.styrke, enrichedContent?.data?.styrke)
+    const status = chooseMetaField(content.status, enrichedContent?.status)
+    const firstPublishedRaw = chooseMetaField(content.forstPublisert, enrichedContent?.forstPublisert)
+    const updatedRaw = chooseMetaField(content.sistOppdatert, enrichedContent?.sistOppdatert)
+    const professionallyUpdatedRaw = chooseMetaField(
+      content.sistFagligOppdatert,
+      enrichedContent?.sistFagligOppdatert,
     )
+    const firstPublished = firstPublishedRaw ? formatDateLabel(firstPublishedRaw) : undefined
+    const updated = updatedRaw ? formatDateLabel(updatedRaw) : undefined
+    const professionallyUpdated = professionallyUpdatedRaw
+      ? formatDateLabel(professionallyUpdatedRaw)
+      : undefined
 
     if (strength) {
       items.push({ label: 'Anbefalingsstyrke', value: strength })
