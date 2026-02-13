@@ -7,7 +7,6 @@ import type { BreadcrumbItem } from "../../types/components";
 export function TemasideIndexPage() {
   const breadcrumbItems: BreadcrumbItem[] = [
     { label: "Forside", href: "/" },
-    { label: "Temasider", href: "/temaside" },
   ];
 
   return (

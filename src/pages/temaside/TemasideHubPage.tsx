@@ -27,7 +27,6 @@ function buildTemasideBreadcrumbItems(
 ): BreadcrumbItem[] {
   const items: BreadcrumbItem[] = [
     { label: "Forside", href: "/" },
-    { label: "Temasider", href: "/temaside" },
   ];
 
   const segments = temaPath.split("/").filter(Boolean);
@@ -245,7 +244,9 @@ export function TemasideHubPage() {
     () => buildTemasideBreadcrumbItems(temaPath, nodeByPath, category?.title),
     [temaPath, nodeByPath, category?.title],
   );
-  const breadcrumbItems = trailByPath[temaPath] || generatedBreadcrumbItems;
+  const sanitizeBreadcrumbItems = (items: BreadcrumbItem[]) =>
+    items.filter((item) => item.label.toLowerCase() !== "temasider");
+  const breadcrumbItems = sanitizeBreadcrumbItems(trailByPath[temaPath] || generatedBreadcrumbItems);
   const buildTrailForLinkedPath = (path: string) =>
     compactDetailBreadcrumbItems(buildTemasideBreadcrumbItems(path, nodeByPath, category?.title));
 
