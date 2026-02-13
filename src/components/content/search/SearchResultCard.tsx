@@ -23,7 +23,7 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
   const cardTitle = isTemaside
     ? result.title.toLocaleUpperCase("nb-NO")
     : result.title;
-  const categoryLabel = result.categoryName.toLocaleUpperCase("nb-NO");
+  const categoryLabel = result.categoryName;
   const contentHref = `/content/${result.id}`;
 
   const handleChildGroupToggle = (

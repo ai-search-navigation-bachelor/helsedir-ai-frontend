@@ -1,47 +1,48 @@
-import { Tabs } from '@digdir/designsystemet-react';
-import {
-  TEMASIDE_CATEGORY,
-  RETNINGSLINJE_CATEGORY,
-  ANBEFALINGER_CATEGORY,
-  REGELVERK_CATEGORY,
-  RAD_CATEGORY,
-} from '../../../constants/categories';
-
-// Hardcoded category order
-const FIXED_CATEGORIES = [
-  { id: TEMASIDE_CATEGORY, label: 'Temaside' },
-  { id: RETNINGSLINJE_CATEGORY, label: 'Nasjonalfaglig retningslinje' },
-  { id: ANBEFALINGER_CATEGORY, label: 'Anbefaling' },
-  { id: REGELVERK_CATEGORY, label: 'Regelverk' },
-  { id: RAD_CATEGORY, label: 'Råd' },
-];
-
 interface SearchCategoryTabsProps {
   activeTab: string;
+  tabs: ReadonlyArray<{ id: string; label: string }>;
   categoryCounts: Record<string, number>;
   onTabChange: (value: string) => void;
 }
 
-export function SearchCategoryTabs({ activeTab, categoryCounts, onTabChange }: SearchCategoryTabsProps) {
+export function SearchCategoryTabs({
+  activeTab,
+  tabs,
+  categoryCounts,
+  onTabChange,
+}: SearchCategoryTabsProps) {
   return (
-    <div className="mb-6">
-      <Tabs value={activeTab} onChange={onTabChange}>
-        <Tabs.List>
-          <Tabs.Tab value="all">
-            Alle
-            <span className="ml-2 text-gray-600">{categoryCounts['all'] || 0}</span>
-          </Tabs.Tab>
-          
-          {FIXED_CATEGORIES.map(category => (
-            <Tabs.Tab key={category.id} value={category.id}>
-              {category.label}
-              <span className="ml-2 text-gray-600">{categoryCounts[category.id] || 0}</span>
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-      </Tabs>
+    <div className="mb-5 border-b border-slate-300 pb-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <button
+          type="button"
+          onClick={() => onTabChange('all')}
+          className={`inline-flex items-center gap-1.5 border-b-2 px-0.5 py-1 text-sm transition-colors ${
+            activeTab === 'all'
+              ? 'border-[#0062BA] text-[#0062BA]'
+              : 'border-transparent text-slate-700 hover:text-slate-900'
+          }`}
+        >
+          Alle
+          <span className="text-slate-600">{categoryCounts.all || 0}</span>
+        </button>
+
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onTabChange(tab.id)}
+            className={`inline-flex items-center gap-1.5 border-b-2 px-0.5 py-1 text-sm transition-colors ${
+              activeTab === tab.id
+                ? 'border-[#0062BA] text-[#0062BA]'
+                : 'border-transparent text-slate-700 hover:text-slate-900'
+            }`}
+          >
+            {tab.label}
+            <span className="text-slate-600">{categoryCounts[tab.id] || 0}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
-
-export { FIXED_CATEGORIES };
