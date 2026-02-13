@@ -27,7 +27,6 @@ function buildTemasideBreadcrumbItems(
 ): BreadcrumbItem[] {
   const items: BreadcrumbItem[] = [
     { label: "Forside", href: "/" },
-    { label: "Temasider", href: "/temaside" },
   ];
 
   const segments = temaPath.split("/").filter(Boolean);
@@ -245,7 +244,9 @@ export function TemasideHubPage() {
     () => buildTemasideBreadcrumbItems(temaPath, nodeByPath, category?.title),
     [temaPath, nodeByPath, category?.title],
   );
-  const breadcrumbItems = trailByPath[temaPath] || generatedBreadcrumbItems;
+  const sanitizeBreadcrumbItems = (items: BreadcrumbItem[]) =>
+    items.filter((item) => item.label.toLowerCase() !== "temasider");
+  const breadcrumbItems = sanitizeBreadcrumbItems(trailByPath[temaPath] || generatedBreadcrumbItems);
   const buildTrailForLinkedPath = (path: string) =>
     compactDetailBreadcrumbItems(buildTemasideBreadcrumbItems(path, nodeByPath, category?.title));
 
@@ -300,7 +301,7 @@ export function TemasideHubPage() {
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-6 py-8 lg:py-10">
+    <div className="max-w-screen-xl mx-auto px-6 pt-10 pb-8">
       <Breadcrumb items={breadcrumbItems} />
 
       <header className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 lg:px-6">

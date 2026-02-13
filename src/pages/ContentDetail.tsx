@@ -250,7 +250,6 @@ export function ContentDetail() {
     content?.content_type === 'temaside' && temasideCategoryPath
       ? [
           { label: 'Forside', href: '/' },
-          { label: 'Temasider', href: '/temaside' },
           {
             label: temasideCategory?.title || content.title,
             href: `/temaside${temasideCategoryPath}`,
@@ -268,7 +267,6 @@ export function ContentDetail() {
     content && content.content_type !== 'temaside' && sourceTemasideContent && sourceTemasideCategoryPath
       ? [
           { label: 'Forside', href: '/' },
-          { label: 'Temasider', href: '/temaside' },
           {
             label: sourceTemasideCategory?.title || sourceTemasideContent.title,
             href: `/temaside${sourceTemasideCategoryPath}`,
@@ -289,7 +287,6 @@ export function ContentDetail() {
     sourceContentTitle
       ? [
           { label: 'Forside', href: '/' },
-          { label: 'Temasider', href: '/temaside' },
           {
             label: sourceTemasideCategory?.title || sourceTemasideContent.title,
             href: `/temaside${sourceTemasideCategoryPath}`,
@@ -300,12 +297,16 @@ export function ContentDetail() {
         ]
       : []
 
+  const sanitizeTemasideItems = (items: BreadcrumbItem[]) =>
+    items.filter((item) => item.label.toLowerCase() !== 'temasider')
   const temasideBreadcrumbItems: BreadcrumbItem[] =
     !searchReturnQuery && temasideLastPath && temasideTrailByPath[temasideLastPath]
       ? [
-          ...temasideTrailByPath[temasideLastPath].slice(
-            0,
-            Math.max(temasideTrailByPath[temasideLastPath].length - 1, 0),
+          ...sanitizeTemasideItems(
+            temasideTrailByPath[temasideLastPath].slice(
+              0,
+              Math.max(temasideTrailByPath[temasideLastPath].length - 1, 0),
+            ),
           ),
           { label: content?.title || 'Laster...', href: '#' },
         ]
@@ -326,19 +327,9 @@ export function ContentDetail() {
                 : fallbackBreadcrumbItems
 
   return (
-    <div className="max-w-screen-xl mx-auto px-8 pt-4 pb-8">
+    <div className="relative max-w-screen-xl mx-auto px-6 pt-10 pb-8">
       {activeBreadcrumbItems.length > 0 ? (
-        <Breadcrumb
-          items={activeBreadcrumbItems}
-          leadingAction={
-            searchReturnQuery
-              ? {
-                  label: 'Til søkeresultat',
-                  href: `/search?query=${encodeURIComponent(searchReturnQuery)}`,
-                }
-              : undefined
-          }
-        />
+        <Breadcrumb items={activeBreadcrumbItems} />
       ) : (
         <Button
           variant='tertiary'
