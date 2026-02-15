@@ -9,6 +9,7 @@ import type {
   CategorizedSearchResponse,
   CategorySearchResponse,
   SearchResponse,
+  SearchSuggestionsResponse,
 } from '../types'
 
 import { BACKEND_BASE_URL } from './backendBaseUrl'
@@ -137,4 +138,25 @@ export async function search(
   })
 
   return httpRequest<SearchResponse>(url, { signal })
+}
+
+/**
+ * Search suggestions - returns autocomplete suggestions for theme pages
+ */
+export async function fetchSearchSuggestions(
+  query: string,
+  { signal, role }: BaseRequestOptions = {},
+): Promise<SearchSuggestionsResponse> {
+  const trimmed = query.trim()
+
+  if (!trimmed) {
+    return { suggestions: [] }
+  }
+
+  const url = buildUrl(`${BACKEND_BASE_URL}/search/suggestions`, {
+    query: trimmed,
+    role,
+  })
+
+  return httpRequest<SearchSuggestionsResponse>(url, { signal })
 }
