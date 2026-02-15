@@ -14,8 +14,11 @@ export interface PageNode {
   depth: number
   parentId: string | null
   childrenIds: string[]
-  recommendationChildren: NestedContent[]
+  expandableChildren: NestedContent[]
   node: NestedContent
+  isPlaceholder?: boolean
+  placeholderStatus?: 'loading' | 'error'
+  placeholderError?: string
 }
 
 export interface TreeResult {

@@ -1,21 +1,37 @@
 import type { ContentDisplayProps } from '../../types/pages'
-import { GenericContentDisplay } from './GenericContentDisplay'
-import { RecommendationContentDisplay } from './RecommendationContentDisplay'
-import { RetningslinjeContentDisplay } from './RetningslinjeContentDisplay'
-
-const RETNINGSLINJE_TYPES = new Set(['retningslinje', 'nasjonal-faglig-retningslinje'])
-const RECOMMENDATION_TYPES = new Set(['anbefaling', 'rad', 'pakkeforlop-anbefaling'])
+import {
+  isRecommendationContentType,
+  isRetningslinjeContentType,
+  normalizeContentType,
+  toContentTypeLabel,
+} from '../../constants/content'
+import { DetailContentDisplay } from './detail/DetailContentDisplay'
+import { HierarchicalContentDisplay } from './hierarchical/HierarchicalContentDisplay'
+import { countUniqueChildLinks } from './shared/linkUtils'
 
 export function ContentDisplay({ content }: ContentDisplayProps) {
-  const normalizedType = content.content_type.trim().toLowerCase()
+  const normalizedType = normalizeContentType(content.content_type)
+  const childrenCount = countUniqueChildLinks(content.links)
+  const typeLabel = toContentTypeLabel(content.content_type)
 
-  if (RETNINGSLINJE_TYPES.has(normalizedType)) {
-    return <RetningslinjeContentDisplay key={content.id} content={content} />
+  if (isRetningslinjeContentType(normalizedType)) {
+    return <HierarchicalContentDisplay key={content.id} content={content} typeLabel={typeLabel} />
   }
 
-  if (RECOMMENDATION_TYPES.has(normalizedType)) {
-    return <RecommendationContentDisplay key={content.id} content={content} />
+  if (isRecommendationContentType(normalizedType)) {
+    return <DetailContentDisplay key={content.id} content={content} />
   }
 
-  return <GenericContentDisplay key={content.id} content={content} />
+  if (childrenCount > 0) {
+    return <HierarchicalContentDisplay key={content.id} content={content} typeLabel={typeLabel} />
+  }
+
+  return (
+    <DetailContentDisplay
+      key={content.id}
+      content={content}
+      typeLabelOverride={typeLabel}
+      primarySectionTitle="Innhold"
+    />
+  )
 }

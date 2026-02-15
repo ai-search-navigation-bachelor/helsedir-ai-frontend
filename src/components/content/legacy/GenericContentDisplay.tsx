@@ -1,12 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useEffect } from 'react'
 import DOMPurify from 'dompurify'
-import { fetchChapterWithSubchapters } from '../../api'
-import type { NestedContent } from '../../types'
-import type { ContentDisplayProps } from '../../types/pages'
+import { useNestedChaptersQuery } from '../../../hooks/queries/useNestedChaptersQuery'
+import type { ContentDisplayProps } from '../../../types/pages'
 import { ChapterAccordion } from './ChapterAccordion'
-import { ContentPageHeader } from './ContentPageHeader'
-import { GenericChaptersLoadingSkeleton } from './ContentSkeletons'
+import { ContentPageHeader } from '../ContentPageHeader'
+import { GenericChaptersLoadingSkeleton } from '../ContentSkeletons'
 import { TableOfContents } from './TableOfContents'
 
 export function GenericContentDisplay({ content }: ContentDisplayProps) {
@@ -14,39 +12,10 @@ export function GenericContentDisplay({ content }: ContentDisplayProps) {
   const [expandedSubchapters, setExpandedSubchapters] = useState<Set<string>>(new Set())
   const [activeChapter, setActiveChapter] = useState<string | null>(null)
 
-  const childrenLinks = useMemo(
-    () => content.links?.filter((link) => link.rel === 'barn') || [],
-    [content.links]
-  )
-
-  const childrenKey = useMemo(
-    () => childrenLinks.map((link) => link.href).join(','),
-    [childrenLinks]
-  )
-
-  const { data: chaptersData, isLoading: chaptersLoading } = useQuery<NestedContent[]>({
-    queryKey: ['nested-chapters', content.id, childrenKey],
-    queryFn: async ({ signal }) => {
-      const chapters: NestedContent[] = []
-      for (const link of childrenLinks) {
-        if (link.href) {
-          try {
-            const chapter = await fetchChapterWithSubchapters(link.href, signal)
-            chapters.push(chapter)
-          } catch (error) {
-            if (error instanceof Error && error.name !== 'AbortError') {
-              console.error('Failed to fetch chapter:', error)
-            }
-          }
-        }
-      }
-      return chapters
-    },
-    enabled: childrenLinks.length > 0,
-    staleTime: 10 * 60 * 1000,
+  const { chapters, isLoading: chaptersLoading } = useNestedChaptersQuery({
+    contentId: content.id,
+    links: content.links,
   })
-
-  const chapters = useMemo(() => chaptersData || [], [chaptersData])
 
   const toggleChapter = (idx: number) => {
     setExpandedChapters((prev) => {

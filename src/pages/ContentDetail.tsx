@@ -1,66 +1,53 @@
-import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { MagnifyingGlassIcon } from '@navikt/aksel-icons'
-import { Button, Alert, Paragraph } from '@digdir/designsystemet-react'
-import { getContent } from '../api'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Alert, Button, Paragraph } from '@digdir/designsystemet-react'
+import { useContentDetailQuery } from '../hooks/queries/useContentDetailQuery'
+import { useContentDetailBreadcrumbs } from '../hooks/useContentDetailBreadcrumbs'
 import { useSearchStore } from '../stores/searchStore'
 import { ContentDisplay } from '../components/content'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
-import type { BreadcrumbItem } from '../types/components'
 
 export function ContentDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const searchId = useSearchStore((state) => state.searchId)
-  const searchQuery = useSearchStore((state) => state.searchQuery)
-
+  const routeState = (location.state as { contentType?: string } | null) ?? null
+  const routeContentType = routeState?.contentType?.trim().toLowerCase() || ''
   const effectiveSearchId = searchId || undefined
-  const effectiveSearchQuery = searchQuery || ''
 
-  const { data: content, isLoading, error } = useQuery({
-    queryKey: ['content', id, effectiveSearchId],
-    queryFn: async ({ signal }) => {
-      if (!id) throw new Error('ID mangler')
-      return getContent(id, effectiveSearchId, { signal })
-    },
-    enabled: !!id,
-    staleTime: 10 * 60 * 1000,
+  const { data: content, isLoading, error } = useContentDetailQuery({
+    contentId: id,
+    searchId: effectiveSearchId,
+    routeContentType,
   })
 
-  const breadcrumbItems: BreadcrumbItem[] = effectiveSearchQuery
-    ? [
-        { label: 'Forside', href: '/' },
-        {
-          label: effectiveSearchQuery,
-          href: `/search?query=${encodeURIComponent(effectiveSearchQuery)}`,
-          icon: <MagnifyingGlassIcon style={{ width: '18px', height: '18px' }} />
-        },
-        { label: content?.title || 'Laster...', href: '#' }
-      ]
-    : []
+  const { activeBreadcrumbItems } = useContentDetailBreadcrumbs({
+    content,
+    currentContentId: id,
+    locationState: location.state,
+    searchId: effectiveSearchId,
+  })
 
   return (
-    <div className="max-w-screen-xl mx-auto px-8 pt-4 pb-8">
-      {effectiveSearchQuery ? (
-        <Breadcrumb items={breadcrumbItems} />
+    <div className="max-w-screen-xl mx-auto px-6 pt-10 pb-8">
+      {activeBreadcrumbItems.length > 0 ? (
+        <Breadcrumb items={activeBreadcrumbItems} />
       ) : (
         <Button
-          variant='tertiary'
+          variant="tertiary"
           onClick={() => navigate(-1)}
           style={{ marginBottom: '24px' }}
         >
-          ← Tilbake
+          &larr; Tilbake
         </Button>
       )}
 
-      {isLoading && (
-        <ContentPageLoadingSkeleton />
-      )}
+      {isLoading && <ContentPageLoadingSkeleton />}
 
       {error && (
-        <Alert data-color='danger'>
+        <Alert data-color="danger">
           <Paragraph>
             {error instanceof Error ? error.message : 'Henting av innhold feilet'}
           </Paragraph>

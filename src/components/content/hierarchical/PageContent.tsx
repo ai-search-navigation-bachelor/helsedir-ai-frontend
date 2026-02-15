@@ -2,7 +2,8 @@ import DOMPurify from 'dompurify'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import type { PageNode } from './types'
 import { hasVisibleContent } from './treeUtils'
-import { RecommendationDropdown } from './RecommendationDropdown'
+import { ExpandableSubcontent } from './ExpandableSubcontent'
+import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
 
 interface PageContentProps {
   activePage: PageNode
@@ -21,6 +22,22 @@ export function PageContent({
 }: PageContentProps) {
   const hasIntro = hasVisibleContent(activePage.node.intro)
   const hasBody = hasVisibleContent(activePage.node.tekst || activePage.node.body)
+  const documentLinks = getDocumentLinks(activePage.node)
+  const publicationUrl = (() => {
+    const url = activePage.node.url?.trim()
+    if (!url) return null
+    return documentLinks.some((document) => document.href === url) ? null : url
+  })()
+  const hasMainContent = hasIntro || hasBody
+  const hasOnlyHelsedirPdfDocuments =
+    documentLinks.length > 0 &&
+    documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
+  const shouldShowPublicationLink =
+    Boolean(publicationUrl) && !hasMainContent && hasOnlyHelsedirPdfDocuments
+  const visibleDocumentLinks = shouldShowPublicationLink
+    ? documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
+    : documentLinks
+  const primaryDocument = visibleDocumentLinks[0]
   const showChildNavigation = !hasIntro && !hasBody && activePage.childrenIds.length > 0
 
   return (
@@ -47,6 +64,40 @@ export function PageContent({
             __html: DOMPurify.sanitize(activePage.node.tekst || activePage.node.body || ''),
           }}
         />
+      )}
+
+      {!hasIntro && !hasBody && (primaryDocument || shouldShowPublicationLink) && (
+        <section className="mt-6 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
+            Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
+          </Paragraph>
+          <ul className="m-0 list-none space-y-2 p-0">
+            {primaryDocument && (
+              <li>
+                <a
+                  href={primaryDocument.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                >
+                  {primaryDocument.label}
+                </a>
+              </li>
+            )}
+            {shouldShowPublicationLink && publicationUrl && (
+              <li>
+                <a
+                  href={publicationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                >
+                  Åpne side hos Helsedirektoratet
+                </a>
+              </li>
+            )}
+          </ul>
+        </section>
       )}
 
       {showChildNavigation && (
@@ -81,14 +132,14 @@ export function PageContent({
         </section>
       )}
 
-      {activePage.recommendationChildren.length > 0 && (
+      {activePage.expandableChildren.length > 0 && (
         <section className="mt-8">
           <Heading level={3} data-size="sm" style={{ marginBottom: 12 }}>
-            {activePage.recommendationChildren.length === 1 ? 'Anbefaling' : 'Anbefalinger'}
+            {activePage.expandableChildren.length === 1 ? 'Underelement' : 'Underelementer'}
           </Heading>
           <div>
-            {activePage.recommendationChildren.map((item, index) => (
-              <RecommendationDropdown
+            {activePage.expandableChildren.map((item, index) => (
+              <ExpandableSubcontent
                 key={`${activePage.id}-rec-${item.id || index}`}
                 item={item}
                 itemKey={`${activePage.id}-rec-${item.id || index}`}

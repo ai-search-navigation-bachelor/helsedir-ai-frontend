@@ -1,7 +1,10 @@
+import { normalizePath } from '../path'
+
 export type ThemeNode = {
   path: string // "/forebygging-diagnose-og-behandling"
   segment: string // "forebygging-diagnose-og-behandling"
   title: string // best-effort display title
+  hasPage: boolean // true when this path exists as a real temaside page
   children: ThemeNode[]
 }
 
@@ -11,15 +14,11 @@ function titleize(segment: string) {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-function normalizePath(path: string): string {
-  return (path || '/').replace(/\/+$/, '') || '/'
-}
-
 export function buildThemeTree(
   paths: readonly string[],
   titleByPath: Readonly<Record<string, string>> = {},
 ): ThemeNode {
-  const root: ThemeNode = { path: '/', segment: '', title: 'Root', children: [] }
+  const root: ThemeNode = { path: '/', segment: '', title: 'Root', hasPage: false, children: [] }
 
   for (const p of paths) {
     const clean = normalizePath(p)
@@ -39,11 +38,13 @@ export function buildThemeTree(
           path: currentPath,
           segment: part,
           title: preferredTitle || titleize(part),
+          hasPage: Boolean(preferredTitle),
           children: [],
         }
         current.children.push(child)
       } else if (preferredTitle) {
         child.title = preferredTitle
+        child.hasPage = true
       }
       current = child
     }
