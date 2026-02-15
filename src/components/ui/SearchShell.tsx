@@ -46,9 +46,11 @@ function SearchShellContent() {
   }
 
   function onClear() {
-    if (isSearchPage) {
-      setSearchParams({})
-    }
+    // Only clear the input text, don't touch URL params or search results
+  }
+
+  function onSuggestionSelect(id: string) {
+    navigate(`/content/${id}`)
   }
 
   return (
@@ -58,6 +60,7 @@ function SearchShellContent() {
       onQueryChange={setQuery}
       onSubmit={onSubmit}
       onClear={onClear}
+      onSuggestionSelect={onSuggestionSelect}
     />
   )
 }

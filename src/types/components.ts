@@ -19,6 +19,7 @@ export interface SearchFormProps {
   onQueryChange: (query: string) => void
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
   onClear?: () => void
+  onSuggestionSelect?: (id: string) => void
 }
 
 /**
