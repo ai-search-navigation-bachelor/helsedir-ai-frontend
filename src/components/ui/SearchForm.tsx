@@ -60,28 +60,8 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
     }
 
     function handleKeyDown(e: React.KeyboardEvent) {
-      if (!showSuggestions || suggestions.length === 0) return
-
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && showSuggestions) {
         setShowSuggestions(false)
-        return
-      }
-
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setActiveIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0))
-        return
-      }
-
-      if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setActiveIndex((prev) => (prev > 0 ? prev - 1 : -1))
-        return
-      }
-
-      if (e.key === 'Enter' && activeIndex >= 0) {
-        e.preventDefault()
-        handleSelectSuggestion(suggestions[activeIndex].id)
       }
     }
 
