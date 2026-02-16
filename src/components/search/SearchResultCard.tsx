@@ -79,7 +79,7 @@ export function SearchResultCard({
   return (
     <div
       ref={cardRef}
-      className="relative bg-white border-l-4 border-blue-500 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+      className="relative bg-white border-l-4 border-[#047FA4] p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
     >
       <Link
         to={contentHref}
@@ -98,7 +98,7 @@ export function SearchResultCard({
       />
 
       <div className="relative z-10 mb-2 pointer-events-none">
-        <span className="inline-block px-2.5 py-0.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-md">
+        <span className="inline-block px-2.5 py-0.5 text-xs font-medium text-[#047FA4] bg-[#e6f2f6] rounded-md">
           {categoryLabel}
         </span>
       </div>

@@ -53,17 +53,17 @@ export function SearchCategoryTabs({
             onClick={() => onTabChange(tab.id)}
             className={`inline-flex items-center gap-1.5 px-1.5 pt-2 pb-3 text-[0.95rem] font-medium transition-colors ${
               activeTab === tab.id
-                ? "text-[#0062BA]"
+                ? "text-[#047FA4]"
                 : "text-slate-700 hover:text-slate-900"
             }`}
           >
             {tab.label}
-            <span className="text-slate-600">{categoryCounts[tab.id] || 0}</span>
+            <span className={activeTab === tab.id ? "text-[#047FA4]" : "text-slate-600"}>{categoryCounts[tab.id] || 0}</span>
           </button>
         ))}
 
         <div
-          className="absolute bottom-0 h-0.5 bg-[#0062BA] rounded-full"
+          className="absolute bottom-0 h-0.5 bg-[#047FA4] rounded-full"
           style={{
             left: indicator.left,
             width: indicator.width,
