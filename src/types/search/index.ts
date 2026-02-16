@@ -72,3 +72,18 @@ export interface SearchResponse {
   has_prev: boolean
   results: SearchResult[]
 }
+
+/**
+ * Search suggestion item
+ */
+export interface SearchSuggestion {
+  id: string
+  title: string
+}
+
+/**
+ * Search suggestions response
+ */
+export interface SearchSuggestionsResponse {
+  suggestions: SearchSuggestion[]
+}

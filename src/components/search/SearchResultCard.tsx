@@ -79,7 +79,7 @@ export function SearchResultCard({
   return (
     <div
       ref={cardRef}
-      className="relative bg-white border-l-4 border-blue-500 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+      className="relative bg-white border-l-4 border-[#047FA4] p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
     >
       <Link
         to={contentHref}
@@ -98,7 +98,7 @@ export function SearchResultCard({
       />
 
       <div className="relative z-10 mb-2 pointer-events-none">
-        <span className="inline-block px-2.5 py-0.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-md">
+        <span className="inline-block px-2.5 py-0.5 text-xs font-medium text-[#047FA4] bg-[#e6f2f6] rounded-md">
           {categoryLabel}
         </span>
       </div>
@@ -148,7 +148,7 @@ export function SearchResultCard({
 
                 {items.length > 0 && (
                   <div
-                    className={`${isOpen ? "block" : "hidden"} absolute left-0 top-full mt-0 md:left-full md:top-[-0.35rem] md:mt-0 md:ml-0 z-20 w-[min(42rem,92vw)] rounded-lg border border-slate-200 bg-white shadow-lg px-2 py-1`}
+                    className={`${isOpen ? "block" : "hidden"} absolute left-0 top-full mt-0 md:left-full md:top-[-0.35rem] md:mt-0 md:ml-0 z-20 w-[min(42rem,92vw)] rounded-lg border border-slate-200 bg-white shadow-lg py-1 overflow-hidden`}
                   >
                     <div className="space-y-1">
                       {items.map((item) => (
@@ -165,7 +165,7 @@ export function SearchResultCard({
                             searchCategoryName: group.display_name,
                             contentType: item.info_type,
                           }}
-                          className="group/item w-full rounded-md border border-transparent px-2 py-1.5 text-left text-sm text-sky-800 hover:bg-sky-50 hover:border-sky-200 cursor-pointer"
+                          className="group/item block w-full px-3 py-1.5 text-left text-sm text-sky-800 hover:bg-sky-50 cursor-pointer"
                         >
                           <span className="inline-flex w-full items-center justify-between gap-2">
                             <span className="truncate group-hover/item:underline">

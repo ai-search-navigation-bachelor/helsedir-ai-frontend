@@ -8,6 +8,7 @@ export {
   searchCategorized,
   searchCategory,
   search,
+  fetchSearchSuggestions,
 } from './search'
 export type {
   CategorizedSearchOptions,
