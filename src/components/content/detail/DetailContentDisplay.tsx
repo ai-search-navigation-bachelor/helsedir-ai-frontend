@@ -1,94 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
-  fetchHelsedirContentById,
-  fetchHelsedirContentByTypeAndId,
-  getHelsedirEndpointByContentType,
-} from '../../../api'
-import type { NestedContent } from '../../../types'
+  getDetailContentTypeLabel,
+  isRecommendationContentType,
+  isTemasideContentType,
+  normalizeContentType,
+} from '../../../constants/content'
+import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
 import { hasVisibleContent } from '../shared/contentTextUtils'
-
-interface ContentSection {
-  id: string
-  title: string
-  html: string
-}
-
-const RECOMMENDATION_TYPES = new Set(['anbefaling', 'rad', 'pakkeforlop-anbefaling'])
-const TEMASIDE_TYPES = new Set(['temaside', 'tema-side'])
-
-const TYPE_LABEL_BY_CONTENT_TYPE: Record<string, string> = {
-  anbefaling: 'Anbefaling',
-  rad: 'Råd',
-  'pakkeforlop-anbefaling': 'Pakkeforløp-anbefaling',
-}
-
-const LINK_LABEL_BY_REL: Record<string, string> = {
-  root: 'Rotpublikasjon',
-}
-
-function formatDateLabel(value?: string) {
-  if (!value) return ''
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
-  return parsed.toLocaleDateString('nb-NO')
-}
-
-function getTypeLabel(contentType: string) {
-  return TYPE_LABEL_BY_CONTENT_TYPE[contentType] || 'Innhold'
-}
-
-function isAbortError(error: unknown) {
-  return error instanceof Error && error.name === 'AbortError'
-}
-
-function getStatusCodeFromError(error: unknown) {
-  if (!(error instanceof Error)) return null
-
-  const match = error.message.match(/\b(\d{3})\b/)
-  if (!match) return null
-
-  const statusCode = Number(match[1])
-  return Number.isNaN(statusCode) ? null : statusCode
-}
-
-function shouldFallbackToTypedEndpoint(error: unknown) {
-  if (isAbortError(error)) return false
-  const statusCode = getStatusCodeFromError(error)
-  return statusCode === 400 || statusCode === 404 || statusCode === 405
-}
-
-function getContentIdFromHref(href?: string) {
-  if (!href) return null
-
-  try {
-    const parsed = new URL(href)
-    const segments = parsed.pathname.split('/').filter(Boolean)
-    return segments[segments.length - 1] || null
-  } catch {
-    const normalized = href.split('?')[0].replace(/\/+$/, '')
-    const segments = normalized.split('/').filter(Boolean)
-    return segments[segments.length - 1] || null
-  }
-}
-
-function normalizeMetaField(value?: string | null): string | undefined {
-  if (typeof value !== 'string') return undefined
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : undefined
-}
-
-// `null` and `undefined` are intentionally treated as "no value".
-function chooseMetaField(primary?: string | null, secondary?: string | null): string | undefined {
-  return normalizeMetaField(primary) ?? normalizeMetaField(secondary)
-}
+import {
+  buildContentSections,
+  buildContextualNavigationLinks,
+  buildMetadataItems,
+  LINK_LABEL_BY_REL,
+  type ContentSection,
+} from './detailContentModel'
 
 interface DetailContentDisplayProps extends ContentDisplayProps {
   typeLabelOverride?: string
@@ -102,7 +34,7 @@ export function DetailContentDisplay({
 }: DetailContentDisplayProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const normalizedType = content.content_type.trim().toLowerCase()
+  const normalizedType = normalizeContentType(content.content_type)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const hasBodyContent = useMemo(() => hasVisibleContent(content.body), [content.body])
   const backendPractical = content.anbefaling_fields?.praktisk || ''
@@ -117,10 +49,10 @@ export function DetailContentDisplay({
   const hasBackendRecommendationStrength = Boolean(content.anbefaling_fields?.styrke?.trim())
   const hasSufficientBackendRecommendationData =
     hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
-  const shouldSkipHelsedirEnrichment = TEMASIDE_TYPES.has(normalizedType)
+  const shouldSkipHelsedirEnrichment = isTemasideContentType(normalizedType)
   const shouldAttemptEnrichment =
     !shouldSkipHelsedirEnrichment &&
-    (RECOMMENDATION_TYPES.has(normalizedType)
+    (isRecommendationContentType(normalizedType)
       ? !hasSufficientBackendRecommendationData
       : !hasBodyContent)
 
@@ -128,25 +60,10 @@ export function DetailContentDisplay({
     data: enrichedContent,
     isLoading: isEnrichedLoading,
     error: enrichedError,
-  } = useQuery<NestedContent>({
-    queryKey: ['enriched-content', normalizedType, content.id],
-    queryFn: async ({ signal }) => {
-      try {
-        return await fetchHelsedirContentById(content.id, signal) as NestedContent
-      } catch (error) {
-        const typedEndpoint = getHelsedirEndpointByContentType(normalizedType)
-        if (!typedEndpoint || !shouldFallbackToTypedEndpoint(error)) {
-          throw error
-        }
-        return await fetchHelsedirContentByTypeAndId(
-          normalizedType,
-          content.id,
-          signal,
-        ) as NestedContent
-      }
-    },
-    enabled: Boolean(content.id) && shouldAttemptEnrichment,
-    staleTime: 10 * 60 * 1000,
+  } = useEnrichedContentQuery({
+    contentId: content.id,
+    contentType: normalizedType,
+    enabled: shouldAttemptEnrichment,
   })
 
   const sections = useMemo<ContentSection[]>(() => {
@@ -164,49 +81,14 @@ export function DetailContentDisplay({
       ? backendPreferences
       : enrichedContent?.data?.nokkelInfo?.verdierogpreferanser || ''
 
-    const result: ContentSection[] = []
-
-    if (hasVisibleContent(mainBody)) {
-      result.push({
-        id: 'section-hovedanbefaling',
-        title: primarySectionTitle,
-        html: mainBody,
-      })
-    }
-
-    if (hasVisibleContent(practical)) {
-      result.push({
-        id: 'section-praktisk',
-        title: 'Praktisk',
-        html: practical,
-      })
-    }
-
-    if (hasVisibleContent(rationale)) {
-      result.push({
-        id: 'section-rasjonale',
-        title: 'Rasjonale',
-        html: rationale,
-      })
-    }
-
-    if (hasVisibleContent(tradeoffs)) {
-      result.push({
-        id: 'section-fordeler-ulemper',
-        title: 'Fordeler og ulemper',
-        html: tradeoffs,
-      })
-    }
-
-    if (hasVisibleContent(preferences)) {
-      result.push({
-        id: 'section-verdier-preferanser',
-        title: 'Verdier og preferanser',
-        html: preferences,
-      })
-    }
-
-    return result
+    return buildContentSections({
+      mainBody,
+      practical,
+      rationale,
+      tradeoffs,
+      preferences,
+      primarySectionTitle,
+    })
   }, [
     backendPractical,
     backendPreferences,
@@ -251,76 +133,21 @@ export function DetailContentDisplay({
     return () => observer.disconnect()
   }, [sections])
 
-  const metadataItems = useMemo(() => {
-    const items: Array<{ label: string; value: string }> = []
-    const strength = chooseMetaField(content.anbefaling_fields?.styrke, enrichedContent?.data?.styrke)
-    const status = chooseMetaField(content.status, enrichedContent?.status)
-    const firstPublishedRaw = chooseMetaField(content.forstPublisert, enrichedContent?.forstPublisert)
-    const updatedRaw = chooseMetaField(content.sistOppdatert, enrichedContent?.sistOppdatert)
-    const professionallyUpdatedRaw = chooseMetaField(
-      content.sistFagligOppdatert,
-      enrichedContent?.sistFagligOppdatert,
-    )
-    const firstPublished = firstPublishedRaw ? formatDateLabel(firstPublishedRaw) : undefined
-    const updated = updatedRaw ? formatDateLabel(updatedRaw) : undefined
-    const professionallyUpdated = professionallyUpdatedRaw
-      ? formatDateLabel(professionallyUpdatedRaw)
-      : undefined
-
-    if (strength) {
-      items.push({ label: 'Anbefalingsstyrke', value: strength })
-    }
-    if (status) {
-      items.push({ label: 'Status', value: status })
-    }
-
-    if (firstPublished) {
-      items.push({ label: 'Først publisert', value: firstPublished })
-    }
-
-    if (updated) {
-      items.push({ label: 'Sist oppdatert', value: updated })
-    }
-
-    if (professionallyUpdated) {
-      items.push({ label: 'Sist faglig oppdatert', value: professionallyUpdated })
-    }
-
-    return items
-  }, [
-    content.anbefaling_fields?.styrke,
-    content.forstPublisert,
-    content.sistFagligOppdatert,
-    content.sistOppdatert,
-    content.status,
-    enrichedContent,
-  ])
+  const metadataItems = useMemo(
+    () => buildMetadataItems(content, enrichedContent),
+    [content, enrichedContent],
+  )
 
   const supportingLinks = useMemo(
     () => content.links?.filter((link) => Boolean(link.href)) || [],
     [content.links],
   )
   const contextualNavigationLinks = useMemo(
-    () => {
-      const seenContentIds = new Set<string>()
-
-      return supportingLinks
-        .filter((link) => link.rel === 'root')
-        .map((link) => ({
-          ...link,
-          contentId: getContentIdFromHref(link.href),
-        }))
-        .filter((link) => Boolean(link.contentId) && link.contentId !== content.id)
-        .filter((link) => {
-          if (!link.contentId || seenContentIds.has(link.contentId)) return false
-          seenContentIds.add(link.contentId)
-          return true
-        })
-    },
+    () => buildContextualNavigationLinks(content.id, supportingLinks),
     [content.id, supportingLinks],
   )
 
-  const typeLabel = typeLabelOverride || getTypeLabel(normalizedType)
+  const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
   const documentLinks = useMemo(
     () => getDocumentLinks(enrichedContent, content.links),
     [content.links, enrichedContent],
@@ -542,4 +369,5 @@ export function DetailContentDisplay({
     </div>
   )
 }
+
 

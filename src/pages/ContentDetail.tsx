@@ -1,16 +1,21 @@
+<<<<<<< HEAD
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Alert, Paragraph } from '@digdir/designsystemet-react'
 import { fetchHelsedirContentById, fetchHelsedirContentByTypeAndId, getContent } from '../api'
 import { TEMASIDE_CATEGORIES } from '../constants/temasider'
+=======
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Alert, Button, Paragraph } from '@digdir/designsystemet-react'
+import { useContentDetailQuery } from '../hooks/queries/useContentDetailQuery'
+import { useContentDetailBreadcrumbs } from '../hooks/useContentDetailBreadcrumbs'
+>>>>>>> fe3fb976984edfdf039136ed83998d87fc73352e
 import { useSearchStore } from '../stores/searchStore'
-import { useTemasideBreadcrumbStore } from '../stores'
 import { ContentDisplay } from '../components/content'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
-import type { BreadcrumbItem } from '../types/components'
-import type { ContentDetail as ContentDetailData, ContentLink, NestedContent } from '../types'
 
+<<<<<<< HEAD
 function isAbortError(error: unknown) {
   return error instanceof Error && error.name === 'AbortError'
 }
@@ -167,80 +172,38 @@ function dedupeAdjacentBreadcrumbItems(items: BreadcrumbItem[]): BreadcrumbItem[
   })
 }
 
+=======
+>>>>>>> fe3fb976984edfdf039136ed83998d87fc73352e
 export function ContentDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const queryClient = useQueryClient()
 
   const searchId = useSearchStore((state) => state.searchId)
   const routeState = (location.state as { contentType?: string } | null) ?? null
   const routeContentType = routeState?.contentType?.trim().toLowerCase() || ''
-  const temasideTrailByPath = useTemasideBreadcrumbStore((state) => state.trailByPath)
-  const temasideLastPath = useTemasideBreadcrumbStore((state) => state.lastPath)
-
   const effectiveSearchId = searchId || undefined
+<<<<<<< HEAD
   const sourceTemasideId = getSourceTemasideIdFromLocationState(location.state)
   const { id: sourceContentId, title: sourceContentTitleFromState } =
     getSourceContentContextFromLocationState(location.state)
+=======
+>>>>>>> fe3fb976984edfdf039136ed83998d87fc73352e
 
-  const { data: content, isLoading, error } = useQuery({
-    queryKey: ['content', id, effectiveSearchId, routeContentType],
-    queryFn: async ({ signal }) => {
-      if (!id) throw new Error('ID mangler')
-
-      const fetchFromBackend = async () =>
-        getContent(id, effectiveSearchId, { signal, suppressErrorStatuses: [404] })
-
-      const fetchFromHelsedir = async () => {
-        try {
-          return await fetchHelsedirContentById(id, signal) as NestedContent
-        } catch (helsedirError) {
-          if (!routeContentType || !shouldFallbackToTypedEndpoint(helsedirError)) {
-            throw helsedirError
-          }
-          return await fetchHelsedirContentByTypeAndId(
-            routeContentType,
-            id,
-            signal,
-          ) as NestedContent
-        }
-      }
-
-      try {
-        return await fetchFromBackend()
-      } catch (backendError) {
-        if (isAbortError(backendError) || signal.aborted) {
-          throw backendError
-        }
-
-        if (!shouldFallbackToTypedEndpoint(backendError)) {
-          throw backendError
-        }
-
-        const helsedirContent = await fetchFromHelsedir()
-        const mappedHelsedirContent = mapHelsedirContentToDetail(helsedirContent)
-        seedEnrichedContentCache(queryClient, id, helsedirContent, [
-          routeContentType,
-          mappedHelsedirContent.content_type,
-        ])
-        return mappedHelsedirContent
-      }
-    },
-    enabled: !!id,
-    staleTime: 10 * 60 * 1000,
+  const { data: content, isLoading, error } = useContentDetailQuery({
+    contentId: id,
+    searchId: effectiveSearchId,
+    routeContentType,
   })
 
-  const { data: sourceTemasideContent } = useQuery({
-    queryKey: ['content', sourceTemasideId, effectiveSearchId],
-    queryFn: async ({ signal }) => {
-      if (!sourceTemasideId) throw new Error('Mangler source temaside-id')
-      return getContent(sourceTemasideId, effectiveSearchId, { signal })
-    },
-    enabled: Boolean(sourceTemasideId && sourceTemasideId !== id),
-    staleTime: 10 * 60 * 1000,
+  const { activeBreadcrumbItems } = useContentDetailBreadcrumbs({
+    content,
+    currentContentId: id,
+    locationState: location.state,
+    searchId: effectiveSearchId,
   })
 
+<<<<<<< HEAD
   const { data: sourceContentForBreadcrumb } = useQuery({
     queryKey: ['content', sourceContentId, effectiveSearchId],
     queryFn: async ({ signal }) => {
@@ -375,26 +338,26 @@ export function ContentDetail() {
             : fallbackBreadcrumbItems,
   )
 
+=======
+>>>>>>> fe3fb976984edfdf039136ed83998d87fc73352e
   return (
-    <div className="max-w-screen-xl mx-auto px-6 pt-10 pb-8">
+    <div className="max-w-screen-xl mx-auto px-6 pt-4 pb-8">
       {activeBreadcrumbItems.length > 0 ? (
         <Breadcrumb items={activeBreadcrumbItems} />
       ) : (
         <Button
-          variant='tertiary'
+          variant="tertiary"
           onClick={() => navigate(-1)}
           style={{ marginBottom: '24px' }}
         >
-          ← Tilbake
+          &larr; Tilbake
         </Button>
       )}
 
-      {isLoading && (
-        <ContentPageLoadingSkeleton />
-      )}
+      {isLoading && <ContentPageLoadingSkeleton />}
 
       {error && (
-        <Alert data-color='danger'>
+        <Alert data-color="danger">
           <Paragraph>
             {error instanceof Error ? error.message : 'Henting av innhold feilet'}
           </Paragraph>

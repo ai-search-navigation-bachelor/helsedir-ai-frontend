@@ -1,3 +1,5 @@
+import { normalizePath } from '../path'
+
 export type ThemeNode = {
   path: string // "/forebygging-diagnose-og-behandling"
   segment: string // "forebygging-diagnose-og-behandling"
@@ -10,10 +12,6 @@ function titleize(segment: string) {
   // simple: "-" -> " ", capitalize first letter. You can override later.
   const s = segment.replace(/-/g, ' ')
   return s.charAt(0).toUpperCase() + s.slice(1)
-}
-
-function normalizePath(path: string): string {
-  return (path || '/').replace(/\/+$/, '') || '/'
 }
 
 export function buildThemeTree(
