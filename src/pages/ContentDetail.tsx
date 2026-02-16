@@ -2,11 +2,6 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Alert, Paragraph } from '@digdir/designsystemet-react'
 import { fetchHelsedirContentById, fetchHelsedirContentByTypeAndId, getContent } from '../api'
-import {
-  getMainCategoryBySubcategory,
-  SEARCH_MAIN_CATEGORIES,
-  SEARCH_SUBCATEGORY_LABELS,
-} from '../constants/categories'
 import { TEMASIDE_CATEGORIES } from '../constants/temasider'
 import { useSearchStore } from '../stores/searchStore'
 import { useTemasideBreadcrumbStore } from '../stores'
@@ -139,44 +134,6 @@ function getSourceTemasideIdFromLocationState(state: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
-function getSearchQueryFromLocationState(state: unknown): string | null {
-  if (!state || typeof state !== 'object') return null
-
-  const fromSearch = (state as { fromSearch?: unknown }).fromSearch
-  const searchQuery = (state as { searchQuery?: unknown }).searchQuery
-  if (fromSearch !== true || typeof searchQuery !== 'string') return null
-
-  const trimmed = searchQuery.trim()
-  return trimmed.length > 0 ? trimmed : null
-}
-
-function getSearchCategoryContextFromLocationState(
-  state: unknown,
-): { categoryId: string | null; categoryName: string | null } {
-  if (!state || typeof state !== 'object') {
-    return { categoryId: null, categoryName: null }
-  }
-
-  const fromSearch = (state as { fromSearch?: unknown }).fromSearch
-  if (fromSearch !== true) {
-    return { categoryId: null, categoryName: null }
-  }
-
-  const rawCategoryId = (state as { searchCategoryId?: unknown }).searchCategoryId
-  const rawCategoryName = (state as { searchCategoryName?: unknown }).searchCategoryName
-
-  const categoryId =
-    typeof rawCategoryId === 'string' && rawCategoryId.trim().length > 0
-      ? rawCategoryId.trim()
-      : null
-  const categoryName =
-    typeof rawCategoryName === 'string' && rawCategoryName.trim().length > 0
-      ? rawCategoryName.trim()
-      : null
-
-  return { categoryId, categoryName }
-}
-
 function getSourceContentContextFromLocationState(
   state: unknown,
 ): { id: string | null; title: string | null } {
@@ -196,6 +153,20 @@ function getSourceContentContextFromLocationState(
 
   return { id, title }
 }
+
+function normalizeBreadcrumbLabel(label: string) {
+  return label.trim().toLowerCase()
+}
+
+function dedupeAdjacentBreadcrumbItems(items: BreadcrumbItem[]): BreadcrumbItem[] {
+  if (items.length <= 1) return items
+
+  return items.filter((item, index) => {
+    if (index === 0) return true
+    return normalizeBreadcrumbLabel(item.label) !== normalizeBreadcrumbLabel(items[index - 1].label)
+  })
+}
+
 export function ContentDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -210,9 +181,6 @@ export function ContentDetail() {
 
   const effectiveSearchId = searchId || undefined
   const sourceTemasideId = getSourceTemasideIdFromLocationState(location.state)
-  const searchReturnQuery = getSearchQueryFromLocationState(location.state)
-  const { categoryId: searchCategoryId, categoryName: searchCategoryName } =
-    getSearchCategoryContextFromLocationState(location.state)
   const { id: sourceContentId, title: sourceContentTitleFromState } =
     getSourceContentContextFromLocationState(location.state)
 
@@ -295,18 +263,6 @@ export function ContentDetail() {
       ]
     : []
 
-  const searchMainCategoryId = searchCategoryId
-    ? getMainCategoryBySubcategory(searchCategoryId)
-    : undefined
-  const searchMainCategoryLabel = searchMainCategoryId
-    ? SEARCH_MAIN_CATEGORIES.find((category) => category.id === searchMainCategoryId)?.label
-    : undefined
-  const searchSubcategoryLabel = searchCategoryName || (
-    searchCategoryId && searchCategoryId in SEARCH_SUBCATEGORY_LABELS
-      ? SEARCH_SUBCATEGORY_LABELS[searchCategoryId as keyof typeof SEARCH_SUBCATEGORY_LABELS]
-      : undefined
-  )
-
   const rootLink = content?.links?.find((link) => link.rel === 'root')
   const parentLink = content?.links?.find((link) => link.rel === 'forelder')
   const rootContentId = getContentIdFromHref(rootLink?.href)
@@ -324,21 +280,6 @@ export function ContentDetail() {
           parentContentId !== content.id &&
           parentContentId !== rootContentId
             ? [{ label: parentLink.tittel, href: `/content/${parentContentId}` }]
-            : []),
-          { label: content.title, href: '#' },
-        ]
-      : []
-
-  const searchHierarchyBreadcrumbItems: BreadcrumbItem[] =
-    content && searchReturnQuery && content.content_type !== 'temaside'
-      ? [
-          { label: 'Forside', href: '/' },
-          { label: 'Søk', href: '#' },
-          ...(searchMainCategoryId && searchMainCategoryLabel
-            ? [{ label: searchMainCategoryLabel, href: '#' }]
-            : []),
-          ...(searchCategoryId && searchSubcategoryLabel && searchCategoryId !== searchMainCategoryId
-            ? [{ label: searchSubcategoryLabel, href: '#' }]
             : []),
           { label: content.title, href: '#' },
         ]
@@ -408,7 +349,7 @@ export function ContentDetail() {
     items.filter((item) => item.label.toLowerCase() !== 'temasider')
 
   const temasideBreadcrumbItems: BreadcrumbItem[] =
-    !searchReturnQuery && temasideLastPath && temasideTrailByPath[temasideLastPath]
+    temasideLastPath && temasideTrailByPath[temasideLastPath]
       ? [
           ...sanitizeTemasideItems(
             temasideTrailByPath[temasideLastPath].slice(
@@ -420,20 +361,19 @@ export function ContentDetail() {
         ]
       : []
 
-  const activeBreadcrumbItems =
+  const activeBreadcrumbItems = dedupeAdjacentBreadcrumbItems(
     temasideCanonicalBreadcrumbItems.length > 0
       ? temasideCanonicalBreadcrumbItems
       : extendedTemasideBreadcrumbItems.length > 0
         ? extendedTemasideBreadcrumbItems
         : relatedTemasideBreadcrumbItems.length > 0
-          ? relatedTemasideBreadcrumbItems
-          : linkHierarchyBreadcrumbItems.length > 0
-            ? linkHierarchyBreadcrumbItems
-            : searchHierarchyBreadcrumbItems.length > 0
-              ? searchHierarchyBreadcrumbItems
-              : temasideBreadcrumbItems.length > 0
-                ? temasideBreadcrumbItems
-                : fallbackBreadcrumbItems
+        ? relatedTemasideBreadcrumbItems
+        : linkHierarchyBreadcrumbItems.length > 0
+          ? linkHierarchyBreadcrumbItems
+          : temasideBreadcrumbItems.length > 0
+            ? temasideBreadcrumbItems
+            : fallbackBreadcrumbItems,
+  )
 
   return (
     <div className="max-w-screen-xl mx-auto px-6 pt-10 pb-8">
