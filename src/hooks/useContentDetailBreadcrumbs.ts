@@ -1,12 +1,5 @@
-import {
-  getMainCategoryBySubcategory,
-  SEARCH_MAIN_CATEGORIES,
-  SEARCH_SUBCATEGORY_LABELS,
-} from '../constants/categories'
 import { useContentByIdQuery } from './queries/useContentByIdQuery'
 import {
-  getSearchCategoryContextFromLocationState,
-  getSearchQueryFromLocationState,
   getSourceContentContextFromLocationState,
   getSourceTemasideIdFromLocationState,
   getTemasideCategoryByPath,
@@ -18,7 +11,6 @@ import {
   buildFallbackBreadcrumbItems,
   buildLinkHierarchyBreadcrumbItems,
   buildRelatedTemasideBreadcrumbItems,
-  buildSearchHierarchyBreadcrumbItems,
   buildTemasideCanonicalBreadcrumbItems,
   buildTemasideTrailBreadcrumbItems,
   resolveActiveContentDetailBreadcrumbs,
@@ -43,9 +35,6 @@ export function useContentDetailBreadcrumbs({
   const temasideLastPath = useTemasideBreadcrumbStore((state) => state.lastPath)
 
   const sourceTemasideId = getSourceTemasideIdFromLocationState(locationState)
-  const searchReturnQuery = getSearchQueryFromLocationState(locationState)
-  const { categoryId: searchCategoryId, categoryName: searchCategoryName } =
-    getSearchCategoryContextFromLocationState(locationState)
   const { id: sourceContentId, title: sourceContentTitleFromState } =
     getSourceContentContextFromLocationState(locationState)
 
@@ -66,27 +55,8 @@ export function useContentDetailBreadcrumbs({
     ),
   })
 
-  const searchMainCategoryId = searchCategoryId
-    ? getMainCategoryBySubcategory(searchCategoryId)
-    : undefined
-  const searchMainCategoryLabel = searchMainCategoryId
-    ? SEARCH_MAIN_CATEGORIES.find((category) => category.id === searchMainCategoryId)?.label
-    : undefined
-  const searchSubcategoryLabel = searchCategoryName || (
-    searchCategoryId && searchCategoryId in SEARCH_SUBCATEGORY_LABELS
-      ? SEARCH_SUBCATEGORY_LABELS[searchCategoryId as keyof typeof SEARCH_SUBCATEGORY_LABELS]
-      : undefined
-  )
-
   const fallbackBreadcrumbItems = buildFallbackBreadcrumbItems(content)
   const linkHierarchyBreadcrumbItems = buildLinkHierarchyBreadcrumbItems(content)
-  const searchHierarchyBreadcrumbItems = buildSearchHierarchyBreadcrumbItems(content, {
-    searchQuery: searchReturnQuery,
-    mainCategoryId: searchMainCategoryId,
-    mainCategoryLabel: searchMainCategoryLabel,
-    categoryId: searchCategoryId,
-    subcategoryLabel: searchSubcategoryLabel,
-  })
 
   const temasideCategoryPath = getTemasideCategoryPathFromContentLinks(content?.links)
   const temasideCategory = temasideCategoryPath
@@ -121,7 +91,6 @@ export function useContentDetailBreadcrumbs({
 
   const temasideBreadcrumbItems = buildTemasideTrailBreadcrumbItems({
     contentTitle: content?.title,
-    searchQuery: searchReturnQuery,
     temasideLastPath,
     trailByPath: temasideTrailByPath,
     sanitizeTemasideItems,
@@ -130,7 +99,6 @@ export function useContentDetailBreadcrumbs({
   const activeBreadcrumbItems = resolveActiveContentDetailBreadcrumbs({
     fallbackBreadcrumbItems,
     linkHierarchyBreadcrumbItems,
-    searchHierarchyBreadcrumbItems,
     temasideCanonicalBreadcrumbItems,
     relatedTemasideBreadcrumbItems,
     extendedTemasideBreadcrumbItems,
