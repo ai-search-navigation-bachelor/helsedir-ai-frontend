@@ -31,7 +31,7 @@ export function ContentDetail() {
   })
 
   return (
-    <div className="max-w-screen-xl mx-auto px-6 pt-10 pb-8">
+    <div className="max-w-screen-xl mx-auto px-6 pt-4 pb-8">
       {activeBreadcrumbItems.length > 0 ? (
         <Breadcrumb items={activeBreadcrumbItems} />
       ) : (
