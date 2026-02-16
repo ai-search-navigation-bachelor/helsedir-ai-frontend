@@ -17,14 +17,11 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
 
     const { data } = useSearchSuggestionsQuery(query, showSuggestions)
     const suggestions = data?.suggestions ?? []
-    const prevSuggestionsLengthRef = useRef(suggestions.length)
 
-    if (prevSuggestionsLengthRef.current !== suggestions.length) {
-      prevSuggestionsLengthRef.current = suggestions.length
-      if (activeIndex !== -1) {
-        setActiveIndex(-1)
-      }
-    }
+    // Reset active index when suggestions change
+    useEffect(() => {
+      setActiveIndex(-1)
+    }, [suggestions.length])
 
     // Close dropdown on click outside
     const handleClickOutside = useCallback((e: MouseEvent) => {
@@ -64,8 +61,28 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
     }
 
     function handleKeyDown(e: React.KeyboardEvent) {
-      if (e.key === 'Escape' && showSuggestions) {
+      if (!showSuggestions || suggestions.length === 0) return
+
+      if (e.key === 'Escape') {
         setShowSuggestions(false)
+        return
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setActiveIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0))
+        return
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setActiveIndex((prev) => (prev > 0 ? prev - 1 : -1))
+        return
+      }
+
+      if (e.key === 'Enter' && activeIndex >= 0) {
+        e.preventDefault()
+        handleSelectSuggestion(suggestions[activeIndex].id)
       }
     }
 
