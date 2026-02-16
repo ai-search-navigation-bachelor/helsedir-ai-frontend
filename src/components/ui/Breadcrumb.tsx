@@ -8,7 +8,7 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <div style={{ marginBottom: '20px' }}>
+    <div style={{ marginBottom: '16px' }}>
       <Breadcrumbs>
         <Breadcrumbs.List className="min-w-0 flex-nowrap text-sm">
           {items.map((item, index) => {
