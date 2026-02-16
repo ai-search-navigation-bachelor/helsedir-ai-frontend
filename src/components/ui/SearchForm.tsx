@@ -1,4 +1,4 @@
-import { useId, useRef, useState, useEffect, forwardRef } from 'react'
+import { useId, useRef, useState, useEffect, useCallback, forwardRef } from 'react'
 import { MagnifyingGlassIcon, XMarkIcon } from '@navikt/aksel-icons'
 import { colors } from '../../styles/dsTokens'
 import { useSearchSuggestionsQuery } from '../../hooks/queries/useSearchSuggestionsQuery'
@@ -17,22 +17,26 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
 
     const { data } = useSearchSuggestionsQuery(query, showSuggestions)
     const suggestions = data?.suggestions ?? []
+    const prevSuggestionsLengthRef = useRef(suggestions.length)
+
+    if (prevSuggestionsLengthRef.current !== suggestions.length) {
+      prevSuggestionsLengthRef.current = suggestions.length
+      if (activeIndex !== -1) {
+        setActiveIndex(-1)
+      }
+    }
 
     // Close dropdown on click outside
-    useEffect(() => {
-      function handleClickOutside(e: MouseEvent) {
-        if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-          setShowSuggestions(false)
-        }
+    const handleClickOutside = useCallback((e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
       }
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    // Reset active index when suggestions change
     useEffect(() => {
-      setActiveIndex(-1)
-    }, [suggestions.length])
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [handleClickOutside])
 
     function handleIconClick() {
       if (query.trim()) {

@@ -16,7 +16,7 @@ export function SearchCategoryTabs({
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const [indicator, setIndicator] = useState({ left: 0, width: 0 });
-  const hasInitialized = useRef(false);
+  const [animate, setAnimate] = useState(false);
 
   useEffect(() => {
     const el = buttonRefs.current.get(activeTab);
@@ -31,12 +31,10 @@ export function SearchCategoryTabs({
       width: elRect.width,
     });
 
-    if (!hasInitialized.current) {
-      requestAnimationFrame(() => {
-        hasInitialized.current = true;
-      });
+    if (!animate) {
+      requestAnimationFrame(() => setAnimate(true));
     }
-  }, [activeTab, tabs, categoryCounts]);
+  }, [activeTab, tabs, categoryCounts, animate]);
 
   const allTabs = [{ id: "all", label: "Alle" }, ...tabs];
 
@@ -67,7 +65,7 @@ export function SearchCategoryTabs({
           style={{
             left: indicator.left,
             width: indicator.width,
-            transition: hasInitialized.current
+            transition: animate
               ? "left 150ms ease, width 150ms ease"
               : "none",
           }}
