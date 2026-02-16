@@ -15,6 +15,24 @@ export interface ContentLink {
 }
 
 /**
+ * Linked content item within a temaside group
+ */
+export interface LinkedContentItem {
+  id: string
+  title: string
+  info_type: string
+}
+
+/**
+ * Grouped linked content on a temaside
+ */
+export interface LinkedContentGroup {
+  info_type: string
+  display_name: string
+  items: LinkedContentItem[]
+}
+
+/**
  * Content detail
  */
 export interface ContentDetail {
@@ -24,6 +42,7 @@ export interface ContentDetail {
   content_type: string
   target_groups?: string[]
   links?: ContentLink[]
+  linked_content?: LinkedContentGroup[]
   status?: string
   forstPublisert?: string
   sistOppdatert?: string
