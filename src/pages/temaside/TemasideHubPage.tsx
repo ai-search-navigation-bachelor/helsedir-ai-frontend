@@ -1,5 +1,7 @@
-import { Heading } from '@digdir/designsystemet-react'
+import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { ContentDisplay } from '../../components/content'
 import { Breadcrumb } from '../../components/ui/Breadcrumb'
+import { useContentByIdQuery } from '../../hooks/queries/useContentByIdQuery'
 import { useTemasideHubPageModel } from '../../hooks/useTemasideHubPageModel'
 import { TemasideHubSections } from './TemasideHubSections'
 import { TemasideHubStatusView } from './TemasideHubStatusView'
@@ -9,6 +11,7 @@ export function TemasideHubPage() {
     breadcrumbItems,
     category,
     categoryIcon,
+    contentId,
     customLayout,
     error,
     isError,
@@ -24,6 +27,16 @@ export function TemasideHubPage() {
     visibleLinks,
     visibleSections,
   } = useTemasideHubPageModel()
+
+  const isLeafContentPage = Boolean(node && !isHub && contentId)
+  const {
+    data: leafContent,
+    isLoading: isLeafContentLoading,
+    error: leafContentError,
+  } = useContentByIdQuery({
+    contentId,
+    enabled: isLeafContentPage,
+  })
 
   if (!category) {
     return (
@@ -68,6 +81,32 @@ export function TemasideHubPage() {
           </>
         }
       />
+    )
+  }
+
+  if (isLeafContentPage) {
+    return (
+      <div className="max-w-screen-xl mx-auto px-6 pt-4 pb-8 lg:pb-10">
+        <Breadcrumb items={breadcrumbItems} />
+
+        {isLeafContentLoading && (
+          <div className="flex justify-center items-center py-8">
+            <Spinner aria-label="Laster temaside..." data-size="lg" />
+          </div>
+        )}
+
+        {leafContentError && (
+          <Alert data-color="danger">
+            <Paragraph>
+              {leafContentError instanceof Error
+                ? leafContentError.message
+                : 'Kunne ikke laste temasideinnhold'}
+            </Paragraph>
+          </Alert>
+        )}
+
+        {leafContent && <ContentDisplay content={leafContent} />}
+      </div>
     )
   }
 

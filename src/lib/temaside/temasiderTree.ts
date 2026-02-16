@@ -5,7 +5,13 @@ export type ThemeNode = {
   segment: string // "forebygging-diagnose-og-behandling"
   title: string // best-effort display title
   hasPage: boolean // true when this path exists as a real temaside page
+  contentId?: string // content id for this temaside path when available
   children: ThemeNode[]
+}
+
+type ThemePathMeta = {
+  title?: string
+  contentId?: string
 }
 
 function titleize(segment: string) {
@@ -16,7 +22,7 @@ function titleize(segment: string) {
 
 export function buildThemeTree(
   paths: readonly string[],
-  titleByPath: Readonly<Record<string, string>> = {},
+  metaByPath: Readonly<Record<string, ThemePathMeta>> = {},
 ): ThemeNode {
   const root: ThemeNode = { path: '/', segment: '', title: 'Root', hasPage: false, children: [] }
 
@@ -30,7 +36,9 @@ export function buildThemeTree(
     let currentPath = ''
     for (const part of parts) {
       currentPath += `/${part}`
-      const preferredTitle = titleByPath[currentPath]
+      const preferredMeta = metaByPath[currentPath]
+      const preferredTitle = preferredMeta?.title
+      const preferredContentId = preferredMeta?.contentId
       let child = current.children.find((c) => c.segment === part)
 
       if (!child) {
@@ -38,13 +46,19 @@ export function buildThemeTree(
           path: currentPath,
           segment: part,
           title: preferredTitle || titleize(part),
-          hasPage: Boolean(preferredTitle),
+          hasPage: Boolean(preferredTitle || preferredContentId),
+          contentId: preferredContentId,
           children: [],
         }
         current.children.push(child)
-      } else if (preferredTitle) {
-        child.title = preferredTitle
+      } else if (preferredTitle || preferredContentId) {
+        if (preferredTitle) {
+          child.title = preferredTitle
+        }
         child.hasPage = true
+        if (preferredContentId) {
+          child.contentId = preferredContentId
+        }
       }
       current = child
     }

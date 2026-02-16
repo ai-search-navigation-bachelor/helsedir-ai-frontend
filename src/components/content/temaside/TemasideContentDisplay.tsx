@@ -92,13 +92,26 @@ function TemasideHero({ title, parentLabel }: { title: string; parentLabel?: str
   )
 }
 
-function LinkedContentCard({ item }: { item: LinkedContentItem }) {
+function LinkedContentCard({
+  item,
+  sourceTemasideId,
+  sourceTemasideTitle,
+}: {
+  item: LinkedContentItem
+  sourceTemasideId: string
+  sourceTemasideTitle: string
+}) {
   const accent = sectionAccent(item.info_type)
 
   return (
     <Link
       to={`/content/${item.id}`}
-      state={{ contentType: item.info_type }}
+      state={{
+        contentType: item.info_type,
+        sourceTemasideId,
+        sourceContentId: sourceTemasideId,
+        sourceContentTitle: sourceTemasideTitle,
+      }}
       className="temaside-card"
     >
       <span className="temaside-card__icon" style={{ color: accent.icon }}>
@@ -115,7 +128,15 @@ function LinkedContentCard({ item }: { item: LinkedContentItem }) {
   )
 }
 
-function LinkedContentSection({ group }: { group: LinkedContentGroup }) {
+function LinkedContentSection({
+  group,
+  sourceTemasideId,
+  sourceTemasideTitle,
+}: {
+  group: LinkedContentGroup
+  sourceTemasideId: string
+  sourceTemasideTitle: string
+}) {
   const accent = sectionAccent(group.info_type)
 
   return (
@@ -131,7 +152,12 @@ function LinkedContentSection({ group }: { group: LinkedContentGroup }) {
       </div>
       <div className="temaside-section__cards">
         {group.items.map((item) => (
-          <LinkedContentCard key={item.id} item={item} />
+          <LinkedContentCard
+            key={item.id}
+            item={item}
+            sourceTemasideId={sourceTemasideId}
+            sourceTemasideTitle={sourceTemasideTitle}
+          />
         ))}
       </div>
     </section>
@@ -183,7 +209,12 @@ export function TemasideContentDisplay({ content }: TemasideContentDisplayProps)
       ) : (
         <div className="temaside-sections">
           {groups.map((group) => (
-            <LinkedContentSection key={group.info_type} group={group} />
+            <LinkedContentSection
+              key={group.info_type}
+              group={group}
+              sourceTemasideId={content.id}
+              sourceTemasideTitle={content.title}
+            />
           ))}
         </div>
       )}
