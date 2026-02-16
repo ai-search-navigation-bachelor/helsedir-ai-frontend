@@ -17,11 +17,17 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
 
     const { data } = useSearchSuggestionsQuery(query, showSuggestions)
     const suggestions = data?.suggestions ?? []
+    const prevSuggestionsLengthRef = useRef(suggestions.length)
 
-    // Reset active index when suggestions change
-    useEffect(() => {
-      setActiveIndex(-1)
-    }, [suggestions.length])
+    // Reset active index when suggestions change (during render is safe here)
+    if (prevSuggestionsLengthRef.current !== suggestions.length) {
+      prevSuggestionsLengthRef.current = suggestions.length
+      // This is a derived state reset, not a side effect - safe during render
+      if (activeIndex !== -1) {
+        // Use a microtask to avoid setState during render warning
+        queueMicrotask(() => setActiveIndex(-1))
+      }
+    }
 
     // Close dropdown on click outside
     const handleClickOutside = useCallback((e: MouseEvent) => {

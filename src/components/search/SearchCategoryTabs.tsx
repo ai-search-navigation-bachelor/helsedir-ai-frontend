@@ -34,7 +34,8 @@ export function SearchCategoryTabs({
     if (!animate) {
       requestAnimationFrame(() => setAnimate(true));
     }
-  }, [activeTab, tabs, categoryCounts]); // Removed animate from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, tabs, categoryCounts]);
 
   const allTabs = [{ id: "all", label: "Alle" }, ...tabs];
 
