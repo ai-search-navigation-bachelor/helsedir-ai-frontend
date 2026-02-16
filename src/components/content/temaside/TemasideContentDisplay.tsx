@@ -77,6 +77,11 @@ function TemasideHero({ title, parentLabel }: { title: string; parentLabel?: str
   return (
     <header className="temaside-hero">
       <div className="temaside-hero__inner">
+        <div className="flex flex-wrap items-center gap-3 mb-3">
+          <span className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-800">
+            Temaside
+          </span>
+        </div>
         {parentLabel && (
           <span className="temaside-hero__parent">{parentLabel}</span>
         )}
