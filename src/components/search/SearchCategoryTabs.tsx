@@ -34,7 +34,7 @@ export function SearchCategoryTabs({
     if (!animate) {
       requestAnimationFrame(() => setAnimate(true));
     }
-  }, [activeTab, tabs, categoryCounts, animate]);
+  }, [activeTab, tabs, categoryCounts]); // Removed animate from deps
 
   const allTabs = [{ id: "all", label: "Alle" }, ...tabs];
 
@@ -45,7 +45,11 @@ export function SearchCategoryTabs({
           <button
             key={tab.id}
             ref={(el) => {
-              if (el) buttonRefs.current.set(tab.id, el);
+              if (el) {
+                buttonRefs.current.set(tab.id, el);
+              } else {
+                buttonRefs.current.delete(tab.id);
+              }
             }}
             type="button"
             onClick={() => onTabChange(tab.id)}
