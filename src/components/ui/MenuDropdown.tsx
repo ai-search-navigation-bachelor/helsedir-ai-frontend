@@ -10,7 +10,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   ...TEMASIDE_CATEGORIES.map((category) => ({
-    path: `/temaside${category.path}`,
+    path: category.path,
     title: category.title,
   })),
   {
