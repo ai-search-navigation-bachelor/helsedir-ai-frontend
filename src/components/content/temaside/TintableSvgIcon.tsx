@@ -55,33 +55,30 @@ interface TintableSvgIconProps {
 }
 
 export function TintableSvgIcon({ src, alt, className }: TintableSvgIconProps) {
-  const [markup, setMarkup] = useState<string | null>(() => svgMarkupCache.get(src) ?? null)
+  const [loadedMarkupBySrc, setLoadedMarkupBySrc] = useState<Record<string, string>>({})
+  const markup = svgMarkupCache.get(src) ?? loadedMarkupBySrc[src] ?? null
 
   useEffect(() => {
     let active = true
 
-    const cached = svgMarkupCache.get(src)
-    if (cached) {
-      setMarkup(cached)
+    if (markup) {
       return () => {
         active = false
       }
     }
 
-    setMarkup(null)
-
     loadTintableSvg(src)
       .then((nextMarkup) => {
-        if (active) setMarkup(nextMarkup)
+        if (active) {
+          setLoadedMarkupBySrc((prev) => (prev[src] ? prev : { ...prev, [src]: nextMarkup }))
+        }
       })
-      .catch(() => {
-        if (active) setMarkup(null)
-      })
+      .catch(() => {})
 
     return () => {
       active = false
     }
-  }, [src])
+  }, [markup, src])
 
   if (!markup) {
     return (
