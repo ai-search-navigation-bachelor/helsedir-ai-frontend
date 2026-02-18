@@ -6,7 +6,6 @@ import { useContentDetailQuery } from '../hooks/queries/useContentDetailQuery'
 import { useThemePagesQuery } from '../hooks/queries/useThemePagesQuery'
 import { useContentDetailBreadcrumbs } from '../hooks/useContentDetailBreadcrumbs'
 import { getTemasideCategoryPathFromContentLinks } from '../lib/content/breadcrumbUtils'
-import { stripTemasidePrefix } from '../lib/path'
 import { useSearchStore } from '../stores/searchStore'
 import { ContentDisplay } from '../components/content'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
@@ -39,7 +38,7 @@ export function ContentDetail() {
   let canonicalTemasidePath: string | null = null
   if (isTemasideContent && content?.id && themePagesData) {
     const match = themePagesData.results.find((result) => result.id === content.id)
-    canonicalTemasidePath = match?.path ? stripTemasidePrefix(match.path) : null
+    canonicalTemasidePath = match?.path ?? null
   }
 
   useEffect(() => {

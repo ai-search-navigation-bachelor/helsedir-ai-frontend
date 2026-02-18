@@ -212,9 +212,9 @@ export function TemasideContentDisplay({ content }: TemasideContentDisplayProps)
         <EmptyTemasideState />
       ) : (
         <div className="temaside-sections">
-          {groups.map((group) => (
+          {groups.map((group, groupIndex) => (
             <LinkedContentSection
-              key={group.info_type}
+              key={`${content.id}-${group.info_type}-${group.display_name}-${groupIndex}`}
               group={group}
               sourceTemasideId={content.id}
               sourceTemasideTitle={content.title}
