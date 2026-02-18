@@ -68,7 +68,7 @@ export function ContentDetail() {
         <Breadcrumb items={activeBreadcrumbItems} />
       ) : (
         <Button
-          variant="tertiary"
+          variant='tertiary'
           onClick={() => navigate(-1)}
           style={{ marginBottom: '24px' }}
         >
@@ -79,7 +79,7 @@ export function ContentDetail() {
       {isLoading && <ContentPageLoadingSkeleton />}
 
       {error && (
-        <Alert data-color="danger">
+        <Alert data-color='danger'>
           <Paragraph>
             {error instanceof Error ? error.message : 'Henting av innhold feilet'}
           </Paragraph>

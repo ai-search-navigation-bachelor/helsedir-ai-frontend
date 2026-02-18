@@ -2,17 +2,8 @@ import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
 import type { ContentDetail } from '../../types'
 import type { BreadcrumbItem } from '../../types/components'
 
-interface SearchBreadcrumbContext {
-  searchQuery: string | null
-  mainCategoryId?: string
-  mainCategoryLabel?: string
-  categoryId: string | null
-  subcategoryLabel?: string
-}
-
 interface TemasideTrailBreadcrumbContext {
   contentTitle?: string
-  searchQuery: string | null
   temasideLastPath: string | null
   trailByPath: Record<string, BreadcrumbItem[]>
   sanitizeTemasideItems: (items: BreadcrumbItem[]) => BreadcrumbItem[]
@@ -21,7 +12,6 @@ interface TemasideTrailBreadcrumbContext {
 interface ActiveBreadcrumbCandidates {
   fallbackBreadcrumbItems: BreadcrumbItem[]
   linkHierarchyBreadcrumbItems: BreadcrumbItem[]
-  searchHierarchyBreadcrumbItems: BreadcrumbItem[]
   temasideCanonicalBreadcrumbItems: BreadcrumbItem[]
   relatedTemasideBreadcrumbItems: BreadcrumbItem[]
   extendedTemasideBreadcrumbItems: BreadcrumbItem[]
@@ -71,35 +61,6 @@ export function buildLinkHierarchyBreadcrumbItems(content?: ContentDetail): Brea
     parentContentId !== content.id &&
     parentContentId !== rootContentId
       ? [{ label: parentLink.tittel, href: `/content/${parentContentId}` }]
-      : []),
-    { label: content.title, href: '#' },
-  ]
-}
-
-export function buildSearchHierarchyBreadcrumbItems(
-  content: ContentDetail | undefined,
-  context: SearchBreadcrumbContext,
-): BreadcrumbItem[] {
-  const {
-    searchQuery,
-    mainCategoryId,
-    mainCategoryLabel,
-    categoryId,
-    subcategoryLabel,
-  } = context
-
-  if (!content || !searchQuery || content.content_type === 'temaside') {
-    return []
-  }
-
-  return [
-    { label: 'Forside', href: '/' },
-    { label: 'Søk', href: '#' },
-    ...(mainCategoryId && mainCategoryLabel
-      ? [{ label: mainCategoryLabel, href: '#' }]
-      : []),
-    ...(categoryId && subcategoryLabel && categoryId !== mainCategoryId
-      ? [{ label: subcategoryLabel, href: '#' }]
       : []),
     { label: content.title, href: '#' },
   ]
@@ -194,9 +155,9 @@ export function buildExtendedTemasideBreadcrumbItems(
 export function buildTemasideTrailBreadcrumbItems(
   context: TemasideTrailBreadcrumbContext,
 ): BreadcrumbItem[] {
-  const { contentTitle, searchQuery, temasideLastPath, trailByPath, sanitizeTemasideItems } = context
+  const { contentTitle, temasideLastPath, trailByPath, sanitizeTemasideItems } = context
 
-  if (searchQuery || !temasideLastPath) {
+  if (!temasideLastPath) {
     return []
   }
 
@@ -212,7 +173,6 @@ export function resolveActiveContentDetailBreadcrumbs({
   extendedTemasideBreadcrumbItems,
   relatedTemasideBreadcrumbItems,
   linkHierarchyBreadcrumbItems,
-  searchHierarchyBreadcrumbItems,
   temasideBreadcrumbItems,
   fallbackBreadcrumbItems,
 }: ActiveBreadcrumbCandidates): BreadcrumbItem[] {
@@ -230,10 +190,6 @@ export function resolveActiveContentDetailBreadcrumbs({
 
   if (linkHierarchyBreadcrumbItems.length > 0) {
     return linkHierarchyBreadcrumbItems
-  }
-
-  if (searchHierarchyBreadcrumbItems.length > 0) {
-    return searchHierarchyBreadcrumbItems
   }
 
   if (temasideBreadcrumbItems.length > 0) {
