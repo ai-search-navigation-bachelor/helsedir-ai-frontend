@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { IoArrowForward } from "react-icons/io5";
+import { stripTemasidePrefix } from "../../lib/path";
 import type { SearchResult } from "../../types";
 
 interface SearchResultCardProps {
@@ -10,12 +11,22 @@ interface SearchResultCardProps {
   };
   searchQuery: string;
   sourceTemasideId?: string;
+  temasidePathById: Map<string, string>;
+}
+
+function getCategoryRootPath(path?: string) {
+  if (!path) return undefined;
+  const normalizedPath = stripTemasidePrefix(path);
+  const segments = normalizedPath.split("/").filter(Boolean);
+  if (segments.length === 0) return undefined;
+  return `/${segments[0]}`;
 }
 
 export function SearchResultCard({
   result,
   searchQuery,
   sourceTemasideId,
+  temasidePathById,
 }: SearchResultCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [pinnedChildGroupKey, setPinnedChildGroupKey] = useState<string | null>(
@@ -30,7 +41,19 @@ export function SearchResultCard({
     ? result.title.toLocaleUpperCase("nb-NO")
     : result.title;
   const categoryLabel = result.categoryName;
-  const contentHref = `/content/${result.id}`;
+  const temasidePath = temasidePathById.get(result.id);
+  const normalizedTemasidePath = temasidePath
+    ? stripTemasidePrefix(temasidePath)
+    : undefined;
+  const sourceTemasidePath = sourceTemasideId
+    ? temasidePathById.get(sourceTemasideId)
+    : undefined;
+  const sourceCategoryPath = getCategoryRootPath(sourceTemasidePath);
+  const contentHref = isTemaside
+    ? normalizedTemasidePath || `/content/${result.id}`
+    : sourceCategoryPath
+      ? `${sourceCategoryPath}/${result.id}`
+      : `/content/${result.id}`;
 
   const handleChildGroupToggle = (
     groupKey: string,
@@ -151,30 +174,37 @@ export function SearchResultCard({
                     className={`${isOpen ? "block" : "hidden"} absolute left-0 top-full mt-0 md:left-full md:top-[-0.35rem] md:mt-0 md:ml-0 z-20 w-[min(42rem,92vw)] rounded-lg border border-slate-200 bg-white shadow-lg py-1 overflow-hidden`}
                   >
                     <div className="space-y-1">
-                      {items.map((item) => (
-                        <Link
-                          key={item.id}
-                          to={`/content/${item.id}`}
-                          state={{
-                            fromSearch: true,
-                            searchQuery,
-                            sourceTemasideId: result.id,
-                            sourceContentId: result.id,
-                            sourceContentTitle: result.title,
-                            searchCategoryId: group.info_type,
-                            searchCategoryName: group.display_name,
-                            contentType: item.info_type,
-                          }}
-                          className="group/item block w-full px-3 py-1.5 text-left text-sm text-sky-800 hover:bg-sky-50 cursor-pointer"
-                        >
-                          <span className="inline-flex w-full items-center justify-between gap-2">
-                            <span className="truncate group-hover/item:underline">
-                              {item.title}
+                      {items.map((item) => {
+                        const childCategoryPath = getCategoryRootPath(temasidePath);
+                        const childHref = childCategoryPath
+                          ? `${childCategoryPath}/${item.id}`
+                          : `/content/${item.id}`;
+
+                        return (
+                          <Link
+                            key={item.id}
+                            to={childHref}
+                            state={{
+                              fromSearch: true,
+                              searchQuery,
+                              sourceTemasideId: result.id,
+                              sourceContentId: result.id,
+                              sourceContentTitle: result.title,
+                              searchCategoryId: group.info_type,
+                              searchCategoryName: group.display_name,
+                              contentType: item.info_type,
+                            }}
+                            className="group/item block w-full px-3 py-1.5 text-left text-sm text-sky-800 hover:bg-sky-50 cursor-pointer"
+                          >
+                            <span className="inline-flex w-full items-center justify-between gap-2">
+                              <span className="truncate group-hover/item:underline">
+                                {item.title}
+                              </span>
+                              <IoArrowForward className="h-3.5 w-3.5 shrink-0 text-sky-700" />
                             </span>
-                            <IoArrowForward className="h-3.5 w-3.5 shrink-0 text-sky-700" />
-                          </span>
-                        </Link>
-                      ))}
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

@@ -4,7 +4,7 @@ import {
   CUSTOM_TEMASIDE_LAYOUTS,
   FORCE_FLAT_CATEGORIES,
 } from '../components/content/temaside/customLayouts'
-import { getTemasideCategoryBySlug } from '../constants/temasider'
+import { getTemasideCategoryBySlug, type TemasideCategorySlug } from '../constants/temasider'
 import { useThemePagesQuery } from './queries/useThemePagesQuery'
 import { buildThemeTree, findNodeByPath } from '../lib/temaside/temasiderTree'
 import {
@@ -20,10 +20,13 @@ import {
 } from '../lib/temaside/hubUtils'
 import { useTemasideBreadcrumbStore } from '../stores'
 
-export function useTemasideHubPageModel() {
+export function useTemasideHubPageModel(
+  categorySlugOverride?: TemasideCategorySlug,
+  subPathOverride?: string,
+) {
   const params = useParams()
-  const categorySlug = (params.category || '').trim().toLowerCase()
-  const subPath = params['*'] || ''
+  const categorySlug = (categorySlugOverride || params.category || '').trim().toLowerCase()
+  const subPath = subPathOverride ?? params['*'] ?? ''
   const temaPath = useMemo(
     () => buildTemasidePath(categorySlug, subPath),
     [categorySlug, subPath],
@@ -44,10 +47,13 @@ export function useTemasideHubPageModel() {
       return null
     }
 
-    const titleByPath: Record<string, string> = {}
+    const metaByPath: Record<string, { title?: string; contentId?: string }> = {}
     const paths = themePagesData.results.map((result) => {
       const normalizedPath = normalizeTemasidePath(result.path)
-      titleByPath[normalizedPath] = result.title
+      metaByPath[normalizedPath] = {
+        title: result.title,
+        contentId: result.id,
+      }
       return normalizedPath
     })
 
@@ -55,7 +61,7 @@ export function useTemasideHubPageModel() {
       paths.push(category.path)
     }
 
-    return buildThemeTree(paths, titleByPath)
+    return buildThemeTree(paths, metaByPath)
   }, [category, themePagesData])
 
   const node = useMemo(() => (tree ? findNodeByPath(tree, temaPath) : null), [temaPath, tree])
@@ -63,6 +69,7 @@ export function useTemasideHubPageModel() {
 
   const customLayout = node ? CUSTOM_TEMASIDE_LAYOUTS[node.path] : undefined
   const shouldForceFlat = node ? FORCE_FLAT_CATEGORIES.includes(node.path) : false
+  const contentId = node?.contentId ?? null
   const isFlatStructure = Boolean(
     node && (shouldForceFlat || node.children.every((child) => child.children.length === 0)),
   )
@@ -119,6 +126,7 @@ export function useTemasideHubPageModel() {
     breadcrumbItems,
     category,
     categoryIcon,
+    contentId,
     customLayout,
     error,
     isError,

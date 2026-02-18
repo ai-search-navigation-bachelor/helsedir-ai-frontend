@@ -1,4 +1,5 @@
 import { buildUrl, httpRequest } from '../lib/httpClient'
+import { stripTemasidePrefix } from '../lib/path'
 import type { BaseRequestOptions } from '../types'
 import { BACKEND_BASE_URL } from './backendBaseUrl'
 
@@ -26,5 +27,13 @@ export async function getThemePages(
     category: trimmedCategory || undefined,
   })
 
-  return httpRequest<ThemePagesResponse>(url, { signal })
+  const response = await httpRequest<ThemePagesResponse>(url, { signal })
+
+  return {
+    ...response,
+    results: response.results.map((result) => ({
+      ...result,
+      path: stripTemasidePrefix(result.path),
+    })),
+  }
 }

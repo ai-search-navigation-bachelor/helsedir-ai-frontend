@@ -54,7 +54,7 @@ export function TemasideHubSections({
           {primarySection.links.map((item) => (
             <li key={item.path} className="border-b border-slate-200 last:border-b-0">
               <Link
-                to={`/temaside${item.path}`}
+                to={item.path}
                 onClick={() => onOpenLinkedPath(item.path)}
                 className="flex items-start gap-2 px-5 py-3.5 text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#005F73]"
               >
@@ -88,7 +88,7 @@ export function TemasideHubSections({
             {section.links.map((item) => (
               <li key={item.path} className="border-b border-slate-200 last:border-b-0">
                 <Link
-                  to={`/temaside${item.path}`}
+                  to={item.path}
                   onClick={() => onOpenLinkedPath(item.path)}
                   className="flex items-start gap-2 px-5 py-3.5 text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#005F73]"
                 >

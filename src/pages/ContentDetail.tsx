@@ -1,7 +1,12 @@
+import { useEffect } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Alert, Button, Paragraph } from '@digdir/designsystemet-react'
+import { isTemasideContentType, normalizeContentType } from '../constants/content'
 import { useContentDetailQuery } from '../hooks/queries/useContentDetailQuery'
+import { useThemePagesQuery } from '../hooks/queries/useThemePagesQuery'
 import { useContentDetailBreadcrumbs } from '../hooks/useContentDetailBreadcrumbs'
+import { getTemasideCategoryPathFromContentLinks } from '../lib/content/breadcrumbUtils'
+import { stripTemasidePrefix } from '../lib/path'
 import { useSearchStore } from '../stores/searchStore'
 import { ContentDisplay } from '../components/content'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
@@ -22,6 +27,31 @@ export function ContentDetail() {
     searchId: effectiveSearchId,
     routeContentType,
   })
+
+  const isTemasideContent = isTemasideContentType(normalizeContentType(content?.content_type))
+  const temasideCategoryPath = getTemasideCategoryPathFromContentLinks(content?.links)
+  const temasideCategorySlug = temasideCategoryPath?.slice(1) || undefined
+
+  const { data: themePagesData } = useThemePagesQuery(temasideCategorySlug, {
+    enabled: Boolean(isTemasideContent && content?.id),
+  })
+
+  let canonicalTemasidePath: string | null = null
+  if (isTemasideContent && content?.id && themePagesData) {
+    const match = themePagesData.results.find((result) => result.id === content.id)
+    canonicalTemasidePath = match?.path ? stripTemasidePrefix(match.path) : null
+  }
+
+  useEffect(() => {
+    if (!canonicalTemasidePath) {
+      return
+    }
+
+    navigate(canonicalTemasidePath, {
+      replace: true,
+      state: location.state,
+    })
+  }, [canonicalTemasidePath, location.state, navigate])
 
   const { activeBreadcrumbItems } = useContentDetailBreadcrumbs({
     content,
