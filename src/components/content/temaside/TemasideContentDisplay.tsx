@@ -20,6 +20,8 @@ interface TemasideContentDisplayProps {
   content: ContentDetail
 }
 
+const EMPTY_LINKED_CONTENT: readonly LinkedContentGroup[] = []
+
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
@@ -114,7 +116,7 @@ function LinkedContentCard({
       state={{
         contentType: item.info_type,
         sourceTemasideId,
-        sourceContentId: sourceTemasideId,
+        sourceContentId: item.id,
         sourceContentTitle: sourceTemasideTitle,
       }}
       className="temaside-card"
@@ -186,7 +188,7 @@ function EmptyTemasideState() {
 
 export function TemasideContentDisplay({ content }: TemasideContentDisplayProps) {
   const parentLink = useMemo(() => getParentLink(content), [content])
-  const groups = useMemo(() => content.linked_content ?? [], [content.linked_content])
+  const groups = content.linked_content ?? EMPTY_LINKED_CONTENT
   const totalItems = useMemo(() => groups.reduce((sum, g) => sum + g.items.length, 0), [groups])
 
   const parentLabel = parentLink?.tittel ?? null

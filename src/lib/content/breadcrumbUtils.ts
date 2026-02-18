@@ -1,5 +1,5 @@
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider'
-import { normalizePath, stripTemasidePrefix } from '../path'
+import { stripTemasidePrefix } from '../path'
 import type { BreadcrumbItem } from '../../types/components'
 
 export function getTemasideCategoryByPath(path: string) {
@@ -12,7 +12,7 @@ export function getTemasideCategoryPathFromContentLinks(
   const parentHref = links?.find((link) => link.rel === 'forelder')?.href
   if (!parentHref) return null
 
-  const normalizedParentPath = stripTemasidePrefix(normalizePath(parentHref))
+  const normalizedParentPath = stripTemasidePrefix(parentHref)
   const segments = normalizedParentPath.split('/').filter(Boolean)
   if (segments.length === 0) return null
 

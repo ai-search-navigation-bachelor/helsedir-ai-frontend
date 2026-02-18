@@ -69,7 +69,7 @@ export function useTemasideHubPageModel(
 
   const customLayout = node ? CUSTOM_TEMASIDE_LAYOUTS[node.path] : undefined
   const shouldForceFlat = node ? FORCE_FLAT_CATEGORIES.includes(node.path) : false
-  const contentId = node?.contentId || null
+  const contentId = node?.contentId ?? null
   const isFlatStructure = Boolean(
     node && (shouldForceFlat || node.children.every((child) => child.children.length === 0)),
   )
