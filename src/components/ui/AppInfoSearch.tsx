@@ -19,36 +19,39 @@ function InfoItem({ item, depth }: InfoItemProps) {
   const [expanded, setExpanded] = useState(depth === 0)
   const hasChildren = item.children && item.children.length > 0
   const isRoot = depth === 0
-  const depthStyle: CSSProperties = { ['--depth' as string]: depth }
+  const depthStyle: CSSProperties = {
+    ['--depth' as string]: depth,
+    marginLeft: 'calc(var(--depth, 0) * 1.25rem)',
+  }
 
   return (
-    <div className='info-item' style={depthStyle}>
-      <div className={`info-item__card ${isRoot ? 'info-item__card--root' : ''}`}>
-        <div className='info-item__row'>
+    <div style={depthStyle}>
+      <div className={`p-4 mb-3 rounded-sm border border-[#e0e0e0] ${isRoot ? 'bg-white shadow-sm' : 'bg-[#f9f9f9]'}`}>
+        <div className="flex items-start gap-3">
           {hasChildren && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 setExpanded(!expanded)
               }}
-              className='info-item__toggle'
+              className="bg-transparent border-0 cursor-pointer p-1 flex items-center text-[#0051be] mt-0.5"
               aria-label={expanded ? 'Skjul innhold' : 'Vis innhold'}
             >
               {expanded ? <FiChevronDown size={20} /> : <FiChevronRight size={20} />}
             </button>
           )}
-          <div className='info-item__content'>
-            <h3 className={`info-item__title ${isRoot ? 'info-item__title--root' : ''}`}>
+          <div className="flex-1 min-w-0">
+            <h3 className={`m-0 font-semibold text-[#1a1a1a] leading-[1.4] ${isRoot ? 'text-2xl' : 'text-lg'}`}>
               {item.tittel}
             </h3>
             {item.infoId && (
-              <p className='info-item__meta'>
+              <p className="mt-2 mb-0 text-[0.8125rem] text-[#666]">
                 {item.infoType && `${item.infoType} • `}ID: {item.infoId}
               </p>
             )}
             {item.tekst && (
               <div
-                className='info-item__text'
+                className="mt-3 mb-0 text-[0.9375rem] leading-[1.6] text-[#333]"
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.tekst) }}
               />
             )}
@@ -57,7 +60,7 @@ function InfoItem({ item, depth }: InfoItemProps) {
       </div>
 
       {hasChildren && expanded && (
-        <div className='info-item__children'>
+        <div className="mt-3 ml-5">
           {item.children!.map((child) => (
             <InfoItem key={child.id} item={child} depth={depth + 1} />
           ))}
@@ -127,18 +130,16 @@ export function AppInfoSearch({ selectedId, depth: initialDepth = 2 }: AppInfoSe
   }, [selectedId, depth])
 
   return (
-    <div className='info-search'>
+    <div className="max-w-[56.25rem] mx-auto p-6 bg-white">
 
       {loading && (
-        <div className='info-search__loading'>
+        <div className="text-center py-8 text-[#666]">
           Laster...
         </div>
       )}
 
       {error && (
-        <div
-          className='info-search__error'
-        >
+        <div className="p-4 bg-[#fee] rounded border border-[#e0e0e0] text-[#c00] mb-4">
           {error}
         </div>
       )}

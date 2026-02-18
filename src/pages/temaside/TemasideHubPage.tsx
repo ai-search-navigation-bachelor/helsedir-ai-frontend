@@ -95,7 +95,7 @@ export function TemasideHubPage({
 
   if (isLeafContentPage) {
     return (
-      <div className="max-w-screen-xl mx-auto px-6 pt-4 pb-8 lg:pb-10">
+      <div className="max-w-screen-xl mx-auto px-12 pt-4 pb-8 lg:pb-10">
         <Breadcrumb items={breadcrumbItems} />
 
         {isLeafContentLoading && (
@@ -120,7 +120,7 @@ export function TemasideHubPage({
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-6 pt-4 pb-8 lg:pb-10">
+    <div className="max-w-screen-xl mx-auto px-12 pt-4 pb-8 lg:pb-10">
       <Breadcrumb items={breadcrumbItems} />
 
       <header className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 lg:px-6">

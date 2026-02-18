@@ -10,7 +10,7 @@ const TEMASIDE_INDEX_BREADCRUMBS: BreadcrumbItem[] = [
 
 export function TemasideIndexPage() {
   return (
-    <div className="max-w-screen-xl mx-auto px-6 py-8 lg:py-10">
+    <div className="max-w-screen-xl mx-auto px-12 py-8 lg:py-10">
       <Breadcrumb items={TEMASIDE_INDEX_BREADCRUMBS} />
 
       <header className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 lg:px-6">

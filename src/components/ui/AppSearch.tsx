@@ -69,14 +69,14 @@ export function AppSearch({
     return (
       <Card
         onClick={() => onSelectResult?.(item.id)}
-        className={`app-search__card ${isClickable ? 'is-clickable' : ''}`}
+        className={isClickable ? 'cursor-pointer' : ''}
       >
-        <CardBlock className='app-search__card-block'>
+        <CardBlock className="grid gap-2 p-4">
           <Heading level={3} data-size='md' style={{ margin: 0 }}>
             {item.title}
           </Heading>
 
-          <div className='app-search__tags'>
+          <div className="flex flex-wrap gap-2">
             <Tag variant='outline'>{item.info_type}</Tag>
             {item.score && (
               <Tag variant='outline'>Score: {item.score.toFixed(2)}</Tag>
@@ -94,7 +94,7 @@ export function AppSearch({
   }
 
   return (
-    <form onSubmit={onSubmit} className='app-search'>
+    <form onSubmit={onSubmit} className="grid gap-3">
       <Search>
         <Search.Input
           aria-label={label}
@@ -121,7 +121,7 @@ export function AppSearch({
       )}
 
       {result != null && !error && (
-        <div className='app-search__results'>
+        <div className="grid gap-3">
           <Paragraph data-size='sm' style={{ margin: 0 }}>
             Treff: {result.results.length}
           </Paragraph>

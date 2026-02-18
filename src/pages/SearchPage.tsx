@@ -29,7 +29,7 @@ export function SearchPage() {
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-6 pt-2 pb-6">
+    <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-6">
       {isLoading && (
         <div className="flex justify-center items-center py-8">
           <Spinner aria-label="Laster søkeresultater..." data-size="lg" />

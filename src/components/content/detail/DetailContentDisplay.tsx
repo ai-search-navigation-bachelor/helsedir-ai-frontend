@@ -191,9 +191,9 @@ export function DetailContentDisplay({
                           }
                           setActiveSectionId(section.id)
                         }}
-                        className={`recommendation-nav__button w-full px-0 py-3 text-left text-[1rem] leading-7 ${
+                        className={`w-full px-0 py-3 text-left text-[1rem] leading-7 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#0f172a] hover:underline ${
                           isActive
-                            ? 'recommendation-nav__button--active font-semibold text-blue-800'
+                            ? 'font-semibold text-blue-800 underline [text-underline-offset:0.15rem]'
                             : 'text-slate-600'
                         }`}
                       >
@@ -238,7 +238,7 @@ export function DetailContentDisplay({
                             },
                           })
                         }}
-                        className="recommendation-nav__button w-full py-1 text-left text-sm text-slate-700"
+                        className="w-full py-1 px-0 text-left text-sm text-slate-700 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#0f172a] hover:underline"
                       >
                         {label}
                       </button>

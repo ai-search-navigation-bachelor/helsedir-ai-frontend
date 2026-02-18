@@ -114,8 +114,8 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
 
     return (
       <div className="rounded-br-[50px]" style={{ backgroundColor: colors.headerBg }}>
-        <div className="max-w-screen-xl mx-auto px-8 pt-5 pb-8">
-          <label htmlFor={inputId} className="block font-bold mb-2">
+        <div className="max-w-screen-xl mx-auto px-12 pt-3 pb-8">
+          <label htmlFor={inputId} className="block font-bold mb-2 text-base">
             Hva leter du etter?
           </label>
 

@@ -54,7 +54,7 @@ function SubchapterItem({
       }}
     >
       <button
-        className="chapter-accordion__subtrigger"
+        className="group"
         onClick={() => onToggleSubchapter(subKey)}
         style={{
           width: '100%',
@@ -90,8 +90,8 @@ function SubchapterItem({
           }}>
             {numbering}
           </span>
-          <span className="chapter-accordion__subtitle" style={{ 
-            fontSize: depth === 1 ? '15px' : '14px', 
+          <span className="group-hover:text-[#0f172a] group-hover:underline transition-colors" style={{
+            fontSize: depth === 1 ? '15px' : '14px',
             fontWeight: '500',
             color: '#334155',
             textAlign: 'left',
@@ -190,7 +190,7 @@ export function ChapterAccordion({
       }}
     >
       <button
-        className={`chapter-accordion__trigger ${isExpanded ? 'is-expanded' : ''}`}
+        className="group"
         onClick={onToggle}
         style={{
           width: '100%',
@@ -226,8 +226,8 @@ export function ChapterAccordion({
           }}>
             {chapterIndex + 1}.
           </span>
-          <span className="chapter-accordion__title" style={{ 
-            fontSize: '18px', 
+          <span className="group-hover:text-[#0f172a] group-hover:underline transition-colors" style={{
+            fontSize: '18px',
             fontWeight: '600',
             color: '#1e293b',
             textAlign: 'left',

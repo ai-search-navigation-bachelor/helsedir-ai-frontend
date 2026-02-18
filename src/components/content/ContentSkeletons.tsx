@@ -99,13 +99,13 @@ export function GenericChaptersLoadingSkeleton() {
 
 export function TableOfContentsLoadingSkeleton() {
   return (
-    <nav className="toc" aria-hidden="true">
+    <nav className="sticky top-4 p-4 bg-[#f9f9f9] rounded border border-[#e0e0e0]" aria-hidden="true">
       <div className="mb-3">
         <Skeleton variant="text" width={9} />
       </div>
-      <ul className="toc__list">
+      <ul className="list-none p-0 m-0">
         {Array.from({ length: 6 }).map((_, index) => (
-          <li key={`toc-skeleton-${index}`} className="toc__item">
+          <li key={`toc-skeleton-${index}`} className="mb-2">
             <div className="py-3">
               <Skeleton variant="text" width={index % 2 === 0 ? 22 : 18} />
             </div>

@@ -95,7 +95,7 @@ export function ExpandableSubcontent({
                   },
                 })
               }}
-              className="recommendation-open-page__button recommendation-open-page__button--compact"
+              className="border border-[#93c5fd] rounded-full bg-[#eff6ff] text-[#1e40af] text-xs font-semibold px-[0.55rem] py-[0.2rem] cursor-pointer no-underline whitespace-nowrap hover:border-[#60a5fa] hover:bg-[#dbeafe] hover:text-[#1e3a8a]"
             >
               Åpne side
             </button>

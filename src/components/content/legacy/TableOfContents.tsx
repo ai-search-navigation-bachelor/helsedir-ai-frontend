@@ -15,18 +15,18 @@ export function TableOfContents({
   }
 
   return (
-    <nav className="toc">
-      <Heading level={3} data-size="xs" className="toc__title">
+    <nav className="sticky top-4 p-4 bg-[#f9f9f9] rounded border border-[#e0e0e0]">
+      <Heading level={3} data-size="xs" className="mb-3">
         Kapitler
       </Heading>
 
-      <ul className="toc__list">
+      <ul className="list-none p-0 m-0">
         {chapters.map((chapter, idx) => {
           const isExpanded = expandedChapters.has(idx)
           const isActive = activeChapter === `chapter-${idx}`
 
           return (
-            <li key={idx} className="toc__item">
+            <li key={idx} className="mb-2">
               <button
                 type="button"
                 onClick={() => {
@@ -36,7 +36,11 @@ export function TableOfContents({
                   }
                   onChapterClick(idx)
                 }}
-                className={`toc__link ${isActive ? 'is-active' : ''}`}
+                className={`block w-full px-3 py-2 text-left no-underline bg-transparent border-0 border-l-[3px] rounded text-sm font-normal cursor-pointer transition-all hover:text-[#0f172a] hover:underline ${
+                  isActive
+                    ? 'text-[#0051be] bg-[#d4e7f7] border-l-[#0051be] font-semibold shadow-[0_0_0_3px_rgba(0,81,190,0.1)]'
+                    : 'text-[#333] border-l-transparent'
+                }`}
               >
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <span style={{ fontWeight: '700', color: '#64748b', minWidth: '20px' }}>
@@ -62,7 +66,9 @@ export function TableOfContents({
                               element.scrollIntoView({ behavior: 'smooth', block: 'start' })
                             }
                           }}
-                          className={`toc__sublink ${isSubActive ? 'is-active' : ''}`}
+                          className={`block w-full px-2 py-[0.375rem] text-left bg-transparent border-0 rounded text-[0.8125rem] font-normal cursor-pointer no-underline transition-all hover:text-[#0f172a] hover:underline ${
+                            isSubActive ? 'text-[#0051be] font-semibold' : 'text-[#64748b]'
+                          }`}
                         >
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <span style={{ fontWeight: '600', minWidth: '30px' }}>

@@ -79,7 +79,7 @@ export function SidebarTree({
                 onSelectPage(page.id)
               }
             }}
-            className={`sidebar-tree__item-button min-w-0 flex-1 py-0.5 text-left text-[1.05rem] leading-7 whitespace-normal break-words transition-colors ${textColor} ${fontWeight} ${
+            className={`min-w-0 flex-1 py-0.5 text-left text-[1.05rem] leading-7 whitespace-normal break-words transition-colors border-0 bg-transparent hover:text-[#0f172a] hover:underline ${textColor} ${fontWeight} ${
               isPlaceholderError ? 'cursor-not-allowed' : isPlaceholder ? 'cursor-progress' : 'cursor-pointer'
             }`}
             aria-disabled={isPlaceholder}

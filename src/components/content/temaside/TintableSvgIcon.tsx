@@ -59,7 +59,7 @@ function toTintableSvgMarkup(rawSvg: string) {
     const cleanedAttrs = attrs
       .replace(/\swidth="[^"]*"/gi, '')
       .replace(/\sheight="[^"]*"/gi, '')
-    return `<svg${cleanedAttrs} class="temaside-icon-svg" aria-hidden="true" focusable="false">`
+    return `<svg${cleanedAttrs} class="w-full h-full block" aria-hidden="true" focusable="false">`
   })
 }
 

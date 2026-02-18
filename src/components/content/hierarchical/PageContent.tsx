@@ -115,15 +115,15 @@ export function PageContent({
                   <button
                     type="button"
                     onClick={() => onSelectPage(child.id)}
-                    className="retningslinje-child-nav__button flex w-full items-start justify-between gap-3 px-1 py-2.5 text-left text-slate-700 transition"
+                    className="group flex w-full items-start justify-between gap-3 px-1 py-2.5 text-left text-slate-700 border-0 bg-transparent cursor-pointer transition-all hover:bg-[#f8fafc] focus-visible:outline-2 focus-visible:outline-[#0ea5e9] focus-visible:outline-offset-2 focus-visible:rounded"
                   >
                     <span className="min-w-0">
-                      <span className="retningslinje-child-nav__number mr-2 min-w-[3.2rem] text-sm text-slate-400">
+                      <span className="mr-2 min-w-[3.2rem] text-sm text-slate-400 transition-colors group-hover:text-[#475569]">
                         {child.numbering}
                       </span>
-                      <span className="retningslinje-child-nav__title min-w-0 break-words">{child.title}</span>
+                      <span className="min-w-0 break-words text-[#334155] transition-colors group-hover:text-[#0f172a] group-hover:underline group-hover:decoration-[#cbd5e1] group-hover:[text-underline-offset:0.13rem]">{child.title}</span>
                     </span>
-                    <span aria-hidden="true" className="retningslinje-child-nav__affordance">→</span>
+                    <span aria-hidden="true" className="text-[#60a5fa] text-[0.9rem] font-bold leading-none pt-[0.15rem] transition-colors group-hover:text-[#1d4ed8]">→</span>
                   </button>
                 </li>
               )
@@ -156,12 +156,12 @@ export function PageContent({
               <button
                 type="button"
                 onClick={() => onSelectPage(previousPage.id)}
-                className="retningslinje-page-nav__button retningslinje-page-nav__button--prev"
+                className="inline-flex items-center gap-[0.375rem] px-[0.625rem] py-[0.375rem] rounded-lg border border-[var(--ds-color-logobla-1-base-default)] bg-[var(--ds-color-logobla-1-base-default)] text-[var(--ds-color-logobla-1-base-contrast-default)] text-[0.8125rem] font-semibold leading-[1.2] cursor-pointer transition-all hover:border-[var(--ds-color-logobla-1-base-hover)] hover:bg-[var(--ds-color-logobla-1-base-hover)] active:border-[var(--ds-color-logobla-1-base-active)] active:bg-[var(--ds-color-logobla-1-base-active)] focus-visible:outline-2 focus-visible:outline-[var(--ds-color-logobla-1-border-default)] focus-visible:outline-offset-2"
                 aria-label={`Gå til forrige kapittel ${previousPage.numbering}`}
               >
-                <span aria-hidden="true" className="retningslinje-page-nav__icon">←</span>
-                <span className="retningslinje-page-nav__label">Forrige</span>
-                <span className="retningslinje-page-nav__number">{previousPage.numbering}</span>
+                <span aria-hidden="true" className="text-[var(--ds-color-logobla-1-base-contrast-subtle)]">←</span>
+                <span className="text-[var(--ds-color-logobla-1-base-contrast-default)]">Forrige</span>
+                <span className="text-[var(--ds-color-logobla-1-base-contrast-subtle)] font-bold">{previousPage.numbering}</span>
               </button>
             ) : null}
 
@@ -169,12 +169,12 @@ export function PageContent({
               <button
                 type="button"
                 onClick={() => onSelectPage(nextPage.id)}
-                className="retningslinje-page-nav__button retningslinje-page-nav__button--next"
+                className="ml-auto inline-flex items-center gap-[0.375rem] px-[0.625rem] py-[0.375rem] rounded-lg border border-[var(--ds-color-logobla-1-base-default)] bg-[var(--ds-color-logobla-1-base-default)] text-[var(--ds-color-logobla-1-base-contrast-default)] text-[0.8125rem] font-semibold leading-[1.2] cursor-pointer transition-all hover:border-[var(--ds-color-logobla-1-base-hover)] hover:bg-[var(--ds-color-logobla-1-base-hover)] active:border-[var(--ds-color-logobla-1-base-active)] active:bg-[var(--ds-color-logobla-1-base-active)] focus-visible:outline-2 focus-visible:outline-[var(--ds-color-logobla-1-border-default)] focus-visible:outline-offset-2"
                 aria-label={`Gå til neste kapittel ${nextPage.numbering}`}
               >
-                <span className="retningslinje-page-nav__label">Neste</span>
-                <span className="retningslinje-page-nav__number">{nextPage.numbering}</span>
-                <span aria-hidden="true" className="retningslinje-page-nav__icon">→</span>
+                <span className="text-[var(--ds-color-logobla-1-base-contrast-default)]">Neste</span>
+                <span className="text-[var(--ds-color-logobla-1-base-contrast-subtle)] font-bold">{nextPage.numbering}</span>
+                <span aria-hidden="true" className="text-[var(--ds-color-logobla-1-base-contrast-subtle)]">→</span>
               </button>
             ) : null}
           </div>
