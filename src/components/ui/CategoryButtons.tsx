@@ -8,7 +8,7 @@ export function CategoryButtons() {
         {TEMASIDE_CATEGORIES.map((category) => (
           <Link
             key={category.path}
-            to={`/temaside${category.path}`}
+            to={category.path}
             className="flex items-center gap-5 rounded-xl border-b-[3px] bg-white p-7 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl"
             style={{ borderBottomColor: '#005F73' }}
           >

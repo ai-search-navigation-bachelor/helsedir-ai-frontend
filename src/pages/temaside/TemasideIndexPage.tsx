@@ -26,7 +26,7 @@ export function TemasideIndexPage() {
         {TEMASIDE_CATEGORIES.map((category) => (
           <Link
             key={category.path}
-            to={`/temaside${category.path}`}
+            to={category.path}
             className="group rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
           >
             <div className="flex items-start gap-4">

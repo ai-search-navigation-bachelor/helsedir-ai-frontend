@@ -44,7 +44,7 @@ export function buildTemasideBreadcrumbItems(
   const categoryNodeTitle = nodeByPath.get(categoryPath)?.title
   items.push({
     label: categoryNodeTitle || categoryTitle || titleizeSegment(segments[0]) || categoryPath,
-    href: `/temaside${categoryPath}`,
+    href: categoryPath,
   })
 
   if (segments.length > 1) {
@@ -52,7 +52,7 @@ export function buildTemasideBreadcrumbItems(
     const currentSegment = segments[segments.length - 1]
     items.push({
       label: currentNodeTitle || titleizeSegment(currentSegment) || temaPath,
-      href: `/temaside${temaPath}`,
+      href: temaPath,
     })
   }
 
