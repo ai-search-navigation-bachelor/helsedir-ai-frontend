@@ -186,11 +186,8 @@ function EmptyTemasideState() {
 
 export function TemasideContentDisplay({ content }: TemasideContentDisplayProps) {
   const parentLink = useMemo(() => getParentLink(content), [content])
-  const groups = content.linked_content ?? []
-  const totalItems = useMemo(
-    () => groups.reduce((sum, g) => sum + g.items.length, 0),
-    [groups],
-  )
+  const groups = useMemo(() => content.linked_content ?? [], [content.linked_content])
+  const totalItems = useMemo(() => groups.reduce((sum, g) => sum + g.items.length, 0), [groups])
 
   const parentLabel = parentLink?.tittel ?? null
 

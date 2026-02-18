@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Alert, Button, Paragraph } from '@digdir/designsystemet-react'
 import { isTemasideContentType, normalizeContentType } from '../constants/content'
@@ -36,14 +36,11 @@ export function ContentDetail() {
     enabled: Boolean(isTemasideContent && content?.id),
   })
 
-  const canonicalTemasidePath = useMemo(() => {
-    if (!isTemasideContent || !content?.id || !themePagesData) {
-      return null
-    }
-
+  let canonicalTemasidePath: string | null = null
+  if (isTemasideContent && content?.id && themePagesData) {
     const match = themePagesData.results.find((result) => result.id === content.id)
-    return match?.path ? stripTemasidePrefix(match.path) : null
-  }, [content?.id, isTemasideContent, themePagesData])
+    canonicalTemasidePath = match?.path ? stripTemasidePrefix(match.path) : null
+  }
 
   useEffect(() => {
     if (!canonicalTemasidePath) {
