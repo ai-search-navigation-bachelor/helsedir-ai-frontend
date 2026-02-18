@@ -1,17 +1,59 @@
 import { useEffect, useState } from 'react'
+import DOMPurify from 'dompurify'
 
 const svgMarkupCache = new Map<string, string>()
 const svgLoadCache = new Map<string, Promise<string>>()
+
+const COLOR_TOKEN_PATTERN = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b|\brgb\(([^)]+)\)|\bwhite\b/gi
+
+function normalizePresentationColor(value: string) {
+  return value.replace(COLOR_TOKEN_PATTERN, 'currentColor')
+}
+
+function rewriteStyleDeclaration(styleValue: string) {
+  return styleValue.replace(
+    /(fill|stroke)\s*:\s*([^;]+)/gi,
+    (_, property: string, value: string) => `${property}: ${normalizePresentationColor(value.trim())}`,
+  )
+}
+
+function rewritePresentationColors(svgMarkup: string) {
+  return svgMarkup
+    .replace(
+      /\b(fill|stroke)\s*=\s*"([^"]*)"/gi,
+      (_, property: string, value: string) => `${property}="${normalizePresentationColor(value)}"`,
+    )
+    .replace(
+      /\b(fill|stroke)\s*=\s*'([^']*)'/gi,
+      (_, property: string, value: string) => `${property}='${normalizePresentationColor(value)}'`,
+    )
+    .replace(
+      /\bstyle\s*=\s*"([^"]*)"/gi,
+      (_, value: string) => `style="${rewriteStyleDeclaration(value)}"`,
+    )
+    .replace(
+      /\bstyle\s*=\s*'([^']*)'/gi,
+      (_, value: string) => `style='${rewriteStyleDeclaration(value)}'`,
+    )
+    .replace(
+      /<style\b([^>]*)>([\s\S]*?)<\/style>/gi,
+      (_, attrs: string, cssBody: string) => `<style${attrs}>${rewriteStyleDeclaration(cssBody)}</style>`,
+    )
+}
+
+function sanitizeSvgMarkup(markup: string) {
+  return DOMPurify.sanitize(markup, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+    ADD_ATTR: ['class', 'aria-hidden', 'focusable'],
+  })
+}
 
 function toTintableSvgMarkup(rawSvg: string) {
   const withoutXmlDecl = rawSvg
     .replace(/<\?xml[\s\S]*?\?>/gi, '')
     .replace(/<!--[\s\S]*?-->/g, '')
 
-  const recolored = withoutXmlDecl
-    .replace(/#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/g, 'currentColor')
-    .replace(/\brgb\(([^)]+)\)/gi, 'currentColor')
-    .replace(/\bwhite\b/gi, 'currentColor')
+  const recolored = rewritePresentationColors(withoutXmlDecl)
 
   return recolored.replace(/<svg\b([^>]*)>/i, (_, attrs: string) => {
     const cleanedAttrs = attrs
@@ -36,7 +78,7 @@ async function loadTintableSvg(src: string) {
       return response.text()
     })
     .then((rawSvg) => {
-      const markup = toTintableSvgMarkup(rawSvg)
+      const markup = sanitizeSvgMarkup(toTintableSvgMarkup(rawSvg))
       svgMarkupCache.set(src, markup)
       return markup
     })
@@ -73,7 +115,9 @@ export function TintableSvgIcon({ src, alt, className }: TintableSvgIconProps) {
           setLoadedMarkupBySrc((prev) => (prev[src] ? prev : { ...prev, [src]: nextMarkup }))
         }
       })
-      .catch(() => {})
+      .catch((error) => {
+        console.warn('Failed to load tintable SVG', src, error)
+      })
 
     return () => {
       active = false

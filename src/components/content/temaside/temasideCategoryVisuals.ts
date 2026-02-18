@@ -50,7 +50,7 @@ const ASSET = {
   reports: '/more-icons/Rapporter.svg',
   normative: '/more-icons/Normerende.svg',
   pathway: '/more-icons/nasjonalt-forlop.svg',
-  hearings: '/more-icons/H%C3%B8ringer.svg',
+  hearings: '/more-icons/H\u00f8ringer.svg',
   grants: '/Tilskudd.svg',
   statistics: '/Statistikk.svg',
   legal: '/Rundskriv_Veileder_til_lov.svg',
@@ -69,17 +69,17 @@ const componentIcon = (component: IconType): CategoryIcon => ({ kind: 'component
  */
 const EXACT_RULES: Record<string, CategoryRule> = {
   anbefaling: { icon: componentIcon(IoClipboardOutline), palette: 'blue' },
-  'pakkeforlop-anbefaling': { icon: assetIcon(ASSET.pathway, 'Pakkeforløp-anbefaling'), palette: 'blue' },
-  rad: { icon: assetIcon(ASSET.guidelines, 'Råd'), palette: 'violet' },
-  'faglig-rad': { icon: assetIcon(ASSET.guidelines, 'Faglig råd'), palette: 'violet' },
+  'pakkeforlop-anbefaling': { icon: assetIcon(ASSET.pathway, 'Pakkeforl\u00f8p-anbefaling'), palette: 'blue' },
+  rad: { icon: assetIcon(ASSET.guidelines, 'R\u00e5d'), palette: 'violet' },
+  'faglig-rad': { icon: assetIcon(ASSET.guidelines, 'Faglig r\u00e5d'), palette: 'violet' },
   retningslinje: { icon: assetIcon(ASSET.guidelines, 'Retningslinje'), palette: 'blue' },
   'nasjonal-faglig-retningslinje': { icon: assetIcon(ASSET.guidelines, 'Nasjonal faglig retningslinje'), palette: 'blue' },
   veileder: { icon: assetIcon(ASSET.guidelines, 'Veileder'), palette: 'cyan' },
   'nasjonal-veileder': { icon: assetIcon(ASSET.guidelines, 'Nasjonal veileder'), palette: 'cyan' },
   prioriteringsveileder: { icon: assetIcon(ASSET.guidelines, 'Prioriteringsveileder'), palette: 'cyan' },
   'veileder-lov-forskrift': { icon: assetIcon(ASSET.legal, 'Veileder til lov og forskrift'), palette: 'amber' },
-  'nasjonalt-forlop': { icon: assetIcon(ASSET.pathway, 'Nasjonalt forløp'), palette: 'green' },
-  pakkeforlop: { icon: assetIcon(ASSET.pathway, 'Pakkeforløp'), palette: 'green' },
+  'nasjonalt-forlop': { icon: assetIcon(ASSET.pathway, 'Nasjonalt forl\u00f8p'), palette: 'green' },
+  pakkeforlop: { icon: assetIcon(ASSET.pathway, 'Pakkeforl\u00f8p'), palette: 'green' },
   lov: { icon: assetIcon(ASSET.legal, 'Lov'), palette: 'amber' },
   forskrift: { icon: assetIcon(ASSET.legal, 'Forskrift'), palette: 'amber' },
   'regelverk-lov-eller-forskrift': { icon: assetIcon(ASSET.legal, 'Regelverk lov/forskrift'), palette: 'amber' },
@@ -95,19 +95,19 @@ const EXACT_RULES: Record<string, CategoryRule> = {
   ehelsestandard: { icon: assetIcon(ASSET.normative, 'E-helsestandard'), palette: 'indigo' },
   'normen-dokument': { icon: assetIcon(ASSET.normative, 'Normen-dokument'), palette: 'indigo' },
   'generisk-normerende-enhet': { icon: assetIcon(ASSET.normative, 'Normerende enhet'), palette: 'indigo' },
-  horing: { icon: assetIcon(ASSET.hearings, 'Høring'), palette: 'orange' },
+  horing: { icon: assetIcon(ASSET.hearings, 'H\u00f8ring'), palette: 'orange' },
   temaside: { icon: componentIcon(IoLibraryOutline), palette: 'slate' },
 }
 
 const KEYWORD_RULES: Array<{ keywords: string[]; rule: CategoryRule }> = [
-  { keywords: ['retningslinje', 'veileder', 'rad'], rule: { icon: assetIcon(ASSET.guidelines, 'Retningslinje/veileder/råd'), palette: 'blue' } },
-  { keywords: ['forlop'], rule: { icon: assetIcon(ASSET.pathway, 'Forløp'), palette: 'green' } },
+  { keywords: ['retningslinje', 'veileder', 'rad'], rule: { icon: assetIcon(ASSET.guidelines, 'Retningslinje/veileder/r\u00e5d'), palette: 'blue' } },
+  { keywords: ['forlop'], rule: { icon: assetIcon(ASSET.pathway, 'Forl\u00f8p'), palette: 'green' } },
   { keywords: ['rapport', 'artikkel', 'nyhet'], rule: { icon: assetIcon(ASSET.reports, 'Rapport/artikkel/nyhet'), palette: 'slate' } },
   { keywords: ['statistikk', 'pico'], rule: { icon: assetIcon(ASSET.statistics, 'Statistikk'), palette: 'rose' } },
   { keywords: ['tilskudd', 'takst'], rule: { icon: assetIcon(ASSET.grants, 'Tilskudd'), palette: 'amber' } },
   { keywords: ['lov', 'forskrift', 'rundskriv', 'regelverk'], rule: { icon: assetIcon(ASSET.legal, 'Regelverk'), palette: 'amber' } },
   { keywords: ['standard', 'norm'], rule: { icon: assetIcon(ASSET.normative, 'Normerende'), palette: 'indigo' } },
-  { keywords: ['horing'], rule: { icon: assetIcon(ASSET.hearings, 'Høring'), palette: 'orange' } },
+  { keywords: ['horing'], rule: { icon: assetIcon(ASSET.hearings, 'H\u00f8ring'), palette: 'orange' } },
 ]
 
 const FALLBACK_ICONS: readonly CategoryIcon[] = [
@@ -152,6 +152,10 @@ function pickFallbackRule(key: string): CategoryRule {
   return { icon, palette }
 }
 
+function keywordMatches(tokens: string[], keyword: string) {
+  return tokens.some((token) => token === keyword || (keyword.length >= 4 && token.startsWith(keyword)))
+}
+
 export function getTemasideCategoryVisual(infoType: string): TemasideCategoryVisual {
   const normalizedKey = normalizeInfoType(infoType)
   const exact = EXACT_RULES[normalizedKey]
@@ -159,7 +163,10 @@ export function getTemasideCategoryVisual(infoType: string): TemasideCategoryVis
     return { icon: exact.icon, colors: PALETTES[exact.palette] }
   }
 
-  const keywordMatch = KEYWORD_RULES.find(({ keywords }) => keywords.some((keyword) => normalizedKey.includes(keyword)))
+  const tokens = normalizedKey.split('-').filter(Boolean)
+  const keywordMatch = KEYWORD_RULES.find(({ keywords }) =>
+    keywords.some((keyword) => keywordMatches(tokens, keyword)),
+  )
   if (keywordMatch) {
     return { icon: keywordMatch.rule.icon, colors: PALETTES[keywordMatch.rule.palette] }
   }
