@@ -6,6 +6,7 @@ import { useContentDetailQuery } from '../hooks/queries/useContentDetailQuery'
 import { useThemePagesQuery } from '../hooks/queries/useThemePagesQuery'
 import { useContentDetailBreadcrumbs } from '../hooks/useContentDetailBreadcrumbs'
 import { getTemasideCategoryPathFromContentLinks } from '../lib/content/breadcrumbUtils'
+import { stripTemasidePrefix } from '../lib/path'
 import { useSearchStore } from '../stores/searchStore'
 import { ContentDisplay } from '../components/content'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
@@ -41,7 +42,7 @@ export function ContentDetail() {
     }
 
     const match = themePagesData.results.find((result) => result.id === content.id)
-    return match?.path || null
+    return match?.path ? stripTemasidePrefix(match.path) : null
   }, [content?.id, isTemasideContent, themePagesData])
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export function ContentDetail() {
       return
     }
 
-    navigate(`/temaside${canonicalTemasidePath}`, {
+    navigate(canonicalTemasidePath, {
       replace: true,
       state: location.state,
     })
