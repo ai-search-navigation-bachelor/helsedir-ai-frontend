@@ -4,7 +4,7 @@ import {
   CUSTOM_TEMASIDE_LAYOUTS,
   FORCE_FLAT_CATEGORIES,
 } from '../components/content/temaside/customLayouts'
-import { getTemasideCategoryBySlug } from '../constants/temasider'
+import { getTemasideCategoryBySlug, type TemasideCategorySlug } from '../constants/temasider'
 import { useThemePagesQuery } from './queries/useThemePagesQuery'
 import { buildThemeTree, findNodeByPath } from '../lib/temaside/temasiderTree'
 import {
@@ -20,10 +20,13 @@ import {
 } from '../lib/temaside/hubUtils'
 import { useTemasideBreadcrumbStore } from '../stores'
 
-export function useTemasideHubPageModel() {
+export function useTemasideHubPageModel(
+  categorySlugOverride?: TemasideCategorySlug,
+  subPathOverride?: string,
+) {
   const params = useParams()
-  const categorySlug = (params.category || '').trim().toLowerCase()
-  const subPath = params['*'] || ''
+  const categorySlug = (categorySlugOverride || params.category || '').trim().toLowerCase()
+  const subPath = subPathOverride ?? params['*'] ?? ''
   const temaPath = useMemo(
     () => buildTemasidePath(categorySlug, subPath),
     [categorySlug, subPath],

@@ -5,8 +5,17 @@ import { useContentByIdQuery } from '../../hooks/queries/useContentByIdQuery'
 import { useTemasideHubPageModel } from '../../hooks/useTemasideHubPageModel'
 import { TemasideHubSections } from './TemasideHubSections'
 import { TemasideHubStatusView } from './TemasideHubStatusView'
+import type { TemasideCategorySlug } from '../../constants/temasider'
 
-export function TemasideHubPage() {
+interface TemasideHubPageProps {
+  categorySlugOverride?: TemasideCategorySlug
+  subPathOverride?: string
+}
+
+export function TemasideHubPage({
+  categorySlugOverride,
+  subPathOverride,
+}: TemasideHubPageProps = {}) {
   const {
     breadcrumbItems,
     category,
@@ -26,7 +35,7 @@ export function TemasideHubPage() {
     totalLinks,
     visibleLinks,
     visibleSections,
-  } = useTemasideHubPageModel()
+  } = useTemasideHubPageModel(categorySlugOverride, subPathOverride)
 
   const isLeafContentPage = Boolean(node && !isHub && contentId)
   const {

@@ -79,7 +79,7 @@ export function buildTemasideCanonicalBreadcrumbItems(
     { label: 'Forside', href: '/' },
     {
       label: temasideCategoryTitle || content.title,
-      href: `/temaside${temasideCategoryPath}`,
+      href: temasideCategoryPath,
     },
     ...(temasideCategoryTitle !== content.title ? [{ label: content.title, href: '#' }] : []),
   ]
@@ -108,9 +108,12 @@ export function buildRelatedTemasideBreadcrumbItems(
     { label: 'Forside', href: '/' },
     {
       label: sourceTemasideCategoryTitle || sourceTemasideContent.title,
-      href: `/temaside${sourceTemasideCategoryPath}`,
+      href: sourceTemasideCategoryPath,
     },
-    { label: sourceTemasideContent.title, href: `/content/${sourceTemasideContent.id}` },
+    {
+      label: sourceTemasideContent.title,
+      href: `${sourceTemasideCategoryPath}/${sourceTemasideContent.id}`,
+    },
     { label: content.title, href: '#' },
   ]
 }
@@ -144,10 +147,13 @@ export function buildExtendedTemasideBreadcrumbItems(
     { label: 'Forside', href: '/' },
     {
       label: sourceTemasideCategoryTitle || sourceTemasideContent.title,
-      href: `/temaside${sourceTemasideCategoryPath}`,
+      href: sourceTemasideCategoryPath,
     },
-    { label: sourceTemasideContent.title, href: `/content/${sourceTemasideContent.id}` },
-    { label: sourceContentTitle, href: `/content/${sourceContentId}` },
+    {
+      label: sourceTemasideContent.title,
+      href: `${sourceTemasideCategoryPath}/${sourceTemasideContent.id}`,
+    },
+    { label: sourceContentTitle, href: `${sourceTemasideCategoryPath}/${sourceContentId}` },
     { label: content.title, href: '#' },
   ]
 }
