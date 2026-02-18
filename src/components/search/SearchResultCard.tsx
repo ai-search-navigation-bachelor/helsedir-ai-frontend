@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { IoArrowForward } from "react-icons/io5";
+import { stripTemasidePrefix } from "../../lib/path";
 import type { SearchResult } from "../../types";
 
 interface SearchResultCardProps {
@@ -15,7 +16,8 @@ interface SearchResultCardProps {
 
 function getCategoryRootPath(path?: string) {
   if (!path) return undefined;
-  const segments = path.split("/").filter(Boolean);
+  const normalizedPath = stripTemasidePrefix(path);
+  const segments = normalizedPath.split("/").filter(Boolean);
   if (segments.length === 0) return undefined;
   return `/${segments[0]}`;
 }
@@ -40,12 +42,15 @@ export function SearchResultCard({
     : result.title;
   const categoryLabel = result.categoryName;
   const temasidePath = temasidePathById.get(result.id);
+  const normalizedTemasidePath = temasidePath
+    ? stripTemasidePrefix(temasidePath)
+    : undefined;
   const sourceTemasidePath = sourceTemasideId
     ? temasidePathById.get(sourceTemasideId)
     : undefined;
   const sourceCategoryPath = getCategoryRootPath(sourceTemasidePath);
   const contentHref = isTemaside
-    ? temasidePath || `/content/${result.id}`
+    ? normalizedTemasidePath || `/content/${result.id}`
     : sourceCategoryPath
       ? `${sourceCategoryPath}/${result.id}`
       : `/content/${result.id}`;

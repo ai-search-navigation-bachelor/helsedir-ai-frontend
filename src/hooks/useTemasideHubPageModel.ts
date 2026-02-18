@@ -47,10 +47,13 @@ export function useTemasideHubPageModel(
       return null
     }
 
-    const titleByPath: Record<string, string> = {}
+    const metaByPath: Record<string, { title?: string; contentId?: string }> = {}
     const paths = themePagesData.results.map((result) => {
       const normalizedPath = normalizeTemasidePath(result.path)
-      titleByPath[normalizedPath] = result.title
+      metaByPath[normalizedPath] = {
+        title: result.title,
+        contentId: result.id,
+      }
       return normalizedPath
     })
 
@@ -58,7 +61,7 @@ export function useTemasideHubPageModel(
       paths.push(category.path)
     }
 
-    return buildThemeTree(paths, titleByPath)
+    return buildThemeTree(paths, metaByPath)
   }, [category, themePagesData])
 
   const node = useMemo(() => (tree ? findNodeByPath(tree, temaPath) : null), [temaPath, tree])
@@ -66,6 +69,7 @@ export function useTemasideHubPageModel(
 
   const customLayout = node ? CUSTOM_TEMASIDE_LAYOUTS[node.path] : undefined
   const shouldForceFlat = node ? FORCE_FLAT_CATEGORIES.includes(node.path) : false
+  const contentId = node?.contentId ?? null
   const isFlatStructure = Boolean(
     node && (shouldForceFlat || node.children.every((child) => child.children.length === 0)),
   )
@@ -122,6 +126,7 @@ export function useTemasideHubPageModel(
     breadcrumbItems,
     category,
     categoryIcon,
+    contentId,
     customLayout,
     error,
     isError,
