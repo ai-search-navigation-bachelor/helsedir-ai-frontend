@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Open Sans", sans-serif;
+  --font-title: "Source Serif 4 Variable", serif;
+}
+
 html {
   scrollbar-gutter: stable;
 }
@@ -26,8 +31,7 @@ main {
 }
 
 body {
-  font-family: "Inter", sans-serif;
-  font-feature-settings: "cv05" 1; /* Enable lowercase l with tail */
+  font-family: var(--font-sans);
 }
 
 :root {

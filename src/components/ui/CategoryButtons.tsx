@@ -24,7 +24,7 @@ function CategoryButton({ path, iconSrc, title }: CategoryButtonProps) {
 export function CategoryButtons() {
   return (
     <section className="w-full max-w-6xl mx-auto px-6 md:px-10 lg:px-12 py-9">
-      <h2 className="text-xl font-semibold text-gray-700 mb-6 max-w-5xl mx-auto">Utforsk etter tema</h2>
+      <h2 className="text-xl font-semibold text-gray-700 mb-6 max-w-5xl mx-auto font-title">Utforsk etter tema</h2>
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 md:grid-cols-2">
         {TEMASIDE_CATEGORIES.map((category) => (
           <CategoryButton
