@@ -252,7 +252,7 @@ export function HierarchicalContentDisplay({
         <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
           {entries.length === 0 ? (
             <Paragraph style={{ marginBottom: 0, color: '#64748b' }}>
-              Ingen barnesider registrert på denne siden.
+              Ingen undersider registrert på denne siden.
             </Paragraph>
           ) : (
             <SidebarTree
@@ -313,7 +313,7 @@ export function HierarchicalContentDisplay({
           {!isChaptersLoading && failedEntries.length > 0 && (
             <Alert data-color="warning" className="mt-6">
               <Paragraph style={{ marginTop: 0 }}>
-                {failedEntries.length} barnesider kunne ikke lastes fra Helsedirektoratet API akkurat nå.
+                {failedEntries.length} undersider kunne ikke lastes fra Helsedirektoratet API akkurat nå.
               </Paragraph>
             </Alert>
           )}
