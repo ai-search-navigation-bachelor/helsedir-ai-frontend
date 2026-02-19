@@ -13,7 +13,7 @@ export function AppHeader() {
   return (
     <>
       <div
-        className="w-full overflow-hidden"
+        className="relative w-full"
         style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}
       >
         <header>
@@ -50,24 +50,26 @@ export function AppHeader() {
                   Søk
                   <IoSearch size={18} />
                 </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  aria-label="Meny"
-                  aria-expanded={isMenuOpen}
-                  className="site-header__button"
-                >
-                  {isMenuOpen ? <IoClose size={18} /> : <IoMenu size={18} />}
-                  Meny
-                </Button>
+                <div className="relative">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    aria-label="Meny"
+                    aria-expanded={isMenuOpen}
+                    className="site-header__button"
+                  >
+                    {isMenuOpen ? <IoClose size={18} /> : <IoMenu size={18} />}
+                    Meny
+                  </Button>
+                  <MenuDropdown
+                    isOpen={isMenuOpen}
+                    onClose={() => setIsMenuOpen(false)}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </header>
-        <MenuDropdown
-          isOpen={isMenuOpen}
-          onClose={() => setIsMenuOpen(false)}
-        />
       </div>
     </>
   );
