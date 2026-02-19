@@ -13,7 +13,7 @@ export function ContentPageHeader({ typeLabel, title }: ContentPageHeaderProps) 
           {typeLabel}
         </span>
       </div>
-      <Heading level={1} data-size="lg" style={{ marginBottom: 0 }}>
+      <Heading level={1} data-size="lg" className="font-title" style={{ marginBottom: 0 }}>
         {title}
       </Heading>
     </header>

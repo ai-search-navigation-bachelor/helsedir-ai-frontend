@@ -315,7 +315,7 @@ export function DetailContentDisplay({
 
           {sections.map((section) => (
             <article key={section.id} id={section.id} className="scroll-mt-20">
-              <Heading level={2} data-size="md" style={{ marginTop: 0, marginBottom: 12 }}>
+              <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
                 {section.title}
               </Heading>
               <div

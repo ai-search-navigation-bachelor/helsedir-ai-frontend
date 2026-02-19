@@ -46,7 +46,7 @@ export function PageContent({
         <p className="m-0 mb-2 text-xs uppercase tracking-wide text-slate-500">
           Side {activePage.numbering}
         </p>
-        <Heading level={2} data-size="lg" style={{ marginBottom: 0 }}>
+        <Heading level={2} data-size="lg" className="font-title" style={{ marginBottom: 0 }}>
           {activePage.title}
         </Heading>
       </div>
@@ -102,7 +102,7 @@ export function PageContent({
 
       {showChildNavigation && (
         <section className="mt-6">
-          <Heading level={3} data-size="sm" style={{ marginBottom: 10 }}>
+          <Heading level={3} data-size="sm" className="font-title" style={{ marginBottom: 10 }}>
             {activePage.childrenIds.length === 1 ? 'Kapittel' : 'Kapitler'}
           </Heading>
           <ul className="m-0 list-none p-0">
@@ -134,7 +134,7 @@ export function PageContent({
 
       {activePage.expandableChildren.length > 0 && (
         <section className="mt-8">
-          <Heading level={3} data-size="sm" style={{ marginBottom: 12 }}>
+          <Heading level={3} data-size="sm" className="font-title" style={{ marginBottom: 12 }}>
             {activePage.expandableChildren.length === 1 ? 'Underelement' : 'Underelementer'}
           </Heading>
           <div>

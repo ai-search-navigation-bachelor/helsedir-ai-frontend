@@ -13,7 +13,7 @@ export function TemasideHubStatusView({ title, breadcrumbItems, details }: Temas
   return (
     <div className="mx-auto max-w-5xl p-6">
       {breadcrumbItems && breadcrumbItems.length > 0 && <Breadcrumb items={breadcrumbItems} />}
-      <Heading level={2} data-size="md">{title}</Heading>
+      <Heading level={2} data-size="md" className="font-title">{title}</Heading>
       {details && <p className="mt-2 text-sm text-slate-600">{details}</p>}
     </div>
   )
