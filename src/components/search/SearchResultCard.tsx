@@ -126,7 +126,7 @@ export function SearchResultCard({
         </span>
       </div>
 
-      <h3 className="relative z-10 pointer-events-none text-lg font-semibold text-gray-900 mb-2 leading-snug">
+      <h3 className="relative z-10 pointer-events-none text-lg font-semibold text-gray-900 mb-2 leading-snug font-title">
         {cardTitle}
       </h3>
 
