@@ -83,16 +83,15 @@ export function SearchResultsList({
           <Paragraph>Ingen resultater funnet i denne kategorien.</Paragraph>
         </Alert>
       ) : (
-        <div className="divide-y divide-gray-200">
+        <div className="flex flex-col gap-3">
           {results.map((result, index) => (
-            <div key={`${result.id}-${index}`} className="py-4 first:pt-0">
-              <SearchResultCard
-                result={result}
-                searchQuery={searchQuery}
-                sourceTemasideId={sourceTemasideByContentId.get(result.id)}
-                temasidePathById={temasidePathById}
-              />
-            </div>
+            <SearchResultCard
+              key={`${result.id}-${index}`}
+              result={result}
+              searchQuery={searchQuery}
+              sourceTemasideId={sourceTemasideByContentId.get(result.id)}
+              temasidePathById={temasidePathById}
+            />
           ))}
         </div>
       )}

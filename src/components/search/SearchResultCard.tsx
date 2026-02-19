@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { IoArrowForward } from "react-icons/io5";
+import { HiArrowRight } from "react-icons/hi2";
 import { stripTemasidePrefix } from "../../lib/path";
 import type { SearchResult } from "../../types";
 
@@ -102,7 +103,7 @@ export function SearchResultCard({
   return (
     <div
       ref={cardRef}
-      className="relative bg-white border-l-4 border-[#047FA4] p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+      className="group relative bg-white border-l-[3px] border-[#025169] px-5 py-4 rounded-xl ring-1 ring-gray-100 shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-px"
     >
       <Link
         to={contentHref}
@@ -117,16 +118,20 @@ export function SearchResultCard({
           contentType: result.info_type,
         }}
         aria-label={`Åpne ${result.title}`}
-        className="absolute inset-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-[#005F73]"
+        className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#025169]"
       />
 
-      <div className="relative z-10 mb-2 pointer-events-none">
-        <span className="inline-block px-2.5 py-0.5 text-xs font-medium text-[#047FA4] bg-[#e6f2f6] rounded-md">
+      <div className="relative z-10 mb-2 flex items-center justify-between pointer-events-none">
+        <span className="inline-block px-2.5 py-0.5 text-xs font-medium text-[#025169] bg-[#e8f4f8] rounded-full">
           {categoryLabel}
         </span>
+        <HiArrowRight
+          size={16}
+          className="text-[#025169] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+        />
       </div>
 
-      <h3 className="relative z-10 pointer-events-none text-lg font-semibold text-gray-900 mb-2 leading-snug font-title">
+      <h3 className="relative z-10 pointer-events-none font-title text-[1.05rem] font-semibold text-gray-900 mb-1 leading-snug">
         {cardTitle}
       </h3>
 
@@ -135,7 +140,7 @@ export function SearchResultCard({
         !result.explanation.toLowerCase().includes("keyword") &&
         !result.explanation.toLowerCase().includes("semantic") &&
         !result.explanation.toLowerCase().includes("fuzzy match") && (
-          <p className="relative z-10 pointer-events-none text-sm text-gray-700 line-clamp-2">
+          <p className="relative z-10 pointer-events-none text-sm text-gray-600 line-clamp-2 mt-1">
             {result.explanation}
           </p>
         )}
