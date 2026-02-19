@@ -62,7 +62,7 @@ export function TemasideHubPage({ categorySlugOverride }: TemasideHubPageProps =
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-12 pt-4 pb-10">
+    <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-10">
       <Breadcrumb items={breadcrumbItems} />
 
       <header className="rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm px-6 py-6 mb-6">

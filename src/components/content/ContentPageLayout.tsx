@@ -29,7 +29,7 @@ export function ContentPageLayout({ content, children }: ContentPageLayoutProps)
   })
 
   return (
-    <div className="max-w-screen-xl mx-auto px-12 pt-4 pb-8">
+    <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-8">
       {activeBreadcrumbItems.length > 0 ? (
         <Breadcrumb items={activeBreadcrumbItems} />
       ) : (

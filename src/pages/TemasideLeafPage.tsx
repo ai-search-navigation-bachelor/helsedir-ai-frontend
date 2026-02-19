@@ -79,7 +79,7 @@ export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
   if (isHub) return null
 
   return (
-    <div className="max-w-screen-xl mx-auto px-12 pt-4 pb-8 lg:pb-10">
+    <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-8 lg:pb-10">
       <Breadcrumb items={breadcrumbItems} />
 
       {isLeafLoading && (
