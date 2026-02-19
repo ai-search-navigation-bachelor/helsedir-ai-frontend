@@ -32,11 +32,11 @@ export function SidebarTree({
     const isSelected = activePageId === page.id
     const isAncestor = selectedAncestorIds.has(page.id)
     const textColor = isSelected
-      ? 'text-blue-800'
+      ? 'text-[#025169]'
       : isAncestor
-        ? 'text-slate-900'
+        ? 'text-slate-800'
         : 'text-slate-500'
-    const fontWeight = isSelected ? 'font-bold' : isAncestor ? 'font-semibold' : 'font-normal'
+    const fontWeight = isSelected ? 'font-semibold' : isAncestor ? 'font-medium' : 'font-normal'
 
     return (
       <li key={page.id} className="border-b border-slate-200">
@@ -58,7 +58,7 @@ export function SidebarTree({
             <button
               type="button"
               onClick={() => onToggleExpanded(page.id)}
-              className="mt-0.5 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded text-slate-700 hover:bg-slate-100"
+              className="mt-0.5 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded text-slate-400 hover:bg-[#e8f4f8] hover:text-[#025169]"
               aria-label={isExpanded ? 'Lukk kategori' : 'Åpne kategori'}
             >
               {isExpanded ? (
@@ -79,7 +79,7 @@ export function SidebarTree({
                 onSelectPage(page.id)
               }
             }}
-            className={`min-w-0 flex-1 py-0.5 text-left text-[1.05rem] leading-7 whitespace-normal break-words transition-colors border-0 bg-transparent hover:text-[#0f172a] hover:underline ${textColor} ${fontWeight} ${
+            className={`min-w-0 flex-1 py-0.5 text-left text-sm leading-6 whitespace-normal break-words transition-colors border-0 bg-transparent hover:text-[#025169] hover:underline ${textColor} ${fontWeight} ${
               isPlaceholderError ? 'cursor-not-allowed' : isPlaceholder ? 'cursor-progress' : 'cursor-pointer'
             }`}
             aria-disabled={isPlaceholder}

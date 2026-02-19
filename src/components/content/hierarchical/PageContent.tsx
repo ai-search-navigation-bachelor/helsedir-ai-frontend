@@ -79,7 +79,7 @@ export function PageContent({
                   href={primaryDocument.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                  className="text-sm text-[#025169] hover:underline"
                 >
                   {primaryDocument.label}
                 </a>
@@ -91,7 +91,7 @@ export function PageContent({
                   href={publicationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                  className="text-sm text-[#025169] hover:underline"
                 >
                   Åpne side hos Helsedirektoratet
                 </a>
