@@ -132,7 +132,7 @@ export function SearchResultCard({
   return (
     <div
       ref={cardRef}
-      className="group relative bg-white border-l-[3px] border-[#025169] px-5 py-4 rounded-xl ring-1 ring-gray-100 shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-px"
+      className="group relative bg-white border-l-[3px] border-[#025169] px-5 py-4 rounded-xl ring-1 ring-gray-100 shadow-sm transition-shadow duration-150 hover:shadow-md"
       style={isAnyGroupOpen ? { zIndex: 100 } : undefined}
     >
       <Link
