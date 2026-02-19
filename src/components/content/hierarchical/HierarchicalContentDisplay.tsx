@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
-import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
+import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useContentNavigationStore } from '../../../stores'
 import { useHierarchicalChapters } from '../../../hooks/queries/useHierarchicalChapters'
