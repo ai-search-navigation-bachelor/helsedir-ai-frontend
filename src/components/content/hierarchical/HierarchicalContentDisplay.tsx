@@ -272,19 +272,16 @@ export function HierarchicalContentDisplay({
           )}
 
           {metadataItems.length > 0 && (
-            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
+            <section className="border-t border-slate-100 pl-7 pt-4">
+              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                 Nøkkelinformasjon
-              </Heading>
-              <ul className="m-0 list-none space-y-2 p-0">
+              </p>
+              <ul className="m-0 list-none space-y-1.5 p-0">
                 {metadataItems.map((item) => (
                   <li key={item.label}>
-                    <Paragraph
-                      data-size="sm"
-                      style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}
-                    >
-                      <span className="font-semibold">{item.label}:</span> {item.value}
-                    </Paragraph>
+                    <p className="m-0 text-xs text-slate-500">
+                      <span className="font-medium text-slate-600">{item.label}:</span> {item.value}
+                    </p>
                   </li>
                 ))}
               </ul>
