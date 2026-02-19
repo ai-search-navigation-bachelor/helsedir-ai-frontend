@@ -1,22 +1,17 @@
-import { Alert, Paragraph, Spinner } from '@digdir/designsystemet-react'
-import { ContentDisplay } from '../components/content'
 import { TemasideHubSections, TemasideHubStatusView } from '../components/content/temaside'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
-import { useContentByIdQuery } from '../hooks/queries/useContentByIdQuery'
 import { useTemasideHubPageModel } from '../hooks/useTemasideHubPageModel'
 import type { TemasideCategorySlug } from '../constants/temasider'
 
 interface TemasideHubPageProps {
   categorySlugOverride?: TemasideCategorySlug
-  subPathOverride?: string
 }
 
-export function TemasideHubPage({ categorySlugOverride, subPathOverride }: TemasideHubPageProps = {}) {
+export function TemasideHubPage({ categorySlugOverride }: TemasideHubPageProps = {}) {
   const {
     breadcrumbItems,
     category,
     categoryIcon,
-    contentId,
     customLayout,
     error,
     isError,
@@ -31,14 +26,7 @@ export function TemasideHubPage({ categorySlugOverride, subPathOverride }: Temas
     totalLinks,
     visibleLinks,
     visibleSections,
-  } = useTemasideHubPageModel(categorySlugOverride, subPathOverride)
-
-  const isLeafContentPage = Boolean(node && !isHub && contentId)
-  const {
-    data: leafContent,
-    isLoading: isLeafContentLoading,
-    error: leafContentError,
-  } = useContentByIdQuery({ contentId, enabled: isLeafContentPage })
+  } = useTemasideHubPageModel(categorySlugOverride)
 
   if (!category) {
     return (
@@ -70,32 +58,6 @@ export function TemasideHubPage({ categorySlugOverride, subPathOverride }: Temas
         breadcrumbItems={breadcrumbItems}
         details={<>Ingen treff for: <code>{temaPath}</code></>}
       />
-    )
-  }
-
-  if (isLeafContentPage) {
-    return (
-      <div className="max-w-screen-xl mx-auto px-12 pt-4 pb-8 lg:pb-10">
-        <Breadcrumb items={breadcrumbItems} />
-
-        {isLeafContentLoading && (
-          <div className="flex justify-center items-center py-8">
-            <Spinner aria-label="Laster temaside..." data-size="lg" />
-          </div>
-        )}
-
-        {leafContentError && (
-          <Alert data-color="danger">
-            <Paragraph>
-              {leafContentError instanceof Error
-                ? leafContentError.message
-                : 'Kunne ikke laste temasideinnhold'}
-            </Paragraph>
-          </Alert>
-        )}
-
-        {leafContent && <ContentDisplay content={leafContent} />}
-      </div>
     )
   }
 

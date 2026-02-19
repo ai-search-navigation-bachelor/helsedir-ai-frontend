@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AppLayout } from './components/layout'
-import { Home, ContentDetail, SearchPage, TemasideHubPage } from './pages'
+import { Home, ContentDetail, SearchPage, TemasideHubPage, TemasideLeafPage } from './pages'
 import { TEMASIDE_CATEGORIES } from './constants/temasider'
 // import { CategoryContentOrHubRoute } from './router/categoryRoutes'
 
@@ -15,8 +15,16 @@ function App() {
         {TEMASIDE_CATEGORIES.map((category) => (
           <Route
             key={`${category.slug}-hub`}
-            path={`${category.slug}/*`}
+            path={category.slug}
             element={<TemasideHubPage categorySlugOverride={category.slug} />}
+          />
+        ))}
+
+        {TEMASIDE_CATEGORIES.map((category) => (
+          <Route
+            key={`${category.slug}-leaf`}
+            path={`${category.slug}/*`}
+            element={<TemasideLeafPage categorySlug={category.slug} />}
           />
         ))}
 
