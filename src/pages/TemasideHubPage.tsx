@@ -1,21 +1,17 @@
-import { Alert, Heading, Paragraph, Spinner } from '@digdir/designsystemet-react'
-import { ContentDisplay } from '../../components/content'
-import { Breadcrumb } from '../../components/ui/Breadcrumb'
-import { useContentByIdQuery } from '../../hooks/queries/useContentByIdQuery'
-import { useTemasideHubPageModel } from '../../hooks/useTemasideHubPageModel'
-import { TemasideHubSections } from './TemasideHubSections'
-import { TemasideHubStatusView } from './TemasideHubStatusView'
-import type { TemasideCategorySlug } from '../../constants/temasider'
+import { Alert, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { ContentDisplay } from '../components/content'
+import { TemasideHubSections, TemasideHubStatusView } from '../components/content/temaside'
+import { Breadcrumb } from '../components/ui/Breadcrumb'
+import { useContentByIdQuery } from '../hooks/queries/useContentByIdQuery'
+import { useTemasideHubPageModel } from '../hooks/useTemasideHubPageModel'
+import type { TemasideCategorySlug } from '../constants/temasider'
 
 interface TemasideHubPageProps {
   categorySlugOverride?: TemasideCategorySlug
   subPathOverride?: string
 }
 
-export function TemasideHubPage({
-  categorySlugOverride,
-  subPathOverride,
-}: TemasideHubPageProps = {}) {
+export function TemasideHubPage({ categorySlugOverride, subPathOverride }: TemasideHubPageProps = {}) {
   const {
     breadcrumbItems,
     category,
@@ -42,31 +38,19 @@ export function TemasideHubPage({
     data: leafContent,
     isLoading: isLeafContentLoading,
     error: leafContentError,
-  } = useContentByIdQuery({
-    contentId,
-    enabled: isLeafContentPage,
-  })
+  } = useContentByIdQuery({ contentId, enabled: isLeafContentPage })
 
   if (!category) {
     return (
       <TemasideHubStatusView
         title="Fant ikke temasiden"
-        details={
-          <>
-            Ukjent kategori for: <code>{temaPath}</code>
-          </>
-        }
+        details={<>Ukjent kategori for: <code>{temaPath}</code></>}
       />
     )
   }
 
   if (isLoading) {
-    return (
-      <TemasideHubStatusView
-        title="Laster temasider..."
-        breadcrumbItems={breadcrumbItems}
-      />
-    )
+    return <TemasideHubStatusView title="Laster temasider..." breadcrumbItems={breadcrumbItems} />
   }
 
   if (isError) {
@@ -84,11 +68,7 @@ export function TemasideHubPage({
       <TemasideHubStatusView
         title="Fant ikke temasiden"
         breadcrumbItems={breadcrumbItems}
-        details={
-          <>
-            Ingen treff for: <code>{temaPath}</code>
-          </>
-        }
+        details={<>Ingen treff for: <code>{temaPath}</code></>}
       />
     )
   }
@@ -120,20 +100,20 @@ export function TemasideHubPage({
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-12 pt-4 pb-8 lg:pb-10">
+    <div className="max-w-screen-xl mx-auto px-12 pt-4 pb-10">
       <Breadcrumb items={breadcrumbItems} />
 
-      <header className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 lg:px-6">
+      <header className="rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm px-6 py-6 mb-6">
         <div className="flex items-center gap-4">
           {categoryIcon && (
-            <img src={categoryIcon} alt="" className="w-14 h-14 lg:w-16 lg:h-16" />
+            <div className="flex-shrink-0 flex h-16 w-16 items-center justify-center rounded-xl" style={{ backgroundColor: '#e8f4f8' }}>
+              <img src={categoryIcon} alt="" className="w-10 h-10" />
+            </div>
           )}
           <div>
-            <Heading level={1} data-size="lg" className="font-bold">
-              {node.title}
-            </Heading>
+            <h1 className="font-title text-2xl font-semibold text-gray-900">{node.title}</h1>
             {isHub && (
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-gray-500">
                 Finn undertema raskt med søk eller bla i seksjonene under.
               </p>
             )}
@@ -147,13 +127,12 @@ export function TemasideHubPage({
               <input
                 type="search"
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Filtrer undertema"
-                className="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm text-slate-800 placeholder:text-slate-500 focus:border-[#005F73] focus:outline-none focus:ring-2 focus:ring-[#005F73]/20"
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Filtrer undertema..."
+                className="w-full rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#025169] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#025169]/20 transition-colors"
               />
             </label>
-
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-gray-500">
               Viser {visibleLinks} av {totalLinks} undertema
             </p>
           </div>
@@ -161,22 +140,18 @@ export function TemasideHubPage({
       </header>
 
       {isHub ? (
-        <div className="mt-6">
-          <TemasideHubSections
-            hasCustomLayout={Boolean(customLayout)}
-            isFlatStructure={isFlatStructure}
-            query={query}
-            visibleSections={visibleSections}
-            onClearQuery={() => setQuery('')}
-            onOpenLinkedPath={onOpenLinkedPath}
-          />
-        </div>
+        <TemasideHubSections
+          hasCustomLayout={Boolean(customLayout)}
+          isFlatStructure={isFlatStructure}
+          query={query}
+          visibleSections={visibleSections}
+          onClearQuery={() => setQuery('')}
+          onOpenLinkedPath={onOpenLinkedPath}
+        />
       ) : (
-        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
-          <p className="text-slate-700">
-            Denne temasiden har ingen undernivå enda.
-          </p>
-          <p className="mt-2 text-sm text-slate-600">
+        <div className="rounded-xl bg-white ring-1 ring-gray-100 p-6">
+          <p className="text-gray-700">Denne temasiden har ingen undernivå enda.</p>
+          <p className="mt-2 text-sm text-gray-400">
             Path: <code>{node.path}</code>
           </p>
         </div>

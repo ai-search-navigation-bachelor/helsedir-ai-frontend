@@ -1,5 +1,4 @@
 export { Home } from './Home'
 export { ContentDetail } from './ContentDetail'
 export { SearchPage } from './SearchPage'
-export { TemasideIndexPage } from './temaside/TemasideIndexPage'
-export { TemasideHubPage } from './temaside/TemasideHubPage'
+export { TemasideHubPage } from './TemasideHubPage'
