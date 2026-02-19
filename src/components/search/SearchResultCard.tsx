@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { IoArrowForward } from "react-icons/io5";
 import { HiArrowRight } from "react-icons/hi2";
@@ -30,14 +30,16 @@ export function SearchResultCard({
   temasidePathById,
 }: SearchResultCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [pinnedChildGroupKey, setPinnedChildGroupKey] = useState<string | null>(
-    null,
-  );
-  const [hoveredChildGroupKey, setHoveredChildGroupKey] = useState<
-    string | null
-  >(null);
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dropdownEls = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  const [pinnedChildGroupKey, setPinnedChildGroupKey] = useState<string | null>(null);
+  const [hoveredChildGroupKey, setHoveredChildGroupKey] = useState<string | null>(null);
+  const [flippedGroups, setFlippedGroups] = useState<Set<string>>(new Set());
+
   const isTemaside = result.info_type === "temaside";
   const childGroups = Array.isArray(result.children) ? result.children : [];
+  const isAnyGroupOpen = pinnedChildGroupKey !== null || hoveredChildGroupKey !== null;
   const cardTitle = isTemaside
     ? result.title.toLocaleUpperCase("nb-NO")
     : result.title;
@@ -56,6 +58,27 @@ export function SearchResultCard({
       ? `${sourceCategoryPath}/${result.id}`
       : `/content/${result.id}`;
 
+  // After each render, check if the active dropdown (positioned at top-0) overflows the
+  // viewport bottom. If so, flip it upward. Skip the check once already flipped to avoid
+  // an infinite loop. Runs in useLayoutEffect so the correction happens before browser paint.
+  useLayoutEffect(() => {
+    const activeKey = pinnedChildGroupKey ?? hoveredChildGroupKey;
+    if (!activeKey || flippedGroups.has(activeKey)) return;
+
+    const el = dropdownEls.current.get(activeKey);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.bottom > window.innerHeight - 8) {
+      setFlippedGroups((prev) => new Set([...prev, activeKey]));
+    }
+  }, [pinnedChildGroupKey, hoveredChildGroupKey, flippedGroups]);
+
+  useEffect(() => {
+    return () => {
+      if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+    };
+  }, []);
+
   const handleChildGroupToggle = (
     groupKey: string,
     event: MouseEvent<HTMLButtonElement>,
@@ -65,16 +88,27 @@ export function SearchResultCard({
   };
 
   const handleChildGroupHover = (groupKey: string) => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
     if (pinnedChildGroupKey && pinnedChildGroupKey !== groupKey) {
       setPinnedChildGroupKey(null);
     }
+    // Reset flip so the dropdown renders at top-0 and useLayoutEffect can measure correctly.
+    setFlippedGroups((prev) => {
+      if (!prev.has(groupKey)) return prev;
+      const next = new Set(prev);
+      next.delete(groupKey);
+      return next;
+    });
     setHoveredChildGroupKey(groupKey);
   };
 
-  const handleChildGroupLeave = (groupKey: string) => {
-    if (hoveredChildGroupKey === groupKey) {
+  const handleChildGroupLeave = () => {
+    leaveTimerRef.current = setTimeout(() => {
       setHoveredChildGroupKey(null);
-    }
+    }, 150);
   };
 
   useEffect(() => {
@@ -84,7 +118,6 @@ export function SearchResultCard({
       const target = event.target as Node | null;
       if (!target) return;
       if (cardRef.current?.contains(target)) return;
-
       event.preventDefault();
       event.stopPropagation();
       setPinnedChildGroupKey(null);
@@ -92,11 +125,7 @@ export function SearchResultCard({
 
     document.addEventListener("pointerdown", handleOutsidePointerDown, true);
     return () => {
-      document.removeEventListener(
-        "pointerdown",
-        handleOutsidePointerDown,
-        true,
-      );
+      document.removeEventListener("pointerdown", handleOutsidePointerDown, true);
     };
   }, [pinnedChildGroupKey]);
 
@@ -104,6 +133,7 @@ export function SearchResultCard({
     <div
       ref={cardRef}
       className="group relative bg-white border-l-[3px] border-[#025169] px-5 py-4 rounded-xl ring-1 ring-gray-100 shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-px"
+      style={isAnyGroupOpen ? { zIndex: 100 } : undefined}
     >
       <Link
         to={contentHref}
@@ -154,6 +184,7 @@ export function SearchResultCard({
             const isHoverOpen =
               pinnedChildGroupKey === null && hoveredChildGroupKey === groupKey;
             const isOpen = isPinnedOpen || isHoverOpen;
+            const isFlipped = flippedGroups.has(groupKey);
 
             return (
               <div
@@ -161,56 +192,60 @@ export function SearchResultCard({
                 data-child-group-key={groupKey}
                 className="relative inline-block"
                 onMouseEnter={() => handleChildGroupHover(groupKey)}
-                onMouseLeave={() => handleChildGroupLeave(groupKey)}
+                onMouseLeave={handleChildGroupLeave}
               >
                 <button
                   type="button"
                   onClick={(event) => handleChildGroupToggle(groupKey, event)}
-                  className="inline-flex min-w-[14.25rem] max-w-full items-center justify-between gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium cursor-pointer transition-colors duration-100 ${
+                    isOpen
+                      ? "border-[#025169] bg-[#025169] text-white"
+                      : "border-slate-300 bg-white text-[#025169] hover:border-[#025169] hover:bg-[#e8f4f8]"
+                  }`}
                 >
-                  <span className="font-semibold text-slate-600 shrink-0">
-                    {group.display_name}
-                  </span>
-                  <IoArrowForward className="h-4 w-4 text-sky-700 shrink-0" />
+                  <span className="shrink-0">{group.display_name}</span>
+                  <IoArrowForward className="h-3.5 w-3.5 shrink-0" />
                 </button>
 
                 {items.length > 0 && (
                   <div
-                    className={`${isOpen ? "block" : "hidden"} absolute left-0 top-full mt-0 md:left-full md:top-[-0.35rem] md:mt-0 md:ml-0 z-20 w-[min(42rem,92vw)] rounded-lg border border-slate-200 bg-white shadow-lg py-1 overflow-hidden`}
+                    ref={(el) => {
+                      if (el) dropdownEls.current.set(groupKey, el);
+                      else dropdownEls.current.delete(groupKey);
+                    }}
+                    className={`absolute left-full ml-2 z-20 min-w-[20rem] w-max max-w-[min(42rem,92vw)] rounded-lg border border-slate-200 bg-white shadow-lg overflow-hidden transition-opacity duration-100 ${
+                      isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                    } ${isFlipped ? "bottom-0 top-auto" : "top-0"}`}
                   >
-                    <div className="space-y-1">
-                      {items.map((item) => {
-                        const childCategoryPath = getCategoryRootPath(temasidePath);
-                        const childHref = childCategoryPath
-                          ? `${childCategoryPath}/${item.id}`
-                          : `/content/${item.id}`;
+                    {items.map((item) => {
+                      const childCategoryPath = getCategoryRootPath(temasidePath);
+                      const childHref = childCategoryPath
+                        ? `${childCategoryPath}/${item.id}`
+                        : `/content/${item.id}`;
 
-                        return (
-                          <Link
-                            key={item.id}
-                            to={childHref}
-                            state={{
-                              fromSearch: true,
-                              searchQuery,
-                              sourceTemasideId: result.id,
-                              sourceContentId: result.id,
-                              sourceContentTitle: result.title,
-                              searchCategoryId: group.info_type,
-                              searchCategoryName: group.display_name,
-                              contentType: item.info_type,
-                            }}
-                            className="group/item block w-full px-3 py-1.5 text-left text-sm text-sky-800 hover:bg-sky-50 cursor-pointer"
-                          >
-                            <span className="inline-flex w-full items-center justify-between gap-2">
-                              <span className="truncate group-hover/item:underline">
-                                {item.title}
-                              </span>
-                              <IoArrowForward className="h-3.5 w-3.5 shrink-0 text-sky-700" />
-                            </span>
-                          </Link>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <Link
+                          key={item.id}
+                          to={childHref}
+                          state={{
+                            fromSearch: true,
+                            searchQuery,
+                            sourceTemasideId: result.id,
+                            sourceContentId: result.id,
+                            sourceContentTitle: result.title,
+                            searchCategoryId: group.info_type,
+                            searchCategoryName: group.display_name,
+                            contentType: item.info_type,
+                          }}
+                          className="group/item flex w-full items-center justify-between gap-3 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] border-b border-slate-100 last:border-b-0"
+                        >
+                          <span className="group-hover/item:underline">
+                            {item.title}
+                          </span>
+                          <IoArrowForward className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>
