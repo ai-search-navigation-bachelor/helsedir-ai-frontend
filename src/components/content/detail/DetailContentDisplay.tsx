@@ -173,7 +173,7 @@ export function DetailContentDisplay({
     <div className="flex flex-col gap-8">
       <ContentPageHeader typeLabel={typeLabel} title={content.title} />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]">
         <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
           {sections.length > 0 && (
             <nav aria-label="Innholdsnavigasjon">

@@ -53,7 +53,7 @@ export function ContentPageLoadingSkeleton() {
     <div className="flex flex-col gap-8" aria-label="Laster innhold" aria-busy="true">
       <HeaderSkeleton />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]">
         <aside className="border-slate-200 lg:border-r lg:pr-6">
           <ContentSidebarLoadingSkeleton />
         </aside>
