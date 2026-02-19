@@ -1,5 +1,6 @@
 import DOMPurify from 'dompurify'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
+import { HiArrowRight } from 'react-icons/hi2'
 import type { PageNode } from './types'
 import { hasVisibleContent } from './treeUtils'
 import { ExpandableSubcontent } from './ExpandableSubcontent'
@@ -105,25 +106,25 @@ export function PageContent({
           <Heading level={3} data-size="sm" className="font-title" style={{ marginBottom: 10 }}>
             {activePage.childrenIds.length === 1 ? 'Kapittel' : 'Kapitler'}
           </Heading>
-          <ul className="m-0 list-none p-0">
+          <ul className="m-0 list-none border-t border-slate-100 p-0">
             {activePage.childrenIds.map((childId) => {
               const child = pagesById.get(childId)
               if (!child) return null
 
               return (
-                <li key={child.id} className="border-b border-slate-100 last:border-b-0">
+                <li key={child.id} className="border-b border-slate-100">
                   <button
                     type="button"
                     onClick={() => onSelectPage(child.id)}
-                    className="group flex w-full items-start justify-between gap-3 px-1 py-2.5 text-left text-slate-700 border-0 bg-transparent cursor-pointer transition-all hover:bg-[#f8fafc] focus-visible:outline-2 focus-visible:outline-[#0ea5e9] focus-visible:outline-offset-2 focus-visible:rounded"
+                    className="group flex w-full items-center gap-4 py-3.5 text-left border-0 bg-transparent cursor-pointer transition-colors hover:bg-[#f8fafc] focus-visible:outline-2 focus-visible:outline-[#025169] focus-visible:outline-offset-[-2px]"
                   >
-                    <span className="min-w-0">
-                      <span className="mr-2 min-w-[3.2rem] text-sm text-slate-400 transition-colors group-hover:text-[#475569]">
-                        {child.numbering}
-                      </span>
-                      <span className="min-w-0 break-words text-[#334155] transition-colors group-hover:text-[#0f172a] group-hover:underline group-hover:decoration-[#cbd5e1] group-hover:[text-underline-offset:0.13rem]">{child.title}</span>
+                    <span className="w-8 shrink-0 text-right text-xs font-semibold tabular-nums text-[#025169]">
+                      {child.numbering}
                     </span>
-                    <span aria-hidden="true" className="text-[#60a5fa] text-[0.9rem] font-bold leading-none pt-[0.15rem] transition-colors group-hover:text-[#1d4ed8]">→</span>
+                    <span className="min-w-0 break-words text-[0.9375rem] text-slate-700 transition-colors group-hover:text-[#025169]">
+                      {child.title}
+                    </span>
+                    <HiArrowRight className="ml-1 h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#025169]" />
                   </button>
                 </li>
               )
@@ -137,7 +138,7 @@ export function PageContent({
           <Heading level={3} data-size="sm" className="font-title" style={{ marginBottom: 12 }}>
             {activePage.expandableChildren.length === 1 ? 'Underelement' : 'Underelementer'}
           </Heading>
-          <div>
+          <div className="border-t border-slate-100">
             {activePage.expandableChildren.map((item, index) => (
               <ExpandableSubcontent
                 key={`${activePage.id}-rec-${item.id || index}`}
