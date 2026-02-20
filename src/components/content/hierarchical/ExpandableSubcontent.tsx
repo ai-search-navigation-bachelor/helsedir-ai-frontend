@@ -145,11 +145,6 @@ export function ExpandableSubcontent({
           <div className="flex min-w-0 items-start gap-3">
             <ChevronRightIcon className="mt-[0.3rem] h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90" />
             <div className="min-w-0">
-              {strength && (
-                <p className="m-0 mb-1 text-[11px] font-semibold uppercase tracking-widest text-[#025169]">
-                  {strength}
-                </p>
-              )}
               <span className="block whitespace-normal break-words text-[0.9375rem] font-medium leading-snug text-slate-800">
                 {title}
               </span>
@@ -181,6 +176,11 @@ export function ExpandableSubcontent({
       </summary>
 
       <div className="pb-5 pl-8 pr-1 pt-1">
+        {strength && (
+          <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#025169]">
+            {strength}
+          </p>
+        )}
         {(status || updated) && (
           <p className="mb-3 mt-0 text-xs text-slate-400">
             {status && <span>{status}</span>}

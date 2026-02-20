@@ -134,10 +134,7 @@ export function PageContent({
       )}
 
       {activePage.expandableChildren.length > 0 && (
-        <section className="mt-8">
-          <Heading level={3} data-size="sm" className="font-title" style={{ marginBottom: 12 }}>
-            {activePage.expandableChildren.length === 1 ? 'Underelement' : 'Underelementer'}
-          </Heading>
+        <section className="mt-4">
           <div className="border-t border-slate-100">
             {activePage.expandableChildren.map((item, index) => (
               <ExpandableSubcontent
