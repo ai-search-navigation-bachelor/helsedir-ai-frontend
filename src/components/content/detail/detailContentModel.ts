@@ -3,10 +3,24 @@ import type { ContentDetail, ContentLink, NestedContent } from '../../../types'
 import { hasVisibleContent } from '../shared/contentTextUtils'
 import { getContentIdFromHref } from '../shared/linkUtils'
 
+export interface VurderingSection {
+  tradeoffs: string
+  preferences: string
+}
+
+export interface AppendedDropdown {
+  id: string
+  title: string
+  html: string
+  vurdering?: VurderingSection
+}
+
 export interface ContentSection {
   id: string
   title: string
   html: string
+  vurdering?: VurderingSection
+  appendedDropdowns?: AppendedDropdown[]
 }
 
 export interface MetadataItem {
@@ -52,43 +66,46 @@ export function buildContentSections({
 }: BuildSectionsOptions): ContentSection[] {
   const result: ContentSection[] = []
 
+  const appendedDropdowns: AppendedDropdown[] = []
+
+  if (hasVisibleContent(practical)) {
+    appendedDropdowns.push({
+      id: 'section-praktisk',
+      title: 'Praktisk informasjon',
+      html: practical,
+    })
+  }
+
+  const hasTradeoffs = hasVisibleContent(tradeoffs)
+  const hasPreferences = hasVisibleContent(preferences)
+
+  if (hasVisibleContent(rationale) || hasTradeoffs || hasPreferences) {
+    appendedDropdowns.push({
+      id: 'section-begrunnelse',
+      title: 'Begrunnelse',
+      html: rationale,
+      ...(hasTradeoffs || hasPreferences
+        ? { vurdering: { tradeoffs, preferences } }
+        : {}),
+    })
+  }
+
   if (hasVisibleContent(mainBody)) {
     result.push({
       id: 'section-hovedanbefaling',
       title: primarySectionTitle,
       html: mainBody,
+      ...(appendedDropdowns.length > 0 ? { appendedDropdowns } : {}),
     })
-  }
-
-  if (hasVisibleContent(practical)) {
-    result.push({
-      id: 'section-praktisk',
-      title: 'Praktisk',
-      html: practical,
-    })
-  }
-
-  if (hasVisibleContent(rationale)) {
-    result.push({
-      id: 'section-rasjonale',
-      title: 'Rasjonale',
-      html: rationale,
-    })
-  }
-
-  if (hasVisibleContent(tradeoffs)) {
-    result.push({
-      id: 'section-fordeler-ulemper',
-      title: 'Fordeler og ulemper',
-      html: tradeoffs,
-    })
-  }
-
-  if (hasVisibleContent(preferences)) {
-    result.push({
-      id: 'section-verdier-preferanser',
-      title: 'Verdier og preferanser',
-      html: preferences,
+  } else {
+    // Fallback: ingen hovedtekst – vis dropdowns som egne seksjoner
+    appendedDropdowns.forEach((d) => {
+      result.push({
+        id: d.id,
+        title: d.title,
+        html: d.html,
+        ...(d.vurdering ? { vurdering: d.vurdering } : {}),
+      })
     })
   }
 
