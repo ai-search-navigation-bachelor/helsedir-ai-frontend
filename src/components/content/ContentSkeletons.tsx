@@ -78,6 +78,23 @@ export function DetailAsideLoadingSkeleton() {
   )
 }
 
+export function ExpandableLoadingSkeleton({ items = 3 }: { items?: number }) {
+  return (
+    <div className="mt-4 border-t border-slate-100" aria-hidden="true">
+      {Array.from({ length: items }).map((_, index) => (
+        <div key={`expandable-skeleton-${index}`} className="border-b border-slate-100 py-4 px-1">
+          <div className="flex items-start gap-3">
+            <Skeleton width={16} height={16} className="mt-0.5 shrink-0 rounded" />
+            <div className="min-w-0 flex-1">
+              <Skeleton variant="text" width={index % 2 === 0 ? 70 : 85} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function GenericChaptersLoadingSkeleton() {
   return (
     <div className="space-y-4" aria-hidden="true">
