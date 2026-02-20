@@ -71,7 +71,7 @@ function asDocumentLink(
 
 function extractFromLinks(links: Array<ContentLink | NestedContentLink> | undefined) {
   return (links ?? [])
-    .map((link) => asDocumentLink(link.href, link.tittel, link.rel, link.type))
+    .map((link) => asDocumentLink(link.href ?? undefined, link.tittel, link.rel, link.type))
     .filter((item): item is DocumentLink => Boolean(item))
 }
 
