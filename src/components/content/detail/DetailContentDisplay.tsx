@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { buildContentUrl } from '../../../lib/contentUrl'
 import {
   getDetailContentTypeLabel,
   isRecommendationContentType,
@@ -221,7 +222,7 @@ export function DetailContentDisplay({
                         type="button"
                         onClick={() => {
                           const normalizedContentType = link.type?.trim()
-                          navigate(`/content/${link.contentId}`, {
+                          navigate(buildContentUrl({ id: link.contentId }), {
                             state: {
                               ...(location.state as Record<string, unknown> | null),
                               sourceContentId: content.id,

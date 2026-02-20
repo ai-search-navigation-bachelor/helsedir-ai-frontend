@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { HiArrowRight, HiChevronDown, HiChevronUp } from 'react-icons/hi2'
 import type { ContentDetail, LinkedContentGroup, LinkedContentItem } from '../../../types/content'
 import { toContentTypeLabel } from '../../../constants/content'
+import { buildContentUrl } from '../../../lib/contentUrl'
 import { getTemasideCategoryVisual } from './temasideCategoryVisuals'
 import { TintableSvgIcon } from './TintableSvgIcon'
 
@@ -41,7 +42,7 @@ function ContentRow({
   return (
     <li className="border-b border-gray-100 last:border-0">
       <Link
-        to={`/content/${item.id}`}
+        to={buildContentUrl(item)}
         state={{
           contentType: item.info_type,
           sourceTemasideId,

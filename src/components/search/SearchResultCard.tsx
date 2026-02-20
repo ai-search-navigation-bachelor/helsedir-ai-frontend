@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "r
 import { Link } from "react-router-dom";
 import { IoArrowForward } from "react-icons/io5";
 import { HiArrowRight } from "react-icons/hi2";
+import { buildContentUrl } from "../../lib/contentUrl";
 import { stripTemasidePrefix } from "../../lib/path";
 import type { SearchResult } from "../../types";
 
@@ -13,14 +14,6 @@ interface SearchResultCardProps {
   searchQuery: string;
   sourceTemasideId?: string;
   temasidePathById: Map<string, string>;
-}
-
-function getCategoryRootPath(path?: string) {
-  if (!path) return undefined;
-  const normalizedPath = stripTemasidePrefix(path);
-  const segments = normalizedPath.split("/").filter(Boolean);
-  if (segments.length === 0) return undefined;
-  return `/${segments[0]}`;
 }
 
 export function SearchResultCard({
@@ -48,15 +41,9 @@ export function SearchResultCard({
   const normalizedTemasidePath = temasidePath
     ? stripTemasidePrefix(temasidePath)
     : undefined;
-  const sourceTemasidePath = sourceTemasideId
-    ? temasidePathById.get(sourceTemasideId)
-    : undefined;
-  const sourceCategoryPath = getCategoryRootPath(sourceTemasidePath);
   const contentHref = isTemaside
-    ? normalizedTemasidePath || `/content/${result.id}`
-    : sourceCategoryPath
-      ? `${sourceCategoryPath}/${result.id}`
-      : `/content/${result.id}`;
+    ? normalizedTemasidePath || buildContentUrl(result)
+    : buildContentUrl(result);
 
   // After each render, check if the active dropdown (positioned at top-0) overflows the
   // viewport bottom. If so, flip it upward. Skip the check once already flipped to avoid
@@ -218,10 +205,7 @@ export function SearchResultCard({
                     } ${isFlipped ? "bottom-0 top-auto" : "top-0"}`}
                   >
                     {items.map((item) => {
-                      const childCategoryPath = getCategoryRootPath(temasidePath);
-                      const childHref = childCategoryPath
-                        ? `${childCategoryPath}/${item.id}`
-                        : `/content/${item.id}`;
+                      const childHref = buildContentUrl(item);
 
                       return (
                         <Link

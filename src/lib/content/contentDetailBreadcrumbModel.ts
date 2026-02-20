@@ -1,4 +1,5 @@
 import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
+import { buildContentUrl } from '../contentUrl'
 import type { ContentDetail } from '../../types'
 import type { BreadcrumbItem } from '../../types/components'
 
@@ -54,13 +55,13 @@ export function buildLinkHierarchyBreadcrumbItems(content?: ContentDetail): Brea
   return [
     { label: 'Forside', href: '/' },
     ...(rootContentId && rootLink?.tittel && rootContentId !== content.id
-      ? [{ label: rootLink.tittel, href: `/content/${rootContentId}` }]
+      ? [{ label: rootLink.tittel, href: buildContentUrl({ id: rootContentId }) }]
       : []),
     ...(parentContentId &&
     parentLink?.tittel &&
     parentContentId !== content.id &&
     parentContentId !== rootContentId
-      ? [{ label: parentLink.tittel, href: `/content/${parentContentId}` }]
+      ? [{ label: parentLink.tittel, href: buildContentUrl({ id: parentContentId }) }]
       : []),
     { label: content.title, href: '#' },
   ]

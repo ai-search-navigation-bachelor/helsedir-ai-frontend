@@ -3,6 +3,7 @@ import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
+import { buildContentUrl } from '../../../lib/contentUrl'
 import { formatDateLabel, getNodeTitle } from './treeUtils'
 
 const MAX_SUBCONTENT_DEPTH = 8
@@ -159,7 +160,7 @@ export function ExpandableSubcontent({
                 event.stopPropagation()
                 if (!item.id) return
                 const normalizedContentType = item.type?.trim()
-                navigate(`/content/${item.id}`, {
+                navigate(buildContentUrl({ id: item.id }), {
                   state: {
                     ...(location.state as Record<string, unknown> | null),
                     sourceContentId: currentContentId,

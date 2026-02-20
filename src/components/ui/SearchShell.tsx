@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { SearchForm } from './SearchForm'
+import { buildContentUrl } from '../../lib/contentUrl'
 import { useThemePagesQuery } from '../../hooks/queries/useThemePagesQuery'
 
 function SearchShellContent() {
@@ -66,7 +67,7 @@ function SearchShellContent() {
   }
 
   function onSuggestionSelect(id: string) {
-    navigate(temasidePathById.get(id) || `/content/${id}`)
+    navigate(temasidePathById.get(id) || buildContentUrl({ id }))
   }
 
   return (
