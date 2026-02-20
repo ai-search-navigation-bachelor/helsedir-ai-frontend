@@ -16,8 +16,13 @@ import { HierarchicalContentDisplay } from '../components/content/hierarchical/H
 import { DetailContentDisplay } from '../components/content/detail/DetailContentDisplay'
 import { countUniqueChildLinks } from '../components/content/shared/linkUtils'
 
-export function ContentDetail() {
-  const { id } = useParams<{ id: string }>()
+interface ContentDetailProps {
+  /** When set, the page uses path-based content fetching (e.g. pathPrefix="retningslinjer") */
+  pathPrefix?: string
+}
+
+export function ContentDetail({ pathPrefix }: ContentDetailProps) {
+  const { id, '*': wildcard } = useParams<{ id: string; '*': string }>()
   const location = useLocation()
 
   const searchId = useSearchStore((state) => state.searchId)
@@ -25,8 +30,12 @@ export function ContentDetail() {
   const routeContentType = routeState?.contentType?.trim().toLowerCase() || ''
   const effectiveSearchId = searchId || undefined
 
+  // When pathPrefix is provided, reconstruct full path from the wildcard segment
+  const contentPath = pathPrefix && wildcard ? `/${pathPrefix}/${wildcard}` : undefined
+
   const { data: content, isLoading, error } = useContentDetailQuery({
-    contentId: id,
+    contentId: contentPath ? undefined : id,
+    contentPath,
     searchId: effectiveSearchId,
     routeContentType,
   })

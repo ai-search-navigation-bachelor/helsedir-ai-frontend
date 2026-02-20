@@ -3,6 +3,7 @@ import {
   fetchHelsedirContentById,
   fetchHelsedirContentByTypeAndId,
   getContent,
+  getContentByPath,
 } from '../../api'
 import { normalizeContentType } from '../../constants/content'
 import { isAbortError, shouldFallbackToTypedEndpoint } from '../../lib/content/queryError'
@@ -10,6 +11,7 @@ import type { ContentDetail as ContentDetailData, ContentLink, NestedContent } f
 
 interface UseContentDetailQueryOptions {
   contentId?: string
+  contentPath?: string
   searchId?: string
   routeContentType?: string
 }
@@ -60,23 +62,27 @@ function getNormalizedHelsedirType(source: NestedContent) {
 
 export function useContentDetailQuery({
   contentId,
+  contentPath,
   searchId,
   routeContentType,
 }: UseContentDetailQueryOptions) {
   const queryClient = useQueryClient()
   const normalizedRouteContentType = normalizeContentType(routeContentType)
+  const queryIdentifier = contentPath || contentId
 
   return useQuery<ContentDetailData>({
-    queryKey: ['content', contentId, searchId, normalizedRouteContentType],
+    queryKey: ['content', queryIdentifier, searchId, normalizedRouteContentType],
     queryFn: async ({ signal }) => {
-      if (!contentId) throw new Error('ID mangler')
+      if (!contentId && !contentPath) throw new Error('ID eller path mangler')
 
       const fetchFromBackend = async () =>
-        getContent(contentId, searchId, { signal, suppressErrorStatuses: [404] })
+        contentPath
+          ? getContentByPath(contentPath, searchId, { signal, suppressErrorStatuses: [404] })
+          : getContent(contentId!, searchId, { signal, suppressErrorStatuses: [404] })
 
-      const fetchFromHelsedir = async () => {
+      const fetchFromHelsedir = async (id: string) => {
         try {
-          return await fetchHelsedirContentById(contentId, signal) as NestedContent
+          return await fetchHelsedirContentById(id, signal) as NestedContent
         } catch (helsedirError) {
           if (!normalizedRouteContentType || !shouldFallbackToTypedEndpoint(helsedirError)) {
             throw helsedirError
@@ -84,7 +90,7 @@ export function useContentDetailQuery({
 
           return await fetchHelsedirContentByTypeAndId(
             normalizedRouteContentType,
-            contentId,
+            id,
             signal,
           ) as NestedContent
         }
@@ -97,11 +103,11 @@ export function useContentDetailQuery({
           throw backendError
         }
 
-        if (!shouldFallbackToTypedEndpoint(backendError)) {
+        if (!contentId || !shouldFallbackToTypedEndpoint(backendError)) {
           throw backendError
         }
 
-        const helsedirContent = await fetchFromHelsedir()
+        const helsedirContent = await fetchFromHelsedir(contentId)
         const mappedHelsedirContent = mapHelsedirContentToDetail(helsedirContent)
         const typeCandidates = new Set<string>([
           getNormalizedHelsedirType(helsedirContent),
@@ -117,7 +123,7 @@ export function useContentDetailQuery({
         return mappedHelsedirContent
       }
     },
-    enabled: Boolean(contentId),
+    enabled: Boolean(contentId || contentPath),
     staleTime: 10 * 60 * 1000,
   })
 }

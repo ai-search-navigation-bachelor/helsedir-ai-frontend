@@ -1,5 +1,6 @@
 export { Home } from './Home'
 export { ContentDetail } from './ContentDetail'
+export { CategoryLandingPage } from './CategoryLandingPage'
 export { SearchPage } from './SearchPage'
 export { TemasideHubPage } from './TemasideHubPage'
 export { TemasideLeafPage } from './TemasideLeafPage'

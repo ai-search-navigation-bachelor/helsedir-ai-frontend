@@ -17,7 +17,7 @@ export type {
 } from './search'
 
 // Content operations
-export { getContent, getInfobit } from './content'
+export { getContent, getContentByPath, getInfobit } from './content'
 export type { ContentOptions } from './content'
 
 // External Helsedirektoratet API

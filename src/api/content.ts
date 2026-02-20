@@ -37,6 +37,28 @@ export async function getContent(
 }
 
 /**
+ * Get content by its path (e.g. "/retningslinjer/adhd")
+ */
+export async function getContentByPath(
+  path: string,
+  searchId?: string,
+  { signal, suppressErrorStatuses }: ContentOptions = {},
+): Promise<ContentDetail> {
+  const trimmed = path.trim()
+
+  if (!trimmed) {
+    throw new Error('Content path is required')
+  }
+
+  const url = buildUrl(`${BACKEND_BASE_URL}/content/by-path`, {
+    path: trimmed,
+    search_id: searchId,
+  })
+
+  return httpRequest<ContentDetail>(url, { signal, suppressErrorStatuses })
+}
+
+/**
  * @deprecated Use getContent instead
  * Get infobit by ID (legacy endpoint)
  */

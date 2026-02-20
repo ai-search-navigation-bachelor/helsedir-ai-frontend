@@ -1,8 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 import { AppLayout } from './components/layout'
-import { Home, ContentDetail, SearchPage, TemasideHubPage, TemasideLeafPage } from './pages'
+import { Home, ContentDetail, CategoryLandingPage, SearchPage, TemasideHubPage, TemasideLeafPage } from './pages'
 import { TEMASIDE_CATEGORIES } from './constants/temasider'
-// import { CategoryContentOrHubRoute } from './router/categoryRoutes'
+import { CONTENT_CATEGORY_GROUPS } from './constants/contentRoutes'
 
 function App() {
   return (
@@ -10,8 +10,16 @@ function App() {
       <Route path="/" element={<AppLayout />}>
         <Route index element={<Home />} />
         <Route path="search" element={<SearchPage />} />
-        <Route path="content/:id" element={<ContentDetail />} />
 
+        {/* Path-based content routes (e.g. /retningslinjer/adhd) */}
+        {CONTENT_CATEGORY_GROUPS.map((group) => (
+          <Route key={group.pathPrefix} path={group.pathPrefix}>
+            <Route index element={<CategoryLandingPage group={group} />} />
+            <Route path="*" element={<ContentDetail pathPrefix={group.pathPrefix} />} />
+          </Route>
+        ))}
+
+        {/* Temaside hub pages (e.g. /forebygging-diagnose-og-behandling) */}
         {TEMASIDE_CATEGORIES.map((category) => (
           <Route
             key={`${category.slug}-hub`}
@@ -20,6 +28,7 @@ function App() {
           />
         ))}
 
+        {/* Temaside leaf pages (e.g. /forebygging-diagnose-og-behandling/diabetes) */}
         {TEMASIDE_CATEGORIES.map((category) => (
           <Route
             key={`${category.slug}-leaf`}
@@ -28,22 +37,8 @@ function App() {
           />
         ))}
 
-        {/* {TEMASIDE_CATEGORIES.map((category) => (
-          <Route
-            key={`${category.slug}-content-or-hub`}
-            path={`${category.slug}/:id`}
-            element={<CategoryContentOrHubRoute categorySlug={category.slug} />}
-          />
-        ))} */}
-
-        {/* Legacy redirect: /:categorySlug/content/:id → /:categorySlug/:id */}
-        {/* {TEMASIDE_CATEGORIES.map((category) => (
-          <Route
-            key={`${category.slug}-content-legacy`}
-            path={`${category.slug}/content/:id`}
-            element={<LegacyCategoryContentRedirect categorySlug={category.slug} />}
-          />
-        ))} */}
+        {/* Legacy ID-based content route (fallback) */}
+        <Route path="content/:id" element={<ContentDetail />} />
       </Route>
     </Routes>
   )
