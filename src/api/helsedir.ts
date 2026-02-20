@@ -212,21 +212,21 @@ export async function fetchChapterWithSubchapters(
   }) || [])
   
   if (childrenLinks.length > 0) {
-    const children: ChapterWithSubchapters[] = []
-    for (const link of childrenLinks) {
-      if (link.href) {
+    const childResults = await Promise.all(
+      childrenLinks.map(async (link) => {
+        if (!link.href) return null
         try {
-          // RECURSIVELY fetch each subchapter and its children
           const subchapter = await fetchChapterWithSubchapters(link.href, signal, depth + 1, maxDepth)
-          children.push({ ...subchapter, type: subchapter.type || link.type })
+          return { ...subchapter, type: subchapter.type || link.type } as ChapterWithSubchapters
         } catch (error) {
-          // Ignore AbortErrors (expected when navigating away)
           if (error instanceof Error && error.name !== 'AbortError') {
             console.error(`Failed to fetch nested content at depth ${depth}:`, error)
           }
+          return null
         }
-      }
-    }
+      }),
+    )
+    const children = childResults.filter((c): c is ChapterWithSubchapters => Boolean(c))
     return { ...chapter, children }
   }
   
