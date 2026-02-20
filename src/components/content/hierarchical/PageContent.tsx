@@ -4,6 +4,7 @@ import { HiArrowRight } from 'react-icons/hi2'
 import type { PageNode } from './types'
 import { hasVisibleContent } from './treeUtils'
 import { ExpandableSubcontent } from './ExpandableSubcontent'
+import { ExpandableLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
 
 interface PageContentProps {
@@ -12,6 +13,7 @@ interface PageContentProps {
   onSelectPage: (pageId: string) => void
   previousPage?: PageNode
   nextPage?: PageNode
+  isLoadingExpandable?: boolean
 }
 
 export function PageContent({
@@ -20,6 +22,7 @@ export function PageContent({
   onSelectPage,
   previousPage,
   nextPage,
+  isLoadingExpandable = false,
 }: PageContentProps) {
   const hasIntro = hasVisibleContent(activePage.node.intro)
   const hasBody = hasVisibleContent(activePage.node.tekst || activePage.node.body)
@@ -133,7 +136,9 @@ export function PageContent({
         </section>
       )}
 
-      {activePage.expandableChildren.length > 0 && (
+      {isLoadingExpandable ? (
+        <ExpandableLoadingSkeleton items={activePage.expandableChildren.length || 3} />
+      ) : activePage.expandableChildren.length > 0 ? (
         <section className="mt-4">
           <div className="border-t border-slate-100">
             {activePage.expandableChildren.map((item, index) => (
@@ -145,7 +150,7 @@ export function PageContent({
             ))}
           </div>
         </section>
-      )}
+      ) : null}
 
       {(previousPage || nextPage) && (
         <nav aria-label="Navigasjon mellom kapitler" className="mt-8 border-t border-slate-200 pt-4">

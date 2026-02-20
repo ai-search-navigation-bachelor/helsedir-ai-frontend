@@ -2,9 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useContentNavigationStore } from '../../../stores'
 import { useHierarchicalChapters } from '../../../hooks/queries/useHierarchicalChapters'
+import { useBackgroundPrefetch } from '../../../hooks/queries/useBackgroundPrefetch'
 import type { ContentDisplayProps } from '../../../types/pages'
+import type { NestedContent } from '../../../types'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { ContentBodyLoadingSkeleton } from '../ContentSkeletons'
 import { PageContent } from './PageContent'
@@ -13,8 +16,10 @@ import {
   buildPageTree,
   formatDateLabel,
   getAncestorIds,
+  getNodeType,
   getSelectedAncestorIds,
 } from './treeUtils'
+import { fetchChapter } from '../../../lib/content/chapterFetch'
 
 function getSectionIdFromLocationState(state: unknown) {
   if (!state || typeof state !== 'object') return null
@@ -110,6 +115,54 @@ export function HierarchicalContentDisplay({
 
     return firstLoadedRootId ? pageTree.pagesById.get(firstLoadedRootId) : undefined
   }, [isChaptersLoading, legacySectionId, locationSectionId, pageTree, storedSectionId])
+  // Lazy-load content for stub pages (sub-chapters with no body/expandable content)
+  const activeNodeId = activePage?.node?.id ?? null
+  const isStubPage =
+    Boolean(activeNodeId) &&
+    !activePage?.isPlaceholder &&
+    !activePage?.node?.body &&
+    !activePage?.node?.tekst &&
+    !activePage?.node?.intro &&
+    activePage?.expandableChildren.length === 0 &&
+    activePage?.childrenIds.length === 0
+
+  // Lazy-load full content when the active page has expandable children stubs (no body/data yet)
+  const needsExpandableContent =
+    Boolean(activeNodeId) &&
+    activePage !== undefined &&
+    !activePage.isPlaceholder &&
+    !isStubPage &&
+    activePage.expandableChildren.length > 0 &&
+    activePage.expandableChildren.some(
+      (child) => !child.body && !child.tekst && !child.intro && !child.data,
+    )
+
+  const { data: lazyPageContent, isFetching: isLazyFetching } = useQuery({
+    queryKey: ['lazy-page-content', activeNodeId],
+    queryFn: async ({ signal }) => {
+      if (!activeNodeId) return null
+      return fetchChapter(activeNodeId, signal)
+    },
+    enabled: Boolean(isStubPage || needsExpandableContent),
+    staleTime: 10 * 60 * 1000,
+  })
+
+  // Merge lazy content into activePage when available
+  const effectiveActivePage = useMemo(() => {
+    if (!activePage || !lazyPageContent) return activePage
+    const newExpandableChildren = (lazyPageContent.children ?? []).filter((child) => {
+      const type = getNodeType(child as NestedContent)
+      return type.includes('anbefaling') || (type && type !== 'kapittel')
+    })
+    return {
+      ...activePage,
+      node: lazyPageContent,
+      expandableChildren: newExpandableChildren,
+    }
+  }, [activePage, lazyPageContent])
+
+  useBackgroundPrefetch(pageTree.pagesById, activePage?.id, isLazyFetching)
+
   const selectedAncestorIds = getSelectedAncestorIds(pageTree.pagesById, activePage)
   const effectiveExpandedIds = useMemo(() => {
     const next = new Set(expandedIds)
@@ -276,13 +329,16 @@ export function HierarchicalContentDisplay({
         <section className="min-w-0">
           {isChaptersLoading && !activePage && <ContentBodyLoadingSkeleton />}
 
-          {activePage && (
+          {isStubPage && isLazyFetching && <ContentBodyLoadingSkeleton />}
+
+          {effectiveActivePage && !(isStubPage && isLazyFetching) && (
             <PageContent
-              activePage={activePage}
+              activePage={effectiveActivePage}
               pagesById={pageTree.pagesById}
               onSelectPage={handleSelectPage}
               previousPage={previousPage}
               nextPage={nextPage}
+              isLoadingExpandable={isLazyFetching && needsExpandableContent}
             />
           )}
 
