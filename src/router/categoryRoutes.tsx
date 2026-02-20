@@ -22,7 +22,7 @@ export function CategoryContentOrHubRoute({ categorySlug }: { categorySlug: Tema
     return <ContentDetail />
   }
 
-  return <TemasideHubPage categorySlugOverride={categorySlug} subPathOverride={id} />
+  return <TemasideHubPage categorySlugOverride={categorySlug} />
 }
 
 /**
