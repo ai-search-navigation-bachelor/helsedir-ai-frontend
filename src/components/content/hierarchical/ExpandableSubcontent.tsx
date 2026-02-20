@@ -1,6 +1,6 @@
 import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
-import { Paragraph } from '@digdir/designsystemet-react'
+import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { formatDateLabel, getNodeTitle } from './treeUtils'
@@ -46,6 +46,64 @@ function SubSection({ label, html }: SubSectionProps) {
         className="content-html pb-4 text-sm leading-6 text-slate-700"
         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
       />
+    </details>
+  )
+}
+
+interface BegrunnelseSubSectionProps {
+  html: string
+  tradeoffs: string
+  preferences: string
+}
+
+function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubSectionProps) {
+  const hasVurdering = Boolean(tradeoffs || preferences)
+  return (
+    <details className="group/sub border-t border-slate-200">
+      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-[#025169]" />
+        Begrunnelse
+      </summary>
+      <div className="pb-2">
+        {html && (
+          <div
+            className="content-html pb-4 text-sm leading-6 text-slate-700"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+          />
+        )}
+        {hasVurdering && (
+          <details className="group/vurdering border-t border-slate-200">
+            <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-hover/vurdering:text-[#025169]" />
+              Vurdering
+            </summary>
+            <div className="space-y-4 pb-4">
+              {tradeoffs && (
+                <div>
+                  <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 6 }}>
+                    Fordeler og ulemper
+                  </Heading>
+                  <div
+                    className="content-html text-sm leading-6 text-slate-700"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tradeoffs) }}
+                  />
+                </div>
+              )}
+              {preferences && (
+                <div>
+                  <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 6 }}>
+                    Verdier og preferanser
+                  </Heading>
+                  <div
+                    className="content-html text-sm leading-6 text-slate-700"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preferences) }}
+                  />
+                </div>
+              )}
+            </div>
+          </details>
+        )}
+      </div>
     </details>
   )
 }
@@ -150,10 +208,10 @@ export function ExpandableSubcontent({
           />
         )}
 
-        {practical && <SubSection label="Praktisk" html={practical} />}
-        {rationale && <SubSection label="Rasjonale" html={rationale} />}
-        {tradeoffs && <SubSection label="Fordeler og ulemper" html={tradeoffs} />}
-        {preferences && <SubSection label="Verdier og preferanser" html={preferences} />}
+        {practical && <SubSection label="Praktisk informasjon" html={practical} />}
+        {(rationale || tradeoffs || preferences) && (
+          <BegrunnelseSubSection html={rationale} tradeoffs={tradeoffs} preferences={preferences} />
+        )}
 
         {referenceChildren.length > 0 && (
           <details className="group/sub border-t border-slate-200">
