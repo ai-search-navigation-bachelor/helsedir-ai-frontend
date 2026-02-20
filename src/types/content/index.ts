@@ -10,8 +10,10 @@ export interface ContentLink {
   rel: string
   type: string
   tittel: string
-  href: string
+  href: string | null
+  id?: string | null
   strukturId?: string
+  children?: ContentLink[] | null
 }
 
 /**
