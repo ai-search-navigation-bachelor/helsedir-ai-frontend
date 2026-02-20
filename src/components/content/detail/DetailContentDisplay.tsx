@@ -191,10 +191,10 @@ export function DetailContentDisplay({
                           }
                           setActiveSectionId(section.id)
                         }}
-                        className={`w-full px-0 py-3 text-left text-[1rem] leading-7 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#0f172a] hover:underline ${
+                        className={`w-full px-0 py-3 text-left text-sm leading-6 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#025169] hover:underline ${
                           isActive
-                            ? 'font-semibold text-blue-800 underline [text-underline-offset:0.15rem]'
-                            : 'text-slate-600'
+                            ? 'font-semibold text-[#025169] underline [text-underline-offset:0.15rem]'
+                            : 'text-slate-500'
                         }`}
                       >
                         {section.title}
@@ -211,11 +211,11 @@ export function DetailContentDisplay({
           )}
 
           {contextualNavigationLinks.length > 0 && (
-            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
+            <section className="border-t border-slate-100 pl-7 pt-4">
+              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                 Gå til publikasjon
-              </Heading>
-              <ul className="m-0 list-none space-y-1 p-0">
+              </p>
+              <ul className="m-0 list-none space-y-1.5 p-0">
                 {contextualNavigationLinks.map((link) => {
                   const label =
                     link.tittel ||
@@ -238,7 +238,7 @@ export function DetailContentDisplay({
                             },
                           })
                         }}
-                        className="w-full py-1 px-0 text-left text-sm text-slate-700 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#0f172a] hover:underline"
+                        className="w-full py-0.5 px-0 text-left text-xs text-slate-500 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#025169] hover:underline"
                       >
                         {label}
                       </button>
@@ -250,19 +250,16 @@ export function DetailContentDisplay({
           )}
 
           {metadataItems.length > 0 && (
-            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
+            <section className="border-t border-slate-100 pl-7 pt-4">
+              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                 Nøkkelinformasjon
-              </Heading>
-              <ul className="m-0 list-none space-y-2 p-0">
+              </p>
+              <ul className="m-0 list-none space-y-1.5 p-0">
                 {metadataItems.map((item) => (
                   <li key={item.label}>
-                    <Paragraph
-                      data-size="sm"
-                      style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}
-                    >
-                      <span className="font-semibold">{item.label}:</span> {item.value}
-                    </Paragraph>
+                    <p className="m-0 text-xs text-slate-500">
+                      <span className="font-medium text-slate-600">{item.label}:</span> {item.value}
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -270,18 +267,18 @@ export function DetailContentDisplay({
           )}
 
           {sections.length > 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
-            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
+            <section className="border-t border-slate-100 pl-7 pt-4">
+              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                 Dokument
-              </Heading>
-              <ul className="m-0 list-none space-y-2 p-0">
+              </p>
+              <ul className="m-0 list-none space-y-1.5 p-0">
                 {visibleDocumentLinks.map((document) => (
                   <li key={`document-${document.href}`}>
                     <a
                       href={document.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                      className="text-xs text-slate-500 hover:text-[#025169] hover:underline"
                     >
                       {document.label}
                     </a>
@@ -293,7 +290,7 @@ export function DetailContentDisplay({
                       href={publicationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                      className="text-xs text-slate-500 hover:text-[#025169] hover:underline"
                     >
                       Åpne side hos Helsedirektoratet
                     </a>
