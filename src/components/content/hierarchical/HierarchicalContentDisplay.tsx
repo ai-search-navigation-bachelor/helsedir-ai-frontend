@@ -271,23 +271,6 @@ export function HierarchicalContentDisplay({
             </Paragraph>
           )}
 
-          {metadataItems.length > 0 && (
-            <section className="border-t border-slate-100 pl-7 pt-4">
-              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Nøkkelinformasjon
-              </p>
-              <ul className="m-0 list-none space-y-1.5 p-0">
-                {metadataItems.map((item) => (
-                  <li key={item.label}>
-                    <p className="m-0 text-xs text-slate-500">
-                      <span className="font-medium text-slate-600">{item.label}:</span> {item.value}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
         </aside>
 
         <section className="min-w-0">
@@ -316,6 +299,23 @@ export function HierarchicalContentDisplay({
                 {failedEntries.length} undersider kunne ikke lastes fra Helsedirektoratet API akkurat nå.
               </Paragraph>
             </Alert>
+          )}
+
+          {metadataItems.length > 0 && (
+            <section className="mt-8 border-t border-slate-200 pt-6">
+              <p className="m-0 mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Nøkkelinformasjon
+              </p>
+              <ul className="m-0 list-none space-y-1.5 p-0">
+                {metadataItems.map((item) => (
+                  <li key={item.label}>
+                    <p className="m-0 text-xs text-slate-500">
+                      <span className="font-medium text-slate-600">{item.label}:</span> {item.value}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
         </section>
       </div>
