@@ -7,7 +7,7 @@ export function getTemasideCategoryByPath(path: string) {
 }
 
 export function getTemasideCategoryPathFromContentLinks(
-  links: Array<{ rel: string; href: string }> | undefined,
+  links: Array<{ rel: string; href: string | null }> | undefined,
 ): string | null {
   const parentHref = links?.find((link) => link.rel === 'forelder')?.href
   if (!parentHref) return null
