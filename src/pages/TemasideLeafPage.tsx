@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Alert, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { ContentDisplay } from '../components/content'
+import { TemasideLoadingSkeleton } from '../components/content/ContentSkeletons'
 import { TemasideHubStatusView } from '../components/content/temaside'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { useContentByIdQuery } from '../hooks/queries/useContentByIdQuery'
@@ -52,7 +53,11 @@ export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
   }
 
   if (isLoading) {
-    return <TemasideHubStatusView title="Laster temasider..." breadcrumbItems={breadcrumbItems} />
+    return (
+      <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-8 lg:pb-10">
+        <TemasideLoadingSkeleton />
+      </div>
+    )
   }
 
   if (isError) {
@@ -82,11 +87,7 @@ export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
     <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-8 lg:pb-10">
       <Breadcrumb items={breadcrumbItems} />
 
-      {isLeafLoading && (
-        <div className="flex justify-center items-center py-8">
-          <Spinner aria-label="Laster temaside..." data-size="lg" />
-        </div>
-      )}
+      {isLeafLoading && <TemasideLoadingSkeleton />}
 
       {leafError && (
         <Alert data-color="danger">

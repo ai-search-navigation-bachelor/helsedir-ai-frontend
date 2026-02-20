@@ -1,4 +1,5 @@
 import { TemasideHubSections, TemasideHubStatusView } from '../components/content/temaside'
+import { TemasideHubLoadingSkeleton } from '../components/content/ContentSkeletons'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { useTemasideHubPageModel } from '../hooks/useTemasideHubPageModel'
 import type { TemasideCategorySlug } from '../constants/temasider'
@@ -38,7 +39,12 @@ export function TemasideHubPage({ categorySlugOverride }: TemasideHubPageProps =
   }
 
   if (isLoading) {
-    return <TemasideHubStatusView title="Laster temasider..." breadcrumbItems={breadcrumbItems} />
+    return (
+      <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-10">
+        {breadcrumbItems && breadcrumbItems.length > 0 && <Breadcrumb items={breadcrumbItems} />}
+        <TemasideHubLoadingSkeleton />
+      </div>
+    )
   }
 
   if (isError) {
