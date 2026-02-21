@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HiArrowRight, HiChevronDown, HiChevronUp } from 'react-icons/hi2'
-import type { ContentDetail, LinkedContentGroup, LinkedContentItem } from '../../../types/content'
+import type { ContentDetail, ContentLink, LinkedContentGroup, LinkedContentItem } from '../../../types/content'
 import { toContentTypeLabel } from '../../../constants/content'
 import { buildContentUrl } from '../../../lib/contentUrl'
 import { getTemasideCategoryVisual } from './temasideCategoryVisuals'
@@ -16,6 +16,17 @@ const DEFAULT_VISIBLE_ITEMS = 5
 
 function getParentLink(content: ContentDetail) {
   return content.links?.find((l) => l.rel === 'forelder') ?? null
+}
+
+function getChildTemasideLinks(content: ContentDetail): ContentLink[] {
+  return (content.links ?? []).filter(
+    (l) => l.rel === 'barn' && l.type === 'temaside' && l.href,
+  )
+}
+
+function titleFromPath(path: string): string {
+  const slug = path.split('/').filter(Boolean).pop() ?? ''
+  return slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ')
 }
 
 function TemasideHeader({ title, parentLabel }: { title: string; parentLabel?: string | null }) {
@@ -143,6 +154,70 @@ function ContentSection({
   )
 }
 
+function ChildTemasideSection({ links }: { links: ContentLink[] }) {
+  const [query, setQuery] = useState('')
+  const filtered = useMemo(() => {
+    if (!query.trim()) return links
+    const q = query.trim().toLowerCase()
+    return links.filter((l) => {
+      const title = (l.tittel || titleFromPath(l.href!)).toLowerCase()
+      return title.includes(q)
+    })
+  }, [links, query])
+
+  return (
+    <section>
+      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+        <div className="flex items-center gap-2.5">
+          <SectionIcon infoType="temaside" />
+          <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide font-title">
+            Undertema
+          </h2>
+        </div>
+        <span className="text-xs font-medium text-gray-400 tabular-nums">
+          {filtered.length === links.length ? links.length : `${filtered.length} / ${links.length}`}
+        </span>
+      </div>
+
+      {links.length > 6 && (
+        <div className="px-5 pt-3">
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filtrer undertema..."
+            className="w-full rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#025169] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#025169]/20 transition-colors"
+          />
+        </div>
+      )}
+
+      {filtered.length === 0 ? (
+        <p className="px-5 py-4 text-sm text-gray-400">Ingen undertema matcher "{query}"</p>
+      ) : (
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-2 py-1">
+          {filtered.map((link) => (
+            <li key={link.href} className="border-b border-gray-100">
+              <Link
+                to={link.href!}
+                className="group flex items-center justify-between gap-3 px-5 py-3 no-underline text-inherit transition-colors duration-100 hover:bg-gray-50 rounded-xl"
+              >
+                <p className="min-w-0 text-[0.9375rem] font-medium leading-snug transition-colors" style={{ color: '#025169' }}>
+                  {link.tittel || titleFromPath(link.href!)}
+                </p>
+                <HiArrowRight
+                  size={14}
+                  className="flex-shrink-0 transition-all duration-150 group-hover:translate-x-1"
+                  style={{ color: '#025169' }}
+                />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
 function EmptyState() {
   return (
     <div className="rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm py-14 text-center">
@@ -155,9 +230,11 @@ function EmptyState() {
 
 export function TemasideContentDisplay({ content }: TemasideContentDisplayProps) {
   const parentLink = useMemo(() => getParentLink(content), [content])
+  const childTemasideLinks = useMemo(() => getChildTemasideLinks(content), [content])
   const groups = content.linked_content ?? EMPTY_LINKED_CONTENT
   const totalItems = useMemo(() => groups.reduce((sum, g) => sum + g.items.length, 0), [groups])
   const parentLabel = parentLink?.tittel ?? null
+  const hasContent = groups.length > 0 || childTemasideLinks.length > 0
 
   return (
     <div className="flex flex-col gap-5">
@@ -172,10 +249,13 @@ export function TemasideContentDisplay({ content }: TemasideContentDisplayProps)
         </div>
       )}
 
-      {groups.length === 0 ? (
+      {!hasContent ? (
         <EmptyState />
       ) : (
         <div className="flex flex-col gap-5">
+          {childTemasideLinks.length > 0 && (
+            <ChildTemasideSection links={childTemasideLinks} />
+          )}
           {groups.map((group, groupIndex) => (
             <ContentSection
               key={`${content.id}-${group.info_type}-${group.display_name}-${groupIndex}`}
