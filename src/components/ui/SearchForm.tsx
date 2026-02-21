@@ -1,13 +1,12 @@
 import { useId, useRef, useState, useEffect, useCallback, forwardRef } from 'react'
-import { MagnifyingGlassIcon, XMarkIcon } from '@navikt/aksel-icons'
-import { colors } from '../../styles/dsTokens'
+import { IoSearch, IoClose } from 'react-icons/io5'
+import { ds, colors } from '../../styles/dsTokens'
 import { useSearchSuggestionsQuery } from '../../hooks/queries/useSearchSuggestionsQuery'
 import type { SearchFormProps } from '../../types/components'
 
 export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
   ({ query, onQueryChange, onSubmit, onClear, onSuggestionSelect }, ref) => {
     const inputId = useId()
-    const [isHoveringIcon, setIsHoveringIcon] = useState(false)
     const [isFocused, setIsFocused] = useState(false)
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [activeIndex, setActiveIndex] = useState(-1)
@@ -19,17 +18,13 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
     const suggestions = data?.suggestions ?? []
     const prevSuggestionsLengthRef = useRef(suggestions.length)
 
-    // Reset active index when suggestions change (during render is safe here)
     if (prevSuggestionsLengthRef.current !== suggestions.length) {
       prevSuggestionsLengthRef.current = suggestions.length
-      // This is a derived state reset, not a side effect - safe during render
       if (activeIndex !== -1) {
-        // Use a microtask to avoid setState during render warning
         queueMicrotask(() => setActiveIndex(-1))
       }
     }
 
-    // Close dropdown on click outside
     const handleClickOutside = useCallback((e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setShowSuggestions(false)
@@ -105,117 +100,202 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
 
       return (
         <>
-          {before}<strong style={{ fontWeight: 700 }}>{match}</strong>{after}
+          {before}
+          <strong style={{ fontWeight: 600, color: '#025169' }}>{match}</strong>
+          {after}
         </>
       )
     }
 
     const listboxId = `${inputId}-suggestions`
+    const hasQuery = query.trim().length > 0
 
     return (
-      <div className="rounded-br-[50px]" style={{ backgroundColor: colors.headerBg }}>
-        <div className="max-w-screen-xl mx-auto px-12 pt-3 pb-8">
-          <label htmlFor={inputId} className="block font-bold mb-2 text-base font-title">
+      <div style={{ backgroundColor: colors.headerBg }}>
+        <div className="max-w-7xl mx-auto px-12 pt-4 pb-10">
+          <label
+            htmlFor={inputId}
+            className="block mb-3 font-title"
+            style={{
+              fontSize: '1.05rem',
+              fontWeight: 600,
+              color: '#025169',
+              letterSpacing: '-0.01em',
+            }}
+          >
             Hva leter du etter?
           </label>
 
-          <form ref={formRef} onSubmit={handleSubmit} className="mb-6">
+          <form ref={formRef} onSubmit={handleSubmit}>
             <div ref={wrapperRef} className="relative">
-              <input
-                ref={ref}
-                type="text"
-                id={inputId}
-                name="query"
-                aria-label="Søk"
-                placeholder="Søk etter innhold..."
-                value={query}
-                onChange={(e) => {
-                  onQueryChange(e.target.value)
-                  setShowSuggestions(true)
+              <div
+                className="flex items-center bg-white overflow-hidden transition-all"
+                style={{
+                  borderRadius: '12px',
+                  border: isFocused
+                    ? '2px solid #047FA4'
+                    : '2px solid transparent',
+                  boxShadow: isFocused
+                    ? '0 0 0 3px rgba(4, 127, 164, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04)'
+                    : '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
                 }}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                onKeyDown={handleKeyDown}
-                role="combobox"
-                aria-expanded={showSuggestions && suggestions.length > 0}
-                aria-controls={listboxId}
-                aria-activedescendant={
-                  activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined
-                }
-                aria-autocomplete="list"
-                autoComplete="off"
-                className={`w-full px-4 py-3 pr-24 border rounded-lg text-base transition-all bg-white outline-none ${
-                  isFocused
-                    ? 'border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.1)]'
-                    : 'border-slate-300 shadow-none'
-                }`}
-              />
+              >
+                <input
+                  ref={ref}
+                  type="text"
+                  id={inputId}
+                  name="query"
+                  aria-label="Sæk"
+                  placeholder="Søk etter innhold..."
+                  value={query}
+                  onChange={(e) => {
+                    onQueryChange(e.target.value)
+                    setShowSuggestions(true)
+                  }}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  onKeyDown={handleKeyDown}
+                  role="combobox"
+                  aria-expanded={showSuggestions && suggestions.length > 0}
+                  aria-controls={listboxId}
+                  aria-activedescendant={
+                    activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined
+                  }
+                  aria-autocomplete="list"
+                  autoComplete="off"
+                  className="w-full bg-transparent outline-none"
+                  style={{
+                    padding: '14px 16px',
+                    fontSize: '1rem',
+                    color: '#1e293b',
+                    lineHeight: 1.5,
+                  }}
+                />
 
-              {query && (
+                {/* Clear button */}
+                {hasQuery && (
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="shrink-0 flex items-center justify-center transition-colors"
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '8px',
+                      color: '#64748b',
+                      marginRight: '4px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f1f5f9'
+                      e.currentTarget.style.color = '#334155'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                      e.currentTarget.style.color = '#64748b'
+                    }}
+                    aria-label="Tom"
+                  >
+                    <IoClose size={18} />
+                  </button>
+                )}
+
+                {/* Submit button */}
                 <button
                   type="button"
-                  onClick={handleClear}
-                  className="absolute right-14 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-slate-100 transition-colors"
-                  aria-label="Tøm"
+                  onClick={handleIconClick}
+                  className="shrink-0 flex items-center justify-center transition-all"
+                  style={{
+                    height: '38px',
+                    borderRadius: '10px',
+                    marginRight: '6px',
+                    padding: hasQuery ? '0 18px' : '0 12px',
+                    gap: '6px',
+                    backgroundColor: hasQuery ? '#025169' : 'transparent',
+                    color: hasQuery ? '#ffffff' : '#64748b',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    cursor: hasQuery ? 'pointer' : 'default',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (hasQuery) {
+                      e.currentTarget.style.backgroundColor = '#047FA4'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (hasQuery) {
+                      e.currentTarget.style.backgroundColor = '#025169'
+                    }
+                  }}
+                  aria-label="Søk"
                 >
-                  <XMarkIcon className="w-5 h-5 text-slate-500" />
+                  {hasQuery && <span>Søk</span>}
+                  {!hasQuery && <IoSearch size={18} />}
                 </button>
-              )}
+              </div>
 
-              <button
-                type="button"
-                onClick={handleIconClick}
-                onMouseEnter={() => setIsHoveringIcon(true)}
-                onMouseLeave={() => setIsHoveringIcon(false)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all cursor-pointer"
-                style={{
-                  backgroundColor: isHoveringIcon ? '#f1f5f9' : 'transparent',
-                  border: isHoveringIcon ? '1px solid #cbd5e1' : '1px solid transparent',
-                }}
-                aria-label="Søk"
-              >
-                <MagnifyingGlassIcon className="w-5 h-5 text-slate-600" />
-              </button>
-
+              {/* Suggestions dropdown */}
               {showSuggestions && suggestions.length > 0 && (
                 <ul
                   ref={dropdownRef}
                   id={listboxId}
                   role="listbox"
-                  className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden"
+                  className="absolute z-50 left-0 right-0"
+                  style={{
+                    marginTop: '6px',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04)',
+                    overflow: 'hidden',
+                    padding: '4px',
+                  }}
                 >
-                  {suggestions.map((suggestion, index) => (
-                    <li
-                      key={suggestion.id}
-                      id={`${listboxId}-option-${index}`}
-                      role="option"
-                      aria-selected={index === activeIndex}
-                      onMouseDown={(e) => {
-                        e.preventDefault()
-                        handleSelectSuggestion(suggestion.id)
-                      }}
-                      onMouseEnter={() => setActiveIndex(index)}
-                      onMouseLeave={() => setActiveIndex(-1)}
-                      className={`flex items-center gap-3 px-4 py-3 cursor-pointer text-sm transition-colors ${
-                        index === activeIndex
-                          ? 'bg-slate-100'
-                          : 'hover:bg-slate-50'
-                      }`}
-                      style={{ color: '#003a4f' }}
-                    >
-                      <span>{highlightMatch(suggestion.title)}</span>
-                      <span
-                        className="shrink-0 text-xs px-2 py-0.5 rounded"
+                  {suggestions.map((suggestion, index) => {
+                    const isActive = index === activeIndex
+                    return (
+                      <li
+                        key={suggestion.id}
+                        id={`${listboxId}-option-${index}`}
+                        role="option"
+                        aria-selected={isActive}
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          handleSelectSuggestion(suggestion.id)
+                        }}
+                        onMouseEnter={() => setActiveIndex(index)}
+                        onMouseLeave={() => setActiveIndex(-1)}
+                        className="flex items-center justify-between cursor-pointer transition-colors"
                         style={{
-                          backgroundColor: '#e6f2f6',
-                          color: '#005f73',
-                          fontWeight: 500,
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          fontSize: '0.9rem',
+                          color: '#1e293b',
+                          backgroundColor: isActive ? '#f0f7fa' : 'transparent',
+                          borderLeft: isActive ? '3px solid #047FA4' : '3px solid transparent',
                         }}
                       >
-                        Temaside
-                      </span>
-                    </li>
-                  ))}
+                        <span style={{ lineHeight: 1.4 }}>
+                          {highlightMatch(suggestion.title)}
+                        </span>
+                        <span
+                          className="shrink-0"
+                          style={{
+                            fontSize: '0.7rem',
+                            fontWeight: 500,
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            backgroundColor: ds.color('logobla-1', 'surface-tinted'),
+                            color: '#025169',
+                            textTransform: 'uppercase' as const,
+                            letterSpacing: '0.05em',
+                            marginLeft: '12px',
+                          }}
+                        >
+                          Temaside
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </div>
