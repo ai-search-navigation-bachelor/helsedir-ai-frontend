@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@digdir/designsystemet-react'
 import { useSearchStore } from '../../stores/searchStore'
 import { useContentDetailBreadcrumbs } from '../../hooks/useContentDetailBreadcrumbs'
@@ -16,22 +16,18 @@ interface ContentPageLayoutProps {
  * Handles the page container, breadcrumb trail and fallback back-button.
  */
 export function ContentPageLayout({ content, children }: ContentPageLayoutProps) {
-  const { id } = useParams<{ id: string }>()
-  const location = useLocation()
   const navigate = useNavigate()
   const searchId = useSearchStore((s) => s.searchId) || undefined
 
-  const { activeBreadcrumbItems } = useContentDetailBreadcrumbs({
+  const { activeBreadcrumbItems, collapsible } = useContentDetailBreadcrumbs({
     content,
-    currentContentId: id,
-    locationState: location.state,
     searchId,
   })
 
   return (
     <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-8">
       {activeBreadcrumbItems.length > 0 ? (
-        <Breadcrumb items={activeBreadcrumbItems} />
+        <Breadcrumb items={activeBreadcrumbItems} collapsible={collapsible} />
       ) : (
         <Button variant="tertiary" onClick={() => navigate(-1)} style={{ marginBottom: '24px' }}>
           &larr; Tilbake
