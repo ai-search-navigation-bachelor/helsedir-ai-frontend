@@ -225,10 +225,13 @@ export function HierarchicalContentDisplay({
       updateHistorySection(pageId, false)
     }
 
-    setExpandedIds(() => {
+    setExpandedIds((prev) => {
       const next = getAncestorIds(pageTree.pagesById, pageId)
-      if (page && page.childrenIds.length > 0) {
-        next.add(pageId)
+      if (page.childrenIds.length > 0) {
+        // Toggle: collapse if already expanded, expand if not
+        if (!prev.has(pageId)) {
+          next.add(pageId)
+        }
       }
       return next
     })
@@ -253,21 +256,6 @@ export function HierarchicalContentDisplay({
     storedSectionId,
     updateHistorySection,
   ])
-
-  const toggleExpanded = (pageId: string) => {
-    const page = pageTree.pagesById.get(pageId)
-    if (!page || page.childrenIds.length === 0) return
-
-    setExpandedIds((prev) => {
-      if (prev.has(pageId)) {
-        return getAncestorIds(pageTree.pagesById, pageId)
-      }
-
-      const next = getAncestorIds(pageTree.pagesById, pageId)
-      next.add(pageId)
-      return next
-    })
-  }
 
   const metadataItems = useMemo(() => {
     if (!activePage?.node) return []
@@ -314,7 +302,7 @@ export function HierarchicalContentDisplay({
               expandedIds={effectiveExpandedIds}
               activePageId={activePage?.id}
               selectedAncestorIds={selectedAncestorIds}
-              onToggleExpanded={toggleExpanded}
+              isLoading={isChaptersLoading}
               onSelectPage={handleSelectPage}
             />
           )}
