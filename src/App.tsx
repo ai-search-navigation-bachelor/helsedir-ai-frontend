@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import { AppLayout } from './components/layout'
 import { Home, ContentDetail, CategoryLandingPage, SearchPage, TemasideHubPage, TemasideLeafPage } from './pages'
 import { TEMASIDE_CATEGORIES } from './constants/temasider'
-import { CONTENT_CATEGORY_GROUPS } from './constants/contentRoutes'
+import { CONTENT_CATEGORY_GROUPS, CONTENT_ONLY_PREFIXES } from './constants/contentRoutes'
 
 function App() {
   return (
@@ -35,6 +35,11 @@ function App() {
             path={`${category.slug}/*`}
             element={<TemasideLeafPage categorySlug={category.slug} />}
           />
+        ))}
+
+        {/* Content-only routes (no landing page, just content detail) */}
+        {CONTENT_ONLY_PREFIXES.map((prefix) => (
+          <Route key={prefix} path={`${prefix}/*`} element={<ContentDetail pathPrefix={prefix} />} />
         ))}
 
         {/* Legacy ID-based content route (fallback) */}

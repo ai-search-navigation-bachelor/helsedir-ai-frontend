@@ -52,7 +52,7 @@ export const CONTENT_CATEGORY_GROUPS: readonly ContentCategoryGroup[] = [
     ],
   },
   {
-    pathPrefix: 'faglig-rad',
+    pathPrefix: 'faglige-rad',
     label: 'Faglige råd',
     subtitle: 'Nasjonale faglige råd og anbefalinger',
     searchCategoryId: 'faglige-rad',
@@ -110,6 +110,24 @@ export const CONTENT_CATEGORY_GROUPS: readonly ContentCategoryGroup[] = [
       'statistikk',
     ],
   },
+]
+
+/**
+ * Additional path prefixes that exist in the backend but don't have
+ * a dedicated landing page. These get content-only routes (no index page).
+ */
+export const CONTENT_ONLY_PREFIXES: readonly string[] = [
+  'rapporter',
+  'referanse',
+  'normen',
+  'standarder',
+  'tilskudd',
+  'konferanser',
+  'nyheter',
+  'horinger',
+  'om-oss',
+  'english',
+  'nasjonale-krav-og-anbefalinger',
 ]
 
 /** Set of all content category path prefixes for quick lookup */
