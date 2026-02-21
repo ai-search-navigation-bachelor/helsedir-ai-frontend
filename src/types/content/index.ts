@@ -12,6 +12,7 @@ export interface ContentLink {
   tittel: string
   href: string | null
   id?: string | null
+  path?: string | null
   strukturId?: string
   children?: ContentLink[] | null
 }

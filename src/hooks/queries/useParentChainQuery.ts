@@ -1,0 +1,98 @@
+import { useQuery } from '@tanstack/react-query'
+import { getContent } from '../../api'
+import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
+import { buildContentUrl } from '../../lib/contentUrl'
+import type { ContentDetail, ContentLink } from '../../types'
+
+export interface ParentChainEntry {
+  id: string
+  tittel: string
+  href: string
+}
+
+export interface TemasideInfo {
+  id: string | null
+  tittel: string
+  href: string
+  path: string
+}
+
+export interface ParentChainResult {
+  chain: ParentChainEntry[]
+  temaside: TemasideInfo | null
+}
+
+const MAX_DEPTH = 10
+
+function hasForelderLink(content?: ContentDetail): boolean {
+  return Boolean(content?.links?.some((link) => link.rel === 'forelder'))
+}
+
+export function extractTemasideInfo(links?: ContentLink[]): TemasideInfo | null {
+  const temasideLink = links?.find(
+    (link) => link.rel === 'temaside' && link.tittel && link.path,
+  )
+  if (!temasideLink?.path) return null
+
+  return {
+    id: temasideLink.id ?? null,
+    tittel: temasideLink.tittel,
+    href: buildContentUrl({ path: temasideLink.path, id: temasideLink.id ?? '' }),
+    path: temasideLink.path,
+  }
+}
+
+async function fetchParentChain(
+  content: ContentDetail,
+  searchId?: string,
+): Promise<ParentChainResult> {
+  const chain: ParentChainEntry[] = []
+  const visited = new Set<string>()
+  let current = content
+
+  // Collect temaside info: prefer from root parent, fall back to current content
+  let temaside: TemasideInfo | null = extractTemasideInfo(content.links)
+
+  for (let depth = 0; depth < MAX_DEPTH; depth++) {
+    const forelderLink = current.links?.find((link) => link.rel === 'forelder')
+    if (!forelderLink) break
+
+    const parentId = forelderLink.id || getContentIdFromHref(forelderLink.href)
+    if (!parentId || visited.has(parentId)) break
+
+    visited.add(parentId)
+
+    const parent = await getContent(parentId, searchId, { suppressErrorStatuses: [404] })
+
+    const href = parent.path
+      ? buildContentUrl({ path: parent.path, id: parent.id })
+      : `/content/${parent.id}`
+
+    chain.unshift({
+      id: parent.id,
+      tittel: parent.title,
+      href,
+    })
+
+    // Overwrite temaside with the one from the highest ancestor found so far
+    const parentTemaside = extractTemasideInfo(parent.links)
+    if (parentTemaside) {
+      temaside = parentTemaside
+    }
+
+    current = parent
+  }
+
+  return { chain, temaside }
+}
+
+export function useParentChainQuery(content?: ContentDetail, searchId?: string) {
+  const enabled = hasForelderLink(content)
+
+  return useQuery<ParentChainResult>({
+    queryKey: ['parentChain', content?.id, searchId],
+    queryFn: () => fetchParentChain(content!, searchId),
+    enabled: enabled && Boolean(content),
+    staleTime: 10 * 60 * 1000,
+  })
+}
