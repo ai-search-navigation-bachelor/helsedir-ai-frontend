@@ -7,7 +7,6 @@ interface SidebarTreeProps {
   expandedIds: Set<string>
   activePageId?: string
   selectedAncestorIds: Set<string>
-  isLoading?: boolean
   onSelectPage: (pageId: string) => void
 }
 
@@ -17,7 +16,6 @@ export function SidebarTree({
   expandedIds,
   activePageId,
   selectedAncestorIds,
-  isLoading,
   onSelectPage,
 }: SidebarTreeProps) {
   const renderNode = (nodeId: string): React.ReactNode => {
@@ -32,8 +30,7 @@ export function SidebarTree({
     const isSelected = activePageId === page.id
     const isAncestor = selectedAncestorIds.has(page.id)
 
-    // Show chevron for chapters that have children OR are still loading (might get children)
-    const showChevron = hasChildren || (isLoading && !isPlaceholder && page.depth === 1)
+    const showChevron = hasChildren
 
     const textColor = isSelected
       ? 'text-[#025169]'

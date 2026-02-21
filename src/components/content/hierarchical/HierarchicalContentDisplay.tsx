@@ -302,7 +302,6 @@ export function HierarchicalContentDisplay({
               expandedIds={effectiveExpandedIds}
               activePageId={activePage?.id}
               selectedAncestorIds={selectedAncestorIds}
-              isLoading={isChaptersLoading}
               onSelectPage={handleSelectPage}
             />
           )}
