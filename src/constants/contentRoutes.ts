@@ -121,7 +121,6 @@ export const CONTENT_ONLY_PREFIXES: readonly string[] = [
   'referanse',
   'normen',
   'standarder',
-  'tilskudd',
   'konferanser',
   'nyheter',
   'horinger',
