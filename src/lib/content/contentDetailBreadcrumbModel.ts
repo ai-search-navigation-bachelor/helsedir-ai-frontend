@@ -1,207 +1,89 @@
+import { stripTemasidePrefix } from '../path'
+import { TEMASIDE_CATEGORIES } from '../../constants/temasider'
 import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
 import { buildContentUrl } from '../contentUrl'
 import type { ContentDetail } from '../../types'
 import type { BreadcrumbItem } from '../../types/components'
+import type { ParentChainEntry, TemasideInfo } from '../../hooks/queries/useParentChainQuery'
 
-interface TemasideTrailBreadcrumbContext {
-  contentTitle?: string
-  temasideLastPath: string | null
-  trailByPath: Record<string, BreadcrumbItem[]>
-  sanitizeTemasideItems: (items: BreadcrumbItem[]) => BreadcrumbItem[]
+/**
+ * Extract the temaside category from the temaside's path.
+ * e.g. "/temaside/forebygging-diagnose-og-behandling/adhd" -> "Forebygging, diagnose og behandling"
+ */
+function getCategoryFromTemasidePath(temasidePath: string): { label: string; href: string } | null {
+  const stripped = stripTemasidePrefix(temasidePath)
+  const segments = stripped.split('/').filter(Boolean)
+  if (segments.length === 0) return null
+
+  const categorySlug = segments[0]
+  const category = TEMASIDE_CATEGORIES.find((c) => c.slug === categorySlug)
+  if (!category) return null
+
+  return { label: category.title, href: category.path }
 }
 
-interface ActiveBreadcrumbCandidates {
-  fallbackBreadcrumbItems: BreadcrumbItem[]
-  linkHierarchyBreadcrumbItems: BreadcrumbItem[]
-  temasideCanonicalBreadcrumbItems: BreadcrumbItem[]
-  relatedTemasideBreadcrumbItems: BreadcrumbItem[]
-  extendedTemasideBreadcrumbItems: BreadcrumbItem[]
-  temasideBreadcrumbItems: BreadcrumbItem[]
+/**
+ * Extract the direct parent entry from content.links (synchronous, no fetch needed).
+ */
+function extractDirectParent(content: ContentDetail): ParentChainEntry | null {
+  const forelderLink = content.links?.find((link) => link.rel === 'forelder')
+  if (!forelderLink?.tittel) return null
+
+  const id = forelderLink.id || getContentIdFromHref(forelderLink.href)
+  if (!id) return null
+
+  const href = forelderLink.path
+    ? buildContentUrl({ path: forelderLink.path, id })
+    : `/content/${id}`
+
+  return { id, tittel: forelderLink.tittel, href }
 }
 
-interface RelatedTemasideContext {
-  content?: ContentDetail
-  sourceTemasideContent?: ContentDetail
-  sourceTemasideCategoryPath: string | null
-  sourceTemasideCategoryTitle?: string
-}
+export function buildContentBreadcrumbItems(
+  content: ContentDetail,
+  parentChain: ParentChainEntry[],
+  temaside: TemasideInfo | null,
+): BreadcrumbItem[] {
+  const items: BreadcrumbItem[] = [{ label: 'Forside', href: '/', group: 'home' }]
 
-interface ExtendedTemasideContext extends RelatedTemasideContext {
-  sourceContentId: string | null
-  sourceContentTitle: string | null
+  // Add category segment derived from the temaside's path
+  if (temaside?.path) {
+    const category = getCategoryFromTemasidePath(temaside.path)
+    if (category) {
+      items.push({ label: category.label, href: category.href, group: 'tema' })
+    }
+  }
+
+  // Add temaside segment
+  if (temaside) {
+    items.push({ label: temaside.tittel, href: temaside.href, group: 'tema' })
+  }
+
+  // Add parent chain entries (skip temaside duplicate and current content)
+  if (parentChain.length > 0) {
+    for (const entry of parentChain) {
+      if (temaside && entry.id === temaside.id) continue
+      if (entry.id === content.id) continue
+      items.push({ label: entry.tittel, href: entry.href, group: 'parent' })
+    }
+  } else {
+    // Fallback: use the direct forelder from content.links (instant, no fetch)
+    const directParent = extractDirectParent(content)
+    if (directParent && directParent.id !== content.id && directParent.id !== temaside?.id) {
+      items.push({ label: directParent.tittel, href: directParent.href, group: 'parent' })
+    }
+  }
+
+  items.push({ label: content.title, href: '#', group: 'current' })
+
+  return items
 }
 
 export function buildFallbackBreadcrumbItems(content?: ContentDetail): BreadcrumbItem[] {
   if (!content) return []
 
   return [
-    { label: 'Forside', href: '/' },
-    { label: content.title, href: '#' },
+    { label: 'Forside', href: '/', group: 'home' },
+    { label: content.title, href: '#', group: 'current' },
   ]
-}
-
-export function buildLinkHierarchyBreadcrumbItems(content?: ContentDetail): BreadcrumbItem[] {
-  if (!content) return []
-
-  const rootLink = content.links?.find((link) => link.rel === 'root')
-  const parentLink = content.links?.find((link) => link.rel === 'forelder')
-  const rootContentId = getContentIdFromHref(rootLink?.href)
-  const parentContentId = getContentIdFromHref(parentLink?.href)
-
-  if (!rootContentId && !parentContentId) {
-    return []
-  }
-
-  return [
-    { label: 'Forside', href: '/' },
-    ...(rootContentId && rootLink?.tittel && rootContentId !== content.id
-      ? [{ label: rootLink.tittel, href: buildContentUrl({ id: rootContentId }) }]
-      : []),
-    ...(parentContentId &&
-    parentLink?.tittel &&
-    parentContentId !== content.id &&
-    parentContentId !== rootContentId
-      ? [{ label: parentLink.tittel, href: buildContentUrl({ id: parentContentId }) }]
-      : []),
-    { label: content.title, href: '#' },
-  ]
-}
-
-export function buildTemasideCanonicalBreadcrumbItems(
-  content: ContentDetail | undefined,
-  temasideCategoryPath: string | null,
-  temasideCategoryTitle?: string,
-): BreadcrumbItem[] {
-  if (!content || content.content_type !== 'temaside' || !temasideCategoryPath) {
-    return []
-  }
-
-  return [
-    { label: 'Forside', href: '/' },
-    {
-      label: temasideCategoryTitle || content.title,
-      href: temasideCategoryPath,
-    },
-    ...(temasideCategoryTitle !== content.title ? [{ label: content.title, href: '#' }] : []),
-  ]
-}
-
-export function buildRelatedTemasideBreadcrumbItems(
-  context: RelatedTemasideContext,
-): BreadcrumbItem[] {
-  const {
-    content,
-    sourceTemasideContent,
-    sourceTemasideCategoryPath,
-    sourceTemasideCategoryTitle,
-  } = context
-
-  if (
-    !content ||
-    content.content_type === 'temaside' ||
-    !sourceTemasideContent ||
-    !sourceTemasideCategoryPath
-  ) {
-    return []
-  }
-
-  return [
-    { label: 'Forside', href: '/' },
-    {
-      label: sourceTemasideCategoryTitle || sourceTemasideContent.title,
-      href: sourceTemasideCategoryPath,
-    },
-    {
-      label: sourceTemasideContent.title,
-      href: `${sourceTemasideCategoryPath}/${sourceTemasideContent.id}`,
-    },
-    { label: content.title, href: '#' },
-  ]
-}
-
-export function buildExtendedTemasideBreadcrumbItems(
-  context: ExtendedTemasideContext,
-): BreadcrumbItem[] {
-  const {
-    content,
-    sourceTemasideContent,
-    sourceTemasideCategoryPath,
-    sourceTemasideCategoryTitle,
-    sourceContentId,
-    sourceContentTitle,
-  } = context
-
-  if (
-    !content ||
-    content.content_type === 'temaside' ||
-    !sourceTemasideContent ||
-    !sourceTemasideCategoryPath ||
-    !sourceContentId ||
-    !sourceContentTitle ||
-    sourceContentId === sourceTemasideContent.id ||
-    sourceContentId === content.id
-  ) {
-    return []
-  }
-
-  return [
-    { label: 'Forside', href: '/' },
-    {
-      label: sourceTemasideCategoryTitle || sourceTemasideContent.title,
-      href: sourceTemasideCategoryPath,
-    },
-    {
-      label: sourceTemasideContent.title,
-      href: `${sourceTemasideCategoryPath}/${sourceTemasideContent.id}`,
-    },
-    { label: sourceContentTitle, href: `${sourceTemasideCategoryPath}/${sourceContentId}` },
-    { label: content.title, href: '#' },
-  ]
-}
-
-export function buildTemasideTrailBreadcrumbItems(
-  context: TemasideTrailBreadcrumbContext,
-): BreadcrumbItem[] {
-  const { contentTitle, temasideLastPath, trailByPath, sanitizeTemasideItems } = context
-
-  if (!temasideLastPath) {
-    return []
-  }
-
-  const trail = trailByPath[temasideLastPath]
-  if (!trail) return []
-
-  const sanitizedTrail = sanitizeTemasideItems(trail.slice(0, Math.max(trail.length - 1, 0)))
-  return [...sanitizedTrail, { label: contentTitle || 'Laster...', href: '#' }]
-}
-
-export function resolveActiveContentDetailBreadcrumbs({
-  temasideCanonicalBreadcrumbItems,
-  extendedTemasideBreadcrumbItems,
-  relatedTemasideBreadcrumbItems,
-  linkHierarchyBreadcrumbItems,
-  temasideBreadcrumbItems,
-  fallbackBreadcrumbItems,
-}: ActiveBreadcrumbCandidates): BreadcrumbItem[] {
-  if (temasideCanonicalBreadcrumbItems.length > 0) {
-    return temasideCanonicalBreadcrumbItems
-  }
-
-  if (extendedTemasideBreadcrumbItems.length > 0) {
-    return extendedTemasideBreadcrumbItems
-  }
-
-  if (relatedTemasideBreadcrumbItems.length > 0) {
-    return relatedTemasideBreadcrumbItems
-  }
-
-  if (linkHierarchyBreadcrumbItems.length > 0) {
-    return linkHierarchyBreadcrumbItems
-  }
-
-  if (temasideBreadcrumbItems.length > 0) {
-    return temasideBreadcrumbItems
-  }
-
-  return fallbackBreadcrumbItems
 }
