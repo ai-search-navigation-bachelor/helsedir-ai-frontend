@@ -115,11 +115,10 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
         <div className="max-w-7xl mx-auto px-12 pt-4 pb-10">
           <label
             htmlFor={inputId}
-            className="block mb-3 font-title"
+            className="block mb-3 font-title text-gray-900"
             style={{
               fontSize: '1.05rem',
               fontWeight: 600,
-              color: '#025169',
               letterSpacing: '-0.01em',
             }}
           >
@@ -271,7 +270,6 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
                           fontSize: '0.9rem',
                           color: '#1e293b',
                           backgroundColor: isActive ? '#f0f7fa' : 'transparent',
-                          borderLeft: isActive ? '3px solid #047FA4' : '3px solid transparent',
                         }}
                       >
                         <span style={{ lineHeight: 1.4 }}>
