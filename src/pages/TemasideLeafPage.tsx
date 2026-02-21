@@ -1,5 +1,3 @@
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { ContentDisplay } from '../components/content'
 import { TemasideLoadingSkeleton } from '../components/content/ContentSkeletons'
@@ -14,34 +12,24 @@ interface TemasideLeafPageProps {
 }
 
 export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
-  const navigate = useNavigate()
-
   const {
     breadcrumbItems,
     category,
     contentId,
     error,
     isError,
-    isHub,
     isLoading,
     node,
     temaPath,
   } = useTemasideHubPageModel(categorySlug)
 
-  // Intermediate nodes have children but are not the root hub → redirect to hub
-  useEffect(() => {
-    if (!isLoading && node && isHub) {
-      navigate(`/${categorySlug}`, { replace: true })
-    }
-  }, [categorySlug, isHub, isLoading, navigate, node])
-
-  const isLeafNode = Boolean(node && !isHub && contentId)
+  const hasContentId = Boolean(contentId)
 
   const {
     data: leafContent,
     isLoading: isLeafLoading,
     error: leafError,
-  } = useContentByIdQuery({ contentId, enabled: isLeafNode })
+  } = useContentByIdQuery({ contentId, enabled: hasContentId })
 
   if (!category) {
     return (
@@ -79,9 +67,6 @@ export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
       />
     )
   }
-
-  // Intermediate node — useEffect redirect is in flight
-  if (isHub) return null
 
   return (
     <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-8 lg:pb-10">
