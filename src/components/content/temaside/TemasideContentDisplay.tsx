@@ -115,7 +115,7 @@ function ContentSection({
 
   return (
     <section>
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+      <div className="flex items-center justify-between py-3 border-b border-gray-200">
         <div className="flex items-center gap-2.5">
           <SectionIcon infoType={group.info_type} />
           <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide font-title">
@@ -167,7 +167,7 @@ function ChildTemasideSection({ links }: { links: ContentLink[] }) {
 
   return (
     <section>
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+      <div className="flex items-center justify-between py-3 border-b border-gray-200">
         <div className="flex items-center gap-2.5">
           <SectionIcon infoType="temaside" />
           <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide font-title">
@@ -180,7 +180,7 @@ function ChildTemasideSection({ links }: { links: ContentLink[] }) {
       </div>
 
       {links.length > 6 && (
-        <div className="px-5 pt-3">
+        <div className="pt-3">
           <input
             type="search"
             value={query}
@@ -192,14 +192,14 @@ function ChildTemasideSection({ links }: { links: ContentLink[] }) {
       )}
 
       {filtered.length === 0 ? (
-        <p className="px-5 py-4 text-sm text-gray-400">Ingen undertema matcher "{query}"</p>
+        <p className="py-4 text-sm text-gray-400">Ingen undertema matcher "{query}"</p>
       ) : (
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-2 py-1">
           {filtered.map((link) => (
             <li key={link.href} className="border-b border-gray-100">
               <Link
                 to={link.href!}
-                className="group flex items-center justify-between gap-3 px-5 py-3 no-underline text-inherit transition-colors duration-100 hover:bg-gray-50 rounded-xl"
+                className="group flex items-center justify-between gap-3 py-3 no-underline text-inherit transition-colors duration-100 hover:bg-gray-50/60"
               >
                 <p className="min-w-0 text-[0.9375rem] font-medium leading-snug transition-colors" style={{ color: '#025169' }}>
                   {link.tittel || titleFromPath(link.href!)}
@@ -232,22 +232,12 @@ export function TemasideContentDisplay({ content }: TemasideContentDisplayProps)
   const parentLink = useMemo(() => getParentLink(content), [content])
   const childTemasideLinks = useMemo(() => getChildTemasideLinks(content), [content])
   const groups = content.linked_content ?? EMPTY_LINKED_CONTENT
-  const totalItems = useMemo(() => groups.reduce((sum, g) => sum + g.items.length, 0), [groups])
   const parentLabel = parentLink?.tittel ?? null
   const hasContent = groups.length > 0 || childTemasideLinks.length > 0
 
   return (
     <div className="flex flex-col gap-5">
       <TemasideHeader title={content.title} parentLabel={parentLabel} />
-
-      {totalItems > 0 && (
-        <div className="flex gap-2 px-1">
-          <span className="text-xs font-medium text-gray-400 tabular-nums">
-            {totalItems} {totalItems === 1 ? 'publikasjon' : 'publikasjoner'} · {groups.length}{' '}
-            {groups.length === 1 ? 'kategori' : 'kategorier'}
-          </span>
-        </div>
-      )}
 
       {!hasContent ? (
         <EmptyState />
