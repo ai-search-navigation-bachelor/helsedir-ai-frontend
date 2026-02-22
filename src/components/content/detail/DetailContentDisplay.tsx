@@ -170,7 +170,7 @@ export function DetailContentDisplay({
 
       <div className="grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]">
         <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
-          {sections.length > 0 && (
+          {sections.length > 1 && (
             <nav aria-label="Innholdsnavigasjon">
               <ul className="m-0 list-none border-t border-slate-200 p-0">
                 {sections.map((section) => {
@@ -244,7 +244,7 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length > 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
+          {sections.length > 1 && (visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
             <section className="border-t border-slate-100 pl-7 pt-4">
               <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                 Dokument
@@ -290,9 +290,11 @@ export function DetailContentDisplay({
 
           {sections.map((section) => (
             <article key={section.id} id={section.id} className="scroll-mt-20">
-              <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
-                {section.title}
-              </Heading>
+              {sections.length > 1 && (
+                <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
+                  {section.title}
+                </Heading>
+              )}
               <div
                 className="content-html text-base leading-7 text-slate-800"
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.html) }}
