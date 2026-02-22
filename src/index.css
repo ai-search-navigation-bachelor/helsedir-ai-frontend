@@ -125,9 +125,33 @@ body {
   line-height: 1.7;
 }
 
+.content-html h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
+}
+
 .content-html ul, .content-html ol {
   margin-bottom: 1rem;
   padding-left: 2rem;
+}
+
+.content-html ul {
+  list-style-type: disc;
+}
+
+.content-html ol {
+  list-style-type: decimal;
+}
+
+.content-html ul ul {
+  list-style-type: circle;
+}
+
+.content-html ul ul ul {
+  list-style-type: square;
 }
 
 .content-html li {
