@@ -147,13 +147,39 @@ export function HierarchicalContentDisplay({
     staleTime: 10 * 60 * 1000,
   })
 
-  // Fetch expandable children stubs individually (their id is often an href URL)
+  // Stage 1: Merge lazy page content into activePage
+  // For stub pages (not in the tree), ALL children become expandable (including kapittel)
+  // For non-stub pages, only non-kapittel children become expandable (kapittel are tree nodes)
+  const pageWithLazyContent = useMemo(() => {
+    if (!activePage) return activePage
+
+    let node = activePage.node
+    let expandableChildren = activePage.expandableChildren
+
+    if (lazyPageContent) {
+      node = lazyPageContent
+      const allLazyChildren = lazyPageContent.children ?? []
+      const lazyExpandable = isStubPage
+        ? allLazyChildren
+        : allLazyChildren.filter((child) => {
+            const type = getNodeType(child as NestedContent)
+            return type.includes('anbefaling') || (type && type !== 'kapittel')
+          })
+      if (lazyExpandable.length > 0) {
+        expandableChildren = lazyExpandable
+      }
+    }
+
+    return { ...activePage, node, expandableChildren }
+  }, [activePage, lazyPageContent, isStubPage])
+
+  // Stage 2: Fetch expandable children stubs individually (their id is often an href URL)
   const expandableStubIds = useMemo(() => {
-    if (!activePage || activePage.expandableChildren.length === 0) return []
-    return activePage.expandableChildren
+    if (!pageWithLazyContent || pageWithLazyContent.expandableChildren.length === 0) return []
+    return pageWithLazyContent.expandableChildren
       .filter((child) => child.id && !child.body && !child.tekst && !child.intro && !child.data)
       .map((child) => child.id)
-  }, [activePage])
+  }, [pageWithLazyContent])
 
   const { data: fetchedExpandableMap, isFetching: isExpandableFetching } = useQuery({
     queryKey: ['expandable-children', activeNodeId, expandableStubIds],
@@ -177,40 +203,20 @@ export function HierarchicalContentDisplay({
 
   const isLazyFetching = isLazyPageFetching || isExpandableFetching
 
-  // Merge lazy content and fetched expandable children into activePage
+  // Stage 3: Replace stubs with individually fetched content
   const effectiveActivePage = useMemo(() => {
-    if (!activePage) return activePage
+    if (!pageWithLazyContent) return pageWithLazyContent
 
-    let node = activePage.node
-    let expandableChildren = activePage.expandableChildren
-
-    // Use lazy page content if available (for stub pages)
-    if (lazyPageContent) {
-      node = lazyPageContent
-      const lazyExpandable = (lazyPageContent.children ?? []).filter((child) => {
-        const type = getNodeType(child as NestedContent)
-        return type.includes('anbefaling') || (type && type !== 'kapittel')
-      })
-      if (lazyExpandable.length > 0) {
-        expandableChildren = lazyExpandable
-      }
-    }
-
-    // Replace stubs with individually fetched expandable children content
-    // Key by the stub's own ID (the href URL), not the fetched content's ID
     if (fetchedExpandableMap && fetchedExpandableMap.size > 0) {
-      expandableChildren = expandableChildren.map((stub) => {
+      const expandableChildren = pageWithLazyContent.expandableChildren.map((stub) => {
         if (!stub.id) return stub
         return fetchedExpandableMap.get(stub.id) ?? stub
       })
+      return { ...pageWithLazyContent, expandableChildren }
     }
 
-    return {
-      ...activePage,
-      node,
-      expandableChildren,
-    }
-  }, [activePage, lazyPageContent, fetchedExpandableMap])
+    return pageWithLazyContent
+  }, [pageWithLazyContent, fetchedExpandableMap])
 
   useBackgroundPrefetch(pageTree.pagesById, activePage?.id, isLazyFetching)
 
