@@ -321,7 +321,7 @@ export function HierarchicalContentDisplay({
     if (!activePage || autoOpenExpandableId || !scrollOnNextPageChange.current) return
     scrollOnNextPageChange.current = false
     contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [activePage?.id, autoOpenExpandableId])
+  }, [activePage, autoOpenExpandableId])
 
   useEffect(() => {
     if (!autoOpenExpandableId || !activePage) return
@@ -329,7 +329,8 @@ export function HierarchicalContentDisplay({
     let attempts = 0
     const maxAttempts = 20
     const interval = setInterval(() => {
-      const el = document.querySelector(`[data-expandable-id="${autoOpenExpandableId}"]`)
+      const escaped = CSS.escape(autoOpenExpandableId)
+      const el = document.querySelector(`[data-expandable-id="${escaped}"]`)
       if (el) {
         clearInterval(interval)
         el.scrollIntoView({ behavior: 'smooth', block: 'center' })

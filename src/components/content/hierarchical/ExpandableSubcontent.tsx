@@ -149,7 +149,7 @@ export function ExpandableSubcontent({
       key={itemKey}
       className="group rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm"
       style={{ marginLeft: `${depth * 14}px` }}
-      open={defaultOpen || undefined}
+      open={isOpen || undefined}
       data-expandable-id={item.id || undefined}
       onToggle={(e) => setIsOpen((e.target as HTMLDetailsElement).open)}
     >
