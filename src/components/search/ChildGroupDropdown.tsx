@@ -88,6 +88,12 @@ export function ChildGroupDropdown({
   ) => {
     event.stopPropagation();
     setPinnedChildGroupKey((prev) => (prev === groupKey ? null : groupKey));
+    setFlippedGroups((prev) => {
+      if (!prev.has(groupKey)) return prev;
+      const next = new Set(prev);
+      next.delete(groupKey);
+      return next;
+    });
   };
 
   const handleChildGroupHover = (groupKey: string) => {
@@ -109,6 +115,9 @@ export function ChildGroupDropdown({
   };
 
   const handleChildGroupLeave = () => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+    }
     leaveTimerRef.current = setTimeout(() => {
       setHoveredChildGroupKey(null);
     }, 150);
@@ -152,7 +161,7 @@ export function ChildGroupDropdown({
                   if (el) dropdownEls.current.set(groupKey, el);
                   else dropdownEls.current.delete(groupKey);
                 }}
-                {...(!isOpen ? { inert: true } : {})}
+                inert={!isOpen}
                 className={`absolute left-full ml-2 z-20 min-w-[20rem] w-max max-w-[min(42rem,92vw)] rounded-lg border border-slate-200 bg-white shadow-lg overflow-hidden transition-opacity duration-100 ${
                   isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                 } ${isFlipped ? "bottom-0 top-auto" : "top-0"}`}
