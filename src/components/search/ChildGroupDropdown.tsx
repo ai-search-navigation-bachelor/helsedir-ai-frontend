@@ -152,6 +152,7 @@ export function ChildGroupDropdown({
                   if (el) dropdownEls.current.set(groupKey, el);
                   else dropdownEls.current.delete(groupKey);
                 }}
+                {...(!isOpen ? { inert: true } : {})}
                 className={`absolute left-full ml-2 z-20 min-w-[20rem] w-max max-w-[min(42rem,92vw)] rounded-lg border border-slate-200 bg-white shadow-lg overflow-hidden transition-opacity duration-100 ${
                   isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                 } ${isFlipped ? "bottom-0 top-auto" : "top-0"}`}
