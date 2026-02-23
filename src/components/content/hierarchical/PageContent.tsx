@@ -57,10 +57,28 @@ export function PageContent({
 
   return (
     <article>
-      <div className="mb-6">
-        <Heading level={headingLevel} data-size={headingSize} className="font-title" style={{ marginBottom: 0 }}>
-          {activePage.title}
-        </Heading>
+      <div className={isOverview && activePage.depth > 1 ? 'mb-1' : 'mb-6'}>
+        {isOverview ? (
+          <button
+            type="button"
+            onClick={() => onSelectPage(activePage.id)}
+            className="group m-0 w-full rounded-lg border-0 bg-transparent px-3 py-2 text-left cursor-pointer transition-colors hover:bg-slate-100"
+          >
+            <Heading level={headingLevel} data-size={headingSize} className="font-title transition-colors group-hover:text-[#025169]" style={{ marginBottom: 0 }}>
+              {activePage.numbering && (
+                <span className="mr-2 transition-colors group-hover:text-[#025169]">{activePage.numbering}</span>
+              )}
+              {activePage.title}
+            </Heading>
+          </button>
+        ) : (
+          <Heading level={headingLevel} data-size={headingSize} className="font-title" style={{ marginBottom: 0 }}>
+            {activePage.numbering && (
+              <span className="mr-2 text-slate-800">{activePage.numbering}</span>
+            )}
+            {activePage.title}
+          </Heading>
+        )}
       </div>
 
       {hasIntro && (

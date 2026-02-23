@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -46,6 +46,7 @@ export function HierarchicalContentDisplay({
   const navigate = useNavigate()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [autoOpenExpandableId, setAutoOpenExpandableId] = useState<string | null>(null)
+  const contentRef = useRef<HTMLElement>(null)
   const sectionByContentId = useContentNavigationStore((state) => state.sectionByContentId)
   const setSectionForContent = useContentNavigationStore((state) => state.setSectionForContent)
   const storedSectionId = sectionByContentId[content.id] || null
@@ -315,6 +316,11 @@ export function HierarchicalContentDisplay({
   ])
 
   useEffect(() => {
+    if (!activePage || autoOpenExpandableId) return
+    contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [activePage?.id, autoOpenExpandableId])
+
+  useEffect(() => {
     if (!autoOpenExpandableId || !activePage) return
 
     let attempts = 0
@@ -391,7 +397,7 @@ export function HierarchicalContentDisplay({
 
         </aside>
 
-        <section className="min-w-0">
+        <section ref={contentRef} className="min-w-0">
           {isChaptersLoading && !activePage && <ContentBodyLoadingSkeleton />}
 
           {isStubPage && isLazyFetching && <ContentBodyLoadingSkeleton />}
@@ -409,18 +415,19 @@ export function HierarchicalContentDisplay({
           )}
 
           {!activePage && !isChaptersLoading && orderedPageIds.length > 0 && (
-            <div className="space-y-10">
+            <div>
               {orderedPageIds.map((pageId) => {
                 const page = pageTree.pagesById.get(pageId)
                 if (!page || page.isPlaceholder) return null
                 return (
-                  <PageContent
-                    key={page.id}
-                    activePage={page}
-                    pagesById={pageTree.pagesById}
-                    onSelectPage={handleSelectPage}
-                    isOverview
-                  />
+                  <div key={page.id} style={{ marginTop: page.depth <= 1 ? 40 : 8 }}>
+                    <PageContent
+                      activePage={page}
+                      pagesById={pageTree.pagesById}
+                      onSelectPage={handleSelectPage}
+                      isOverview
+                    />
+                  </div>
                 )
               })}
             </div>
