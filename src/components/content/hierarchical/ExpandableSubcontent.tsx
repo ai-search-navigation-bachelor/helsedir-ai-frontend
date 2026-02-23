@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
+import { useQuery } from '@tanstack/react-query'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { buildContentUrl } from '../../../lib/contentUrl'
+import { fetchChapter } from '../../../lib/content/chapterFetch'
 import { formatDateLabel, getNodeTitle, getNodeType } from './treeUtils'
 
 const MAX_SUBCONTENT_DEPTH = 8
@@ -35,7 +38,7 @@ function SubSection({ label, html }: SubSectionProps) {
         {label}
       </summary>
       <div
-        className="content-html pb-4 text-sm leading-6 text-slate-700"
+        className="content-html pb-4 pl-6 text-sm leading-6 text-slate-700"
         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
       />
     </details>
@@ -56,7 +59,7 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
         <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-[#025169]" />
         Begrunnelse
       </summary>
-      <div className="pb-2">
+      <div className="pb-2 pl-6">
         {html && (
           <div
             className="content-html pb-4 text-sm leading-6 text-slate-700"
@@ -69,7 +72,7 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
               <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-hover/vurdering:text-[#025169]" />
               Vurdering
             </summary>
-            <div className="space-y-4 pb-4">
+            <div className="space-y-4 pb-4 pl-6">
               {tradeoffs && (
                 <div>
                   <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 6 }}>
@@ -105,42 +108,54 @@ export function ExpandableSubcontent({
   itemKey,
   depth = 0,
 }: ExpandableSubcontentProps) {
+  const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const { id: currentContentId } = useParams<{ id: string }>()
-  const title = getNodeTitle(item)
-  const intro = item.intro || ''
-  const body = item.tekst || item.body || ''
 
-  const strength = item.data?.styrke || ''
-  const status = item.status || ''
-  const updated = formatDateLabel(item.sistOppdatert || item.sistFagligOppdatert)
-  const shortIntro = item.kortIntro || ''
-  const practical = item.data?.praktisk || ''
-  const rationale = item.data?.rasjonale || ''
-  const tradeoffs = item.data?.nokkelInfo?.fordelerogulemper || ''
-  const preferences = item.data?.nokkelInfo?.verdierogpreferanser || ''
+  const isStub = Boolean(item.id) && !item.body && !item.tekst && !item.intro && !item.data
+
+  const { data: fetchedContent, isFetching } = useQuery({
+    queryKey: ['expandable-content', item.id],
+    queryFn: async ({ signal }) => {
+      if (!item.id) return null
+      return fetchChapter(item.id, signal)
+    },
+    enabled: isOpen && isStub,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const resolved = fetchedContent ?? item
+  const title = getNodeTitle(item)
+  const intro = resolved.intro || ''
+  const body = resolved.tekst || resolved.body || ''
+
+  const strength = resolved.data?.styrke || ''
+  const status = resolved.status || ''
+  const updated = formatDateLabel(resolved.sistOppdatert || resolved.sistFagligOppdatert)
+  const shortIntro = resolved.kortIntro || ''
+  const practical = resolved.data?.praktisk || ''
+  const rationale = resolved.data?.rasjonale || ''
+  const tradeoffs = resolved.data?.nokkelInfo?.fordelerogulemper || ''
+  const preferences = resolved.data?.nokkelInfo?.verdierogpreferanser || ''
   const hasStandalonePage = Boolean(item.id) && !isReferenceNode(item) && !isPicoNode(item)
-  const children = item.children ?? []
-  const picoChildren = children.filter((child) => isPicoNode(child))
-  const referenceChildren = children.filter((child) => isReferenceNode(child))
+  const children = resolved.children ?? []
   const nestedChildren = children.filter((child) => !isReferenceNode(child) && !isPicoNode(child))
 
   return (
     <details
       key={itemKey}
-      className="group border-b border-slate-100"
-      style={{ paddingLeft: `${depth * 14}px` }}
+      className="group rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm"
+      style={{ marginLeft: `${depth * 14}px` }}
+      onToggle={(e) => setIsOpen((e.target as HTMLDetailsElement).open)}
     >
-      <summary className="cursor-pointer list-none py-4 hover:bg-[#f8fafc]">
-        <div className="flex items-start justify-between gap-4 px-1">
-          <div className="flex min-w-0 items-start gap-3">
-            <ChevronRightIcon className="mt-[0.3rem] h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90" />
-            <div className="min-w-0">
-              <span className="block whitespace-normal break-words text-[0.9375rem] font-medium leading-snug text-slate-800">
-                {title}
-              </span>
-            </div>
+      <summary className="cursor-pointer list-none rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open:rounded-b-none">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90 group-open:text-[#025169]" />
+            <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-medium leading-snug text-slate-800 group-open:text-[#025169]">
+              {title}
+            </span>
           </div>
 
           {hasStandalonePage && (
@@ -167,7 +182,10 @@ export function ExpandableSubcontent({
         </div>
       </summary>
 
-      <div className="pb-5 pl-8 pr-1 pt-1">
+      <div className="border-t border-slate-200 px-4 pb-5 pt-3" style={{ paddingLeft: '2.75rem' }}>
+        {isFetching && !body && !intro && (
+          <p className="m-0 py-2 text-sm italic text-slate-400">Laster innhold...</p>
+        )}
         {strength && (
           <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#025169]">
             {strength}
@@ -205,40 +223,8 @@ export function ExpandableSubcontent({
           <BegrunnelseSubSection html={rationale} tradeoffs={tradeoffs} preferences={preferences} />
         )}
 
-        {referenceChildren.length > 0 && (
-          <details className="group/sub border-t border-slate-200">
-            <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
-              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90" />
-              Referanser
-            </summary>
-            <ul className="m-0 list-disc space-y-2 pb-4 pl-5">
-              {referenceChildren.map((reference, index) => (
-                <li key={`${itemKey}-reference-${reference.id || index}`} className="text-sm leading-6 text-slate-700">
-                  {getNodeTitle(reference)}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-
-        {picoChildren.length > 0 && (
-          <details className="group/sub border-t border-slate-200">
-            <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
-              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90" />
-              PICO-er
-            </summary>
-            <ul className="m-0 list-disc space-y-2 pb-4 pl-5">
-              {picoChildren.map((pico, index) => (
-                <li key={`${itemKey}-pico-${pico.id || index}`} className="text-sm leading-6 text-slate-700">
-                  {getNodeTitle(pico)}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-
         {depth < MAX_SUBCONTENT_DEPTH && nestedChildren.length > 0 && (
-          <div className="mt-3 space-y-2">
+          <div className="mt-3 space-y-3">
             {nestedChildren.map((child, index) => (
               <ExpandableSubcontent
                 key={`${itemKey}-child-${child.id || index}`}
