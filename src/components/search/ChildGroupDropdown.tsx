@@ -168,7 +168,7 @@ export function ChildGroupDropdown({
                         fromSearch: true,
                         searchQuery,
                         sourceTemasideId: resultId,
-                        sourceContentId: resultId,
+                        sourceContentId: item.id,
                         sourceContentTitle: resultTitle,
                         searchCategoryId: group.info_type,
                         searchCategoryName: group.display_name,
