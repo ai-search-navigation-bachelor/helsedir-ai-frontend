@@ -15,6 +15,7 @@ interface ExpandableSubcontentProps {
   item: NestedContent
   itemKey: string
   depth?: number
+  defaultOpen?: boolean
 }
 
 function isReferenceNode(node: NestedContent) {
@@ -107,8 +108,9 @@ export function ExpandableSubcontent({
   item,
   itemKey,
   depth = 0,
+  defaultOpen = false,
 }: ExpandableSubcontentProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(defaultOpen)
   const navigate = useNavigate()
   const location = useLocation()
   const { id: currentContentId } = useParams<{ id: string }>()
@@ -147,6 +149,8 @@ export function ExpandableSubcontent({
       key={itemKey}
       className="group rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm"
       style={{ marginLeft: `${depth * 14}px` }}
+      open={defaultOpen || undefined}
+      data-expandable-id={item.id || undefined}
       onToggle={(e) => setIsOpen((e.target as HTMLDetailsElement).open)}
     >
       <summary className="cursor-pointer list-none rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open:rounded-b-none">

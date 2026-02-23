@@ -45,6 +45,7 @@ export function HierarchicalContentDisplay({
   const location = useLocation()
   const navigate = useNavigate()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [autoOpenExpandableId, setAutoOpenExpandableId] = useState<string | null>(null)
   const sectionByContentId = useContentNavigationStore((state) => state.sectionByContentId)
   const setSectionForContent = useContentNavigationStore((state) => state.setSectionForContent)
   const storedSectionId = sectionByContentId[content.id] || null
@@ -256,6 +257,7 @@ export function HierarchicalContentDisplay({
   )
 
   const handleShowOverview = useCallback(() => {
+    setAutoOpenExpandableId(null)
     navigate(
       {
         pathname: location.pathname,
@@ -272,10 +274,11 @@ export function HierarchicalContentDisplay({
     )
   }, [location.hash, location.pathname, location.state, navigate, searchWithoutSection])
 
-  const handleSelectPage = (pageId: string) => {
+  const handleSelectPage = (pageId: string, expandableId?: string) => {
     const page = pageTree.pagesById.get(pageId)
     if (!page || page.isPlaceholder) return
 
+    setAutoOpenExpandableId(expandableId ?? null)
     setSectionForContent(content.id, pageId)
     if (locationSectionId !== pageId || hasLegacySectionParam) {
       updateHistorySection(pageId, false)
@@ -316,6 +319,23 @@ export function HierarchicalContentDisplay({
     storedSectionId,
     updateHistorySection,
   ])
+
+  useEffect(() => {
+    if (!autoOpenExpandableId || !activePage) return
+
+    let attempts = 0
+    const maxAttempts = 20
+    const interval = setInterval(() => {
+      const el = document.querySelector(`[data-expandable-id="${autoOpenExpandableId}"]`)
+      if (el) {
+        clearInterval(interval)
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      if (++attempts >= maxAttempts) clearInterval(interval)
+    }, 100)
+
+    return () => clearInterval(interval)
+  }, [autoOpenExpandableId, activePage])
 
   const metadataItems = useMemo(() => {
     if (!activePage?.node) return []
@@ -390,6 +410,7 @@ export function HierarchicalContentDisplay({
               previousPage={previousPage}
               nextPage={nextPage}
               isLoadingExpandable={isExpandableFetching || (isLazyPageFetching && needsExpandableContent)}
+              autoOpenExpandableId={autoOpenExpandableId}
             />
           )}
 
