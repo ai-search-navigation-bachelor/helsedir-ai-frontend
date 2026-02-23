@@ -162,7 +162,7 @@ export function HierarchicalContentDisplay({
       const lazyExpandable = isStubPage
         ? allLazyChildren
         : allLazyChildren.filter((child) => {
-            const type = getNodeType(child as NestedContent)
+            const type = getNodeType(child)
             return type && type !== 'kapittel'
           })
       if (lazyExpandable.length > 0) {
@@ -285,10 +285,14 @@ export function HierarchicalContentDisplay({
     }
 
     setExpandedIds((prev) => {
-      const next = getAncestorIds(pageTree.pagesById, pageId)
+      const next = new Set(prev)
+      const ancestorIds = getAncestorIds(pageTree.pagesById, pageId)
+      ancestorIds.forEach((id) => next.add(id))
       if (page.childrenIds.length > 0) {
         // Toggle: collapse if already expanded, expand if not
-        if (!prev.has(pageId)) {
+        if (prev.has(pageId)) {
+          next.delete(pageId)
+        } else {
           next.add(pageId)
         }
       }
@@ -344,6 +348,8 @@ export function HierarchicalContentDisplay({
     return items
   }, [activePage])
 
+  const combinedFailedCount = failedEntries.length + (fetchedExpandableResult?.failedStubIds?.length ?? 0)
+
   return (
     <div className="flex flex-col gap-8">
       <ContentPageHeader typeLabel={typeLabel} title={content.title} />
@@ -395,10 +401,10 @@ export function HierarchicalContentDisplay({
             />
           )}
 
-          {!isChaptersLoading && (failedEntries.length > 0 || (fetchedExpandableResult?.failedStubIds?.length ?? 0) > 0) && (
+          {!isChaptersLoading && combinedFailedCount > 0 && (
             <Alert data-color="warning" className="mt-6">
               <Paragraph style={{ marginTop: 0 }}>
-                {failedEntries.length + (fetchedExpandableResult?.failedStubIds?.length ?? 0)} undersider kunne ikke lastes fra Helsedirektoratet API akkurat nå.
+                {combinedFailedCount} undersider kunne ikke lastes fra Helsedirektoratet API akkurat nå.
               </Paragraph>
             </Alert>
           )}
