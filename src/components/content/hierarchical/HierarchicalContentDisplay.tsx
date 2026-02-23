@@ -144,7 +144,7 @@ export function HierarchicalContentDisplay({
       return fetchChapter(activeNodeId, signal)
     },
     enabled: Boolean(isStubPage || needsExpandableContent),
-    staleTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   })
 
   // Stage 1: Merge lazy page content into activePage
@@ -163,7 +163,7 @@ export function HierarchicalContentDisplay({
         ? allLazyChildren
         : allLazyChildren.filter((child) => {
             const type = getNodeType(child as NestedContent)
-            return type.includes('anbefaling') || (type && type !== 'kapittel')
+            return type && type !== 'kapittel'
           })
       if (lazyExpandable.length > 0) {
         expandableChildren = lazyExpandable
@@ -181,24 +181,26 @@ export function HierarchicalContentDisplay({
       .map((child) => child.id)
   }, [pageWithLazyContent])
 
-  const { data: fetchedExpandableMap, isFetching: isExpandableFetching } = useQuery({
+  const { data: fetchedExpandableResult, isFetching: isExpandableFetching } = useQuery({
     queryKey: ['expandable-children', activeNodeId, expandableStubIds],
     queryFn: async ({ signal }) => {
       const map = new Map<string, NestedContent>()
+      const failedStubIds: string[] = []
       await Promise.all(
         expandableStubIds.map(async (stubId) => {
           try {
-            const content = await fetchChapter(stubId, signal)
-            map.set(stubId, content)
+            const fetchedChapter = await fetchChapter(stubId, signal)
+            map.set(stubId, fetchedChapter)
           } catch (err) {
             if (err instanceof Error && err.name === 'AbortError') throw err
+            failedStubIds.push(stubId)
           }
         }),
       )
-      return map
+      return { map, failedStubIds }
     },
     enabled: expandableStubIds.length > 0,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   })
 
   const isLazyFetching = isLazyPageFetching || isExpandableFetching
@@ -207,16 +209,16 @@ export function HierarchicalContentDisplay({
   const effectiveActivePage = useMemo(() => {
     if (!pageWithLazyContent) return pageWithLazyContent
 
-    if (fetchedExpandableMap && fetchedExpandableMap.size > 0) {
+    if (fetchedExpandableResult?.map && fetchedExpandableResult.map.size > 0) {
       const expandableChildren = pageWithLazyContent.expandableChildren.map((stub) => {
         if (!stub.id) return stub
-        return fetchedExpandableMap.get(stub.id) ?? stub
+        return fetchedExpandableResult.map.get(stub.id) ?? stub
       })
       return { ...pageWithLazyContent, expandableChildren }
     }
 
     return pageWithLazyContent
-  }, [pageWithLazyContent, fetchedExpandableMap])
+  }, [pageWithLazyContent, fetchedExpandableResult])
 
   useBackgroundPrefetch(pageTree.pagesById, activePage?.id, isLazyFetching)
 
@@ -393,25 +395,25 @@ export function HierarchicalContentDisplay({
             />
           )}
 
-          {!isChaptersLoading && failedEntries.length > 0 && (
+          {!isChaptersLoading && (failedEntries.length > 0 || (fetchedExpandableResult?.failedStubIds?.length ?? 0) > 0) && (
             <Alert data-color="warning" className="mt-6">
               <Paragraph style={{ marginTop: 0 }}>
-                {failedEntries.length} undersider kunne ikke lastes fra Helsedirektoratet API akkurat nå.
+                {failedEntries.length + (fetchedExpandableResult?.failedStubIds?.length ?? 0)} undersider kunne ikke lastes fra Helsedirektoratet API akkurat nå.
               </Paragraph>
             </Alert>
           )}
 
           {metadataItems.length > 0 && (
             <section className="mt-8 border-t border-slate-200 pt-6">
-              <p className="m-0 mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              <Paragraph data-size="xs" className="m-0 mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                 Nøkkelinformasjon
-              </p>
+              </Paragraph>
               <ul className="m-0 list-none space-y-1.5 p-0">
                 {metadataItems.map((item) => (
                   <li key={item.label}>
-                    <p className="m-0 text-xs text-slate-500">
+                    <Paragraph data-size="xs" className="m-0 text-xs text-slate-500">
                       <span className="font-medium text-slate-600">{item.label}:</span> {item.value}
-                    </p>
+                    </Paragraph>
                   </li>
                 ))}
               </ul>
