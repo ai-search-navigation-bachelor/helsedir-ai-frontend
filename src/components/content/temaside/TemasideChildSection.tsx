@@ -15,9 +15,10 @@ function titleFromPath(path: string): string {
 export function ChildTemasideSection({ links }: { links: ContentLink[] }) {
   const [query, setQuery] = useState('')
   const filtered = useMemo(() => {
-    if (!query.trim()) return links
+    const withHref = links.filter((l) => l.href)
+    if (!query.trim()) return withHref
     const q = query.trim().toLowerCase()
-    return links.filter((l) => {
+    return withHref.filter((l) => {
       const title = (l.tittel || titleFromPath(l.href!)).toLowerCase()
       return title.includes(q)
     })
@@ -53,8 +54,8 @@ export function ChildTemasideSection({ links }: { links: ContentLink[] }) {
         <p className="py-4 text-sm text-gray-400">Ingen undertema matcher &quot;{query}&quot;</p>
       ) : (
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-2 py-1">
-          {filtered.map((link) => (
-            <li key={link.href} className="border-b border-gray-100">
+          {filtered.map((link, i) => (
+            <li key={link.href ?? `child-${i}`} className="border-b border-gray-100">
               <Link
                 to={link.href!}
                 className="group flex items-center justify-between gap-3 py-3 no-underline text-inherit transition-colors duration-100 hover:bg-gray-50/60"
