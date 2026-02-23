@@ -14,6 +14,7 @@ interface PageContentProps {
   previousPage?: PageNode
   nextPage?: PageNode
   isLoadingExpandable?: boolean
+  isOverview?: boolean
 }
 
 export function PageContent({
@@ -23,6 +24,7 @@ export function PageContent({
   previousPage,
   nextPage,
   isLoadingExpandable = false,
+  isOverview = false,
 }: PageContentProps) {
   const hasIntro = hasVisibleContent(activePage.node.intro)
   const hasBody = hasVisibleContent(activePage.node.tekst || activePage.node.body)
@@ -42,15 +44,19 @@ export function PageContent({
     ? documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
     : documentLinks
   const primaryDocument = visibleDocumentLinks[0]
-  const showChildNavigation = !hasIntro && !hasBody && activePage.childrenIds.length > 0
+  const showChildNavigation = !isOverview && !hasIntro && !hasBody && activePage.childrenIds.length > 0
+  const headingLevel = isOverview ? Math.min(2 + activePage.depth - 1, 5) as 2 | 3 | 4 | 5 : 2
+  const headingSize = isOverview && activePage.depth > 1 ? 'md' : 'lg'
 
   return (
     <article>
       <div className="mb-6">
-        <p className="m-0 mb-2 text-xs uppercase tracking-wide text-slate-500">
-          Side {activePage.numbering}
-        </p>
-        <Heading level={2} data-size="lg" className="font-title" style={{ marginBottom: 0 }}>
+        {!isOverview && (
+          <p className="m-0 mb-2 text-xs uppercase tracking-wide text-slate-500">
+            Side {activePage.numbering}
+          </p>
+        )}
+        <Heading level={headingLevel} data-size={headingSize} className="font-title" style={{ marginBottom: 0 }}>
           {activePage.title}
         </Heading>
       </div>
@@ -139,16 +145,14 @@ export function PageContent({
       {isLoadingExpandable ? (
         <ExpandableLoadingSkeleton items={activePage.expandableChildren.length || 3} />
       ) : activePage.expandableChildren.length > 0 ? (
-        <section className="mt-4">
-          <div className="border-t border-slate-100">
-            {activePage.expandableChildren.map((item, index) => (
-              <ExpandableSubcontent
-                key={`${activePage.id}-rec-${item.id || index}`}
-                item={item}
-                itemKey={`${activePage.id}-rec-${item.id || index}`}
-              />
-            ))}
-          </div>
+        <section className="mt-6 space-y-3">
+          {activePage.expandableChildren.map((item, index) => (
+            <ExpandableSubcontent
+              key={`${activePage.id}-rec-${item.id || index}`}
+              item={item}
+              itemKey={`${activePage.id}-rec-${item.id || index}`}
+            />
+          ))}
         </section>
       ) : null}
 

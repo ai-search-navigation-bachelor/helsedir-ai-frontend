@@ -93,28 +93,8 @@ export function HierarchicalContentDisplay({
       : undefined
     if (fromLegacyQuery) return fromLegacyQuery
 
-    const fromStore = storedSectionId
-      ? asSelectable(pageTree.pagesById.get(storedSectionId))
-      : undefined
-    if (fromStore) return fromStore
-
-    const firstRootId = pageTree.rootIds[0]
-    const firstRootPage = firstRootId ? asSelectable(pageTree.pagesById.get(firstRootId)) : undefined
-    if (firstRootPage) return firstRootPage
-
-    // Keep waiting for chapter 1 while loading to avoid jumping between chapters.
-    if (isChaptersLoading) {
-      return undefined
-    }
-
-    // If chapter 1 failed, fall back to the first loaded chapter after loading is complete.
-    const firstLoadedRootId = pageTree.rootIds.find((rootId) => {
-      const rootPage = pageTree.pagesById.get(rootId)
-      return Boolean(rootPage) && !rootPage?.isPlaceholder
-    })
-
-    return firstLoadedRootId ? pageTree.pagesById.get(firstLoadedRootId) : undefined
-  }, [isChaptersLoading, legacySectionId, locationSectionId, pageTree, storedSectionId])
+    return undefined
+  }, [legacySectionId, locationSectionId, pageTree])
   // Lazy-load content for stub pages (sub-chapters with no body/expandable content)
   const activeNodeId = activePage?.node?.id ?? null
   const isStubPage =
@@ -275,6 +255,23 @@ export function HierarchicalContentDisplay({
     [location.hash, location.pathname, location.state, navigate, searchWithoutSection],
   )
 
+  const handleShowOverview = useCallback(() => {
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchWithoutSection,
+        hash: location.hash,
+      },
+      {
+        replace: false,
+        state: {
+          ...toLocationStateObject(location.state),
+          sectionId: undefined,
+        },
+      },
+    )
+  }, [location.hash, location.pathname, location.state, navigate, searchWithoutSection])
+
   const handleSelectPage = (pageId: string) => {
     const page = pageTree.pagesById.get(pageId)
     if (!page || page.isPlaceholder) return
@@ -368,6 +365,8 @@ export function HierarchicalContentDisplay({
               activePageId={activePage?.id}
               selectedAncestorIds={selectedAncestorIds}
               onSelectPage={handleSelectPage}
+              onShowOverview={handleShowOverview}
+              isOverviewActive={!activePage}
             />
           )}
           {isChaptersLoading && loadedChapters.length > 0 && (
@@ -394,7 +393,25 @@ export function HierarchicalContentDisplay({
             />
           )}
 
-          {!activePage && content.body && (
+          {!activePage && !isChaptersLoading && orderedPageIds.length > 0 && (
+            <div className="space-y-10">
+              {orderedPageIds.map((pageId) => {
+                const page = pageTree.pagesById.get(pageId)
+                if (!page || page.isPlaceholder) return null
+                return (
+                  <PageContent
+                    key={page.id}
+                    activePage={page}
+                    pagesById={pageTree.pagesById}
+                    onSelectPage={handleSelectPage}
+                    isOverview
+                  />
+                )
+              })}
+            </div>
+          )}
+
+          {!activePage && !isChaptersLoading && pageTree.rootIds.length === 0 && content.body && (
             <div
               className="content-html text-base leading-7 text-slate-800"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.body) }}
