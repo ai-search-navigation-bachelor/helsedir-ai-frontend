@@ -118,15 +118,16 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
           <form ref={formRef} onSubmit={handleSubmit}>
             <div ref={wrapperRef} className="relative">
               <div
-                className="flex items-center bg-white overflow-hidden transition-all"
+                className="flex items-center bg-white transition-all"
                 style={{
                   borderRadius: '12px',
                   border: isFocused
                     ? `2px solid ${ds.color('logobla-2', 'base-default')}`
-                    : '2px solid transparent',
+                    : '2px solid #e2e8f0',
                   boxShadow: isFocused
-                    ? '0 0 0 3px rgba(4, 127, 164, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04)'
-                    : '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
+                    ? '0 0 0 3px rgba(4, 127, 164, 0.12)'
+                    : 'none',
+                  transform: 'translateZ(0)',
                 }}
               >
                 <input
