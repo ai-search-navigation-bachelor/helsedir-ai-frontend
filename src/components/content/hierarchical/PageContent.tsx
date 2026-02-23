@@ -152,34 +152,55 @@ export function PageContent({
         </section>
       ) : null}
 
+      {/* Page navigation */}
       {(previousPage || nextPage) && (
-        <nav aria-label="Navigasjon mellom kapitler" className="mt-8 border-t border-slate-200 pt-4">
-          <div className="flex flex-wrap items-center gap-2">
+        <nav
+          aria-label="Navigasjon mellom kapitler"
+          className="mt-10"
+          style={{ paddingTop: '1.5rem', borderTop: '1px solid #e2e8f0' }}
+        >
+          <div className="flex flex-wrap items-stretch gap-3">
             {previousPage ? (
               <button
                 type="button"
                 onClick={() => onSelectPage(previousPage.id)}
-                className="inline-flex items-center gap-[0.375rem] px-[0.625rem] py-[0.375rem] rounded-lg border border-[var(--ds-color-logobla-1-base-default)] bg-[var(--ds-color-logobla-1-base-default)] text-[var(--ds-color-logobla-1-base-contrast-default)] text-[0.8125rem] font-semibold leading-[1.2] cursor-pointer transition-all hover:border-[var(--ds-color-logobla-1-base-hover)] hover:bg-[var(--ds-color-logobla-1-base-hover)] active:border-[var(--ds-color-logobla-1-base-active)] active:bg-[var(--ds-color-logobla-1-base-active)] focus-visible:outline-2 focus-visible:outline-[var(--ds-color-logobla-1-border-default)] focus-visible:outline-offset-2"
+                className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left cursor-pointer transition-all hover:border-[#025169]/40 hover:shadow-sm"
                 aria-label={`Gå til forrige kapittel ${previousPage.numbering}`}
               >
-                <span aria-hidden="true" className="text-[var(--ds-color-logobla-1-base-contrast-subtle)]">←</span>
-                <span className="text-[var(--ds-color-logobla-1-base-contrast-default)]">Forrige</span>
-                <span className="text-[var(--ds-color-logobla-1-base-contrast-subtle)] font-bold">{previousPage.numbering}</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#025169] text-white transition-colors group-hover:bg-[#025169]/90">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[0.6875rem] font-medium uppercase tracking-wide text-slate-400">Forrige</span>
+                  <span className="block truncate text-sm font-medium text-slate-700 group-hover:text-[#025169]">
+                    {previousPage.numbering} {previousPage.title}
+                  </span>
+                </div>
               </button>
-            ) : null}
+            ) : (
+              <div className="flex-1" />
+            )}
 
             {nextPage ? (
               <button
                 type="button"
                 onClick={() => onSelectPage(nextPage.id)}
-                className="ml-auto inline-flex items-center gap-[0.375rem] px-[0.625rem] py-[0.375rem] rounded-lg border border-[var(--ds-color-logobla-1-base-default)] bg-[var(--ds-color-logobla-1-base-default)] text-[var(--ds-color-logobla-1-base-contrast-default)] text-[0.8125rem] font-semibold leading-[1.2] cursor-pointer transition-all hover:border-[var(--ds-color-logobla-1-base-hover)] hover:bg-[var(--ds-color-logobla-1-base-hover)] active:border-[var(--ds-color-logobla-1-base-active)] active:bg-[var(--ds-color-logobla-1-base-active)] focus-visible:outline-2 focus-visible:outline-[var(--ds-color-logobla-1-border-default)] focus-visible:outline-offset-2"
+                className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-right cursor-pointer transition-all hover:border-[#025169]/40 hover:shadow-sm"
                 aria-label={`Gå til neste kapittel ${nextPage.numbering}`}
               >
-                <span className="text-[var(--ds-color-logobla-1-base-contrast-default)]">Neste</span>
-                <span className="text-[var(--ds-color-logobla-1-base-contrast-subtle)] font-bold">{nextPage.numbering}</span>
-                <span aria-hidden="true" className="text-[var(--ds-color-logobla-1-base-contrast-subtle)]">→</span>
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[0.6875rem] font-medium uppercase tracking-wide text-slate-400">Neste</span>
+                  <span className="block truncate text-sm font-medium text-slate-700 group-hover:text-[#025169]">
+                    {nextPage.numbering} {nextPage.title}
+                  </span>
+                </div>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#025169] text-white transition-colors group-hover:bg-[#025169]/90">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
               </button>
-            ) : null}
+            ) : (
+              <div className="flex-1" />
+            )}
           </div>
         </nav>
       )}
