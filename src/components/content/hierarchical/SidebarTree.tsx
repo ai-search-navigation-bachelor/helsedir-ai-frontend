@@ -117,6 +117,7 @@ export function SidebarTree({
             <button
               type="button"
               onClick={onShowOverview}
+              aria-current={isOverviewActive ? 'page' : undefined}
               className={`flex w-full items-start gap-1 border-0 bg-transparent py-2 text-left text-sm transition-colors cursor-pointer ${
                 isOverviewActive
                   ? 'text-[#025169] font-semibold'

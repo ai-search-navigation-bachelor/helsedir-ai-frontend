@@ -132,8 +132,8 @@ export function Breadcrumb({ items, collapsible = false }: BreadcrumbProps) {
             </li>
           </>
         ) : (
-          navigable.slice(1).map((item, i) => (
-            <li key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
+          navigable.slice(1).map((item) => (
+            <li key={item.href || item.label} style={{ display: 'inline-flex', alignItems: 'center' }}>
               <Separator />
               <ItemLabel item={item} />
             </li>

@@ -5,19 +5,13 @@ export function Home() {
   return (
     <>
       <section className="w-full max-w-screen-xl mx-auto px-12 pt-8 pb-6">
-        <h2
-          className="font-title mb-5"
-          style={{ fontSize: '1.15rem', fontWeight: 600, color: '#334155', letterSpacing: '-0.01em' }}
-        >
+        <h2 className="font-title mb-5 text-[1.15rem] font-semibold text-[#334155] tracking-[-0.01em]">
           Utforsk etter tema
         </h2>
         <CategoryButtons />
       </section>
       <section className="w-full max-w-screen-xl mx-auto px-12 pb-12">
-        <h2
-          className="font-title mb-5"
-          style={{ fontSize: '1.15rem', fontWeight: 600, color: '#334155', letterSpacing: '-0.01em' }}
-        >
+        <h2 className="font-title mb-5 text-[1.15rem] font-semibold text-[#334155] tracking-[-0.01em]">
           Nyttige ressurser
         </h2>
         <div className="flex flex-col gap-3">

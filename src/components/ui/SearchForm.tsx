@@ -109,7 +109,7 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
               fontSize: '1.1rem',
               fontWeight: 600,
               letterSpacing: '-0.01em',
-              color: '#1a3c4a',
+              color: ds.color('logobla-1', 'text-default'),
             }}
           >
             Hva leter du etter?
@@ -123,10 +123,11 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
                   borderRadius: '12px',
                   border: isFocused
                     ? `2px solid ${ds.color('logobla-2', 'base-default')}`
-                    : '2px solid #e2e8f0',
+                    : `2px solid ${ds.color('logobla-1', 'border-subtle')}`,
                   boxShadow: isFocused
-                    ? '0 0 0 3px rgba(4, 127, 164, 0.12)'
+                    ? `0 0 0 3px color-mix(in srgb, ${ds.color('logobla-2', 'base-default')} 12%, transparent)`
                     : 'none',
+                  // GPU compositing hint; the suggestions dropdown is intentionally contained within this stacking context
                   transform: 'translateZ(0)',
                 }}
               >

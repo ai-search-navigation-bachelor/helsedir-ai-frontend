@@ -33,12 +33,12 @@ function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
   return (
     <details className="group/vurdering mt-4 rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm">
       <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open/vurdering:rounded-b-none">
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-open/vurdering:text-[#025169]" />
+        <ChevronRightIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-open/vurdering:text-[#025169]" />
         <span className="text-[0.9375rem] font-medium text-slate-800 group-open/vurdering:text-[#025169]">
           Vurdering
         </span>
       </summary>
-      <div className="space-y-6 border-t border-slate-200 px-4 pb-5 pt-3" style={{ paddingLeft: '2.75rem' }}>
+      <div className="space-y-6 border-t border-slate-200 pr-4 pl-[2.75rem] pb-5 pt-3">
         {showTradeoffs && (
           <div>
             <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
@@ -357,12 +357,12 @@ export function DetailContentDisplay({
                   {section.appendedDropdowns.map((dropdown) => (
                     <details key={dropdown.id} className="group/dropdown rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm">
                       <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open/dropdown:rounded-b-none">
-                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/dropdown:rotate-90 group-open/dropdown:text-[#025169]" />
+                        <ChevronRightIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/dropdown:rotate-90 group-open/dropdown:text-[#025169]" />
                         <span className="text-[0.9375rem] font-medium text-slate-800 group-open/dropdown:text-[#025169]">
                           {dropdown.title}
                         </span>
                       </summary>
-                      <div className="border-t border-slate-200 px-4 pb-5 pt-3" style={{ paddingLeft: '2.75rem' }}>
+                      <div className="border-t border-slate-200 pr-4 pl-[2.75rem] pb-5 pt-3">
                         <div
                           className="content-html text-base leading-7 text-slate-800"
                           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(dropdown.html) }}
