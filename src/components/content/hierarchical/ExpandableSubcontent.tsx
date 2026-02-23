@@ -1,9 +1,10 @@
 import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
-import { Paragraph } from '@digdir/designsystemet-react'
+import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
-import { formatDateLabel, getNodeTitle } from './treeUtils'
+import { buildContentUrl } from '../../../lib/contentUrl'
+import { formatDateLabel, getNodeTitle, getNodeType } from './treeUtils'
 
 const MAX_SUBCONTENT_DEPTH = 8
 
@@ -13,23 +14,90 @@ interface ExpandableSubcontentProps {
   depth?: number
 }
 
-function getNodeType(node: NestedContent) {
-  return (
-    node.type ||
-    node.tekniskeData?.subtype ||
-    node.tekniskeData?.infoType ||
-    ''
-  ).trim().toLowerCase()
-}
-
 function isReferenceNode(node: NestedContent) {
-  const normalizedType = getNodeType(node)
-  return normalizedType.includes('referanse')
+  return getNodeType(node).includes('referanse')
 }
 
 function isPicoNode(node: NestedContent) {
-  const normalizedType = getNodeType(node)
-  return normalizedType.includes('pico')
+  return getNodeType(node).includes('pico')
+}
+
+interface SubSectionProps {
+  label: string
+  html: string
+}
+
+function SubSection({ label, html }: SubSectionProps) {
+  return (
+    <details className="group/sub border-t border-slate-200">
+      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-[#025169]" />
+        {label}
+      </summary>
+      <div
+        className="content-html pb-4 text-sm leading-6 text-slate-700"
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+      />
+    </details>
+  )
+}
+
+interface BegrunnelseSubSectionProps {
+  html: string
+  tradeoffs: string
+  preferences: string
+}
+
+function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubSectionProps) {
+  const hasVurdering = Boolean(tradeoffs || preferences)
+  return (
+    <details className="group/sub border-t border-slate-200">
+      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-[#025169]" />
+        Begrunnelse
+      </summary>
+      <div className="pb-2">
+        {html && (
+          <div
+            className="content-html pb-4 text-sm leading-6 text-slate-700"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+          />
+        )}
+        {hasVurdering && (
+          <details className="group/vurdering border-t border-slate-200">
+            <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-hover/vurdering:text-[#025169]" />
+              Vurdering
+            </summary>
+            <div className="space-y-4 pb-4">
+              {tradeoffs && (
+                <div>
+                  <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 6 }}>
+                    Fordeler og ulemper
+                  </Heading>
+                  <div
+                    className="content-html text-sm leading-6 text-slate-700"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tradeoffs) }}
+                  />
+                </div>
+              )}
+              {preferences && (
+                <div>
+                  <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 6 }}>
+                    Verdier og preferanser
+                  </Heading>
+                  <div
+                    className="content-html text-sm leading-6 text-slate-700"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preferences) }}
+                  />
+                </div>
+              )}
+            </div>
+          </details>
+        )}
+      </div>
+    </details>
+  )
 }
 
 export function ExpandableSubcontent({
@@ -59,23 +127,19 @@ export function ExpandableSubcontent({
   const nestedChildren = children.filter((child) => !isReferenceNode(child) && !isPicoNode(child))
 
   return (
-    <details key={itemKey} className="mb-3 rounded-lg border border-slate-200 bg-white">
-      <summary
-        className="cursor-pointer list-none px-3 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-        style={{ paddingLeft: `${12 + depth * 12}px` }}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-start gap-2">
-            <ChevronRightIcon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+    <details
+      key={itemKey}
+      className="group border-b border-slate-100"
+      style={{ paddingLeft: `${depth * 14}px` }}
+    >
+      <summary className="cursor-pointer list-none py-4 hover:bg-[#f8fafc]">
+        <div className="flex items-start justify-between gap-4 px-1">
+          <div className="flex min-w-0 items-start gap-3">
+            <ChevronRightIcon className="mt-[0.3rem] h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90" />
             <div className="min-w-0">
-              <div className="mb-1 flex flex-wrap items-center gap-1">
-                {strength && (
-                  <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-700">
-                    {strength}
-                  </span>
-                )}
-              </div>
-              <span className="block whitespace-normal break-words leading-6">{title}</span>
+              <span className="block whitespace-normal break-words text-[0.9375rem] font-medium leading-snug text-slate-800">
+                {title}
+              </span>
             </div>
           </div>
 
@@ -87,7 +151,7 @@ export function ExpandableSubcontent({
                 event.stopPropagation()
                 if (!item.id) return
                 const normalizedContentType = item.type?.trim()
-                navigate(`/content/${item.id}`, {
+                navigate(buildContentUrl({ id: item.id }), {
                   state: {
                     ...(location.state as Record<string, unknown> | null),
                     sourceContentId: currentContentId,
@@ -95,7 +159,7 @@ export function ExpandableSubcontent({
                   },
                 })
               }}
-              className="recommendation-open-page__button recommendation-open-page__button--compact"
+              className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 cursor-pointer whitespace-nowrap hover:border-[#025169] hover:text-[#025169]"
             >
               Åpne side
             </button>
@@ -103,9 +167,14 @@ export function ExpandableSubcontent({
         </div>
       </summary>
 
-      <div className="px-3 pb-4 pt-1" style={{ paddingLeft: `${34 + depth * 12}px` }}>
+      <div className="pb-5 pl-8 pr-1 pt-1">
+        {strength && (
+          <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#025169]">
+            {strength}
+          </p>
+        )}
         {(status || updated) && (
-          <p className="mb-2 mt-0 text-xs text-slate-500">
+          <p className="mb-3 mt-0 text-xs text-slate-400">
             {status && <span>{status}</span>}
             {status && updated && <span> · </span>}
             {updated && <span>Oppdatert {updated}</span>}
@@ -131,91 +200,40 @@ export function ExpandableSubcontent({
           />
         )}
 
-        {practical && (
-          <details className="mt-3 rounded-md border border-slate-200 bg-slate-50">
-            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
-              Praktisk
-            </summary>
-            <div
-              className="content-html px-3 pb-3 text-sm leading-6 text-slate-800"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(practical) }}
-            />
-          </details>
-        )}
-
-        {rationale && (
-          <details className="mt-2 rounded-md border border-slate-200 bg-slate-50">
-            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
-              Rasjonale
-            </summary>
-            <div
-              className="content-html px-3 pb-3 text-sm leading-6 text-slate-800"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(rationale) }}
-            />
-          </details>
-        )}
-
-        {tradeoffs && (
-          <details className="mt-2 rounded-md border border-slate-200 bg-slate-50">
-            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
-              Fordeler og ulemper
-            </summary>
-            <div
-              className="content-html px-3 pb-3 text-sm leading-6 text-slate-800"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tradeoffs) }}
-            />
-          </details>
-        )}
-
-        {preferences && (
-          <details className="mt-2 rounded-md border border-slate-200 bg-slate-50">
-            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
-              Verdier og preferanser
-            </summary>
-            <div
-              className="content-html px-3 pb-3 text-sm leading-6 text-slate-800"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preferences) }}
-            />
-          </details>
+        {practical && <SubSection label="Praktisk informasjon" html={practical} />}
+        {(rationale || tradeoffs || preferences) && (
+          <BegrunnelseSubSection html={rationale} tradeoffs={tradeoffs} preferences={preferences} />
         )}
 
         {referenceChildren.length > 0 && (
-          <details className="mt-2 rounded-md border border-slate-200 bg-slate-50">
-            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
+          <details className="group/sub border-t border-slate-200">
+            <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90" />
               Referanser
             </summary>
-            <div className="px-3 pb-3">
-              <ul className="m-0 list-disc space-y-2 pl-5">
-                {referenceChildren.map((reference, index) => (
-                  <li
-                    key={`${itemKey}-reference-${reference.id || index}`}
-                    className="text-sm leading-6 text-slate-800"
-                  >
-                    {getNodeTitle(reference)}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <ul className="m-0 list-disc space-y-2 pb-4 pl-5">
+              {referenceChildren.map((reference, index) => (
+                <li key={`${itemKey}-reference-${reference.id || index}`} className="text-sm leading-6 text-slate-700">
+                  {getNodeTitle(reference)}
+                </li>
+              ))}
+            </ul>
           </details>
         )}
 
         {picoChildren.length > 0 && (
-          <details className="mt-2 rounded-md border border-slate-200 bg-slate-50">
-            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-slate-700">
+          <details className="group/sub border-t border-slate-200">
+            <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90" />
               PICO-er
             </summary>
-            <div className="px-3 pb-3">
-              <ul className="m-0 list-disc space-y-2 pl-5">
-                {picoChildren.map((pico, index) => (
-                  <li
-                    key={`${itemKey}-pico-${pico.id || index}`}
-                    className="text-sm leading-6 text-slate-800"
-                  >
-                    {getNodeTitle(pico)}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <ul className="m-0 list-disc space-y-2 pb-4 pl-5">
+              {picoChildren.map((pico, index) => (
+                <li key={`${itemKey}-pico-${pico.id || index}`} className="text-sm leading-6 text-slate-700">
+                  {getNodeTitle(pico)}
+                </li>
+              ))}
+            </ul>
           </details>
         )}
 

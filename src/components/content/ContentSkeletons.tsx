@@ -53,7 +53,7 @@ export function ContentPageLoadingSkeleton() {
     <div className="flex flex-col gap-8" aria-label="Laster innhold" aria-busy="true">
       <HeaderSkeleton />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]">
         <aside className="border-slate-200 lg:border-r lg:pr-6">
           <ContentSidebarLoadingSkeleton />
         </aside>
@@ -78,40 +78,19 @@ export function DetailAsideLoadingSkeleton() {
   )
 }
 
-export function GenericChaptersLoadingSkeleton() {
+export function ExpandableLoadingSkeleton({ items = 3 }: { items?: number }) {
   return (
-    <div className="space-y-4" aria-hidden="true">
-      {Array.from({ length: 3 }).map((_, index) => (
-        <section
-          key={`chapter-skeleton-${index}`}
-          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-        >
-          <div className="space-y-3">
-            <Skeleton variant="text" width={18} />
-            <Skeleton variant="text" width={30} />
-            <Skeleton variant="text" width={27} />
+    <div className="mt-4 border-t border-slate-100" aria-hidden="true">
+      {Array.from({ length: items }).map((_, index) => (
+        <div key={`expandable-skeleton-${index}`} className="border-b border-slate-100 py-4 px-1">
+          <div className="flex items-start gap-3">
+            <Skeleton width={16} height={16} className="mt-0.5 shrink-0 rounded" />
+            <div className="min-w-0 flex-1">
+              <Skeleton variant="text" width={index % 2 === 0 ? 70 : 85} />
+            </div>
           </div>
-        </section>
+        </div>
       ))}
     </div>
-  )
-}
-
-export function TableOfContentsLoadingSkeleton() {
-  return (
-    <nav className="toc" aria-hidden="true">
-      <div className="mb-3">
-        <Skeleton variant="text" width={9} />
-      </div>
-      <ul className="toc__list">
-        {Array.from({ length: 6 }).map((_, index) => (
-          <li key={`toc-skeleton-${index}`} className="toc__item">
-            <div className="py-3">
-              <Skeleton variant="text" width={index % 2 === 0 ? 22 : 18} />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </nav>
   )
 }

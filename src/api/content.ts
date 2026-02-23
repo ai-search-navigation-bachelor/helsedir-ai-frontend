@@ -4,7 +4,7 @@
  */
 
 import { httpRequest, buildUrl } from '../lib/httpClient'
-import type { BaseRequestOptions, ContentDetail, InfoResultItem } from '../types'
+import type { BaseRequestOptions, ContentDetail } from '../types'
 import { BACKEND_BASE_URL } from './backendBaseUrl'
 
 /**
@@ -37,24 +37,24 @@ export async function getContent(
 }
 
 /**
- * @deprecated Use getContent instead
- * Get infobit by ID (legacy endpoint)
+ * Get content by its path (e.g. "/retningslinjer/adhd")
  */
-export async function getInfobit(
-  infobitId: string,
-  { signal, depth = 2 }: ContentOptions = {},
-): Promise<InfoResultItem> {
-  const trimmed = infobitId.trim()
+export async function getContentByPath(
+  path: string,
+  searchId?: string,
+  { signal, suppressErrorStatuses }: ContentOptions = {},
+): Promise<ContentDetail> {
+  const trimmed = path.trim()
 
   if (!trimmed) {
-    throw new Error('Infobit ID is required')
+    throw new Error('Content path is required')
   }
 
-  // Legacy endpoint for backwards compatibility
-  const url = buildUrl(`${BACKEND_BASE_URL}/helsedir/infobit/${encodeURIComponent(trimmed)}`, {
-    include_children: true,
-    depth,
+  const url = buildUrl(`${BACKEND_BASE_URL}/content/by-path`, {
+    path: trimmed,
+    search_id: searchId,
   })
 
-  return httpRequest<InfoResultItem>(url, { signal })
+  return httpRequest<ContentDetail>(url, { signal, suppressErrorStatuses })
 }
+

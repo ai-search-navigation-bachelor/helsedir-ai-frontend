@@ -1,7 +1,7 @@
 import { Alert, Paragraph } from "@digdir/designsystemet-react";
 import { useMemo } from "react";
 import { SearchResultCard } from "./SearchResultCard";
-import { useThemePagesQuery } from "../../hooks/queries/useThemePagesQuery";
+import { useTemasidePathMap } from "../../hooks/queries/useTemasidePathMap";
 import type { SearchResult } from "../../types";
 
 interface SearchResultsListProps {
@@ -22,21 +22,7 @@ export function SearchResultsList({
   activeTab = "all",
   activeTabLabel,
 }: SearchResultsListProps) {
-  const { data: themePagesData } = useThemePagesQuery();
-
-  const temasidePathById = useMemo(() => {
-    const map = new Map<string, string>();
-    const pages = themePagesData?.results ?? [];
-
-    pages.forEach((page) => {
-      const id = page.id?.trim();
-      const path = page.path?.trim();
-      if (!id || !path) return;
-      map.set(id, path);
-    });
-
-    return map;
-  }, [themePagesData?.results]);
+  const temasidePathById = useTemasidePathMap();
 
   const sourceTemasideByContentId = useMemo(() => {
     const map = new Map<string, string>();
@@ -83,16 +69,15 @@ export function SearchResultsList({
           <Paragraph>Ingen resultater funnet i denne kategorien.</Paragraph>
         </Alert>
       ) : (
-        <div className="divide-y divide-gray-200">
+        <div className="flex flex-col gap-3">
           {results.map((result, index) => (
-            <div key={`${result.id}-${index}`} className="py-4 first:pt-0">
-              <SearchResultCard
-                result={result}
-                searchQuery={searchQuery}
-                sourceTemasideId={sourceTemasideByContentId.get(result.id)}
-                temasidePathById={temasidePathById}
-              />
-            </div>
+            <SearchResultCard
+              key={`${result.id}-${index}`}
+              result={result}
+              searchQuery={searchQuery}
+              sourceTemasideId={sourceTemasideByContentId.get(result.id)}
+              temasidePathById={temasidePathById}
+            />
           ))}
         </div>
       )}

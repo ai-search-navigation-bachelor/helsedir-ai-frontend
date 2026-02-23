@@ -17,7 +17,6 @@ export type CustomLayout = {
  */
 export const FORCE_FLAT_CATEGORIES: string[] = [
   '/lov-og-forskrift',
-  '/tilskudd-og-finansiering',
   '/statistikk-registre-og-rapporter',
 ];
 

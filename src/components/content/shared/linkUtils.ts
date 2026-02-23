@@ -1,16 +1,19 @@
 interface LinkLike {
   rel?: string
-  href?: string
+  href?: string | null
+  id?: string | null
 }
 
 export function getUniqueChildLinks<T extends LinkLike>(links?: T[]) {
-  const dedupedByHref = new Set<string>()
+  const seen = new Set<string>()
   const result: T[] = []
 
   for (const link of links ?? []) {
-    if (link.rel !== 'barn' || !link.href) continue
-    if (dedupedByHref.has(link.href)) continue
-    dedupedByHref.add(link.href)
+    if (link.rel !== 'barn') continue
+    const key = link.id || link.href
+    if (!key) continue
+    if (seen.has(key)) continue
+    seen.add(key)
     result.push(link)
   }
 

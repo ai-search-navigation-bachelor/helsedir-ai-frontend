@@ -10,6 +10,7 @@ export interface SearchResult {
   id: string
   title: string
   info_type: string
+  path?: string
   score: number
   explanation?: string
   children?: SearchResultChildGroup[] | null

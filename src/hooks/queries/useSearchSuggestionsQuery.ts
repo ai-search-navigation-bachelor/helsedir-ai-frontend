@@ -1,20 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState, useEffect } from 'react'
 import { fetchSearchSuggestions } from '../../api'
 import type { SearchSuggestionsResponse } from '../../types'
+import { useDebouncedValue } from '../useDebouncedValue'
 
 const DEBOUNCE_MS = 500
-
-function useDebouncedValue(value: string, delay: number): string {
-  const [debounced, setDebounced] = useState(value)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(timer)
-  }, [value, delay])
-
-  return debounced
-}
 
 export function useSearchSuggestionsQuery(query: string, enabled = true) {
   const debouncedQuery = useDebouncedValue(query, DEBOUNCE_MS)

@@ -1,4 +1,3 @@
-import { Heading } from '@digdir/designsystemet-react'
 
 type ContentPageHeaderProps = {
   typeLabel: string
@@ -7,15 +6,11 @@ type ContentPageHeaderProps = {
 
 export function ContentPageHeader({ typeLabel, title }: ContentPageHeaderProps) {
   return (
-    <header className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-800">
-          {typeLabel}
-        </span>
-      </div>
-      <Heading level={1} data-size="lg" style={{ marginBottom: 0 }}>
-        {title}
-      </Heading>
+    <header className="pb-1">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#025169]">
+        {typeLabel}
+      </p>
+      <h1 className="font-title text-3xl font-bold leading-tight text-gray-900">{title}</h1>
     </header>
   )
 }

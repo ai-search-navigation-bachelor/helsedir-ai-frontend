@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { buildContentUrl } from '../../../lib/contentUrl'
 import {
   getDetailContentTypeLabel,
   isRecommendationContentType,
@@ -17,10 +18,49 @@ import { hasVisibleContent } from '../shared/contentTextUtils'
 import {
   buildContentSections,
   buildContextualNavigationLinks,
-  buildMetadataItems,
   LINK_LABEL_BY_REL,
   type ContentSection,
+  type VurderingSection,
 } from './detailContentModel'
+
+function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
+  if (!vurdering) return null
+  const showTradeoffs = hasVisibleContent(vurdering.tradeoffs)
+  const showPreferences = hasVisibleContent(vurdering.preferences)
+  if (!showTradeoffs && !showPreferences) return null
+
+  return (
+    <details className="mt-6 border-t border-slate-200">
+      <summary className="cursor-pointer py-3 text-base font-semibold text-slate-700 hover:text-slate-900">
+        Vurdering
+      </summary>
+      <div className="space-y-6 pt-2">
+        {showTradeoffs && (
+          <div>
+            <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
+              Fordeler og ulemper
+            </Heading>
+            <div
+              className="content-html text-base leading-7 text-slate-800"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vurdering.tradeoffs) }}
+            />
+          </div>
+        )}
+        {showPreferences && (
+          <div>
+            <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
+              Verdier og preferanser
+            </Heading>
+            <div
+              className="content-html text-base leading-7 text-slate-800"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vurdering.preferences) }}
+            />
+          </div>
+        )}
+      </div>
+    </details>
+  )
+}
 
 interface DetailContentDisplayProps extends ContentDisplayProps {
   typeLabelOverride?: string
@@ -133,11 +173,6 @@ export function DetailContentDisplay({
     return () => observer.disconnect()
   }, [sections])
 
-  const metadataItems = useMemo(
-    () => buildMetadataItems(content, enrichedContent),
-    [content, enrichedContent],
-  )
-
   const supportingLinks = useMemo(
     () => content.links?.filter((link) => Boolean(link.href)) || [],
     [content.links],
@@ -169,13 +204,20 @@ export function DetailContentDisplay({
   }, [documentLinks, shouldShowPublicationLink])
   const primaryDocument = visibleDocumentLinks[0]
 
+  const hasSidebarContent =
+    sections.length > 1 ||
+    contextualNavigationLinks.length > 0
+  // Reserve sidebar space while enrichment is loading to prevent grid layout shift
+  const showSidebarLayout = hasSidebarContent || isEnrichedLoading
+
   return (
     <div className="flex flex-col gap-8">
       <ContentPageHeader typeLabel={typeLabel} title={content.title} />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
+      <div className={showSidebarLayout ? 'grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]' : ''}>
+        {showSidebarLayout && (
         <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
-          {sections.length > 0 && (
+          {sections.length > 1 && (
             <nav aria-label="Innholdsnavigasjon">
               <ul className="m-0 list-none border-t border-slate-200 p-0">
                 {sections.map((section) => {
@@ -191,10 +233,10 @@ export function DetailContentDisplay({
                           }
                           setActiveSectionId(section.id)
                         }}
-                        className={`recommendation-nav__button w-full px-0 py-3 text-left text-[1rem] leading-7 ${
+                        className={`w-full px-0 py-3 text-left text-sm leading-6 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#025169] hover:underline ${
                           isActive
-                            ? 'recommendation-nav__button--active font-semibold text-blue-800'
-                            : 'text-slate-600'
+                            ? 'font-semibold text-[#025169] underline [text-underline-offset:0.15rem]'
+                            : 'text-slate-500'
                         }`}
                       >
                         {section.title}
@@ -211,11 +253,11 @@ export function DetailContentDisplay({
           )}
 
           {contextualNavigationLinks.length > 0 && (
-            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
+            <section className="border-t border-slate-100 pl-7 pt-4">
+              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                 Gå til publikasjon
-              </Heading>
-              <ul className="m-0 list-none space-y-1 p-0">
+              </p>
+              <ul className="m-0 list-none space-y-1.5 p-0">
                 {contextualNavigationLinks.map((link) => {
                   const label =
                     link.tittel ||
@@ -227,7 +269,7 @@ export function DetailContentDisplay({
                         type="button"
                         onClick={() => {
                           const normalizedContentType = link.type?.trim()
-                          navigate(`/content/${link.contentId}`, {
+                          navigate(buildContentUrl({ id: link.contentId, path: link.path ?? undefined }), {
                             state: {
                               ...(location.state as Record<string, unknown> | null),
                               sourceContentId: content.id,
@@ -238,7 +280,7 @@ export function DetailContentDisplay({
                             },
                           })
                         }}
-                        className="recommendation-nav__button w-full py-1 text-left text-sm text-slate-700"
+                        className="w-full py-0.5 px-0 text-left text-xs text-slate-500 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#025169] hover:underline"
                       >
                         {label}
                       </button>
@@ -249,39 +291,19 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {metadataItems.length > 0 && (
-            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
-                Nøkkelinformasjon
-              </Heading>
-              <ul className="m-0 list-none space-y-2 p-0">
-                {metadataItems.map((item) => (
-                  <li key={item.label}>
-                    <Paragraph
-                      data-size="sm"
-                      style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}
-                    >
-                      <span className="font-semibold">{item.label}:</span> {item.value}
-                    </Paragraph>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
           {sections.length > 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
-            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
+            <section className="border-t border-slate-100 pl-7 pt-4">
+              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                 Dokument
-              </Heading>
-              <ul className="m-0 list-none space-y-2 p-0">
+              </p>
+              <ul className="m-0 list-none space-y-1.5 p-0">
                 {visibleDocumentLinks.map((document) => (
                   <li key={`document-${document.href}`}>
                     <a
                       href={document.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                      className="text-xs text-slate-500 hover:text-[#025169] hover:underline"
                     >
                       {document.label}
                     </a>
@@ -293,7 +315,7 @@ export function DetailContentDisplay({
                       href={publicationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                      className="text-xs text-slate-500 hover:text-[#025169] hover:underline"
                     >
                       Åpne side hos Helsedirektoratet
                     </a>
@@ -303,6 +325,7 @@ export function DetailContentDisplay({
             </section>
           )}
         </aside>
+        )}
 
         <section className="min-w-0 space-y-8">
           {enrichedError && (
@@ -315,13 +338,34 @@ export function DetailContentDisplay({
 
           {sections.map((section) => (
             <article key={section.id} id={section.id} className="scroll-mt-20">
-              <Heading level={2} data-size="md" style={{ marginTop: 0, marginBottom: 12 }}>
-                {section.title}
-              </Heading>
+              {sections.length > 1 && (
+                <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
+                  {section.title}
+                </Heading>
+              )}
               <div
                 className="content-html text-base leading-7 text-slate-800"
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.html) }}
               />
+              <VurderingDetails vurdering={section.vurdering} />
+              {section.appendedDropdowns && section.appendedDropdowns.length > 0 && (
+                <div className="mt-6 border-t border-slate-200">
+                  {section.appendedDropdowns.map((dropdown) => (
+                    <details key={dropdown.id} className="border-b border-slate-200">
+                      <summary className="cursor-pointer py-3 text-base font-semibold text-slate-700 hover:text-slate-900">
+                        {dropdown.title}
+                      </summary>
+                      <div className="pb-4 pt-2">
+                        <div
+                          className="content-html text-base leading-7 text-slate-800"
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(dropdown.html) }}
+                        />
+                        <VurderingDetails vurdering={dropdown.vurdering} />
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              )}
             </article>
           ))}
 

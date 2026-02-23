@@ -1,6 +1,6 @@
 import type { CustomLayout } from '../../components/content/temaside/customLayouts'
 import type { ThemeNode } from './temasiderTree'
-import type { BreadcrumbItem } from '../../types/components'
+import type { BreadcrumbItem } from '../../components/ui/Breadcrumb'
 import { normalizePath } from '../path'
 
 export type HubLink = {

@@ -54,7 +54,7 @@ export function SearchCategoryTabs({
             }}
             type="button"
             onClick={() => onTabChange(tab.id)}
-            className={`inline-flex items-center gap-1.5 px-1.5 pt-2 pb-3 text-[0.95rem] font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-1.5 pt-2 pb-3 text-[0.95rem] font-medium transition-colors font-title ${
               activeTab === tab.id
                 ? "text-[#047FA4]"
                 : "text-slate-700 hover:text-slate-900"

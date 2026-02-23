@@ -1,111 +1,40 @@
-import { useContentByIdQuery } from './queries/useContentByIdQuery'
+import { useParentChainQuery } from './queries/useParentChainQuery'
+import { extractTemasideInfo } from '../lib/content/breadcrumbUtils'
 import {
-  getSourceContentContextFromLocationState,
-  getSourceTemasideIdFromLocationState,
-  getTemasideCategoryByPath,
-  getTemasideCategoryPathFromContentLinks,
-  sanitizeTemasideItems,
-} from '../lib/content/breadcrumbUtils'
-import {
-  buildExtendedTemasideBreadcrumbItems,
+  buildContentBreadcrumbItems,
   buildFallbackBreadcrumbItems,
-  buildLinkHierarchyBreadcrumbItems,
-  buildRelatedTemasideBreadcrumbItems,
-  buildTemasideCanonicalBreadcrumbItems,
-  buildTemasideTrailBreadcrumbItems,
-  resolveActiveContentDetailBreadcrumbs,
 } from '../lib/content/contentDetailBreadcrumbModel'
-import { useTemasideBreadcrumbStore } from '../stores'
 import type { ContentDetail } from '../types'
 
 interface UseContentDetailBreadcrumbsOptions {
   content?: ContentDetail
-  currentContentId?: string
-  locationState: unknown
   searchId?: string
 }
 
 export function useContentDetailBreadcrumbs({
   content,
-  currentContentId,
-  locationState,
   searchId,
 }: UseContentDetailBreadcrumbsOptions) {
-  const temasideTrailByPath = useTemasideBreadcrumbStore((state) => state.trailByPath)
-  const temasideLastPath = useTemasideBreadcrumbStore((state) => state.lastPath)
-
-  const sourceTemasideId = getSourceTemasideIdFromLocationState(locationState)
-  const { id: sourceContentId, title: sourceContentTitleFromState } =
-    getSourceContentContextFromLocationState(locationState)
-
-  const { data: sourceTemasideContent } = useContentByIdQuery({
-    contentId: sourceTemasideId,
-    searchId,
-    enabled: Boolean(sourceTemasideId && sourceTemasideId !== currentContentId),
-  })
-
-  const { data: sourceContentForBreadcrumb } = useContentByIdQuery({
-    contentId: sourceContentId,
-    searchId,
-    enabled: Boolean(
-      sourceContentId &&
-      sourceContentId !== currentContentId &&
-      sourceContentId !== sourceTemasideId &&
-      !sourceContentTitleFromState,
-    ),
-  })
-
-  const fallbackBreadcrumbItems = buildFallbackBreadcrumbItems(content)
-  const linkHierarchyBreadcrumbItems = buildLinkHierarchyBreadcrumbItems(content)
-
-  const temasideCategoryPath = getTemasideCategoryPathFromContentLinks(content?.links)
-  const temasideCategory = temasideCategoryPath
-    ? getTemasideCategoryByPath(temasideCategoryPath)
-    : undefined
-  const temasideCanonicalBreadcrumbItems = buildTemasideCanonicalBreadcrumbItems(
+  const { data: parentChainResult, isLoading: isParentChainLoading } = useParentChainQuery(
     content,
-    temasideCategoryPath,
-    temasideCategory?.title,
+    searchId,
   )
 
-  const sourceTemasideCategoryPath = getTemasideCategoryPathFromContentLinks(sourceTemasideContent?.links)
-  const sourceTemasideCategory = sourceTemasideCategoryPath
-    ? getTemasideCategoryByPath(sourceTemasideCategoryPath)
-    : undefined
-  const relatedTemasideBreadcrumbItems = buildRelatedTemasideBreadcrumbItems({
-    content,
-    sourceTemasideContent,
-    sourceTemasideCategoryPath,
-    sourceTemasideCategoryTitle: sourceTemasideCategory?.title,
-  })
+  const hasLinks = Boolean(content?.links && content.links.length > 0)
 
-  const sourceContentTitle = sourceContentTitleFromState || sourceContentForBreadcrumb?.title || null
-  const extendedTemasideBreadcrumbItems = buildExtendedTemasideBreadcrumbItems({
-    content,
-    sourceTemasideContent,
-    sourceTemasideCategoryPath,
-    sourceTemasideCategoryTitle: sourceTemasideCategory?.title,
-    sourceContentId,
-    sourceContentTitle,
-  })
+  // Use temaside from parent chain when available, otherwise extract from current content
+  const temaside = parentChainResult?.temaside ?? extractTemasideInfo(content?.links) ?? null
 
-  const temasideBreadcrumbItems = buildTemasideTrailBreadcrumbItems({
-    contentTitle: content?.title,
-    temasideLastPath,
-    trailByPath: temasideTrailByPath,
-    sanitizeTemasideItems,
-  })
+  const activeBreadcrumbItems =
+    content && hasLinks
+      ? buildContentBreadcrumbItems(content, parentChainResult?.chain ?? [], temaside)
+      : buildFallbackBreadcrumbItems(content)
 
-  const activeBreadcrumbItems = resolveActiveContentDetailBreadcrumbs({
-    fallbackBreadcrumbItems,
-    linkHierarchyBreadcrumbItems,
-    temasideCanonicalBreadcrumbItems,
-    relatedTemasideBreadcrumbItems,
-    extendedTemasideBreadcrumbItems,
-    temasideBreadcrumbItems,
-  })
+  const collapsible = Boolean(content?.links?.some((link) => link.rel === 'forelder'))
 
   return {
     activeBreadcrumbItems,
+    isParentChainLoading,
+    collapsible,
   }
 }

@@ -62,7 +62,7 @@ function AppLayoutInner({ isHome, isSearchPinnedOpen }: AppLayoutInnerProps) {
         </main>
       )}
       {isHome && (
-        <main id='main-content' className='page-shell__main page-shell__main--home' style={{ overflow: 'visible', flex: 1 }}>
+        <main id='main-content' style={{ overflow: 'visible', flex: 1 }}>
           <Outlet />
         </main>
       )}

@@ -24,7 +24,6 @@ export function useCategorizedSearchQuery(
       })
     },
     enabled: options?.enabled !== false && query.trim().length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   })
 }
