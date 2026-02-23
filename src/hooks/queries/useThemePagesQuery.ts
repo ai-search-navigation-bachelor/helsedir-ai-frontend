@@ -16,7 +16,6 @@ export function useThemePagesQuery(
     queryKey: ['theme-pages', normalizedCategory ?? 'all'],
     queryFn: ({ signal }) => getThemePages({ signal, category: normalizedCategory }),
     enabled: options?.enabled !== false,
-    staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   })
 }

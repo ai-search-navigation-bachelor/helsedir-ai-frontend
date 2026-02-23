@@ -1,37 +1,8 @@
-import { Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import { AppLayout } from './components/layout'
-import { Home, ContentDetail, SearchPage, TemasideHubPage } from './pages'
-import { TEMASIDE_CATEGORIES, type TemasideCategorySlug } from './constants/temasider'
-
-function isLikelyContentId(value: string) {
-  const trimmed = value.trim()
-  if (!trimmed) return false
-  if (/^\d{4}-\d{4}-[a-z0-9-]{8,}$/i.test(trimmed)) return true
-  if (/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(trimmed)) return true
-  return false
-}
-
-function CategoryContentOrHubRoute({ categorySlug }: { categorySlug: TemasideCategorySlug }) {
-  const params = useParams()
-  const id = (params.id || '').trim()
-
-  if (isLikelyContentId(id)) {
-    return <ContentDetail />
-  }
-
-  return <TemasideHubPage categorySlugOverride={categorySlug} subPathOverride={id} />
-}
-
-function LegacyCategoryContentRedirect({ categorySlug }: { categorySlug: TemasideCategorySlug }) {
-  const params = useParams()
-  const id = (params.id || '').trim()
-
-  if (!id) {
-    return <Navigate to={`/${categorySlug}`} replace />
-  }
-
-  return <Navigate to={`/${categorySlug}/${id}`} replace />
-}
+import { Home, ContentDetail, CategoryLandingPage, SearchPage, TemasideHubPage, TemasideLeafPage } from './pages'
+import { TEMASIDE_CATEGORIES } from './constants/temasider'
+import { CONTENT_CATEGORY_GROUPS, CONTENT_ONLY_PREFIXES } from './constants/contentRoutes'
 
 function App() {
   return (
@@ -39,32 +10,43 @@ function App() {
       <Route path="/" element={<AppLayout />}>
         <Route index element={<Home />} />
         <Route path="search" element={<SearchPage />} />
-        <Route path="content/:id" element={<ContentDetail />} />
-        {TEMASIDE_CATEGORIES.map((category) => (
-          <Route
-            key={`${category.slug}-content-legacy`}
-            path={`${category.slug}/content/:id`}
-            element={<LegacyCategoryContentRedirect categorySlug={category.slug} />}
-          />
+
+        {/* Path-based content routes (e.g. /retningslinjer/adhd) */}
+        {CONTENT_CATEGORY_GROUPS.map((group) => (
+          <Route key={group.pathPrefix} path={group.pathPrefix}>
+            <Route index element={<CategoryLandingPage group={group} />} />
+            <Route path="*" element={<ContentDetail pathPrefix={group.pathPrefix} />} />
+          </Route>
         ))}
-        {TEMASIDE_CATEGORIES.map((category) => (
-          <Route
-            key={`${category.slug}-content-or-hub`}
-            path={`${category.slug}/:id`}
-            element={<CategoryContentOrHubRoute categorySlug={category.slug} />}
-          />
-        ))}
+
+        {/* Temaside hub pages (e.g. /forebygging-diagnose-og-behandling) */}
         {TEMASIDE_CATEGORIES.map((category) => (
           <Route
             key={`${category.slug}-hub`}
-            path={`${category.slug}/*`}
+            path={category.slug}
             element={<TemasideHubPage categorySlugOverride={category.slug} />}
           />
         ))}
+
+        {/* Temaside leaf pages (e.g. /forebygging-diagnose-og-behandling/diabetes) */}
+        {TEMASIDE_CATEGORIES.map((category) => (
+          <Route
+            key={`${category.slug}-leaf`}
+            path={`${category.slug}/*`}
+            element={<TemasideLeafPage categorySlug={category.slug} />}
+          />
+        ))}
+
+        {/* Content-only routes (no landing page, just content detail) */}
+        {CONTENT_ONLY_PREFIXES.map((prefix) => (
+          <Route key={prefix} path={`${prefix}/*`} element={<ContentDetail pathPrefix={prefix} />} />
+        ))}
+
+        {/* Legacy ID-based content route (fallback) */}
+        <Route path="content/:id" element={<ContentDetail />} />
       </Route>
     </Routes>
   )
 }
 
 export default App
-

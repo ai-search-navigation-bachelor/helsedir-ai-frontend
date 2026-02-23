@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { SearchForm } from './SearchForm'
-import { useThemePagesQuery } from '../../hooks/queries/useThemePagesQuery'
+import { buildContentUrl } from '../../lib/contentUrl'
+import { useTemasidePathMap } from '../../hooks/queries/useTemasidePathMap'
 
 function SearchShellContent() {
   const location = useLocation()
@@ -11,21 +12,7 @@ function SearchShellContent() {
   const searchQueryFromUrl = searchParams.get('query') || ''
   const [query, setQuery] = useState(isSearchPage ? searchQueryFromUrl : '')
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const { data: themePagesData } = useThemePagesQuery()
-
-  const temasidePathById = useMemo(() => {
-    const map = new Map<string, string>()
-    const pages = themePagesData?.results ?? []
-
-    pages.forEach((page) => {
-      const id = page.id?.trim()
-      const path = page.path?.trim()
-      if (!id || !path) return
-      map.set(id, path)
-    })
-
-    return map
-  }, [themePagesData?.results])
+  const temasidePathById = useTemasidePathMap()
 
   useEffect(() => {
     if (!searchInputRef.current) return
@@ -66,7 +53,7 @@ function SearchShellContent() {
   }
 
   function onSuggestionSelect(id: string) {
-    navigate(temasidePathById.get(id) || `/content/${id}`)
+    navigate(temasidePathById.get(id) || buildContentUrl({ id }))
   }
 
   return (

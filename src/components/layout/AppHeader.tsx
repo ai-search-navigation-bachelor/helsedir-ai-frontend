@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, CardBlock } from "@digdir/designsystemet-react";
+import { Button } from "@digdir/designsystemet-react";
 import { Link } from "react-router-dom";
 
 import { colors } from "../../styles/dsTokens";
@@ -13,16 +13,16 @@ export function AppHeader() {
   return (
     <>
       <div
-        className="site-header"
+        className="relative w-full"
         style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}
       >
         <header>
-          <CardBlock className="site-header__card">
-            <div className="site-header__inner">
+          <div className="w-full box-border">
+            <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-6 box-border px-12 py-12">
               <Link
                 to="/"
                 aria-label="Helsedirektoratet"
-                className="site-header__logo"
+                className="flex items-center gap-3 shrink-0 min-w-0"
                 style={{ color: "inherit", textDecoration: "none" }}
               >
                 <picture>
@@ -33,11 +33,12 @@ export function AppHeader() {
                   <img
                     src="/Hdir_logo.svg"
                     alt="Helsedirektoratet"
+                    className="block h-8 w-auto"
                   />
                 </picture>
               </Link>
 
-              <div className="site-header__actions">
+              <div className="flex gap-3 items-center shrink-0 min-w-0">
                 <Button
                   variant="secondary"
                   onClick={() => {
@@ -49,24 +50,26 @@ export function AppHeader() {
                   Søk
                   <IoSearch size={18} />
                 </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  aria-label="Meny"
-                  aria-expanded={isMenuOpen}
-                  className="site-header__button"
-                >
-                  {isMenuOpen ? <IoClose size={18} /> : <IoMenu size={18} />}
-                  Meny
-                </Button>
+                <div className="relative">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    aria-label="Meny"
+                    aria-expanded={isMenuOpen}
+                    className="site-header__button"
+                  >
+                    {isMenuOpen ? <IoClose size={18} /> : <IoMenu size={18} />}
+                    Meny
+                  </Button>
+                  <MenuDropdown
+                    isOpen={isMenuOpen}
+                    onClose={() => setIsMenuOpen(false)}
+                  />
+                </div>
               </div>
             </div>
-          </CardBlock>
+          </div>
         </header>
-        <MenuDropdown
-          isOpen={isMenuOpen}
-          onClose={() => setIsMenuOpen(false)}
-        />
       </div>
     </>
   );

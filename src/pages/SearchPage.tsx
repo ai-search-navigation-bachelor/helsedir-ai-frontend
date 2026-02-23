@@ -1,9 +1,10 @@
-import { Alert, Paragraph, Spinner } from '@digdir/designsystemet-react'
+import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import {
   SearchCategoryTabs,
   SearchEmptyState,
   SearchResultsList,
 } from '../components/search'
+import { SearchPageLoadingSkeleton } from '../components/search/SearchSkeletons'
 import { useSearchPageModel } from '../hooks/useSearchPageModel'
 
 /**
@@ -29,12 +30,8 @@ export function SearchPage() {
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-6 pt-2 pb-6">
-      {isLoading && (
-        <div className="flex justify-center items-center py-8">
-          <Spinner aria-label="Laster søkeresultater..." data-size="lg" />
-        </div>
-      )}
+    <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-6">
+      {isLoading && <SearchPageLoadingSkeleton />}
 
       {error && (
         <Alert>

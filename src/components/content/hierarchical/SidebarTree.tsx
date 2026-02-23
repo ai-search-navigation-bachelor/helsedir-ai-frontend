@@ -7,7 +7,6 @@ interface SidebarTreeProps {
   expandedIds: Set<string>
   activePageId?: string
   selectedAncestorIds: Set<string>
-  onToggleExpanded: (pageId: string) => void
   onSelectPage: (pageId: string) => void
 }
 
@@ -17,7 +16,6 @@ export function SidebarTree({
   expandedIds,
   activePageId,
   selectedAncestorIds,
-  onToggleExpanded,
   onSelectPage,
 }: SidebarTreeProps) {
   const renderNode = (nodeId: string): React.ReactNode => {
@@ -31,20 +29,28 @@ export function SidebarTree({
     const isExpanded = expandedIds.has(page.id)
     const isSelected = activePageId === page.id
     const isAncestor = selectedAncestorIds.has(page.id)
+
+    const showChevron = hasChildren
+
     const textColor = isSelected
-      ? 'text-blue-800'
+      ? 'text-[#025169]'
       : isAncestor
-        ? 'text-slate-900'
+        ? 'text-slate-800'
         : 'text-slate-500'
-    const fontWeight = isSelected ? 'font-bold' : isAncestor ? 'font-semibold' : 'font-normal'
+    const fontWeight = isSelected ? 'font-semibold' : isAncestor ? 'font-medium' : 'font-normal'
+
+    const handleClick = () => {
+      if (isPlaceholder) return
+      onSelectPage(page.id)
+    }
 
     return (
       <li key={page.id} className="border-b border-slate-200">
-        <div
-          className="flex items-start gap-1 py-2"
-          style={{ paddingLeft: `${(page.depth - 1) * 14}px` }}
-        >
-          {isPlaceholder ? (
+        {isPlaceholder ? (
+          <div
+            className="flex items-start gap-1 py-2"
+            style={{ paddingLeft: `${(page.depth - 1) * 14}px` }}
+          >
             <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center" aria-hidden="true">
               {isPlaceholderError ? (
                 <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-100 text-[10px] font-semibold text-amber-700">
@@ -54,41 +60,43 @@ export function SidebarTree({
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-500" />
               )}
             </span>
-          ) : hasChildren ? (
-            <button
-              type="button"
-              onClick={() => onToggleExpanded(page.id)}
-              className="mt-0.5 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded text-slate-700 hover:bg-slate-100"
-              aria-label={isExpanded ? 'Lukk kategori' : 'Åpne kategori'}
+            <span
+              className={`min-w-0 flex-1 py-0.5 text-left text-sm leading-6 whitespace-normal break-words ${
+                isPlaceholderError ? 'cursor-not-allowed text-slate-400' : 'cursor-progress text-slate-500'
+              }`}
+              title={isPlaceholderError ? page.placeholderError || 'Kunne ikke laste kapittel' : undefined}
             >
-              {isExpanded ? (
-                <ChevronDownIcon className="h-4 w-4" />
-              ) : (
-                <ChevronRightIcon className="h-4 w-4" />
-              )}
-            </button>
-          ) : (
-            <span className="inline-block h-6 w-6 shrink-0" />
-          )}
-
+              <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
+              {page.title}
+            </span>
+          </div>
+        ) : (
           <button
             type="button"
-            disabled={isPlaceholder}
-            onClick={() => {
-              if (!isPlaceholder) {
-                onSelectPage(page.id)
-              }
-            }}
-            className={`sidebar-tree__item-button min-w-0 flex-1 py-0.5 text-left text-[1.05rem] leading-7 whitespace-normal break-words transition-colors ${textColor} ${fontWeight} ${
-              isPlaceholderError ? 'cursor-not-allowed' : isPlaceholder ? 'cursor-progress' : 'cursor-pointer'
-            }`}
-            aria-disabled={isPlaceholder}
-            title={isPlaceholderError ? page.placeholderError || 'Kunne ikke laste kapittel' : undefined}
+            onClick={handleClick}
+            className={`flex w-full items-start gap-1 border-0 bg-transparent py-2 text-left transition-colors hover:text-[#025169] hover:underline ${textColor} ${fontWeight} cursor-pointer`}
+            style={{ paddingLeft: `${(page.depth - 1) * 14}px` }}
           >
-            <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
-            {page.title}
+            {showChevron ? (
+              <span
+                className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400"
+                aria-hidden="true"
+              >
+                {isExpanded ? (
+                  <ChevronDownIcon className="h-4 w-4" />
+                ) : (
+                  <ChevronRightIcon className="h-4 w-4" />
+                )}
+              </span>
+            ) : (
+              <span className="inline-block h-6 w-6 shrink-0" />
+            )}
+            <span className="min-w-0 flex-1 py-0.5 text-sm leading-6 whitespace-normal break-words">
+              <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
+              {page.title}
+            </span>
           </button>
-        </div>
+        )}
 
         {hasChildren && isExpanded && (
           <ul className="m-0 list-none p-0">

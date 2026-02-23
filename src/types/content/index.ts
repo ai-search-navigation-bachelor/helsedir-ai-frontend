@@ -10,8 +10,11 @@ export interface ContentLink {
   rel: string
   type: string
   tittel: string
-  href: string
+  href: string | null
+  id?: string | null
+  path?: string | null
   strukturId?: string
+  children?: ContentLink[] | null
 }
 
 /**
@@ -21,6 +24,7 @@ export interface LinkedContentItem {
   id: string
   title: string
   info_type: string
+  path?: string
 }
 
 /**
@@ -40,6 +44,7 @@ export interface ContentDetail {
   title: string
   body: string
   content_type: string
+  path?: string
   target_groups?: string[]
   links?: ContentLink[]
   linked_content?: LinkedContentGroup[]

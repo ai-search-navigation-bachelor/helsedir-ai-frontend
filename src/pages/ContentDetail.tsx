@@ -1,19 +1,20 @@
-import { useEffect } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Alert, Button, Paragraph } from '@digdir/designsystemet-react'
+import { useLocation, useParams } from 'react-router-dom'
+import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { isTemasideContentType, normalizeContentType } from '../constants/content'
 import { useContentDetailQuery } from '../hooks/queries/useContentDetailQuery'
-import { useThemePagesQuery } from '../hooks/queries/useThemePagesQuery'
-import { useContentDetailBreadcrumbs } from '../hooks/useContentDetailBreadcrumbs'
-import { getTemasideCategoryPathFromContentLinks } from '../lib/content/breadcrumbUtils'
+import { useTemasideCanonicalRedirect } from '../hooks/useTemasideCanonicalRedirect'
 import { useSearchStore } from '../stores/searchStore'
-import { ContentDisplay } from '../components/content'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
-import { Breadcrumb } from '../components/ui/Breadcrumb'
+import { ContentPageLayout } from '../components/content/ContentPageLayout'
+import { ContentDisplay } from '../components/content/ContentDisplay'
 
-export function ContentDetail() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
+interface ContentDetailProps {
+  /** When set, the page uses path-based content fetching (e.g. pathPrefix="retningslinjer") */
+  pathPrefix?: string
+}
+
+export function ContentDetail({ pathPrefix }: ContentDetailProps) {
+  const { id, '*': wildcard } = useParams<{ id: string; '*': string }>()
   const location = useLocation()
 
   const searchId = useSearchStore((state) => state.searchId)
@@ -21,69 +22,48 @@ export function ContentDetail() {
   const routeContentType = routeState?.contentType?.trim().toLowerCase() || ''
   const effectiveSearchId = searchId || undefined
 
+  // When pathPrefix is provided, reconstruct full path from the wildcard segment
+  const contentPath = pathPrefix && wildcard ? `/${pathPrefix}/${wildcard}` : undefined
+
   const { data: content, isLoading, error } = useContentDetailQuery({
-    contentId: id,
+    contentId: contentPath ? undefined : id,
+    contentPath,
     searchId: effectiveSearchId,
     routeContentType,
   })
 
-  const isTemasideContent = isTemasideContentType(normalizeContentType(content?.content_type))
-  const temasideCategoryPath = getTemasideCategoryPathFromContentLinks(content?.links)
-  const temasideCategorySlug = temasideCategoryPath?.slice(1) || undefined
+  // Always called — no-op unless content is a temaside type
+  useTemasideCanonicalRedirect(content)
 
-  const { data: themePagesData } = useThemePagesQuery(temasideCategorySlug, {
-    enabled: Boolean(isTemasideContent && content?.id),
-  })
-
-  let canonicalTemasidePath: string | null = null
-  if (isTemasideContent && content?.id && themePagesData) {
-    const match = themePagesData.results.find((result) => result.id === content.id)
-    canonicalTemasidePath = match?.path ?? null
+  if (isLoading) {
+    return (
+      <div className="max-w-screen-xl mx-auto px-12 pt-4 pb-8">
+        <ContentPageLoadingSkeleton />
+      </div>
+    )
   }
 
-  useEffect(() => {
-    if (!canonicalTemasidePath) {
-      return
-    }
-
-    navigate(canonicalTemasidePath, {
-      replace: true,
-      state: location.state,
-    })
-  }, [canonicalTemasidePath, location.state, navigate])
-
-  const { activeBreadcrumbItems } = useContentDetailBreadcrumbs({
-    content,
-    currentContentId: id,
-    locationState: location.state,
-    searchId: effectiveSearchId,
-  })
-
-  return (
-    <div className="max-w-screen-xl mx-auto px-6 pt-4 pb-8">
-      {activeBreadcrumbItems.length > 0 ? (
-        <Breadcrumb items={activeBreadcrumbItems} />
-      ) : (
-        <Button
-          variant='tertiary'
-          onClick={() => navigate(-1)}
-          style={{ marginBottom: '24px' }}
-        >
-          &larr; Tilbake
-        </Button>
-      )}
-
-      {isLoading && <ContentPageLoadingSkeleton />}
-
-      {error && (
-        <Alert data-color='danger'>
+  if (error) {
+    return (
+      <div className="max-w-screen-xl mx-auto px-12 pt-4 pb-8">
+        <Alert data-color="danger">
           <Paragraph>
             {error instanceof Error ? error.message : 'Henting av innhold feilet'}
           </Paragraph>
         </Alert>
-      )}
+      </div>
+    )
+  }
 
-      {content && <ContentDisplay content={content} />}
-    </div>
+  if (!content) return null
+
+  const type = normalizeContentType(content.content_type)
+
+  if (isTemasideContentType(type)) return null
+
+  return (
+    <ContentPageLayout content={content}>
+      <ContentDisplay content={content} />
+    </ContentPageLayout>
   )
 }

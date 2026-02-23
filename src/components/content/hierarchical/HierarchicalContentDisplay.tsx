@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
-import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
+import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useContentNavigationStore } from '../../../stores'
 import { useHierarchicalChapters } from '../../../hooks/queries/useHierarchicalChapters'
+import { useBackgroundPrefetch } from '../../../hooks/queries/useBackgroundPrefetch'
 import type { ContentDisplayProps } from '../../../types/pages'
+import type { NestedContent } from '../../../types'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { ContentBodyLoadingSkeleton } from '../ContentSkeletons'
 import { PageContent } from './PageContent'
@@ -13,8 +16,10 @@ import {
   buildPageTree,
   formatDateLabel,
   getAncestorIds,
+  getNodeType,
   getSelectedAncestorIds,
 } from './treeUtils'
+import { fetchChapter } from '../../../lib/content/chapterFetch'
 
 function getSectionIdFromLocationState(state: unknown) {
   if (!state || typeof state !== 'object') return null
@@ -110,6 +115,113 @@ export function HierarchicalContentDisplay({
 
     return firstLoadedRootId ? pageTree.pagesById.get(firstLoadedRootId) : undefined
   }, [isChaptersLoading, legacySectionId, locationSectionId, pageTree, storedSectionId])
+  // Lazy-load content for stub pages (sub-chapters with no body/expandable content)
+  const activeNodeId = activePage?.node?.id ?? null
+  const isStubPage =
+    Boolean(activeNodeId) &&
+    !activePage?.isPlaceholder &&
+    !activePage?.node?.body &&
+    !activePage?.node?.tekst &&
+    !activePage?.node?.intro &&
+    activePage?.expandableChildren.length === 0 &&
+    activePage?.childrenIds.length === 0
+
+  // Lazy-load full content when the active page has expandable children stubs (no body/data yet)
+  const needsExpandableContent =
+    Boolean(activeNodeId) &&
+    activePage !== undefined &&
+    !activePage.isPlaceholder &&
+    !isStubPage &&
+    activePage.expandableChildren.length > 0 &&
+    activePage.expandableChildren.some(
+      (child) => !child.body && !child.tekst && !child.intro && !child.data,
+    )
+
+  const { data: lazyPageContent, isFetching: isLazyPageFetching } = useQuery({
+    queryKey: ['lazy-page-content', activeNodeId],
+    queryFn: async ({ signal }) => {
+      if (!activeNodeId) return null
+      return fetchChapter(activeNodeId, signal)
+    },
+    enabled: Boolean(isStubPage || needsExpandableContent),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Stage 1: Merge lazy page content into activePage
+  // For stub pages (not in the tree), ALL children become expandable (including kapittel)
+  // For non-stub pages, only non-kapittel children become expandable (kapittel are tree nodes)
+  const pageWithLazyContent = useMemo(() => {
+    if (!activePage) return activePage
+
+    let node = activePage.node
+    let expandableChildren = activePage.expandableChildren
+
+    if (lazyPageContent) {
+      node = lazyPageContent
+      const allLazyChildren = lazyPageContent.children ?? []
+      const lazyExpandable = isStubPage
+        ? allLazyChildren
+        : allLazyChildren.filter((child) => {
+            const type = getNodeType(child)
+            return type && type !== 'kapittel'
+          })
+      if (lazyExpandable.length > 0) {
+        expandableChildren = lazyExpandable
+      }
+    }
+
+    return { ...activePage, node, expandableChildren }
+  }, [activePage, lazyPageContent, isStubPage])
+
+  // Stage 2: Fetch expandable children stubs individually (their id is often an href URL)
+  const expandableStubIds = useMemo(() => {
+    if (!pageWithLazyContent || pageWithLazyContent.expandableChildren.length === 0) return []
+    return pageWithLazyContent.expandableChildren
+      .filter((child) => child.id && !child.body && !child.tekst && !child.intro && !child.data)
+      .map((child) => child.id)
+  }, [pageWithLazyContent])
+
+  const { data: fetchedExpandableResult, isFetching: isExpandableFetching } = useQuery({
+    queryKey: ['expandable-children', activeNodeId, expandableStubIds],
+    queryFn: async ({ signal }) => {
+      const map = new Map<string, NestedContent>()
+      const failedStubIds: string[] = []
+      await Promise.all(
+        expandableStubIds.map(async (stubId) => {
+          try {
+            const fetchedChapter = await fetchChapter(stubId, signal)
+            map.set(stubId, fetchedChapter)
+          } catch (err) {
+            if (err instanceof Error && err.name === 'AbortError') throw err
+            failedStubIds.push(stubId)
+          }
+        }),
+      )
+      return { map, failedStubIds }
+    },
+    enabled: expandableStubIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const isLazyFetching = isLazyPageFetching || isExpandableFetching
+
+  // Stage 3: Replace stubs with individually fetched content
+  const effectiveActivePage = useMemo(() => {
+    if (!pageWithLazyContent) return pageWithLazyContent
+
+    if (fetchedExpandableResult?.map && fetchedExpandableResult.map.size > 0) {
+      const expandableChildren = pageWithLazyContent.expandableChildren.map((stub) => {
+        if (!stub.id) return stub
+        return fetchedExpandableResult.map.get(stub.id) ?? stub
+      })
+      return { ...pageWithLazyContent, expandableChildren }
+    }
+
+    return pageWithLazyContent
+  }, [pageWithLazyContent, fetchedExpandableResult])
+
+  useBackgroundPrefetch(pageTree.pagesById, activePage?.id, isLazyFetching)
+
   const selectedAncestorIds = getSelectedAncestorIds(pageTree.pagesById, activePage)
   const effectiveExpandedIds = useMemo(() => {
     const next = new Set(expandedIds)
@@ -172,10 +284,17 @@ export function HierarchicalContentDisplay({
       updateHistorySection(pageId, false)
     }
 
-    setExpandedIds(() => {
-      const next = getAncestorIds(pageTree.pagesById, pageId)
-      if (page && page.childrenIds.length > 0) {
-        next.add(pageId)
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      const ancestorIds = getAncestorIds(pageTree.pagesById, pageId)
+      ancestorIds.forEach((id) => next.add(id))
+      if (page.childrenIds.length > 0) {
+        // Toggle: collapse if already expanded, expand if not
+        if (prev.has(pageId)) {
+          next.delete(pageId)
+        } else {
+          next.add(pageId)
+        }
       }
       return next
     })
@@ -200,21 +319,6 @@ export function HierarchicalContentDisplay({
     storedSectionId,
     updateHistorySection,
   ])
-
-  const toggleExpanded = (pageId: string) => {
-    const page = pageTree.pagesById.get(pageId)
-    if (!page || page.childrenIds.length === 0) return
-
-    setExpandedIds((prev) => {
-      if (prev.has(pageId)) {
-        return getAncestorIds(pageTree.pagesById, pageId)
-      }
-
-      const next = getAncestorIds(pageTree.pagesById, pageId)
-      next.add(pageId)
-      return next
-    })
-  }
 
   const metadataItems = useMemo(() => {
     if (!activePage?.node) return []
@@ -244,15 +348,17 @@ export function HierarchicalContentDisplay({
     return items
   }, [activePage])
 
+  const combinedFailedCount = failedEntries.length + (fetchedExpandableResult?.failedStubIds?.length ?? 0)
+
   return (
     <div className="flex flex-col gap-8">
       <ContentPageHeader typeLabel={typeLabel} title={content.title} />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(290px,360px)_1fr]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]">
         <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
           {entries.length === 0 ? (
             <Paragraph style={{ marginBottom: 0, color: '#64748b' }}>
-              Ingen barnesider registrert på denne siden.
+              Ingen undersider registrert på denne siden.
             </Paragraph>
           ) : (
             <SidebarTree
@@ -261,7 +367,6 @@ export function HierarchicalContentDisplay({
               expandedIds={effectiveExpandedIds}
               activePageId={activePage?.id}
               selectedAncestorIds={selectedAncestorIds}
-              onToggleExpanded={toggleExpanded}
               onSelectPage={handleSelectPage}
             />
           )}
@@ -271,38 +376,21 @@ export function HierarchicalContentDisplay({
             </Paragraph>
           )}
 
-          {metadataItems.length > 0 && (
-            <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <Heading level={3} data-size="2xs" style={{ marginBottom: 8 }}>
-                Nøkkelinformasjon
-              </Heading>
-              <ul className="m-0 list-none space-y-2 p-0">
-                {metadataItems.map((item) => (
-                  <li key={item.label}>
-                    <Paragraph
-                      data-size="sm"
-                      style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}
-                    >
-                      <span className="font-semibold">{item.label}:</span> {item.value}
-                    </Paragraph>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
         </aside>
 
         <section className="min-w-0">
           {isChaptersLoading && !activePage && <ContentBodyLoadingSkeleton />}
 
-          {activePage && (
+          {isStubPage && isLazyFetching && <ContentBodyLoadingSkeleton />}
+
+          {effectiveActivePage && !(isStubPage && isLazyFetching) && (
             <PageContent
-              activePage={activePage}
+              activePage={effectiveActivePage}
               pagesById={pageTree.pagesById}
               onSelectPage={handleSelectPage}
               previousPage={previousPage}
               nextPage={nextPage}
+              isLoadingExpandable={isExpandableFetching || (isLazyPageFetching && needsExpandableContent)}
             />
           )}
 
@@ -313,12 +401,29 @@ export function HierarchicalContentDisplay({
             />
           )}
 
-          {!isChaptersLoading && failedEntries.length > 0 && (
+          {!isChaptersLoading && combinedFailedCount > 0 && (
             <Alert data-color="warning" className="mt-6">
               <Paragraph style={{ marginTop: 0 }}>
-                {failedEntries.length} barnesider kunne ikke lastes fra Helsedirektoratet API akkurat nå.
+                {combinedFailedCount} undersider kunne ikke lastes fra Helsedirektoratet API akkurat nå.
               </Paragraph>
             </Alert>
+          )}
+
+          {metadataItems.length > 0 && (
+            <section className="mt-8 border-t border-slate-200 pt-6">
+              <Paragraph data-size="xs" className="m-0 mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Nøkkelinformasjon
+              </Paragraph>
+              <ul className="m-0 list-none space-y-1.5 p-0">
+                {metadataItems.map((item) => (
+                  <li key={item.label}>
+                    <Paragraph data-size="xs" className="m-0 text-xs text-slate-500">
+                      <span className="font-medium text-slate-600">{item.label}:</span> {item.value}
+                    </Paragraph>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
         </section>
       </div>

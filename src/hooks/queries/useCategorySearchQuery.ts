@@ -17,8 +17,7 @@ export function useCategorySearchQuery(
     queryKey: ['categorySearch', query, category, role, search_id],
     queryFn: ({ signal }) => searchCategory(query, category, { signal, role, search_id }),
     enabled: enabled && !!query && !!category && !!search_id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    gcTime: 10 * 60 * 1000,
     retry: 2,
   })
 }

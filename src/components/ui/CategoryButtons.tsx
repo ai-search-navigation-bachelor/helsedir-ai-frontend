@@ -1,30 +1,48 @@
 import { Link } from 'react-router-dom';
+import { HiArrowRight } from 'react-icons/hi2';
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider';
+
+interface CategoryButtonProps {
+  path: string;
+  iconSrc: string;
+  title: string;
+}
+
+function CategoryButton({ path, iconSrc, title }: CategoryButtonProps) {
+  return (
+    <Link
+      to={path}
+      className="group flex flex-col gap-5 rounded-2xl bg-white p-7 shadow-sm ring-1 ring-gray-100 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:ring-[#025169]/30"
+    >
+      <div
+        className="flex h-14 w-14 items-center justify-center rounded-xl"
+        style={{ backgroundColor: '#E8F4F8' }}
+      >
+        <img src={iconSrc} alt="" className="w-9 h-9" />
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <h3 className="text-[15px] font-semibold text-gray-800 leading-snug">{title}</h3>
+        <HiArrowRight
+          className="flex-shrink-0 transition-all duration-200 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5"
+          style={{ color: '#025169' }}
+          size={18}
+        />
+      </div>
+    </Link>
+  );
+}
 
 export function CategoryButtons() {
   return (
-    <section className="w-full max-w-6xl mx-auto px-6 md:px-10 lg:px-12 py-14 md:py-16">
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-7 md:grid-cols-2 md:gap-8">
-        {TEMASIDE_CATEGORIES.map((category) => (
-          <Link
-            key={category.path}
-            to={category.path}
-            className="flex items-center gap-5 rounded-xl border-b-[3px] bg-white p-7 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-xl"
-            style={{ borderBottomColor: '#005F73' }}
-          >
-            <div className="flex-shrink-0">
-              <img 
-                src={category.iconSrc} 
-                alt="" 
-                className="w-16 h-16"
-              />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900">
-              {category.title}
-            </h3>
-          </Link>
-        ))}
-      </div>
-    </section>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {TEMASIDE_CATEGORIES.map((category) => (
+        <CategoryButton
+          key={category.path}
+          path={category.path}
+          iconSrc={category.iconSrc}
+          title={category.title}
+        />
+      ))}
+    </div>
   );
 }

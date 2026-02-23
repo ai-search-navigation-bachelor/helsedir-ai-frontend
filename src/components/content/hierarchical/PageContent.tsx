@@ -1,8 +1,10 @@
 import DOMPurify from 'dompurify'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
+import { HiArrowRight } from 'react-icons/hi2'
 import type { PageNode } from './types'
 import { hasVisibleContent } from './treeUtils'
 import { ExpandableSubcontent } from './ExpandableSubcontent'
+import { ExpandableLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
 
 interface PageContentProps {
@@ -11,6 +13,7 @@ interface PageContentProps {
   onSelectPage: (pageId: string) => void
   previousPage?: PageNode
   nextPage?: PageNode
+  isLoadingExpandable?: boolean
 }
 
 export function PageContent({
@@ -19,6 +22,7 @@ export function PageContent({
   onSelectPage,
   previousPage,
   nextPage,
+  isLoadingExpandable = false,
 }: PageContentProps) {
   const hasIntro = hasVisibleContent(activePage.node.intro)
   const hasBody = hasVisibleContent(activePage.node.tekst || activePage.node.body)
@@ -46,7 +50,7 @@ export function PageContent({
         <p className="m-0 mb-2 text-xs uppercase tracking-wide text-slate-500">
           Side {activePage.numbering}
         </p>
-        <Heading level={2} data-size="lg" style={{ marginBottom: 0 }}>
+        <Heading level={2} data-size="lg" className="font-title" style={{ marginBottom: 0 }}>
           {activePage.title}
         </Heading>
       </div>
@@ -78,7 +82,7 @@ export function PageContent({
                   href={primaryDocument.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                  className="text-sm text-[#025169] hover:underline"
                 >
                   {primaryDocument.label}
                 </a>
@@ -90,7 +94,7 @@ export function PageContent({
                   href={publicationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                  className="text-sm text-[#025169] hover:underline"
                 >
                   Åpne side hos Helsedirektoratet
                 </a>
@@ -102,28 +106,28 @@ export function PageContent({
 
       {showChildNavigation && (
         <section className="mt-6">
-          <Heading level={3} data-size="sm" style={{ marginBottom: 10 }}>
+          <Heading level={3} data-size="sm" className="font-title" style={{ marginBottom: 10 }}>
             {activePage.childrenIds.length === 1 ? 'Kapittel' : 'Kapitler'}
           </Heading>
-          <ul className="m-0 list-none p-0">
+          <ul className="m-0 list-none border-t border-slate-100 p-0">
             {activePage.childrenIds.map((childId) => {
               const child = pagesById.get(childId)
               if (!child) return null
 
               return (
-                <li key={child.id} className="border-b border-slate-100 last:border-b-0">
+                <li key={child.id} className="border-b border-slate-100">
                   <button
                     type="button"
                     onClick={() => onSelectPage(child.id)}
-                    className="retningslinje-child-nav__button flex w-full items-start justify-between gap-3 px-1 py-2.5 text-left text-slate-700 transition"
+                    className="group flex w-full items-center gap-4 py-3.5 text-left border-0 bg-transparent cursor-pointer transition-colors hover:bg-[#f8fafc] focus-visible:outline-2 focus-visible:outline-[#025169] focus-visible:outline-offset-[-2px]"
                   >
-                    <span className="min-w-0">
-                      <span className="retningslinje-child-nav__number mr-2 min-w-[3.2rem] text-sm text-slate-400">
-                        {child.numbering}
-                      </span>
-                      <span className="retningslinje-child-nav__title min-w-0 break-words">{child.title}</span>
+                    <span className="w-8 shrink-0 text-right text-xs font-semibold tabular-nums text-[#025169]">
+                      {child.numbering}
                     </span>
-                    <span aria-hidden="true" className="retningslinje-child-nav__affordance">→</span>
+                    <span className="min-w-0 break-words text-[0.9375rem] text-slate-700 transition-colors group-hover:text-[#025169]">
+                      {child.title}
+                    </span>
+                    <HiArrowRight className="ml-1 h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#025169]" />
                   </button>
                 </li>
               )
@@ -132,12 +136,11 @@ export function PageContent({
         </section>
       )}
 
-      {activePage.expandableChildren.length > 0 && (
-        <section className="mt-8">
-          <Heading level={3} data-size="sm" style={{ marginBottom: 12 }}>
-            {activePage.expandableChildren.length === 1 ? 'Underelement' : 'Underelementer'}
-          </Heading>
-          <div>
+      {isLoadingExpandable ? (
+        <ExpandableLoadingSkeleton items={activePage.expandableChildren.length || 3} />
+      ) : activePage.expandableChildren.length > 0 ? (
+        <section className="mt-4">
+          <div className="border-t border-slate-100">
             {activePage.expandableChildren.map((item, index) => (
               <ExpandableSubcontent
                 key={`${activePage.id}-rec-${item.id || index}`}
@@ -147,36 +150,57 @@ export function PageContent({
             ))}
           </div>
         </section>
-      )}
+      ) : null}
 
+      {/* Page navigation */}
       {(previousPage || nextPage) && (
-        <nav aria-label="Navigasjon mellom kapitler" className="mt-8 border-t border-slate-200 pt-4">
-          <div className="flex flex-wrap items-center gap-2">
+        <nav
+          aria-label="Navigasjon mellom kapitler"
+          className="mt-10"
+          style={{ paddingTop: '1.5rem', borderTop: '1px solid #e2e8f0' }}
+        >
+          <div className="flex flex-wrap items-stretch gap-3">
             {previousPage ? (
               <button
                 type="button"
                 onClick={() => onSelectPage(previousPage.id)}
-                className="retningslinje-page-nav__button retningslinje-page-nav__button--prev"
+                className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left cursor-pointer transition-all hover:border-[#025169]/40 hover:shadow-sm"
                 aria-label={`Gå til forrige kapittel ${previousPage.numbering}`}
               >
-                <span aria-hidden="true" className="retningslinje-page-nav__icon">←</span>
-                <span className="retningslinje-page-nav__label">Forrige</span>
-                <span className="retningslinje-page-nav__number">{previousPage.numbering}</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#025169] text-white transition-colors group-hover:bg-[#025169]/90">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[0.6875rem] font-medium uppercase tracking-wide text-slate-400">Forrige</span>
+                  <span className="block truncate text-sm font-medium text-slate-700 group-hover:text-[#025169]">
+                    {previousPage.numbering} {previousPage.title}
+                  </span>
+                </div>
               </button>
-            ) : null}
+            ) : (
+              <div className="flex-1" />
+            )}
 
             {nextPage ? (
               <button
                 type="button"
                 onClick={() => onSelectPage(nextPage.id)}
-                className="retningslinje-page-nav__button retningslinje-page-nav__button--next"
+                className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-right cursor-pointer transition-all hover:border-[#025169]/40 hover:shadow-sm"
                 aria-label={`Gå til neste kapittel ${nextPage.numbering}`}
               >
-                <span className="retningslinje-page-nav__label">Neste</span>
-                <span className="retningslinje-page-nav__number">{nextPage.numbering}</span>
-                <span aria-hidden="true" className="retningslinje-page-nav__icon">→</span>
+                <div className="min-w-0 flex-1">
+                  <span className="block text-[0.6875rem] font-medium uppercase tracking-wide text-slate-400">Neste</span>
+                  <span className="block truncate text-sm font-medium text-slate-700 group-hover:text-[#025169]">
+                    {nextPage.numbering} {nextPage.title}
+                  </span>
+                </div>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#025169] text-white transition-colors group-hover:bg-[#025169]/90">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 3L11 8L6 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
               </button>
-            ) : null}
+            ) : (
+              <div className="flex-1" />
+            )}
           </div>
         </nav>
       )}

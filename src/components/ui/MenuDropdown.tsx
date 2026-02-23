@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronRightIcon } from '@navikt/aksel-icons';
+import { HiArrowRight } from 'react-icons/hi2';
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider';
 
 interface MenuItem {
@@ -29,36 +29,46 @@ export function MenuDropdown({ isOpen, onClose }: MenuDropdownProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute left-0 right-0 bg-white shadow-xl z-50 border-t border-gray-200">
-      <div className="max-w-screen-xl mx-auto px-6 py-6">
-        <nav>
-          {menuItems.map((item) => (
-            item.isExternal ? (
-              <a
-                key={item.path}
-                href={item.path}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between py-4 px-4 border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                onClick={onClose}
-              >
-                <span className="text-gray-900">{item.title}</span>
-                <ChevronRightIcon className="h-5 w-5 text-blue-600" />
-              </a>
-            ) : (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="flex items-center justify-between py-4 px-4 border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                onClick={onClose}
-              >
-                <span className="text-gray-900">{item.title}</span>
-                <ChevronRightIcon className="h-5 w-5 text-blue-600" />
-              </Link>
-            )
-          ))}
-        </nav>
-      </div>
+    <div className="absolute top-full right-0 mt-2 w-80 bg-white shadow-lg z-50 rounded-xl border border-gray-100 overflow-hidden">
+      <nav className="px-2 py-2">
+        {menuItems.map((item, index) => {
+          const isLast = index === menuItems.length - 1;
+          const className = `group flex items-center justify-between py-3 px-4 rounded-lg transition-colors duration-100 hover:bg-[#e8f4f8] ${isLast ? 'mt-1 border-t border-gray-100 pt-4' : ''}`;
+          const content = (
+            <>
+              <span className="text-[0.95rem] text-gray-800 group-hover:text-[#025169] transition-colors">
+                {item.title}
+              </span>
+              <HiArrowRight
+                size={16}
+                className="text-gray-400 group-hover:text-[#025169] group-hover:translate-x-0.5 transition-all duration-150"
+              />
+            </>
+          );
+
+          return item.isExternal ? (
+            <a
+              key={item.path}
+              href={item.path}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={className}
+              onClick={onClose}
+            >
+              {content}
+            </a>
+          ) : (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={className}
+              onClick={onClose}
+            >
+              {content}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

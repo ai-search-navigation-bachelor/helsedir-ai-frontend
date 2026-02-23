@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import type { BreadcrumbItem } from '../types/components'
+import type { BreadcrumbItem } from '../components/ui/Breadcrumb'
 
 interface TemasideBreadcrumbState {
   trailByPath: Record<string, BreadcrumbItem[]>
