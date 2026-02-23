@@ -164,11 +164,17 @@ export function DetailContentDisplay({
   }, [documentLinks, shouldShowPublicationLink])
   const primaryDocument = visibleDocumentLinks[0]
 
+  const hasSidebarContent =
+    sections.length > 1 ||
+    isEnrichedLoading ||
+    contextualNavigationLinks.length > 0
+
   return (
     <div className="flex flex-col gap-8">
       <ContentPageHeader typeLabel={typeLabel} title={content.title} />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]">
+      <div className={hasSidebarContent ? 'grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]' : ''}>
+        {hasSidebarContent && (
         <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
           {sections.length > 1 && (
             <nav aria-label="Innholdsnavigasjon">
@@ -278,6 +284,7 @@ export function DetailContentDisplay({
             </section>
           )}
         </aside>
+        )}
 
         <section className="min-w-0 space-y-8">
           {enrichedError && (
