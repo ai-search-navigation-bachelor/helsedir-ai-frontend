@@ -206,15 +206,16 @@ export function DetailContentDisplay({
 
   const hasSidebarContent =
     sections.length > 1 ||
-    isEnrichedLoading ||
     contextualNavigationLinks.length > 0
+  // Reserve sidebar space while enrichment is loading to prevent grid layout shift
+  const showSidebarLayout = hasSidebarContent || isEnrichedLoading
 
   return (
     <div className="flex flex-col gap-8">
       <ContentPageHeader typeLabel={typeLabel} title={content.title} />
 
-      <div className={hasSidebarContent ? 'grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]' : ''}>
-        {hasSidebarContent && (
+      <div className={showSidebarLayout ? 'grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]' : ''}>
+        {showSidebarLayout && (
         <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
           {sections.length > 1 && (
             <nav aria-label="Innholdsnavigasjon">
