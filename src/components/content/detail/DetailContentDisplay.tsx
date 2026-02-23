@@ -269,7 +269,7 @@ export function DetailContentDisplay({
                         type="button"
                         onClick={() => {
                           const normalizedContentType = link.type?.trim()
-                          navigate(buildContentUrl({ id: link.contentId }), {
+                          navigate(buildContentUrl({ id: link.contentId, path: link.path ?? undefined }), {
                             state: {
                               ...(location.state as Record<string, unknown> | null),
                               sourceContentId: content.id,
