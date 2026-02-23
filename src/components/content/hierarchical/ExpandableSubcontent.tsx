@@ -170,7 +170,7 @@ export function ExpandableSubcontent({
                 event.stopPropagation()
                 if (!item.id) return
                 const normalizedContentType = item.type?.trim()
-                navigate(buildContentUrl({ id: item.id }), {
+                navigate(buildContentUrl({ id: item.id, path: item.path }), {
                   state: {
                     ...(location.state as Record<string, unknown> | null),
                     sourceContentId: currentContentId,
