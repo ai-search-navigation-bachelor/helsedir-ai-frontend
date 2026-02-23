@@ -291,7 +291,7 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length > 1 && (visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
+          {sections.length > 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
             <section className="border-t border-slate-100 pl-7 pt-4">
               <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
                 Dokument
