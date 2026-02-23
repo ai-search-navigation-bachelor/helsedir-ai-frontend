@@ -419,11 +419,11 @@ export function HierarchicalContentDisplay({
 
           {!activePage && !isChaptersLoading && orderedPageIds.length > 0 && (
             <div>
-              {orderedPageIds.map((pageId) => {
+              {orderedPageIds.map((pageId, index) => {
                 const page = pageTree.pagesById.get(pageId)
                 if (!page || page.isPlaceholder) return null
                 return (
-                  <div key={page.id} style={{ marginTop: page.depth <= 1 ? 40 : 8 }}>
+                  <div key={page.id} style={{ marginTop: index === 0 ? 0 : page.depth <= 1 ? 40 : 8 }}>
                     <PageContent
                       activePage={page}
                       pagesById={pageTree.pagesById}

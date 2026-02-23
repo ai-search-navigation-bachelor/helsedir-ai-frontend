@@ -49,11 +49,7 @@ export function PageContent({
   const primaryDocument = visibleDocumentLinks[0]
   const showChildNavigation = !isOverview && !hasIntro && !hasBody && activePage.childrenIds.length > 0
   const headingLevel = isOverview ? Math.min(2 + activePage.depth - 1, 5) as 2 | 3 | 4 | 5 : 2
-  const headingSize = (() => {
-    if (!isOverview) return 'lg'
-    if (activePage.depth <= 1) return 'md'
-    return 'sm'
-  })()
+  const headingSize = activePage.depth <= 1 ? 'md' : 'sm'
 
   return (
     <article>
