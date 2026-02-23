@@ -26,6 +26,7 @@ function hasForelderLink(content?: ContentDetail): boolean {
 }
 
 async function fetchParentChain(
+  signal: AbortSignal,
   content: ContentDetail,
   searchId?: string,
 ): Promise<ParentChainResult> {
@@ -45,7 +46,15 @@ async function fetchParentChain(
 
     visited.add(parentId)
 
-    const parent = await getContent(parentId, searchId, { suppressErrorStatuses: [404] })
+    let parent: ContentDetail
+    try {
+      parent = await getContent(parentId, searchId, { signal, suppressErrorStatuses: [404] })
+    } catch (error) {
+      // Rethrow abort errors so React Query handles cancellation
+      if (error instanceof DOMException && error.name === 'AbortError') throw error
+      // Parent not found (404) or other error — stop climbing
+      break
+    }
 
     const href = parent.path
       ? buildContentUrl({ path: parent.path, id: parent.id })
@@ -74,7 +83,7 @@ export function useParentChainQuery(content?: ContentDetail, searchId?: string) 
 
   return useQuery<ParentChainResult>({
     queryKey: ['parentChain', content?.id, searchId],
-    queryFn: () => fetchParentChain(content!, searchId),
+    queryFn: ({ signal }) => fetchParentChain(signal, content!, searchId),
     enabled: enabled && Boolean(content),
     staleTime: 10 * 60 * 1000,
   })
