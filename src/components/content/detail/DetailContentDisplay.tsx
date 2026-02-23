@@ -10,7 +10,7 @@ import {
   normalizeContentType,
 } from '../../../constants/content'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
-import type { ContentDisplayProps } from '../../../types/pages'
+import type { ContentDisplayProps } from '../ContentDisplay'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, isHelsedirektoratetPdfUrl } from './documentUtils'

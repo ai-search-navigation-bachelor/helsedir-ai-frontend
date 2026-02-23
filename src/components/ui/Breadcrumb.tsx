@@ -1,6 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { BreadcrumbItem } from '../../types/components'
+import { ds } from '../../styles/dsTokens'
+
+/**
+ * Breadcrumb item for navigation
+ */
+export interface BreadcrumbItem {
+  label: string
+  href: string
+  icon?: React.ReactNode
+  /** Semantic group for visual separation: home, tema, parent, current */
+  group?: 'home' | 'tema' | 'parent' | 'current'
+}
 
 interface BreadcrumbProps {
   items: BreadcrumbItem[]
@@ -8,24 +19,27 @@ interface BreadcrumbProps {
   collapsible?: boolean
 }
 
+const linkColor = ds.color('logobla-1', 'base-default')
+const linkHoverColor = ds.color('logobla-2', 'base-default')
+
 function ItemLabel({ item }: { item: BreadcrumbItem }) {
   return (
     <Link
       to={item.href}
       style={{
-        color: '#025169',
+        color: linkColor,
         textDecoration: 'underline',
-        textDecorationColor: 'rgba(2, 81, 105, 0.25)',
+        textDecorationColor: ds.color('logobla-1', 'border-subtle'),
         textUnderlineOffset: '3px',
         transition: 'text-decoration-color 0.2s ease, color 0.2s ease',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.textDecorationColor = 'rgba(2, 81, 105, 0.7)'
-        e.currentTarget.style.color = '#047FA4'
+        e.currentTarget.style.textDecorationColor = ds.color('logobla-1', 'border-default')
+        e.currentTarget.style.color = linkHoverColor
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.textDecorationColor = 'rgba(2, 81, 105, 0.25)'
-        e.currentTarget.style.color = '#025169'
+        e.currentTarget.style.textDecorationColor = ds.color('logobla-1', 'border-subtle')
+        e.currentTarget.style.color = linkColor
       }}
     >
       <span
@@ -89,23 +103,23 @@ export function Breadcrumb({ items, collapsible = false }: BreadcrumbProps) {
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  color: '#025169',
+                  color: linkColor,
                   fontSize: 'inherit',
                   fontFamily: 'inherit',
                   padding: '2px 4px',
                   borderRadius: '4px',
                   textDecoration: 'underline',
-                  textDecorationColor: 'rgba(2, 81, 105, 0.25)',
+                  textDecorationColor: ds.color('logobla-1', 'border-subtle'),
                   textUnderlineOffset: '3px',
                   transition: 'text-decoration-color 0.2s ease, color 0.2s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.textDecorationColor = 'rgba(2, 81, 105, 0.7)'
-                  e.currentTarget.style.color = '#047FA4'
+                  e.currentTarget.style.textDecorationColor = ds.color('logobla-1', 'border-default')
+                  e.currentTarget.style.color = linkHoverColor
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.textDecorationColor = 'rgba(2, 81, 105, 0.25)'
-                  e.currentTarget.style.color = '#025169'
+                  e.currentTarget.style.textDecorationColor = ds.color('logobla-1', 'border-subtle')
+                  e.currentTarget.style.color = linkColor
                 }}
               >
                 ...

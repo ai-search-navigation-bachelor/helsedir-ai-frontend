@@ -1,4 +1,5 @@
-import { useParentChainQuery, extractTemasideInfo } from './queries/useParentChainQuery'
+import { useParentChainQuery } from './queries/useParentChainQuery'
+import { extractTemasideInfo } from '../lib/content/breadcrumbUtils'
 import {
   buildContentBreadcrumbItems,
   buildFallbackBreadcrumbItems,

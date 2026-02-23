@@ -2,7 +2,17 @@ import { useId, useRef, useState, useEffect, useCallback, forwardRef } from 'rea
 import { IoSearch, IoClose } from 'react-icons/io5'
 import { ds, colors } from '../../styles/dsTokens'
 import { useSearchSuggestionsQuery } from '../../hooks/queries/useSearchSuggestionsQuery'
-import type { SearchFormProps } from '../../types/components'
+import { SearchSuggestions } from './SearchSuggestions'
+/**
+ * Search form props
+ */
+export interface SearchFormProps {
+  query: string
+  onQueryChange: (query: string) => void
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
+  onClear?: () => void
+  onSuggestionSelect?: (id: string) => void
+}
 
 export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
   ({ query, onQueryChange, onSubmit, onClear, onSuggestionSelect }, ref) => {
@@ -11,7 +21,6 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
     const [showSuggestions, setShowSuggestions] = useState(false)
     const [activeIndex, setActiveIndex] = useState(-1)
     const formRef = useRef<HTMLFormElement>(null)
-    const dropdownRef = useRef<HTMLUListElement>(null)
     const wrapperRef = useRef<HTMLDivElement>(null)
 
     const { data } = useSearchSuggestionsQuery(query, showSuggestions)
@@ -87,26 +96,6 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
       }
     }
 
-    function highlightMatch(title: string) {
-      const trimmed = query.trim()
-      if (!trimmed) return title
-
-      const index = title.toLowerCase().indexOf(trimmed.toLowerCase())
-      if (index === -1) return title
-
-      const before = title.slice(0, index)
-      const match = title.slice(index, index + trimmed.length)
-      const after = title.slice(index + trimmed.length)
-
-      return (
-        <>
-          {before}
-          <strong style={{ fontWeight: 600, color: '#025169' }}>{match}</strong>
-          {after}
-        </>
-      )
-    }
-
     const listboxId = `${inputId}-suggestions`
     const hasQuery = query.trim().length > 0
 
@@ -132,7 +121,7 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
                 style={{
                   borderRadius: '12px',
                   border: isFocused
-                    ? '2px solid #047FA4'
+                    ? `2px solid ${ds.color('logobla-2', 'base-default')}`
                     : '2px solid transparent',
                   boxShadow: isFocused
                     ? '0 0 0 3px rgba(4, 127, 164, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04)'
@@ -144,7 +133,7 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
                   type="text"
                   id={inputId}
                   name="query"
-                  aria-label="Sæk"
+                  aria-label="Søk"
                   placeholder="Søk etter innhold..."
                   value={query}
                   onChange={(e) => {
@@ -209,7 +198,7 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
                     marginRight: '6px',
                     padding: hasQuery ? '0 18px' : '0 12px',
                     gap: '6px',
-                    backgroundColor: hasQuery ? '#025169' : 'transparent',
+                    backgroundColor: hasQuery ? ds.color('logobla-1', 'base-default') : 'transparent',
                     color: hasQuery ? '#ffffff' : '#64748b',
                     fontSize: '0.875rem',
                     fontWeight: 500,
@@ -217,12 +206,12 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
                   }}
                   onMouseEnter={(e) => {
                     if (hasQuery) {
-                      e.currentTarget.style.backgroundColor = '#047FA4'
+                      e.currentTarget.style.backgroundColor = ds.color('logobla-2', 'base-default')
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (hasQuery) {
-                      e.currentTarget.style.backgroundColor = '#025169'
+                      e.currentTarget.style.backgroundColor = ds.color('logobla-1', 'base-default')
                     }
                   }}
                   aria-label="Søk"
@@ -234,67 +223,14 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
 
               {/* Suggestions dropdown */}
               {showSuggestions && suggestions.length > 0 && (
-                <ul
-                  ref={dropdownRef}
-                  id={listboxId}
-                  role="listbox"
-                  className="absolute z-50 left-0 right-0"
-                  style={{
-                    marginTop: '6px',
-                    backgroundColor: '#ffffff',
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04)',
-                    overflow: 'hidden',
-                    padding: '4px',
-                  }}
-                >
-                  {suggestions.map((suggestion, index) => {
-                    const isActive = index === activeIndex
-                    return (
-                      <li
-                        key={suggestion.id}
-                        id={`${listboxId}-option-${index}`}
-                        role="option"
-                        aria-selected={isActive}
-                        onMouseDown={(e) => {
-                          e.preventDefault()
-                          handleSelectSuggestion(suggestion.id)
-                        }}
-                        onMouseEnter={() => setActiveIndex(index)}
-                        onMouseLeave={() => setActiveIndex(-1)}
-                        className="flex items-center justify-between cursor-pointer transition-colors"
-                        style={{
-                          padding: '10px 14px',
-                          borderRadius: '8px',
-                          fontSize: '0.9rem',
-                          color: '#1e293b',
-                          backgroundColor: isActive ? '#f0f7fa' : 'transparent',
-                        }}
-                      >
-                        <span style={{ lineHeight: 1.4 }}>
-                          {highlightMatch(suggestion.title)}
-                        </span>
-                        <span
-                          className="shrink-0"
-                          style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 500,
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            backgroundColor: ds.color('logobla-1', 'surface-tinted'),
-                            color: '#025169',
-                            textTransform: 'uppercase' as const,
-                            letterSpacing: '0.05em',
-                            marginLeft: '12px',
-                          }}
-                        >
-                          Temaside
-                        </span>
-                      </li>
-                    )
-                  })}
-                </ul>
+                <SearchSuggestions
+                  suggestions={suggestions}
+                  query={query}
+                  activeIndex={activeIndex}
+                  listboxId={listboxId}
+                  onSelect={handleSelectSuggestion}
+                  onActiveIndexChange={setActiveIndex}
+                />
               )}
             </div>
           </form>

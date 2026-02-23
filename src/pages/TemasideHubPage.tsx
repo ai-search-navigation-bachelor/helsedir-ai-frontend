@@ -1,7 +1,8 @@
 import { TemasideHubSections, TemasideHubStatusView } from '../components/content/temaside'
-import { TemasideHubLoadingSkeleton } from '../components/content/ContentSkeletons'
+import { TemasideHubLoadingSkeleton } from '../components/content/temaside/TemasideSkeletons'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { useTemasideHubPageModel } from '../hooks/useTemasideHubPageModel'
+import { ds } from '../styles/dsTokens'
 import type { TemasideCategorySlug } from '../constants/temasider'
 
 interface TemasideHubPageProps {
@@ -74,7 +75,7 @@ export function TemasideHubPage({ categorySlugOverride }: TemasideHubPageProps =
       <header className="rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm px-6 py-6 mb-6">
         <div className="flex items-center gap-4">
           {categoryIcon && (
-            <div className="flex-shrink-0 flex h-16 w-16 items-center justify-center rounded-xl" style={{ backgroundColor: '#e8f4f8' }}>
+            <div className="flex-shrink-0 flex h-16 w-16 items-center justify-center rounded-xl" style={{ backgroundColor: ds.color('logobla-1', 'surface-tinted') }}>
               <img src={categoryIcon} alt="" className="w-10 h-10" />
             </div>
           )}

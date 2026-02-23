@@ -8,8 +8,12 @@ export function getNodeTitle(node: NestedContent, fallback = 'Uten tittel') {
 }
 
 export function getNodeType(node: NestedContent) {
-  if (!node.type) return ''
-  return node.type.trim().toLowerCase()
+  return (
+    node.type ||
+    node.tekniskeData?.subtype ||
+    node.tekniskeData?.infoType ||
+    ''
+  ).trim().toLowerCase()
 }
 
 function toNodeId(chapterIndex: number, path: number[]) {

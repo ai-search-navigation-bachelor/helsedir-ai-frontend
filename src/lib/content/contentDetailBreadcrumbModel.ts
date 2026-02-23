@@ -3,8 +3,9 @@ import { TEMASIDE_CATEGORIES } from '../../constants/temasider'
 import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
 import { buildContentUrl } from '../contentUrl'
 import type { ContentDetail } from '../../types'
-import type { BreadcrumbItem } from '../../types/components'
-import type { ParentChainEntry, TemasideInfo } from '../../hooks/queries/useParentChainQuery'
+import type { BreadcrumbItem } from '../../components/ui/Breadcrumb'
+import type { TemasideInfo } from './breadcrumbUtils'
+import type { ParentChainEntry } from '../../hooks/queries/useParentChainQuery'
 
 /**
  * Extract the temaside category from the temaside's path.

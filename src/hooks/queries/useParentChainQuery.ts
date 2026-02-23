@@ -2,19 +2,16 @@ import { useQuery } from '@tanstack/react-query'
 import { getContent } from '../../api'
 import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
 import { buildContentUrl } from '../../lib/contentUrl'
-import type { ContentDetail, ContentLink } from '../../types'
+import { extractTemasideInfo } from '../../lib/content/breadcrumbUtils'
+import type { TemasideInfo } from '../../lib/content/breadcrumbUtils'
+import type { ContentDetail } from '../../types'
+
+export type { TemasideInfo }
 
 export interface ParentChainEntry {
   id: string
   tittel: string
   href: string
-}
-
-export interface TemasideInfo {
-  id: string | null
-  tittel: string
-  href: string
-  path: string
 }
 
 export interface ParentChainResult {
@@ -26,20 +23,6 @@ const MAX_DEPTH = 10
 
 function hasForelderLink(content?: ContentDetail): boolean {
   return Boolean(content?.links?.some((link) => link.rel === 'forelder'))
-}
-
-export function extractTemasideInfo(links?: ContentLink[]): TemasideInfo | null {
-  const temasideLink = links?.find(
-    (link) => link.rel === 'temaside' && link.tittel && link.path,
-  )
-  if (!temasideLink?.path) return null
-
-  return {
-    id: temasideLink.id ?? null,
-    tittel: temasideLink.tittel,
-    href: buildContentUrl({ path: temasideLink.path, id: temasideLink.id ?? '' }),
-    path: temasideLink.path,
-  }
 }
 
 async function fetchParentChain(

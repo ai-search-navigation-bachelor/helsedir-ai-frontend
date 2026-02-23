@@ -1,0 +1,5 @@
+export const TEMASIDE_CATEGORY = 'temaside'
+export const RETNINGSLINJE_CATEGORY = 'retningslinje'
+export const ANBEFALINGER_CATEGORY = 'anbefaling'
+export const REGELVERK_CATEGORY = 'regelverk-lov-eller-forskrift'
+export const RAD_CATEGORY = 'veileder-lov-forskrift'

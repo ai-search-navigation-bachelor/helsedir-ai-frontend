@@ -1,20 +1,12 @@
 import { useLocation, useParams } from 'react-router-dom'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
-import {
-  isRecommendationContentType,
-  isRetningslinjeContentType,
-  isTemasideContentType,
-  normalizeContentType,
-  toContentTypeLabel,
-} from '../constants/content'
+import { isTemasideContentType, normalizeContentType } from '../constants/content'
 import { useContentDetailQuery } from '../hooks/queries/useContentDetailQuery'
 import { useTemasideCanonicalRedirect } from '../hooks/useTemasideCanonicalRedirect'
 import { useSearchStore } from '../stores/searchStore'
 import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
 import { ContentPageLayout } from '../components/content/ContentPageLayout'
-import { HierarchicalContentDisplay } from '../components/content/hierarchical/HierarchicalContentDisplay'
-import { DetailContentDisplay } from '../components/content/detail/DetailContentDisplay'
-import { countUniqueChildLinks } from '../components/content/shared/linkUtils'
+import { ContentDisplay } from '../components/content/ContentDisplay'
 
 interface ContentDetailProps {
   /** When set, the page uses path-based content fetching (e.g. pathPrefix="retningslinjer") */
@@ -69,22 +61,9 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
 
   if (isTemasideContentType(type)) return null
 
-  const typeLabel = toContentTypeLabel(content.content_type)
-  const hasChildren = countUniqueChildLinks(content.links) > 0
-
   return (
     <ContentPageLayout content={content}>
-      {isRetningslinjeContentType(type) || hasChildren ? (
-        <HierarchicalContentDisplay content={content} typeLabel={typeLabel} />
-      ) : isRecommendationContentType(type) ? (
-        <DetailContentDisplay content={content} />
-      ) : (
-        <DetailContentDisplay
-          content={content}
-          typeLabelOverride={typeLabel}
-          primarySectionTitle="Innhold"
-        />
-      )}
+      <ContentDisplay content={content} />
     </ContentPageLayout>
   )
 }

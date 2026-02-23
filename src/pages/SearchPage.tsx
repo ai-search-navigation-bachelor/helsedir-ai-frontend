@@ -4,7 +4,7 @@ import {
   SearchEmptyState,
   SearchResultsList,
 } from '../components/search'
-import { SearchPageLoadingSkeleton } from '../components/content/ContentSkeletons'
+import { SearchPageLoadingSkeleton } from '../components/search/SearchSkeletons'
 import { useSearchPageModel } from '../hooks/useSearchPageModel'
 
 /**

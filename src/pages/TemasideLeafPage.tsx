@@ -1,6 +1,6 @@
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { ContentDisplay } from '../components/content'
-import { TemasideLoadingSkeleton } from '../components/content/ContentSkeletons'
+import { TemasideLoadingSkeleton } from '../components/content/temaside/TemasideSkeletons'
 import { TemasideHubStatusView } from '../components/content/temaside'
 import { Breadcrumb } from '../components/ui/Breadcrumb'
 import { useContentByIdQuery } from '../hooks/queries/useContentByIdQuery'

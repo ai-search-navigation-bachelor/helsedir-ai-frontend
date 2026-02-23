@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Heading } from '@digdir/designsystemet-react'
 import { Breadcrumb } from '../../ui/Breadcrumb'
-import type { BreadcrumbItem } from '../../../types/components'
+import type { BreadcrumbItem } from '../../ui/Breadcrumb'
 
 interface TemasideHubStatusViewProps {
   title: string

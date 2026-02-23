@@ -4,7 +4,7 @@ import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { buildContentUrl } from '../../../lib/contentUrl'
-import { formatDateLabel, getNodeTitle } from './treeUtils'
+import { formatDateLabel, getNodeTitle, getNodeType } from './treeUtils'
 
 const MAX_SUBCONTENT_DEPTH = 8
 
@@ -12,15 +12,6 @@ interface ExpandableSubcontentProps {
   item: NestedContent
   itemKey: string
   depth?: number
-}
-
-function getNodeType(node: NestedContent) {
-  return (
-    node.type ||
-    node.tekniskeData?.subtype ||
-    node.tekniskeData?.infoType ||
-    ''
-  ).trim().toLowerCase()
 }
 
 function isReferenceNode(node: NestedContent) {
