@@ -157,7 +157,7 @@ export function ExpandableSubcontent({
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90 group-open:text-[#025169]" />
-            <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-medium leading-snug text-slate-800 group-open:text-[#025169]">
+            <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 group-open:text-[#025169]">
               {title}
             </span>
           </div>

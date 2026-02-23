@@ -47,6 +47,7 @@ export function HierarchicalContentDisplay({
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [autoOpenExpandableId, setAutoOpenExpandableId] = useState<string | null>(null)
   const contentRef = useRef<HTMLElement>(null)
+  const scrollOnNextPageChange = useRef(false)
   const sectionByContentId = useContentNavigationStore((state) => state.sectionByContentId)
   const setSectionForContent = useContentNavigationStore((state) => state.setSectionForContent)
   const storedSectionId = sectionByContentId[content.id] || null
@@ -275,10 +276,11 @@ export function HierarchicalContentDisplay({
     )
   }, [location.hash, location.pathname, location.state, navigate, searchWithoutSection])
 
-  const handleSelectPage = (pageId: string, expandableId?: string) => {
+  const handleSelectPage = (pageId: string, expandableId?: string, scrollTo?: boolean) => {
     const page = pageTree.pagesById.get(pageId)
     if (!page || page.isPlaceholder) return
 
+    scrollOnNextPageChange.current = scrollTo === true
     setAutoOpenExpandableId(expandableId ?? null)
     setSectionForContent(content.id, pageId)
     if (locationSectionId !== pageId || hasLegacySectionParam) {
@@ -316,7 +318,8 @@ export function HierarchicalContentDisplay({
   ])
 
   useEffect(() => {
-    if (!activePage || autoOpenExpandableId) return
+    if (!activePage || autoOpenExpandableId || !scrollOnNextPageChange.current) return
+    scrollOnNextPageChange.current = false
     contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [activePage?.id, autoOpenExpandableId])
 

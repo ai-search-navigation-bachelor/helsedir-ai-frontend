@@ -11,7 +11,7 @@ import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../detail/documentU
 interface PageContentProps {
   activePage: PageNode
   pagesById: Map<string, PageNode>
-  onSelectPage: (pageId: string, expandableId?: string) => void
+  onSelectPage: (pageId: string, expandableId?: string, scrollTo?: boolean) => void
   previousPage?: PageNode
   nextPage?: PageNode
   isLoadingExpandable?: boolean
@@ -61,7 +61,7 @@ export function PageContent({
         {isOverview ? (
           <button
             type="button"
-            onClick={() => onSelectPage(activePage.id)}
+            onClick={() => onSelectPage(activePage.id, undefined, true)}
             className="group m-0 w-full rounded-lg border-0 bg-transparent px-3 py-2 text-left cursor-pointer transition-colors hover:bg-slate-100"
           >
             <Heading level={headingLevel} data-size={headingSize} className="font-title transition-colors group-hover:text-[#025169]" style={{ marginBottom: 0 }}>
@@ -175,7 +175,7 @@ export function PageContent({
                 className="group flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3.5 text-left cursor-pointer transition-all hover:border-[#025169]/30 hover:shadow-sm"
               >
                 <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-colors group-hover:text-[#025169]" />
-                <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-medium leading-snug text-slate-800 transition-colors group-hover:text-[#025169]">
+                <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-[#025169]">
                   {getNodeTitle(item)}
                 </span>
               </button>
