@@ -1,4 +1,4 @@
-import type { ContentDetail } from '../../types'
+import type { ContentDisplayProps } from '../../types/pages'
 import {
   isRecommendationContentType,
   isRetningslinjeContentType,
@@ -10,13 +10,6 @@ import { DetailContentDisplay } from './detail/DetailContentDisplay'
 import { HierarchicalContentDisplay } from './hierarchical/HierarchicalContentDisplay'
 import { TemasideContentDisplay } from './temaside/TemasideContentDisplay'
 import { countUniqueChildLinks } from './shared/linkUtils'
-
-/**
- * Content display props
- */
-export interface ContentDisplayProps {
-  content: ContentDetail
-}
 
 export function ContentDisplay({ content }: ContentDisplayProps) {
   const normalizedType = normalizeContentType(content.content_type)
