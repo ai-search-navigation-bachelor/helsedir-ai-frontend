@@ -53,8 +53,6 @@ export function ChildTemasideSection({ links }: { links: ContentLink[] }) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Filtrer undertema..."
             style={{
-              borderColor: undefined,
-              // Use token-based focus styles via CSS custom property
               '--brand-focus': brandColor,
             } as React.CSSProperties}
             className="w-full rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[var(--brand-focus)] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--brand-focus)]/20 transition-colors"
@@ -62,9 +60,9 @@ export function ChildTemasideSection({ links }: { links: ContentLink[] }) {
         </div>
       )}
 
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && query.trim() ? (
         <p className="py-4 text-sm text-gray-400">Ingen undertema matcher &quot;{query}&quot;</p>
-      ) : (
+      ) : filtered.length > 0 ? (
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-2 py-1">
           {filtered.map((link) => (
             <li key={link.href} className="border-b border-gray-100">
@@ -84,7 +82,7 @@ export function ChildTemasideSection({ links }: { links: ContentLink[] }) {
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </section>
   )
 }
