@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -45,6 +45,9 @@ export function HierarchicalContentDisplay({
   const location = useLocation()
   const navigate = useNavigate()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [autoOpenExpandableId, setAutoOpenExpandableId] = useState<string | null>(null)
+  const contentRef = useRef<HTMLElement>(null)
+  const scrollOnNextPageChange = useRef(false)
   const sectionByContentId = useContentNavigationStore((state) => state.sectionByContentId)
   const setSectionForContent = useContentNavigationStore((state) => state.setSectionForContent)
   const storedSectionId = sectionByContentId[content.id] || null
@@ -93,28 +96,8 @@ export function HierarchicalContentDisplay({
       : undefined
     if (fromLegacyQuery) return fromLegacyQuery
 
-    const fromStore = storedSectionId
-      ? asSelectable(pageTree.pagesById.get(storedSectionId))
-      : undefined
-    if (fromStore) return fromStore
-
-    const firstRootId = pageTree.rootIds[0]
-    const firstRootPage = firstRootId ? asSelectable(pageTree.pagesById.get(firstRootId)) : undefined
-    if (firstRootPage) return firstRootPage
-
-    // Keep waiting for chapter 1 while loading to avoid jumping between chapters.
-    if (isChaptersLoading) {
-      return undefined
-    }
-
-    // If chapter 1 failed, fall back to the first loaded chapter after loading is complete.
-    const firstLoadedRootId = pageTree.rootIds.find((rootId) => {
-      const rootPage = pageTree.pagesById.get(rootId)
-      return Boolean(rootPage) && !rootPage?.isPlaceholder
-    })
-
-    return firstLoadedRootId ? pageTree.pagesById.get(firstLoadedRootId) : undefined
-  }, [isChaptersLoading, legacySectionId, locationSectionId, pageTree, storedSectionId])
+    return undefined
+  }, [legacySectionId, locationSectionId, pageTree])
   // Lazy-load content for stub pages (sub-chapters with no body/expandable content)
   const activeNodeId = activePage?.node?.id ?? null
   const isStubPage =
@@ -275,26 +258,40 @@ export function HierarchicalContentDisplay({
     [location.hash, location.pathname, location.state, navigate, searchWithoutSection],
   )
 
-  const handleSelectPage = (pageId: string) => {
+  const handleShowOverview = useCallback(() => {
+    setAutoOpenExpandableId(null)
+    navigate(
+      {
+        pathname: location.pathname,
+        search: searchWithoutSection,
+        hash: location.hash,
+      },
+      {
+        replace: false,
+        state: {
+          ...toLocationStateObject(location.state),
+          sectionId: undefined,
+        },
+      },
+    )
+  }, [location.hash, location.pathname, location.state, navigate, searchWithoutSection])
+
+  const handleSelectPage = (pageId: string, expandableId?: string, scrollTo?: boolean) => {
     const page = pageTree.pagesById.get(pageId)
     if (!page || page.isPlaceholder) return
 
+    scrollOnNextPageChange.current = scrollTo === true
+    setAutoOpenExpandableId(expandableId ?? null)
     setSectionForContent(content.id, pageId)
     if (locationSectionId !== pageId || hasLegacySectionParam) {
       updateHistorySection(pageId, false)
     }
 
-    setExpandedIds((prev) => {
-      const next = new Set(prev)
+    setExpandedIds(() => {
       const ancestorIds = getAncestorIds(pageTree.pagesById, pageId)
-      ancestorIds.forEach((id) => next.add(id))
+      const next = new Set(ancestorIds)
       if (page.childrenIds.length > 0) {
-        // Toggle: collapse if already expanded, expand if not
-        if (prev.has(pageId)) {
-          next.delete(pageId)
-        } else {
-          next.add(pageId)
-        }
+        next.add(pageId)
       }
       return next
     })
@@ -319,6 +316,30 @@ export function HierarchicalContentDisplay({
     storedSectionId,
     updateHistorySection,
   ])
+
+  useEffect(() => {
+    if (!activePage || autoOpenExpandableId || !scrollOnNextPageChange.current) return
+    scrollOnNextPageChange.current = false
+    contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [activePage, autoOpenExpandableId])
+
+  useEffect(() => {
+    if (!autoOpenExpandableId || !activePage) return
+
+    let attempts = 0
+    const maxAttempts = 20
+    const interval = setInterval(() => {
+      const escaped = CSS.escape(autoOpenExpandableId)
+      const el = document.querySelector(`[data-expandable-id="${escaped}"]`)
+      if (el) {
+        clearInterval(interval)
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      if (++attempts >= maxAttempts) clearInterval(interval)
+    }, 100)
+
+    return () => clearInterval(interval)
+  }, [autoOpenExpandableId, activePage])
 
   const metadataItems = useMemo(() => {
     if (!activePage?.node) return []
@@ -368,6 +389,8 @@ export function HierarchicalContentDisplay({
               activePageId={activePage?.id}
               selectedAncestorIds={selectedAncestorIds}
               onSelectPage={handleSelectPage}
+              onShowOverview={handleShowOverview}
+              isOverviewActive={!activePage}
             />
           )}
           {isChaptersLoading && loadedChapters.length > 0 && (
@@ -378,7 +401,7 @@ export function HierarchicalContentDisplay({
 
         </aside>
 
-        <section className="min-w-0">
+        <section ref={contentRef} className="min-w-0">
           {isChaptersLoading && !activePage && <ContentBodyLoadingSkeleton />}
 
           {isStubPage && isLazyFetching && <ContentBodyLoadingSkeleton />}
@@ -391,10 +414,30 @@ export function HierarchicalContentDisplay({
               previousPage={previousPage}
               nextPage={nextPage}
               isLoadingExpandable={isExpandableFetching || (isLazyPageFetching && needsExpandableContent)}
+              autoOpenExpandableId={autoOpenExpandableId}
             />
           )}
 
-          {!activePage && content.body && (
+          {!activePage && !isChaptersLoading && orderedPageIds.length > 0 && (
+            <div>
+              {orderedPageIds.map((pageId, index) => {
+                const page = pageTree.pagesById.get(pageId)
+                if (!page || page.isPlaceholder) return null
+                return (
+                  <div key={page.id} style={{ marginTop: index === 0 ? 0 : page.depth <= 1 ? 40 : 8 }}>
+                    <PageContent
+                      activePage={page}
+                      pagesById={pageTree.pagesById}
+                      onSelectPage={handleSelectPage}
+                      isOverview
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {!activePage && !isChaptersLoading && pageTree.rootIds.length === 0 && content.body && (
             <div
               className="content-html text-base leading-7 text-slate-800"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.body) }}

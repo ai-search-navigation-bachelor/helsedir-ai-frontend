@@ -8,6 +8,8 @@ interface SidebarTreeProps {
   activePageId?: string
   selectedAncestorIds: Set<string>
   onSelectPage: (pageId: string) => void
+  onShowOverview?: () => void
+  isOverviewActive?: boolean
 }
 
 export function SidebarTree({
@@ -17,6 +19,8 @@ export function SidebarTree({
   activePageId,
   selectedAncestorIds,
   onSelectPage,
+  onShowOverview,
+  isOverviewActive = false,
 }: SidebarTreeProps) {
   const renderNode = (nodeId: string): React.ReactNode => {
     const page = pagesById.get(nodeId)
@@ -74,12 +78,16 @@ export function SidebarTree({
           <button
             type="button"
             onClick={handleClick}
-            className={`flex w-full items-start gap-1 border-0 bg-transparent py-2 text-left transition-colors hover:text-[#025169] hover:underline ${textColor} ${fontWeight} cursor-pointer`}
+            className={`flex w-full items-center gap-1 border-0 bg-transparent py-2 text-left transition-colors hover:text-[#025169] hover:underline ${textColor} ${fontWeight} cursor-pointer`}
             style={{ paddingLeft: `${(page.depth - 1) * 14}px` }}
           >
-            {showChevron ? (
+            <span className="min-w-0 flex-1 py-0.5 text-sm leading-6 whitespace-normal break-words">
+              <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
+              {page.title}
+            </span>
+            {showChevron && (
               <span
-                className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400"
                 aria-hidden="true"
               >
                 {isExpanded ? (
@@ -88,13 +96,7 @@ export function SidebarTree({
                   <ChevronRightIcon className="h-4 w-4" />
                 )}
               </span>
-            ) : (
-              <span className="inline-block h-6 w-6 shrink-0" />
             )}
-            <span className="min-w-0 flex-1 py-0.5 text-sm leading-6 whitespace-normal break-words">
-              <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
-              {page.title}
-            </span>
           </button>
         )}
 
@@ -110,6 +112,24 @@ export function SidebarTree({
   return (
     <nav aria-label="Innholdssider">
       <ul className="m-0 list-none border-t border-slate-200 p-0">
+        {onShowOverview && (
+          <li className="border-b border-slate-200">
+            <button
+              type="button"
+              onClick={onShowOverview}
+              aria-current={isOverviewActive ? 'page' : undefined}
+              className={`flex w-full items-start gap-1 border-0 bg-transparent py-2 text-left text-sm transition-colors cursor-pointer ${
+                isOverviewActive
+                  ? 'text-[#025169] font-semibold'
+                  : 'text-slate-500 font-normal hover:text-[#025169] hover:underline'
+              }`}
+            >
+              <span className="min-w-0 flex-1 py-0.5 leading-6 whitespace-normal break-words">
+                Oversikt
+              </span>
+            </button>
+          </li>
+        )}
         {rootIds.map((rootId) => renderNode(rootId))}
       </ul>
     </nav>

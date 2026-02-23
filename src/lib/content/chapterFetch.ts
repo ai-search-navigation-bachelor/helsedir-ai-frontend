@@ -8,6 +8,7 @@ export function contentDetailToNestedContent(
 ): NestedContent {
   return {
     id: detail.id,
+    path: detail.path,
     tittel: detail.title,
     title: detail.title,
     type: detail.content_type,

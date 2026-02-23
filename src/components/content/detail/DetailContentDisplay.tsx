@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
+import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { buildContentUrl } from '../../../lib/contentUrl'
@@ -30,11 +31,14 @@ function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
   if (!showTradeoffs && !showPreferences) return null
 
   return (
-    <details className="mt-6 border-t border-slate-200">
-      <summary className="cursor-pointer py-3 text-base font-semibold text-slate-700 hover:text-slate-900">
-        Vurdering
+    <details className="group/vurdering mt-4 rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm">
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open/vurdering:rounded-b-none">
+        <ChevronRightIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-open/vurdering:text-[#025169]" />
+        <span className="text-[0.9375rem] font-medium text-slate-800 group-open/vurdering:text-[#025169]">
+          Vurdering
+        </span>
       </summary>
-      <div className="space-y-6 pt-2">
+      <div className="space-y-6 border-t border-slate-200 pr-4 pl-[2.75rem] pb-5 pt-3">
         {showTradeoffs && (
           <div>
             <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
@@ -349,13 +353,16 @@ export function DetailContentDisplay({
               />
               <VurderingDetails vurdering={section.vurdering} />
               {section.appendedDropdowns && section.appendedDropdowns.length > 0 && (
-                <div className="mt-6 border-t border-slate-200">
+                <div className="mt-6 space-y-3">
                   {section.appendedDropdowns.map((dropdown) => (
-                    <details key={dropdown.id} className="border-b border-slate-200">
-                      <summary className="cursor-pointer py-3 text-base font-semibold text-slate-700 hover:text-slate-900">
-                        {dropdown.title}
+                    <details key={dropdown.id} className="group/dropdown rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm">
+                      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open/dropdown:rounded-b-none">
+                        <ChevronRightIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/dropdown:rotate-90 group-open/dropdown:text-[#025169]" />
+                        <span className="text-[0.9375rem] font-medium text-slate-800 group-open/dropdown:text-[#025169]">
+                          {dropdown.title}
+                        </span>
                       </summary>
-                      <div className="pb-4 pt-2">
+                      <div className="border-t border-slate-200 pr-4 pl-[2.75rem] pb-5 pt-3">
                         <div
                           className="content-html text-base leading-7 text-slate-800"
                           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(dropdown.html) }}

@@ -80,6 +80,7 @@ export interface NestedContentLink {
  */
 export interface NestedContent {
   id: string
+  path?: string
   type?: string
   tittel?: string
   kortTittel?: string

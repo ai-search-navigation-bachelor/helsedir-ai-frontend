@@ -7,18 +7,21 @@ import { MenuDropdown } from "../ui/MenuDropdown";
 
 import { IoSearch, IoMenu, IoClose } from "react-icons/io5";
 
-export function AppHeader() {
+type AppHeaderProps = {
+  searchVisible?: boolean;
+};
+
+export function AppHeader({ searchVisible = false }: AppHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <>
       <div
         className="relative w-full"
         style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}
       >
         <header>
           <div className="w-full box-border">
-            <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-6 box-border px-12 py-12">
+            <div className={`w-full max-w-7xl mx-auto flex items-center justify-between gap-6 box-border px-12 pt-10 ${searchVisible ? "pb-5" : "pb-10"}`}>
               <Link
                 to="/"
                 aria-label="Helsedirektoratet"
@@ -71,6 +74,5 @@ export function AppHeader() {
           </div>
         </header>
       </div>
-    </>
   );
 }
