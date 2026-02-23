@@ -22,7 +22,7 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
       >
         <header>
           <div className="w-full box-border">
-            <div className={`w-full max-w-7xl mx-auto flex items-center justify-between gap-6 box-border px-12 pt-12 ${searchVisible ? "pb-6" : "pb-12"}`}>
+            <div className={`w-full max-w-7xl mx-auto flex items-center justify-between gap-6 box-border px-12 pt-10 ${searchVisible ? "pb-5" : "pb-10"}`}>
               <Link
                 to="/"
                 aria-label="Helsedirektoratet"

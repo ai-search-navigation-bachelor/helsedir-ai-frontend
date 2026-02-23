@@ -4,12 +4,22 @@ import { CategoryButtons } from '../components/ui/CategoryButtons'
 export function Home() {
   return (
     <>
-      <section className="w-full max-w-screen-xl mx-auto px-12 py-9">
-        <h2 className="text-xl font-semibold text-gray-700 mb-6 font-title">Utforsk etter tema</h2>
+      <section className="w-full max-w-screen-xl mx-auto px-12 pt-8 pb-6">
+        <h2
+          className="font-title mb-5"
+          style={{ fontSize: '1.15rem', fontWeight: 600, color: '#334155', letterSpacing: '-0.01em' }}
+        >
+          Utforsk etter tema
+        </h2>
         <CategoryButtons />
       </section>
       <section className="w-full max-w-screen-xl mx-auto px-12 pb-12">
-        <h2 className="text-xl font-semibold text-gray-700 mb-6 font-title">Nyttige ressurser</h2>
+        <h2
+          className="font-title mb-5"
+          style={{ fontSize: '1.15rem', fontWeight: 600, color: '#334155', letterSpacing: '-0.01em' }}
+        >
+          Nyttige ressurser
+        </h2>
         <div className="flex flex-col gap-3">
           <a
             href="https://www.helsenorge.no"

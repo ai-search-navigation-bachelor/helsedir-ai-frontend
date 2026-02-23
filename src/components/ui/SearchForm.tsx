@@ -100,15 +100,16 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
     const hasQuery = query.trim().length > 0
 
     return (
-      <div style={{ backgroundColor: colors.headerBg }}>
-        <div className="max-w-7xl mx-auto px-12 pt-4 pb-10">
+      <div className="bg-gradient-to-b from-[#e6f2f6] to-[#f8fcfd]">
+        <div className="max-w-7xl mx-auto px-12 pt-2 pb-8">
           <label
             htmlFor={inputId}
-            className="block mb-3 font-title text-gray-900"
+            className="block mb-3 font-title"
             style={{
-              fontSize: '1.05rem',
+              fontSize: '1.1rem',
               fontWeight: 600,
               letterSpacing: '-0.01em',
+              color: '#1a3c4a',
             }}
           >
             Hva leter du etter?
