@@ -1,6 +1,6 @@
 import { useId, useRef, useState, useEffect, useCallback, forwardRef } from 'react'
 import { IoSearch, IoClose } from 'react-icons/io5'
-import { ds, colors } from '../../styles/dsTokens'
+import { ds } from '../../styles/dsTokens'
 import { useSearchSuggestionsQuery } from '../../hooks/queries/useSearchSuggestionsQuery'
 import { SearchSuggestions } from './SearchSuggestions'
 /**

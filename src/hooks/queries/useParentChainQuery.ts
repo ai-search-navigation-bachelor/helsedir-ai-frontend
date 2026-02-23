@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { getContent } from '../../api'
+import { getContent, fetchHelsedirContent } from '../../api'
+import type { HelselinkContent } from '../../api'
 import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
 import { buildContentUrl } from '../../lib/contentUrl'
 import { extractTemasideInfo } from '../../lib/content/breadcrumbUtils'
@@ -25,6 +26,24 @@ function hasForelderLink(content?: ContentDetail): boolean {
   return Boolean(content?.links?.some((link) => link.rel === 'forelder'))
 }
 
+/** Convert a HelselinkContent (Helsedir API) response into a minimal ContentDetail. */
+function helsedirToContentDetail(hc: HelselinkContent): ContentDetail {
+  return {
+    id: hc.id,
+    title: hc.tittel,
+    body: '',
+    content_type: hc.type ?? '',
+    links: hc.lenker?.map((l) => ({
+      rel: l.rel,
+      type: l.type ?? '',
+      tittel: l.tittel ?? '',
+      href: l.href ?? null,
+      id: l.strukturId ?? null,
+      path: null,
+    })),
+  }
+}
+
 async function fetchParentChain(
   signal: AbortSignal,
   content: ContentDetail,
@@ -32,7 +51,8 @@ async function fetchParentChain(
 ): Promise<ParentChainResult> {
   const chain: ParentChainEntry[] = []
   const visited = new Set<string>()
-  let current = content
+  let current: ContentDetail = content
+  let childPath = content.path ?? null
 
   // Collect temaside info: prefer from root parent, fall back to current content
   let temaside: TemasideInfo | null = extractTemasideInfo(content.links)
@@ -46,19 +66,35 @@ async function fetchParentChain(
 
     visited.add(parentId)
 
-    let parent: ContentDetail
+    let parent: ContentDetail | null = null
     try {
       parent = await getContent(parentId, searchId, { signal, suppressErrorStatuses: [404] })
     } catch (error) {
       // Rethrow abort errors so React Query handles cancellation
       if (error instanceof DOMException && error.name === 'AbortError') throw error
-      // Parent not found (404) or other error — stop climbing
-      break
+      // Backend failed — try Helsedir API directly as fallback
+      if (forelderLink.href) {
+        try {
+          parent = helsedirToContentDetail(await fetchHelsedirContent(forelderLink.href, signal))
+        } catch (fallbackError) {
+          if (fallbackError instanceof DOMException && fallbackError.name === 'AbortError')
+            throw fallbackError
+          // Both failed, parent stays null
+        }
+      }
     }
 
-    const href = parent.path
-      ? buildContentUrl({ path: parent.path, id: parent.id })
-      : `/content/${parent.id}`
+    if (!parent) break
+
+    // Derive href: prefer parent's own path, then derive from child's path
+    let href: string
+    if (parent.path) {
+      href = buildContentUrl({ path: parent.path, id: parent.id })
+    } else if (childPath) {
+      href = childPath.replace(/\/[^/]+$/, '') || `/content/${parent.id}`
+    } else {
+      href = `/content/${parent.id}`
+    }
 
     chain.unshift({
       id: parent.id,
@@ -72,6 +108,8 @@ async function fetchParentChain(
       temaside = parentTemaside
     }
 
+    // Move up: track derived path for next iteration
+    childPath = parent.path ?? (childPath ? childPath.replace(/\/[^/]+$/, '') : null)
     current = parent
   }
 
