@@ -22,6 +22,11 @@ export interface ParentChainResult {
 
 const MAX_DEPTH = 10
 
+/** Strip the last path segment (e.g. "/a/b/c" → "/a/b"). Returns empty string for single-segment paths. */
+function stripLastPathSegment(path: string): string {
+  return path.replace(/\/[^/]+$/, '')
+}
+
 function hasForelderLink(content?: ContentDetail): boolean {
   return Boolean(content?.links?.some((link) => link.rel === 'forelder'))
 }
@@ -91,7 +96,7 @@ async function fetchParentChain(
     if (parent.path) {
       href = buildContentUrl({ path: parent.path, id: parent.id })
     } else if (childPath) {
-      href = childPath.replace(/\/[^/]+$/, '') || `/content/${parent.id}`
+      href = stripLastPathSegment(childPath) || `/content/${parent.id}`
     } else {
       href = `/content/${parent.id}`
     }
@@ -109,7 +114,7 @@ async function fetchParentChain(
     }
 
     // Move up: track derived path for next iteration
-    childPath = parent.path ?? (childPath ? childPath.replace(/\/[^/]+$/, '') : null)
+    childPath = parent.path ?? (childPath ? stripLastPathSegment(childPath) : null)
     current = parent
   }
 
@@ -123,6 +128,6 @@ export function useParentChainQuery(content?: ContentDetail, searchId?: string) 
     queryKey: ['parentChain', content?.id, searchId],
     queryFn: ({ signal }) => fetchParentChain(signal, content!, searchId),
     enabled: enabled && Boolean(content),
-    staleTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   })
 }
