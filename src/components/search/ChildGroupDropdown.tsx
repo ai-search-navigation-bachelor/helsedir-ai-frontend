@@ -73,8 +73,6 @@ export function ChildGroupDropdown({
       const target = event.target as Node | null;
       if (!target) return;
       if (cardRef.current?.contains(target)) return;
-      event.preventDefault();
-      event.stopPropagation();
       setPinnedChildGroupKey(null);
     };
 
