@@ -15,7 +15,6 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <>
       <div
         className="relative w-full"
         style={{ backgroundColor: colors.headerBg, color: colors.headerFg }}
@@ -75,6 +74,5 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
           </div>
         </header>
       </div>
-    </>
   );
 }
