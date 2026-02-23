@@ -20,7 +20,47 @@ import {
   buildContextualNavigationLinks,
   LINK_LABEL_BY_REL,
   type ContentSection,
+  type VurderingSection,
 } from './detailContentModel'
+
+function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
+  if (!vurdering) return null
+  const showTradeoffs = hasVisibleContent(vurdering.tradeoffs)
+  const showPreferences = hasVisibleContent(vurdering.preferences)
+  if (!showTradeoffs && !showPreferences) return null
+
+  return (
+    <details className="mt-6 border-t border-slate-200">
+      <summary className="cursor-pointer py-3 text-base font-semibold text-slate-700 hover:text-slate-900">
+        Vurdering
+      </summary>
+      <div className="space-y-6 pt-2">
+        {showTradeoffs && (
+          <div>
+            <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
+              Fordeler og ulemper
+            </Heading>
+            <div
+              className="content-html text-base leading-7 text-slate-800"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vurdering.tradeoffs) }}
+            />
+          </div>
+        )}
+        {showPreferences && (
+          <div>
+            <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
+              Verdier og preferanser
+            </Heading>
+            <div
+              className="content-html text-base leading-7 text-slate-800"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vurdering.preferences) }}
+            />
+          </div>
+        )}
+      </div>
+    </details>
+  )
+}
 
 interface DetailContentDisplayProps extends ContentDisplayProps {
   typeLabelOverride?: string
@@ -306,37 +346,7 @@ export function DetailContentDisplay({
                 className="content-html text-base leading-7 text-slate-800"
                 dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.html) }}
               />
-              {section.vurdering && (hasVisibleContent(section.vurdering.tradeoffs) || hasVisibleContent(section.vurdering.preferences)) && (
-                <details className="mt-6 border-t border-slate-200">
-                  <summary className="cursor-pointer py-3 text-base font-semibold text-slate-700 hover:text-slate-900">
-                    Vurdering
-                  </summary>
-                  <div className="space-y-6 pt-2">
-                    {hasVisibleContent(section.vurdering.tradeoffs) && (
-                      <div>
-                        <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
-                          Fordeler og ulemper
-                        </Heading>
-                        <div
-                          className="content-html text-base leading-7 text-slate-800"
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.vurdering.tradeoffs) }}
-                        />
-                      </div>
-                    )}
-                    {hasVisibleContent(section.vurdering.preferences) && (
-                      <div>
-                        <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
-                          Verdier og preferanser
-                        </Heading>
-                        <div
-                          className="content-html text-base leading-7 text-slate-800"
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.vurdering.preferences) }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </details>
-              )}
+              <VurderingDetails vurdering={section.vurdering} />
               {section.appendedDropdowns && section.appendedDropdowns.length > 0 && (
                 <div className="mt-6 border-t border-slate-200">
                   {section.appendedDropdowns.map((dropdown) => (
@@ -349,37 +359,7 @@ export function DetailContentDisplay({
                           className="content-html text-base leading-7 text-slate-800"
                           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(dropdown.html) }}
                         />
-                        {dropdown.vurdering && (hasVisibleContent(dropdown.vurdering.tradeoffs) || hasVisibleContent(dropdown.vurdering.preferences)) && (
-                          <details className="mt-6 border-t border-slate-200">
-                            <summary className="cursor-pointer py-3 text-base font-semibold text-slate-700 hover:text-slate-900">
-                              Vurdering
-                            </summary>
-                            <div className="space-y-6 pt-2">
-                              {hasVisibleContent(dropdown.vurdering.tradeoffs) && (
-                                <div>
-                                  <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
-                                    Fordeler og ulemper
-                                  </Heading>
-                                  <div
-                                    className="content-html text-base leading-7 text-slate-800"
-                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(dropdown.vurdering.tradeoffs) }}
-                                  />
-                                </div>
-                              )}
-                              {hasVisibleContent(dropdown.vurdering.preferences) && (
-                                <div>
-                                  <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
-                                    Verdier og preferanser
-                                  </Heading>
-                                  <div
-                                    className="content-html text-base leading-7 text-slate-800"
-                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(dropdown.vurdering.preferences) }}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </details>
-                        )}
+                        <VurderingDetails vurdering={dropdown.vurdering} />
                       </div>
                     </details>
                   ))}
