@@ -54,7 +54,7 @@ function AppLayoutInner({ isHome, isSearchPinnedOpen }: AppLayoutInnerProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <SkipLink href='#main-content'>Hopp til hovedinnhold</SkipLink>
-      <AppHeader />
+      <AppHeader searchVisible={isSearchVisible} />
       {isSearchVisible && <SearchShell />}
       {!isHome && (
         <main id='main-content' style={{ overflow: 'visible', flex: 1 }}>
