@@ -58,7 +58,7 @@ export function PageContent({
           <button
             type="button"
             onClick={() => onSelectPage(activePage.id, undefined, true)}
-            className="group m-0 w-full rounded-lg border-0 bg-transparent px-3 py-2 text-left cursor-pointer transition-colors hover:bg-slate-100"
+            className="group -mx-2 -my-1 w-[calc(100%+1rem)] rounded-lg border-0 bg-transparent px-2 py-1 text-left cursor-pointer transition-colors hover:bg-slate-100"
           >
             <Heading level={headingLevel} data-size={headingSize} className="font-title transition-colors group-hover:text-[#025169]" style={{ marginBottom: 0 }}>
               {activePage.numbering && (
