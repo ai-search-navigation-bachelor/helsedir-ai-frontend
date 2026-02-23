@@ -284,17 +284,11 @@ export function HierarchicalContentDisplay({
       updateHistorySection(pageId, false)
     }
 
-    setExpandedIds((prev) => {
-      const next = new Set(prev)
+    setExpandedIds(() => {
       const ancestorIds = getAncestorIds(pageTree.pagesById, pageId)
-      ancestorIds.forEach((id) => next.add(id))
+      const next = new Set(ancestorIds)
       if (page.childrenIds.length > 0) {
-        // Toggle: collapse if already expanded, expand if not
-        if (prev.has(pageId)) {
-          next.delete(pageId)
-        } else {
-          next.add(pageId)
-        }
+        next.add(pageId)
       }
       return next
     })
