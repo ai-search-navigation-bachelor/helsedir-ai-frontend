@@ -8,21 +8,24 @@ import { SearchPageLoadingSkeleton } from '../components/search/SearchSkeletons'
 import { useSearchPageModel } from '../hooks/useSearchPageModel'
 
 /**
- * Search page with tab-based navigation across main categories.
+ * Search page with tab-based navigation and infinite scroll.
  */
 export function SearchPage() {
   const {
     activeTab,
     activeTabLabel,
-    data,
+    allResults,
     error,
+    fetchNextPage,
     handleTabChange,
+    hasNextPage,
     hasQuery,
+    isFetchingNextPage,
     isLoading,
     mainCategoryCounts,
     searchQuery,
-    sortedResults,
     tabs,
+    total,
   } = useSearchPageModel()
 
   if (!hasQuery) {
@@ -39,7 +42,7 @@ export function SearchPage() {
         </Alert>
       )}
 
-      {!isLoading && !error && data && (
+      {!isLoading && !error && allResults && (
         <>
           <SearchCategoryTabs
             activeTab={activeTab}
@@ -49,10 +52,14 @@ export function SearchPage() {
           />
 
           <SearchResultsList
-            results={sortedResults}
+            results={allResults}
             searchQuery={searchQuery}
             activeTab={activeTab}
             activeTabLabel={activeTabLabel}
+            total={total}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={fetchNextPage}
           />
         </>
       )}
