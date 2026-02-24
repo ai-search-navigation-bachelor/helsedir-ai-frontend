@@ -92,10 +92,26 @@ export function useSearchPageModel() {
   // Compute search_id synchronously: only use stored search_id if query matches.
   // This prevents sending a stale search_id for new searches (backend must generate new).
   const trimmedQuery = searchQuery.trim()
+
+  // Persist category counts across tab switches so we can skip empty categories
+  const knownCountsRef = useRef<Record<string, number>>({})
+  const knownCountsQueryRef = useRef<string>('')
+
+  // Reset counts when the search query changes
+  if (trimmedQuery !== knownCountsQueryRef.current) {
+    knownCountsRef.current = {}
+    knownCountsQueryRef.current = trimmedQuery
+  }
   const effectiveSearchId =
     trimmedQuery && trimmedQuery === searchQueryFromStore
       ? searchIdFromStore || undefined
       : undefined
+
+  // Skip API call if we already know this category has 0 results
+  const categoryKnownEmpty =
+    activeTab !== 'all' &&
+    Object.keys(knownCountsRef.current).length > 0 &&
+    (knownCountsRef.current[activeTab] || 0) === 0
 
   const {
     data,
@@ -105,7 +121,7 @@ export function useSearchPageModel() {
     hasNextPage,
     isFetchingNextPage,
   } = useSearchInfiniteQuery(searchQuery, {
-    enabled: hasQuery,
+    enabled: hasQuery && !categoryKnownEmpty,
     category: apiCategory,
     search_id: effectiveSearchId,
   })
@@ -178,6 +194,17 @@ export function useSearchPageModel() {
     [categoryCounts],
   )
 
+  // Update persisted counts when we get real data (typically from the "all" tab)
+  if (Object.keys(mainCategoryCounts).length > 0 && mainCategoryCounts.all > 0) {
+    knownCountsRef.current = mainCategoryCounts
+  }
+
+  // Use persisted counts when the current query has no data (e.g. disabled for empty category)
+  const stableMainCategoryCounts =
+    Object.keys(mainCategoryCounts).length > 0 && mainCategoryCounts.all > 0
+      ? mainCategoryCounts
+      : knownCountsRef.current
+
   const tabs = useMemo(() => buildTabs(), [])
   const activeTabLabel = useMemo(
     () => getActiveTabLabel(activeTab, SEARCH_SUBCATEGORY_LABELS),
@@ -233,7 +260,7 @@ export function useSearchPageModel() {
     hasQuery,
     isFetchingNextPage,
     isLoading,
-    mainCategoryCounts,
+    mainCategoryCounts: stableMainCategoryCounts,
     searchQuery,
     tabs,
     total,
