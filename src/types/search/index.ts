@@ -72,6 +72,7 @@ export interface SearchResponse {
   has_next: boolean
   has_prev: boolean
   results: SearchResult[]
+  category_counts: Record<string, number>
 }
 
 /**
