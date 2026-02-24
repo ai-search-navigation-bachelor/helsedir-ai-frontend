@@ -20,6 +20,7 @@ export interface SearchOptions extends BaseRequestOptions {
   limit?: number
   search_id?: string
   category?: string
+  log?: boolean
 }
 
 /**
@@ -44,7 +45,7 @@ function emptySearchResponse(): SearchResponse {
  */
 export async function search(
   query: string,
-  { signal, offset = 0, limit = 15, role, search_id, category }: SearchOptions = {},
+  { signal, offset = 0, limit = 15, role, search_id, category, log }: SearchOptions = {},
 ): Promise<SearchResponse> {
   const trimmed = query.trim()
 
@@ -59,6 +60,7 @@ export async function search(
     role,
     search_id,
     category,
+    log,
   })
 
   return httpRequest<SearchResponse>(url, { signal })

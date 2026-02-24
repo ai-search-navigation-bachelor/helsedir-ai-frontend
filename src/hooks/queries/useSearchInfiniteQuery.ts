@@ -71,6 +71,7 @@ export function prefetchCategorySearch(
         category,
         search_id: searchId,
         role,
+        log: false,
       })
     },
     initialPageParam: { offset: 0, searchId } as {
