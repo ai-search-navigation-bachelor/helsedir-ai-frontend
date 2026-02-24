@@ -1,6 +1,6 @@
 import { useId, useRef, useState, useEffect, useCallback, forwardRef } from 'react'
 import { IoSearch, IoClose } from 'react-icons/io5'
-import { ds, colors } from '../../styles/dsTokens'
+import { ds } from '../../styles/dsTokens'
 import { useSearchSuggestionsQuery } from '../../hooks/queries/useSearchSuggestionsQuery'
 import { SearchSuggestions } from './SearchSuggestions'
 /**
@@ -100,15 +100,16 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
     const hasQuery = query.trim().length > 0
 
     return (
-      <div style={{ backgroundColor: colors.headerBg }}>
-        <div className="max-w-7xl mx-auto px-12 pt-4 pb-10">
+      <div className="bg-gradient-to-b from-[#e6f2f6] to-[#f8fcfd]">
+        <div className="max-w-7xl mx-auto px-12 pt-2 pb-8">
           <label
             htmlFor={inputId}
-            className="block mb-3 font-title text-gray-900"
+            className="block mb-3 font-title"
             style={{
-              fontSize: '1.05rem',
+              fontSize: '1.1rem',
               fontWeight: 600,
               letterSpacing: '-0.01em',
+              color: ds.color('logobla-1', 'text-default'),
             }}
           >
             Hva leter du etter?
@@ -117,15 +118,17 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
           <form ref={formRef} onSubmit={handleSubmit}>
             <div ref={wrapperRef} className="relative">
               <div
-                className="flex items-center bg-white overflow-hidden transition-all"
+                className="flex items-center bg-white transition-all"
                 style={{
                   borderRadius: '12px',
                   border: isFocused
                     ? `2px solid ${ds.color('logobla-2', 'base-default')}`
-                    : '2px solid transparent',
+                    : `2px solid ${ds.color('logobla-1', 'border-subtle')}`,
                   boxShadow: isFocused
-                    ? '0 0 0 3px rgba(4, 127, 164, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04)'
-                    : '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
+                    ? `0 0 0 3px color-mix(in srgb, ${ds.color('logobla-2', 'base-default')} 12%, transparent)`
+                    : 'none',
+                  // GPU compositing hint; the suggestions dropdown is intentionally contained within this stacking context
+                  transform: 'translateZ(0)',
                 }}
               >
                 <input

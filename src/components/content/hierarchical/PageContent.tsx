@@ -1,8 +1,9 @@
 import DOMPurify from 'dompurify'
+import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { HiArrowRight } from 'react-icons/hi2'
 import type { PageNode } from './types'
-import { hasVisibleContent } from './treeUtils'
+import { hasVisibleContent, getNodeTitle } from './treeUtils'
 import { ExpandableSubcontent } from './ExpandableSubcontent'
 import { ExpandableLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
@@ -10,10 +11,12 @@ import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../detail/documentU
 interface PageContentProps {
   activePage: PageNode
   pagesById: Map<string, PageNode>
-  onSelectPage: (pageId: string) => void
+  onSelectPage: (pageId: string, expandableId?: string, scrollTo?: boolean) => void
   previousPage?: PageNode
   nextPage?: PageNode
   isLoadingExpandable?: boolean
+  isOverview?: boolean
+  autoOpenExpandableId?: string | null
 }
 
 export function PageContent({
@@ -23,6 +26,8 @@ export function PageContent({
   previousPage,
   nextPage,
   isLoadingExpandable = false,
+  isOverview = false,
+  autoOpenExpandableId = null,
 }: PageContentProps) {
   const hasIntro = hasVisibleContent(activePage.node.intro)
   const hasBody = hasVisibleContent(activePage.node.tekst || activePage.node.body)
@@ -42,17 +47,34 @@ export function PageContent({
     ? documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
     : documentLinks
   const primaryDocument = visibleDocumentLinks[0]
-  const showChildNavigation = !hasIntro && !hasBody && activePage.childrenIds.length > 0
+  const showChildNavigation = !isOverview && !hasIntro && !hasBody && activePage.childrenIds.length > 0
+  const headingLevel = isOverview ? Math.max(2, Math.min(2 + activePage.depth - 1, 5)) as 2 | 3 | 4 | 5 : 2
+  const headingSize = activePage.depth <= 1 ? 'md' : 'sm'
 
   return (
     <article>
-      <div className="mb-6">
-        <p className="m-0 mb-2 text-xs uppercase tracking-wide text-slate-500">
-          Side {activePage.numbering}
-        </p>
-        <Heading level={2} data-size="lg" className="font-title" style={{ marginBottom: 0 }}>
-          {activePage.title}
-        </Heading>
+      <div className={isOverview && activePage.depth > 1 ? 'mb-1' : 'mb-6'}>
+        {isOverview ? (
+          <button
+            type="button"
+            onClick={() => onSelectPage(activePage.id, undefined, true)}
+            className="group -mx-2 -my-1 w-[calc(100%+1rem)] rounded-lg border-0 bg-transparent px-2 py-1 text-left cursor-pointer transition-colors hover:bg-slate-100"
+          >
+            <Heading level={headingLevel} data-size={headingSize} className="font-title transition-colors group-hover:text-[#025169]" style={{ marginBottom: 0 }}>
+              {activePage.numbering && (
+                <span className="mr-2 transition-colors group-hover:text-[#025169]">{activePage.numbering}</span>
+              )}
+              {activePage.title}
+            </Heading>
+          </button>
+        ) : (
+          <Heading level={headingLevel} data-size={headingSize} className="font-title" style={{ marginBottom: 0 }}>
+            {activePage.numbering && (
+              <span className="mr-2 text-slate-800">{activePage.numbering}</span>
+            )}
+            {activePage.title}
+          </Heading>
+        )}
       </div>
 
       {hasIntro && (
@@ -139,17 +161,34 @@ export function PageContent({
       {isLoadingExpandable ? (
         <ExpandableLoadingSkeleton items={activePage.expandableChildren.length || 3} />
       ) : activePage.expandableChildren.length > 0 ? (
-        <section className="mt-4">
-          <div className="border-t border-slate-100">
+        isOverview ? (
+          <section className="mt-4 space-y-2">
+            {activePage.expandableChildren.map((item, index) => (
+              <button
+                key={`${activePage.id}-overview-${item.id || index}`}
+                type="button"
+                onClick={() => onSelectPage(activePage.id, item.id || undefined)}
+                className="group flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3.5 text-left cursor-pointer transition-all hover:border-[#025169]/30 hover:shadow-sm"
+              >
+                <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-colors group-hover:text-[#025169]" />
+                <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-[#025169]">
+                  {getNodeTitle(item)}
+                </span>
+              </button>
+            ))}
+          </section>
+        ) : (
+          <section className="mt-6 space-y-3">
             {activePage.expandableChildren.map((item, index) => (
               <ExpandableSubcontent
                 key={`${activePage.id}-rec-${item.id || index}`}
                 item={item}
                 itemKey={`${activePage.id}-rec-${item.id || index}`}
+                defaultOpen={Boolean(autoOpenExpandableId && item.id === autoOpenExpandableId)}
               />
             ))}
-          </div>
-        </section>
+          </section>
+        )
       ) : null}
 
       {/* Page navigation */}

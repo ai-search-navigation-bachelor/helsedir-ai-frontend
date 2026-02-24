@@ -17,18 +17,16 @@ export function AppLayout() {
   return (
     <AppLayoutInner
       key={layoutKey}
-      isHome={isHome}
       isSearchPinnedOpen={isSearchPinnedOpen}
     />
   )
 }
 
 type AppLayoutInnerProps = {
-  isHome: boolean
   isSearchPinnedOpen: boolean
 }
 
-function AppLayoutInner({ isHome, isSearchPinnedOpen }: AppLayoutInnerProps) {
+function AppLayoutInner({ isSearchPinnedOpen }: AppLayoutInnerProps) {
   const [isSearchVisible, setIsSearchVisible] = useState(isSearchPinnedOpen)
 
   useEffect(() => {
@@ -54,18 +52,11 @@ function AppLayoutInner({ isHome, isSearchPinnedOpen }: AppLayoutInnerProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <SkipLink href='#main-content'>Hopp til hovedinnhold</SkipLink>
-      <AppHeader />
+      <AppHeader searchVisible={isSearchVisible} />
       {isSearchVisible && <SearchShell />}
-      {!isHome && (
-        <main id='main-content' style={{ overflow: 'visible', flex: 1 }}>
-          <Outlet />
-        </main>
-      )}
-      {isHome && (
-        <main id='main-content' style={{ overflow: 'visible', flex: 1 }}>
-          <Outlet />
-        </main>
-      )}
+      <main id='main-content' style={{ overflow: 'visible', flex: 1 }}>
+        <Outlet />
+      </main>
       <AppFooter />
     </div>
   )
