@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -94,13 +94,14 @@ export function useSearchPageModel() {
   const trimmedQuery = searchQuery.trim()
 
   // Persist category counts across tab switches so we can skip empty categories
-  const knownCountsRef = useRef<Record<string, number>>({})
-  const knownCountsQueryRef = useRef<string>('')
+  const [knownCounts, setKnownCounts] = useState<Record<string, number>>({})
+  const [knownCountsQuery, setKnownCountsQuery] = useState('')
 
-  // Reset counts when the search query changes
-  if (trimmedQuery !== knownCountsQueryRef.current) {
-    knownCountsRef.current = {}
-    knownCountsQueryRef.current = trimmedQuery
+  // Reset counts when the search query changes (setState during render is the
+  // recommended React pattern for adjusting state based on changed props)
+  if (trimmedQuery !== knownCountsQuery) {
+    setKnownCounts({})
+    setKnownCountsQuery(trimmedQuery)
   }
   const effectiveSearchId =
     trimmedQuery && trimmedQuery === searchQueryFromStore
@@ -110,8 +111,8 @@ export function useSearchPageModel() {
   // Skip API call if we already know this category has 0 results
   const categoryKnownEmpty =
     activeTab !== 'all' &&
-    Object.keys(knownCountsRef.current).length > 0 &&
-    (knownCountsRef.current[activeTab] || 0) === 0
+    Object.keys(knownCounts).length > 0 &&
+    (knownCounts[activeTab] || 0) === 0
 
   const {
     data,
@@ -195,15 +196,13 @@ export function useSearchPageModel() {
   )
 
   // Update persisted counts when we get real data (typically from the "all" tab)
-  if (Object.keys(mainCategoryCounts).length > 0 && mainCategoryCounts.all > 0) {
-    knownCountsRef.current = mainCategoryCounts
+  const hasRealCounts = Object.keys(mainCategoryCounts).length > 0 && mainCategoryCounts.all > 0
+  if (hasRealCounts && knownCounts !== mainCategoryCounts) {
+    setKnownCounts(mainCategoryCounts)
   }
 
   // Use persisted counts when the current query has no data (e.g. disabled for empty category)
-  const stableMainCategoryCounts =
-    Object.keys(mainCategoryCounts).length > 0 && mainCategoryCounts.all > 0
-      ? mainCategoryCounts
-      : knownCountsRef.current
+  const stableMainCategoryCounts = hasRealCounts ? mainCategoryCounts : knownCounts
 
   const tabs = useMemo(() => buildTabs(), [])
   const activeTabLabel = useMemo(
