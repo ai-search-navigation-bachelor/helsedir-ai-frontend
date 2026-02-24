@@ -5,14 +5,10 @@
 
 // Search operations
 export {
-  searchCategorized,
-  searchCategory,
   search,
   fetchSearchSuggestions,
 } from './search'
 export type {
-  CategorizedSearchOptions,
-  CategorySearchOptions,
   SearchOptions,
 } from './search'
 

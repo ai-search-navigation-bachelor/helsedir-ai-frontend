@@ -1,5 +1,5 @@
-import { Alert, Paragraph } from "@digdir/designsystemet-react";
-import { useMemo } from "react";
+import { Alert, Paragraph, Spinner } from "@digdir/designsystemet-react";
+import { useEffect, useMemo, useRef } from "react";
 import { SearchResultCard } from "./SearchResultCard";
 import { useTemasidePathMap } from "../../hooks/queries/useTemasidePathMap";
 import type { SearchResult } from "../../types";
@@ -14,6 +14,10 @@ interface SearchResultsListProps {
   searchQuery: string;
   activeTab?: string;
   activeTabLabel?: string;
+  total?: number;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
 }
 
 export function SearchResultsList({
@@ -21,8 +25,13 @@ export function SearchResultsList({
   searchQuery,
   activeTab = "all",
   activeTabLabel,
+  total,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
 }: SearchResultsListProps) {
   const temasidePathById = useTemasidePathMap();
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const sourceTemasideByContentId = useMemo(() => {
     const map = new Map<string, string>();
@@ -48,11 +57,32 @@ export function SearchResultsList({
     return map;
   }, [results]);
 
+  // Infinite scroll: observe sentinel element
+  useEffect(() => {
+    if (!onLoadMore || !hasNextPage || isFetchingNextPage) return;
+
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [onLoadMore, hasNextPage, isFetchingNextPage]);
+
   const normalizedLabel = (activeTabLabel || "").trim().toLocaleLowerCase("nb-NO");
+  const displayCount = total ?? results.length;
   const resultsLabel =
     activeTab === "all" || !normalizedLabel
-      ? `${results.length} treff på ${searchQuery}`
-      : `${results.length} ${normalizedLabel} treff på ${searchQuery}`;
+      ? `${displayCount} treff på "${searchQuery}"`
+      : `${displayCount} ${normalizedLabel}-treff på "${searchQuery}"`;
 
   return (
     <>
@@ -79,6 +109,15 @@ export function SearchResultsList({
               temasidePathById={temasidePathById}
             />
           ))}
+
+          {/* Sentinel for infinite scroll */}
+          <div ref={sentinelRef} aria-hidden="true" />
+
+          {isFetchingNextPage && (
+            <div className="flex justify-center py-4">
+              <Spinner aria-label="Laster flere resultater" data-size="md" />
+            </div>
+          )}
         </div>
       )}
     </>
