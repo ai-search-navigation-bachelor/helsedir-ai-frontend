@@ -1,8 +1,13 @@
-import { useInfiniteQuery, type QueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query'
 import { search } from '../../api'
 import type { SearchResponse } from '../../types'
 
 export const PAGE_SIZE = 15
+
+interface SearchPageParam {
+  offset: number
+  searchId?: string
+}
 
 export interface UseSearchInfiniteQueryOptions {
   enabled?: boolean
@@ -15,7 +20,13 @@ export function useSearchInfiniteQuery(
   query: string,
   options?: UseSearchInfiniteQueryOptions,
 ) {
-  return useInfiniteQuery<SearchResponse, Error>({
+  return useInfiniteQuery<
+    SearchResponse,
+    Error,
+    InfiniteData<SearchResponse>,
+    readonly unknown[],
+    SearchPageParam
+  >({
     queryKey: [
       'search',
       query,
@@ -23,21 +34,16 @@ export function useSearchInfiniteQuery(
       options?.role,
     ],
     queryFn: async ({ signal, pageParam }) => {
-      const { offset, searchId } = pageParam as { offset: number; searchId?: string }
-
       return search(query, {
         signal,
-        offset,
+        offset: pageParam.offset,
         limit: PAGE_SIZE,
         role: options?.role,
         category: options?.category,
-        search_id: searchId || options?.search_id,
+        search_id: pageParam.searchId || options?.search_id,
       })
     },
-    initialPageParam: { offset: 0, searchId: options?.search_id } as {
-      offset: number
-      searchId?: string
-    },
+    initialPageParam: { offset: 0, searchId: options?.search_id },
     getNextPageParam: (lastPage) => {
       if (!lastPage.has_next) return undefined
 
@@ -61,7 +67,13 @@ export function prefetchCategorySearch(
   searchId: string,
   role?: string,
 ) {
-  return queryClient.prefetchInfiniteQuery<SearchResponse>({
+  return queryClient.prefetchInfiniteQuery<
+    SearchResponse,
+    Error,
+    InfiniteData<SearchResponse>,
+    readonly unknown[],
+    SearchPageParam
+  >({
     queryKey: ['search', query, category, role],
     queryFn: async ({ signal }) => {
       return search(query, {
@@ -74,9 +86,6 @@ export function prefetchCategorySearch(
         log: false,
       })
     },
-    initialPageParam: { offset: 0, searchId } as {
-      offset: number
-      searchId?: string
-    },
+    initialPageParam: { offset: 0, searchId },
   })
 }

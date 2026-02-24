@@ -34,33 +34,6 @@ export interface CategoryGroup {
 }
 
 /**
- * Categorized search response
- */
-export interface CategorizedSearchResponse {
-  query: string
-  total: number
-  min_score: number
-  search_id: string
-  priority_categories: CategoryGroup[]
-  other_categories: CategoryGroup[]
-}
-
-/**
- * Category search response
- */
-export interface CategorySearchResponse {
-  query: string
-  total: number
-  offset: number
-  limit: number
-  search_id: string
-  has_next: boolean
-  has_prev: boolean
-  results: SearchResult[]
-  category: string
-}
-
-/**
  * General search response
  */
 export interface SearchResponse {
