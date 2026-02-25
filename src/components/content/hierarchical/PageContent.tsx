@@ -143,10 +143,10 @@ export function PageContent({
                     onClick={() => onSelectPage(child.id)}
                     className="group flex w-full items-center gap-4 py-3.5 text-left border-0 bg-transparent cursor-pointer transition-colors hover:bg-[#f8fafc] focus-visible:outline-2 focus-visible:outline-[#025169] focus-visible:outline-offset-[-2px]"
                   >
-                    <span className="w-8 shrink-0 text-right text-xs font-semibold tabular-nums text-[#025169]">
+                    <span className="w-8 shrink-0 text-right text-sm font-bold tabular-nums text-[#025169]">
                       {child.numbering}
                     </span>
-                    <span className="min-w-0 break-words text-[0.9375rem] text-slate-700 transition-colors group-hover:text-[#025169]">
+                    <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-[#025169]">
                       {child.title}
                     </span>
                     <HiArrowRight className="ml-1 h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-[#025169]" />
