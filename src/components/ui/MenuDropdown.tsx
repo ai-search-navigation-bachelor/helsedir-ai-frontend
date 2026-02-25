@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { HiArrowRight } from 'react-icons/hi2';
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider';
@@ -26,10 +27,25 @@ interface MenuDropdownProps {
 }
 
 export function MenuDropdown({ isOpen, onClose }: MenuDropdownProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-full right-0 mt-2 w-80 bg-white shadow-lg z-50 rounded-xl border border-gray-100 overflow-hidden">
+    <div ref={ref} className="absolute top-full right-0 mt-2 w-80 bg-white shadow-lg z-50 rounded-xl border border-gray-100 overflow-hidden">
       <nav className="px-2 py-2">
         {menuItems.map((item, index) => {
           const isLast = index === menuItems.length - 1;
