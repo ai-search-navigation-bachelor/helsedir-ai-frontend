@@ -151,7 +151,11 @@ export function ExpandableSubcontent({
       style={{ marginLeft: `${depth * 14}px` }}
       open={isOpen || undefined}
       data-expandable-id={item.id || undefined}
-      onToggle={(e) => setIsOpen((e.target as HTMLDetailsElement).open)}
+      onToggle={(e) => {
+        if (e.target === e.currentTarget) {
+          setIsOpen((e.target as HTMLDetailsElement).open)
+        }
+      }}
     >
       <summary className="cursor-pointer list-none rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open:rounded-b-none">
         <div className="flex items-center justify-between gap-4">
