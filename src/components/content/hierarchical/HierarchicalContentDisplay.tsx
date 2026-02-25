@@ -83,21 +83,35 @@ export function HierarchicalContentDisplay({
   })
 
   const pageTree = useMemo(() => buildPageTree(entries), [entries])
+
+  // Reverse lookup: content node ID → page tree ID
+  const contentIdToPageId = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const [pageId, page] of pageTree.pagesById) {
+      if (page.node?.id) map.set(page.node.id, pageId)
+    }
+    return map
+  }, [pageTree])
+
   const activePage = useMemo(() => {
     const asSelectable = (page?: ReturnType<typeof pageTree.pagesById.get>) =>
       page && !page.isPlaceholder ? page : undefined
 
-    const fromLocationState =
-      locationSectionId ? asSelectable(pageTree.pagesById.get(locationSectionId)) : undefined
+    const resolveById = (id: string | null) => {
+      if (!id) return undefined
+      // Try direct page tree ID first, then fall back to content node ID
+      return asSelectable(pageTree.pagesById.get(id))
+        ?? asSelectable(pageTree.pagesById.get(contentIdToPageId.get(id) ?? ''))
+    }
+
+    const fromLocationState = resolveById(locationSectionId)
     if (fromLocationState) return fromLocationState
 
-    const fromLegacyQuery = legacySectionId
-      ? asSelectable(pageTree.pagesById.get(legacySectionId))
-      : undefined
+    const fromLegacyQuery = resolveById(legacySectionId)
     if (fromLegacyQuery) return fromLegacyQuery
 
     return undefined
-  }, [legacySectionId, locationSectionId, pageTree])
+  }, [legacySectionId, locationSectionId, pageTree, contentIdToPageId])
   // Lazy-load content for stub pages (sub-chapters with no body/expandable content)
   const activeNodeId = activePage?.node?.id ?? null
   const isStubPage =

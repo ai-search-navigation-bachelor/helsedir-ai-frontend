@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { ContentDetail, ContentLink, LinkedContentGroup } from '../../../types/content'
+import { SEARCH_MAIN_CATEGORIES } from '../../../constants/categories'
 import { TemasideHeader } from './TemasideHeader'
 import { ContentSection } from './TemasideContentSection'
 import { ChildTemasideSection } from './TemasideChildSection'
@@ -9,6 +10,22 @@ interface TemasideContentDisplayProps {
 }
 
 const EMPTY_LINKED_CONTENT: readonly LinkedContentGroup[] = []
+
+/** Flat priority index for every subcategory – lower = shown first. */
+const INFO_TYPE_PRIORITY: Record<string, number> = Object.fromEntries(
+  SEARCH_MAIN_CATEGORIES.flatMap((cat, catIndex) =>
+    cat.subcategoryIds.map((subId, subIndex) => [subId, catIndex * 100 + subIndex]),
+  ),
+)
+
+function sortGroupsByPriority(groups: readonly LinkedContentGroup[]): LinkedContentGroup[] {
+  const fallback = SEARCH_MAIN_CATEGORIES.length * 100
+  return [...groups].sort((a, b) => {
+    const aPriority = INFO_TYPE_PRIORITY[a.info_type] ?? fallback
+    const bPriority = INFO_TYPE_PRIORITY[b.info_type] ?? fallback
+    return aPriority - bPriority
+  })
+}
 
 function getParentLink(content: ContentDetail) {
   return content.links?.find((l) => l.rel === 'forelder') ?? null
@@ -33,7 +50,10 @@ function EmptyState() {
 export function TemasideContentDisplay({ content }: TemasideContentDisplayProps) {
   const parentLink = useMemo(() => getParentLink(content), [content])
   const childTemasideLinks = useMemo(() => getChildTemasideLinks(content), [content])
-  const groups = content.linked_content ?? EMPTY_LINKED_CONTENT
+  const groups = useMemo(
+    () => sortGroupsByPriority(content.linked_content ?? EMPTY_LINKED_CONTENT),
+    [content.linked_content],
+  )
   const parentLabel = parentLink?.tittel ?? null
   const hasContent = groups.length > 0 || childTemasideLinks.length > 0
 

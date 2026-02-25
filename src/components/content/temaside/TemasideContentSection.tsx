@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom'
 import { HiArrowRight, HiChevronDown, HiChevronUp } from 'react-icons/hi2'
 import type { LinkedContentGroup, LinkedContentItem } from '../../../types/content'
 import { toContentTypeLabel } from '../../../constants/content'
+import { normalizeContentType } from '../../../constants/content'
 import { buildContentUrl } from '../../../lib/contentUrl'
 import { ds } from '../../../styles/dsTokens'
 import { getTemasideCategoryVisual } from './temasideCategoryVisuals'
 import { TintableSvgIcon } from './TintableSvgIcon'
+import { RetningslinjeChapters } from './RetningslinjeChapters'
 
 export const DEFAULT_VISIBLE_ITEMS = 5
 
@@ -33,6 +35,9 @@ export function SectionIcon({ infoType }: { infoType: string }) {
   )
 }
 
+const isRetningslinje = (infoType: string) =>
+  normalizeContentType(infoType) === 'retningslinje'
+
 function ContentRow({
   item,
   sourceTemasideId,
@@ -42,6 +47,8 @@ function ContentRow({
   sourceTemasideId: string
   sourceTemasideTitle: string
 }) {
+  const showChapters = isRetningslinje(item.info_type)
+
   return (
     <li className="border-b border-gray-100 last:border-0">
       <Link
@@ -66,6 +73,14 @@ function ContentRow({
           style={{ color: brandColor }}
         />
       </Link>
+      {showChapters && (
+        <RetningslinjeChapters
+          itemId={item.id}
+          itemPath={item.path}
+          sourceTemasideId={sourceTemasideId}
+          sourceTemasideTitle={sourceTemasideTitle}
+        />
+      )}
     </li>
   )
 }
