@@ -334,7 +334,18 @@ export function HierarchicalContentDisplay({
   useEffect(() => {
     if (!activePage || autoOpenExpandableId || !scrollOnNextPageChange.current) return
     scrollOnNextPageChange.current = false
-    contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+    const contentEl = contentRef.current
+    if (!contentEl) return
+
+    const rect = contentEl.getBoundingClientRect()
+    const topThreshold = 24
+
+    // Only auto-scroll if the user is already below the content panel top.
+    // Avoid scrolling downward when the content top is already visible lower in the viewport.
+    if (rect.top < -topThreshold) {
+      contentEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }, [activePage, autoOpenExpandableId])
 
   useEffect(() => {
