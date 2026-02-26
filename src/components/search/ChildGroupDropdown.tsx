@@ -11,6 +11,9 @@ import { IoArrowForward } from "react-icons/io5";
 import { buildContentUrl } from "../../lib/contentUrl";
 import type { SearchResultChildGroup } from "../../types";
 
+const MOBILE_MAX_WIDTH_PX = 767;
+const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_MAX_WIDTH_PX}px)`;
+
 interface ChildGroupDropdownProps {
   resultId: string;
   resultTitle: string;
@@ -48,7 +51,7 @@ export function ChildGroupDropdown({
   useLayoutEffect(() => {
     const activeKey = pinnedChildGroupKey ?? hoveredChildGroupKey;
     if (!activeKey) return;
-    if (window.matchMedia("(max-width: 767px)").matches) return;
+    if (window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
 
     const el = dropdownEls.current.get(activeKey);
     if (!el) return;
@@ -98,7 +101,7 @@ export function ChildGroupDropdown({
   // On mobile, close floating overlays when the user scrolls the page/content.
   useEffect(() => {
     if (!isAnyGroupOpen) return;
-    if (!window.matchMedia("(max-width: 767px)").matches) return;
+    if (!window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
 
     const handleScroll = (event: Event) => {
       const activeKey = pinnedChildGroupKey ?? hoveredChildGroupKey;

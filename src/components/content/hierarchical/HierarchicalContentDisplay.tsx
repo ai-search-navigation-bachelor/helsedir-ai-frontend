@@ -22,6 +22,8 @@ import {
 } from './treeUtils'
 import { fetchChapter } from '../../../lib/content/chapterFetch'
 
+const DESKTOP_LG_MEDIA_QUERY = '(min-width: 1024px)'
+
 function getSectionIdFromLocationState(state: unknown) {
   if (!state || typeof state !== 'object') return null
   const sectionId = (state as { sectionId?: unknown }).sectionId
@@ -52,6 +54,8 @@ export function HierarchicalContentDisplay({
   const mobileSidebarDialogRef = useRef<HTMLDivElement>(null)
   const mobileSidebarCloseButtonRef = useRef<HTMLButtonElement>(null)
   const previousFocusedElementRef = useRef<HTMLElement | null>(null)
+  const mobileSidebarDialogId = 'mobile-chapter-nav-dialog'
+  const mobileSidebarDialogTitleId = 'mobile-chapter-nav-dialog-title'
   const scrollOnNextPageChange = useRef(false)
   const sectionByContentId = useContentNavigationStore((state) => state.sectionByContentId)
   const setSectionForContent = useContentNavigationStore((state) => state.setSectionForContent)
@@ -355,6 +359,12 @@ export function HierarchicalContentDisplay({
   useEffect(() => {
     if (!isMobileSidebarOpen) return
 
+    const desktopMediaQuery = window.matchMedia(DESKTOP_LG_MEDIA_QUERY)
+    if (desktopMediaQuery.matches) {
+      setIsMobileSidebarOpen(false)
+      return
+    }
+
     previousFocusedElementRef.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null
 
@@ -416,6 +426,13 @@ export function HierarchicalContentDisplay({
     document.documentElement.style.overflow = 'hidden'
     window.addEventListener('keydown', handleKeyDown)
 
+    const handleDesktopBreakpointChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setIsMobileSidebarOpen(false)
+      }
+    }
+    desktopMediaQuery.addEventListener('change', handleDesktopBreakpointChange)
+
     const focusTimer = window.setTimeout(() => {
       mobileSidebarCloseButtonRef.current?.focus()
     }, 0)
@@ -425,6 +442,7 @@ export function HierarchicalContentDisplay({
       document.body.style.overflow = previousBodyOverflow
       document.documentElement.style.overflow = previousHtmlOverflow
       window.removeEventListener('keydown', handleKeyDown)
+      desktopMediaQuery.removeEventListener('change', handleDesktopBreakpointChange)
 
       const previousFocused = previousFocusedElementRef.current
       if (previousFocused && previousFocused.isConnected) {
@@ -559,7 +577,7 @@ export function HierarchicalContentDisplay({
                 className="mb-4 flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:bg-slate-50 lg:hidden"
                 aria-haspopup="dialog"
                 aria-expanded={isMobileSidebarOpen}
-                aria-controls="mobile-chapter-nav-dialog"
+                aria-controls={mobileSidebarDialogId}
               >
                 <span className="min-w-0">
                   <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-400">
@@ -583,11 +601,11 @@ export function HierarchicalContentDisplay({
                   style={{ touchAction: 'none' }}
                 >
                   <div
-                    id="mobile-chapter-nav-dialog"
+                    id={mobileSidebarDialogId}
                     ref={mobileSidebarDialogRef}
                     role="dialog"
                     aria-modal="true"
-                    aria-label="Kapittelnavigasjon"
+                    aria-labelledby={mobileSidebarDialogTitleId}
                     tabIndex={-1}
                     className="mx-auto flex h-full w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
                     onClick={(event) => event.stopPropagation()}
@@ -598,7 +616,7 @@ export function HierarchicalContentDisplay({
                         <p className="m-0 text-xs font-medium uppercase tracking-wide text-slate-400">
                           Navigasjon
                         </p>
-                        <p className="m-0 truncate text-sm font-semibold text-slate-900">
+                        <p id={mobileSidebarDialogTitleId} className="m-0 truncate text-sm font-semibold text-slate-900">
                           Kapittelliste
                         </p>
                       </div>
