@@ -101,7 +101,7 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
 
     return (
       <div className="bg-gradient-to-b from-[#e6f2f6] to-[#f8fcfd]">
-        <div className="max-w-7xl mx-auto px-12 pt-2 pb-8">
+        <div className="mx-auto max-w-7xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">
           <label
             htmlFor={inputId}
             className="block mb-3 font-title"

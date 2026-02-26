@@ -21,7 +21,7 @@ export function CategoryLandingPage({ group }: CategoryLandingPageProps) {
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-12 pt-8 pb-12">
+    <div className="mx-auto max-w-screen-xl px-4 pt-8 pb-12 sm:px-6 lg:px-12">
       <Heading level={1} data-size="xl" style={{ marginBottom: '0.5rem' }}>
         {group.label}
       </Heading>

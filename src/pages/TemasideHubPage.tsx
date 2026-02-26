@@ -41,7 +41,7 @@ export function TemasideHubPage({ categorySlugOverride }: TemasideHubPageProps =
 
   if (isLoading) {
     return (
-      <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-10">
+      <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-10 sm:px-6 lg:px-12">
         {breadcrumbItems && breadcrumbItems.length > 0 && <Breadcrumb items={breadcrumbItems} />}
         <TemasideHubLoadingSkeleton />
       </div>
@@ -69,7 +69,7 @@ export function TemasideHubPage({ categorySlugOverride }: TemasideHubPageProps =
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-10">
+    <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-10 sm:px-6 lg:px-12">
       <Breadcrumb items={breadcrumbItems} />
 
       <header className="rounded-2xl bg-white ring-1 ring-gray-100 shadow-sm px-6 py-6 mb-6">
