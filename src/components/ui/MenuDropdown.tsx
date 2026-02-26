@@ -45,7 +45,7 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, containerRef]);
 
   if (!isOpen) return null;
 

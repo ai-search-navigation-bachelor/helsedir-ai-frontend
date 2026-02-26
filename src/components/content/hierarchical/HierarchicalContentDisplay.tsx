@@ -49,6 +49,9 @@ export function HierarchicalContentDisplay({
   const [autoOpenExpandableId, setAutoOpenExpandableId] = useState<string | null>(null)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const contentRef = useRef<HTMLElement>(null)
+  const mobileSidebarDialogRef = useRef<HTMLDivElement>(null)
+  const mobileSidebarCloseButtonRef = useRef<HTMLButtonElement>(null)
+  const previousFocusedElementRef = useRef<HTMLElement | null>(null)
   const scrollOnNextPageChange = useRef(false)
   const sectionByContentId = useContentNavigationStore((state) => state.sectionByContentId)
   const setSectionForContent = useContentNavigationStore((state) => state.setSectionForContent)
@@ -296,7 +299,7 @@ export function HierarchicalContentDisplay({
     setIsMobileSidebarOpen(false)
   }, [])
 
-  const handleSelectPage = (pageId: string, expandableId?: string, scrollTo?: boolean) => {
+  const handleSelectPage = useCallback((pageId: string, expandableId?: string, scrollTo?: boolean) => {
     const page = pageTree.pagesById.get(pageId)
     if (!page || page.isPlaceholder) return
 
@@ -315,7 +318,14 @@ export function HierarchicalContentDisplay({
       }
       return next
     })
-  }
+  }, [
+    content.id,
+    hasLegacySectionParam,
+    locationSectionId,
+    pageTree.pagesById,
+    setSectionForContent,
+    updateHistorySection,
+  ])
 
   const handleMobileSelectPage = useCallback(
     (pageId: string) => {
@@ -345,9 +355,58 @@ export function HierarchicalContentDisplay({
   useEffect(() => {
     if (!isMobileSidebarOpen) return
 
+    previousFocusedElementRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+
+    const getFocusableElements = () => {
+      const dialog = mobileSidebarDialogRef.current
+      if (!dialog) return [] as HTMLElement[]
+
+      const elements = dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+
+      return Array.from(elements).filter((element) => {
+        if (element.hasAttribute('disabled')) return false
+        if (element.getAttribute('aria-hidden') === 'true') return false
+        return element.offsetParent !== null || element === document.activeElement
+      })
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsMobileSidebarOpen(false)
+        return
+      }
+
+      if (event.key !== 'Tab') return
+
+      const dialog = mobileSidebarDialogRef.current
+      if (!dialog) return
+
+      const focusable = getFocusableElements()
+      if (focusable.length === 0) {
+        event.preventDefault()
+        dialog.focus()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+      const activeInsideDialog = active instanceof Node && dialog.contains(active)
+
+      if (event.shiftKey) {
+        if (!activeInsideDialog || active === first) {
+          event.preventDefault()
+          last.focus()
+        }
+        return
+      }
+
+      if (!activeInsideDialog || active === last) {
+        event.preventDefault()
+        first.focus()
       }
     }
 
@@ -357,10 +416,21 @@ export function HierarchicalContentDisplay({
     document.documentElement.style.overflow = 'hidden'
     window.addEventListener('keydown', handleKeyDown)
 
+    const focusTimer = window.setTimeout(() => {
+      mobileSidebarCloseButtonRef.current?.focus()
+    }, 0)
+
     return () => {
+      window.clearTimeout(focusTimer)
       document.body.style.overflow = previousBodyOverflow
       document.documentElement.style.overflow = previousHtmlOverflow
       window.removeEventListener('keydown', handleKeyDown)
+
+      const previousFocused = previousFocusedElementRef.current
+      if (previousFocused && previousFocused.isConnected) {
+        previousFocused.focus()
+      }
+      previousFocusedElementRef.current = null
     }
   }, [isMobileSidebarOpen])
 
@@ -514,9 +584,11 @@ export function HierarchicalContentDisplay({
                 >
                   <div
                     id="mobile-chapter-nav-dialog"
+                    ref={mobileSidebarDialogRef}
                     role="dialog"
                     aria-modal="true"
                     aria-label="Kapittelnavigasjon"
+                    tabIndex={-1}
                     className="mx-auto flex h-full w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
                     onClick={(event) => event.stopPropagation()}
                     style={{ touchAction: 'pan-y' }}
@@ -531,6 +603,7 @@ export function HierarchicalContentDisplay({
                         </p>
                       </div>
                       <button
+                        ref={mobileSidebarCloseButtonRef}
                         type="button"
                         onClick={() => setIsMobileSidebarOpen(false)}
                         className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"

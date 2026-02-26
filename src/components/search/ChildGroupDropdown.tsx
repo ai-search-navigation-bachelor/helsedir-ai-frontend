@@ -62,7 +62,6 @@ export function ChildGroupDropdown({
     }
 
     if (rect.right > window.innerWidth - 8) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional layout correction before paint
       setFlippedHorizontalGroups((prev) =>
         prev.has(activeKey) ? prev : new Set([...prev, activeKey]),
       );
@@ -70,8 +69,6 @@ export function ChildGroupDropdown({
   }, [
     pinnedChildGroupKey,
     hoveredChildGroupKey,
-    flippedVerticalGroups,
-    flippedHorizontalGroups,
   ]);
 
   // Clean up leave timer on unmount
@@ -126,12 +123,7 @@ export function ChildGroupDropdown({
     };
   }, [isAnyGroupOpen, pinnedChildGroupKey, hoveredChildGroupKey]);
 
-  const handleChildGroupToggle = (
-    groupKey: string,
-    event: MouseEvent<HTMLButtonElement>,
-  ) => {
-    event.stopPropagation();
-    setPinnedChildGroupKey((prev) => (prev === groupKey ? null : groupKey));
+  const resetFlipForGroup = (groupKey: string) => {
     setFlippedVerticalGroups((prev) => {
       if (!prev.has(groupKey)) return prev;
       const next = new Set(prev);
@@ -146,6 +138,15 @@ export function ChildGroupDropdown({
     });
   };
 
+  const handleChildGroupToggle = (
+    groupKey: string,
+    event: MouseEvent<HTMLButtonElement>,
+  ) => {
+    event.stopPropagation();
+    setPinnedChildGroupKey((prev) => (prev === groupKey ? null : groupKey));
+    resetFlipForGroup(groupKey);
+  };
+
   const handleChildGroupHover = (groupKey: string) => {
     if (leaveTimerRef.current) {
       clearTimeout(leaveTimerRef.current);
@@ -155,18 +156,7 @@ export function ChildGroupDropdown({
       setPinnedChildGroupKey(null);
     }
     // Reset placement flags so the dropdown renders in its default position before measuring.
-    setFlippedVerticalGroups((prev) => {
-      if (!prev.has(groupKey)) return prev;
-      const next = new Set(prev);
-      next.delete(groupKey);
-      return next;
-    });
-    setFlippedHorizontalGroups((prev) => {
-      if (!prev.has(groupKey)) return prev;
-      const next = new Set(prev);
-      next.delete(groupKey);
-      return next;
-    });
+    resetFlipForGroup(groupKey);
     setHoveredChildGroupKey(groupKey);
   };
 
