@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { HiArrowRight } from 'react-icons/hi2';
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider';
@@ -24,16 +24,21 @@ const menuItems: MenuItem[] = [
 interface MenuDropdownProps {
   isOpen: boolean;
   onClose: () => void;
+  containerRef?: RefObject<HTMLDivElement | null>;
 }
 
-export function MenuDropdown({ isOpen, onClose }: MenuDropdownProps) {
+export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
 
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideDropdown = ref.current?.contains(target);
+      const insideContainer = containerRef?.current?.contains(target);
+
+      if (!insideDropdown && !insideContainer) {
         onClose();
       }
     }

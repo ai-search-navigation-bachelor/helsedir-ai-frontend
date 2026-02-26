@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@digdir/designsystemet-react";
 import { Link } from "react-router-dom";
 
@@ -13,6 +13,7 @@ type AppHeaderProps = {
 
 export function AppHeader({ searchVisible = false }: AppHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuContainerRef = useRef<HTMLDivElement>(null);
 
   return (
       <div
@@ -53,7 +54,7 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
                   Søk
                   <IoSearch size={18} />
                 </Button>
-                <div className="relative">
+                <div ref={menuContainerRef} className="relative">
                   <Button
                     variant="secondary"
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -67,6 +68,7 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
                   <MenuDropdown
                     isOpen={isMenuOpen}
                     onClose={() => setIsMenuOpen(false)}
+                    containerRef={menuContainerRef}
                   />
                 </div>
               </div>
