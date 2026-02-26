@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
+import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -20,6 +21,8 @@ import {
   getSelectedAncestorIds,
 } from './treeUtils'
 import { fetchChapter } from '../../../lib/content/chapterFetch'
+
+const DESKTOP_LG_MEDIA_QUERY = '(min-width: 1024px)'
 
 function getSectionIdFromLocationState(state: unknown) {
   if (!state || typeof state !== 'object') return null
@@ -46,7 +49,13 @@ export function HierarchicalContentDisplay({
   const navigate = useNavigate()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [autoOpenExpandableId, setAutoOpenExpandableId] = useState<string | null>(null)
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const contentRef = useRef<HTMLElement>(null)
+  const mobileSidebarDialogRef = useRef<HTMLDivElement>(null)
+  const mobileSidebarCloseButtonRef = useRef<HTMLButtonElement>(null)
+  const previousFocusedElementRef = useRef<HTMLElement | null>(null)
+  const mobileSidebarDialogId = 'mobile-chapter-nav-dialog'
+  const mobileSidebarDialogTitleId = 'mobile-chapter-nav-dialog-title'
   const scrollOnNextPageChange = useRef(false)
   const sectionByContentId = useContentNavigationStore((state) => state.sectionByContentId)
   const setSectionForContent = useContentNavigationStore((state) => state.setSectionForContent)
@@ -290,7 +299,11 @@ export function HierarchicalContentDisplay({
     )
   }, [location.hash, location.pathname, location.state, navigate, searchWithoutSection])
 
-  const handleSelectPage = (pageId: string, expandableId?: string, scrollTo?: boolean) => {
+  const closeMobileSidebarNav = useCallback(() => {
+    setIsMobileSidebarOpen(false)
+  }, [])
+
+  const handleSelectPage = useCallback((pageId: string, expandableId?: string, scrollTo?: boolean) => {
     const page = pageTree.pagesById.get(pageId)
     if (!page || page.isPlaceholder) return
 
@@ -309,7 +322,135 @@ export function HierarchicalContentDisplay({
       }
       return next
     })
-  }
+  }, [
+    content.id,
+    hasLegacySectionParam,
+    locationSectionId,
+    pageTree.pagesById,
+    setSectionForContent,
+    updateHistorySection,
+  ])
+
+  const handleMobileSelectPage = useCallback(
+    (pageId: string) => {
+      handleSelectPage(pageId)
+      closeMobileSidebarNav()
+    },
+    [closeMobileSidebarNav, handleSelectPage],
+  )
+
+  const handleMobileShowOverview = useCallback(() => {
+    handleShowOverview()
+    closeMobileSidebarNav()
+  }, [closeMobileSidebarNav, handleShowOverview])
+
+  const handleToggleExpand = useCallback((pageId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(pageId)) {
+        next.delete(pageId)
+      } else {
+        next.add(pageId)
+      }
+      return next
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!isMobileSidebarOpen) return
+
+    const desktopMediaQuery = window.matchMedia(DESKTOP_LG_MEDIA_QUERY)
+    if (desktopMediaQuery.matches) {
+      setIsMobileSidebarOpen(false)
+      return
+    }
+
+    previousFocusedElementRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+
+    const getFocusableElements = () => {
+      const dialog = mobileSidebarDialogRef.current
+      if (!dialog) return [] as HTMLElement[]
+
+      const elements = dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+
+      return Array.from(elements).filter((element) => {
+        if (element.hasAttribute('disabled')) return false
+        if (element.getAttribute('aria-hidden') === 'true') return false
+        return element.offsetParent !== null || element === document.activeElement
+      })
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMobileSidebarOpen(false)
+        return
+      }
+
+      if (event.key !== 'Tab') return
+
+      const dialog = mobileSidebarDialogRef.current
+      if (!dialog) return
+
+      const focusable = getFocusableElements()
+      if (focusable.length === 0) {
+        event.preventDefault()
+        dialog.focus()
+        return
+      }
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+      const activeInsideDialog = active instanceof Node && dialog.contains(active)
+
+      if (event.shiftKey) {
+        if (!activeInsideDialog || active === first) {
+          event.preventDefault()
+          last.focus()
+        }
+        return
+      }
+
+      if (!activeInsideDialog || active === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    const previousBodyOverflow = document.body.style.overflow
+    const previousHtmlOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+
+    const handleDesktopBreakpointChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setIsMobileSidebarOpen(false)
+      }
+    }
+    desktopMediaQuery.addEventListener('change', handleDesktopBreakpointChange)
+
+    const focusTimer = window.setTimeout(() => {
+      mobileSidebarCloseButtonRef.current?.focus()
+    }, 0)
+
+    return () => {
+      window.clearTimeout(focusTimer)
+      document.body.style.overflow = previousBodyOverflow
+      document.documentElement.style.overflow = previousHtmlOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+      desktopMediaQuery.removeEventListener('change', handleDesktopBreakpointChange)
+
+      const previousFocused = previousFocusedElementRef.current
+      if (previousFocused && previousFocused.isConnected) {
+        previousFocused.focus()
+      }
+      previousFocusedElementRef.current = null
+    }
+  }, [isMobileSidebarOpen])
 
   useEffect(() => {
     if (!activePage?.id) return
@@ -334,7 +475,18 @@ export function HierarchicalContentDisplay({
   useEffect(() => {
     if (!activePage || autoOpenExpandableId || !scrollOnNextPageChange.current) return
     scrollOnNextPageChange.current = false
-    contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+    const contentEl = contentRef.current
+    if (!contentEl) return
+
+    const rect = contentEl.getBoundingClientRect()
+    const topThreshold = 24
+
+    // Only auto-scroll if the user is already below the content panel top.
+    // Avoid scrolling downward when the content top is already visible lower in the viewport.
+    if (rect.top < -topThreshold) {
+      contentEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }, [activePage, autoOpenExpandableId])
 
   useEffect(() => {
@@ -390,7 +542,7 @@ export function HierarchicalContentDisplay({
       <ContentPageHeader typeLabel={typeLabel} title={content.title} />
 
       <div className="grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]">
-        <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
+        <aside className="hidden space-y-6 border-slate-200 lg:block lg:border-r lg:pr-6">
           {entries.length === 0 ? (
             <Paragraph style={{ marginBottom: 0, color: '#64748b' }}>
               Ingen undersider registrert på denne siden.
@@ -403,6 +555,7 @@ export function HierarchicalContentDisplay({
               activePageId={activePage?.id}
               selectedAncestorIds={selectedAncestorIds}
               onSelectPage={handleSelectPage}
+              onToggleExpand={handleToggleExpand}
               onShowOverview={handleShowOverview}
               isOverviewActive={!activePage}
             />
@@ -416,6 +569,99 @@ export function HierarchicalContentDisplay({
         </aside>
 
         <section ref={contentRef} className="min-w-0">
+          {entries.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="mb-4 flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:bg-slate-50 lg:hidden"
+                aria-haspopup="dialog"
+                aria-expanded={isMobileSidebarOpen}
+                aria-controls={mobileSidebarDialogId}
+              >
+                <span className="min-w-0">
+                  <span className="block text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                    {activePage ? 'Kapittelnavigasjon' : 'Innholdsoversikt'}
+                  </span>
+                  <span className="block truncate text-sm font-semibold text-slate-800">
+                    {activePage
+                      ? `${activePage.numbering ? `${activePage.numbering} ` : ''}${activePage.title}`
+                      : 'Åpne kapittelliste'}
+                  </span>
+                </span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500">
+                  <ChevronRightIcon aria-hidden="true" className="h-4 w-4" />
+                </span>
+              </button>
+
+              {isMobileSidebarOpen && (
+                <div
+                  className="fixed inset-0 z-50 overflow-hidden bg-slate-900/35 p-3 backdrop-blur-[1px] lg:hidden"
+                  onClick={() => setIsMobileSidebarOpen(false)}
+                  style={{ touchAction: 'none' }}
+                >
+                  <div
+                    id={mobileSidebarDialogId}
+                    ref={mobileSidebarDialogRef}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby={mobileSidebarDialogTitleId}
+                    tabIndex={-1}
+                    className="mx-auto flex h-full w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+                    onClick={(event) => event.stopPropagation()}
+                    style={{ touchAction: 'pan-y' }}
+                  >
+                    <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="m-0 text-xs font-medium uppercase tracking-wide text-slate-400">
+                          Navigasjon
+                        </p>
+                        <p id={mobileSidebarDialogTitleId} className="m-0 truncate text-sm font-semibold text-slate-900">
+                          Kapittelliste
+                        </p>
+                      </div>
+                      <button
+                        ref={mobileSidebarCloseButtonRef}
+                        type="button"
+                        onClick={() => setIsMobileSidebarOpen(false)}
+                        className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
+                      >
+                        Lukk
+                      </button>
+                    </div>
+
+                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3">
+                      <SidebarTree
+                        rootIds={pageTree.rootIds}
+                        pagesById={pageTree.pagesById}
+                        expandedIds={effectiveExpandedIds}
+                        activePageId={activePage?.id}
+                        selectedAncestorIds={selectedAncestorIds}
+                        onSelectPage={handleMobileSelectPage}
+                        onToggleExpand={handleToggleExpand}
+                        emphasizeExpandControl
+                        onShowOverview={handleMobileShowOverview}
+                        isOverviewActive={!activePage}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {entries.length === 0 && !isChaptersLoading && (
+            <Paragraph className="lg:hidden" style={{ marginTop: 0, marginBottom: 0, color: '#64748b' }}>
+              Ingen undersider registrert på denne siden.
+            </Paragraph>
+          )}
+
+          {isChaptersLoading && loadedChapters.length > 0 && (
+            <Paragraph data-size="sm" className="mt-3 lg:hidden" style={{ marginBottom: 0, color: '#64748b' }}>
+              Laster flere kapitler i bakgrunnen...
+            </Paragraph>
+          )}
+
           {isChaptersLoading && !activePage && <ContentBodyLoadingSkeleton />}
 
           {isStubPage && isLazyFetching && <ContentBodyLoadingSkeleton />}

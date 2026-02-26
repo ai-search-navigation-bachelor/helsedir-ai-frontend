@@ -8,6 +8,8 @@ interface SidebarTreeProps {
   activePageId?: string
   selectedAncestorIds: Set<string>
   onSelectPage: (pageId: string) => void
+  onToggleExpand?: (pageId: string) => void
+  emphasizeExpandControl?: boolean
   onShowOverview?: () => void
   isOverviewActive?: boolean
 }
@@ -19,6 +21,8 @@ export function SidebarTree({
   activePageId,
   selectedAncestorIds,
   onSelectPage,
+  onToggleExpand,
+  emphasizeExpandControl = false,
   onShowOverview,
   isOverviewActive = false,
 }: SidebarTreeProps) {
@@ -45,6 +49,15 @@ export function SidebarTree({
 
     const handleClick = () => {
       if (isPlaceholder) return
+      onSelectPage(page.id)
+    }
+
+    const handleToggleExpand = () => {
+      if (!hasChildren || isPlaceholder) return
+      if (onToggleExpand) {
+        onToggleExpand(page.id)
+        return
+      }
       onSelectPage(page.id)
     }
 
@@ -75,29 +88,44 @@ export function SidebarTree({
             </span>
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={handleClick}
-            className={`flex w-full items-center gap-1 border-0 bg-transparent py-2 text-left transition-colors hover:text-[#025169] hover:underline ${textColor} ${fontWeight} cursor-pointer`}
+          <div
+            className="flex items-center gap-1 py-1"
             style={{ paddingLeft: `${(page.depth - 1) * 14}px` }}
           >
-            <span className="min-w-0 flex-1 py-0.5 text-sm leading-6 whitespace-normal break-words">
-              <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
-              {page.title}
-            </span>
+            <button
+              type="button"
+              onClick={handleClick}
+              className={`min-w-0 flex-1 border-0 bg-transparent py-1 text-left transition-colors hover:text-[#025169] hover:underline ${textColor} ${fontWeight} cursor-pointer`}
+            >
+              <span className="min-w-0 flex-1 py-0.5 text-sm leading-6 whitespace-normal break-words">
+                <span className="mr-2 text-sm text-slate-400">{page.numbering}</span>
+                {page.title}
+              </span>
+            </button>
             {showChevron && (
-              <span
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400"
-                aria-hidden="true"
+              <button
+                type="button"
+                onClick={handleToggleExpand}
+                aria-label={`${isExpanded ? 'Skjul' : 'Vis'} underkapitler for ${page.title}`}
+                aria-expanded={isExpanded}
+                className={
+                  emphasizeExpandControl
+                    ? `flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white transition-colors ${
+                        isExpanded
+                          ? 'border-slate-300 text-[#025169]'
+                          : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
+                      }`
+                    : 'flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400 transition-colors hover:text-slate-700'
+                }
               >
                 {isExpanded ? (
-                  <ChevronDownIcon className="h-4 w-4" />
+                  <ChevronDownIcon className={emphasizeExpandControl ? 'h-5 w-5' : 'h-4 w-4'} />
                 ) : (
-                  <ChevronRightIcon className="h-4 w-4" />
+                  <ChevronRightIcon className={emphasizeExpandControl ? 'h-5 w-5' : 'h-4 w-4'} />
                 )}
-              </span>
+              </button>
             )}
-          </button>
+          </div>
         )}
 
         {hasChildren && isExpanded && (

@@ -11,6 +11,9 @@ import { IoArrowForward } from "react-icons/io5";
 import { buildContentUrl } from "../../lib/contentUrl";
 import type { SearchResultChildGroup } from "../../types";
 
+const MOBILE_MAX_WIDTH_PX = 767;
+const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_MAX_WIDTH_PX}px)`;
+
 interface ChildGroupDropdownProps {
   resultId: string;
   resultTitle: string;
@@ -33,7 +36,8 @@ export function ChildGroupDropdown({
 
   const [pinnedChildGroupKey, setPinnedChildGroupKey] = useState<string | null>(null);
   const [hoveredChildGroupKey, setHoveredChildGroupKey] = useState<string | null>(null);
-  const [flippedGroups, setFlippedGroups] = useState<Set<string>>(new Set());
+  const [flippedVerticalGroups, setFlippedVerticalGroups] = useState<Set<string>>(new Set());
+  const [flippedHorizontalGroups, setFlippedHorizontalGroups] = useState<Set<string>>(new Set());
 
   const isAnyGroupOpen = pinnedChildGroupKey !== null || hoveredChildGroupKey !== null;
 
@@ -42,21 +46,33 @@ export function ChildGroupDropdown({
     onOpenChange(isAnyGroupOpen);
   }, [isAnyGroupOpen, onOpenChange]);
 
-  // After each render, check if the active dropdown (positioned at top-0) overflows the
-  // viewport bottom. If so, flip it upward. Skip the check once already flipped to avoid
-  // an infinite loop. Runs in useLayoutEffect so the correction happens before browser paint.
+  // On desktop, correct dropdown placement if it overflows viewport bounds.
+  // Runs in useLayoutEffect so the correction happens before browser paint.
   useLayoutEffect(() => {
     const activeKey = pinnedChildGroupKey ?? hoveredChildGroupKey;
-    if (!activeKey || flippedGroups.has(activeKey)) return;
+    if (!activeKey) return;
+    if (window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
 
     const el = dropdownEls.current.get(activeKey);
     if (!el) return;
     const rect = el.getBoundingClientRect();
+
     if (rect.bottom > window.innerHeight - 8) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional layout correction before paint
-      setFlippedGroups((prev) => new Set([...prev, activeKey]));
+      setFlippedVerticalGroups((prev) =>
+        prev.has(activeKey) ? prev : new Set([...prev, activeKey]),
+      );
     }
-  }, [pinnedChildGroupKey, hoveredChildGroupKey, flippedGroups]);
+
+    if (rect.right > window.innerWidth - 8) {
+      setFlippedHorizontalGroups((prev) =>
+        prev.has(activeKey) ? prev : new Set([...prev, activeKey]),
+      );
+    }
+  }, [
+    pinnedChildGroupKey,
+    hoveredChildGroupKey,
+  ]);
 
   // Clean up leave timer on unmount
   useEffect(() => {
@@ -82,18 +98,56 @@ export function ChildGroupDropdown({
     };
   }, [pinnedChildGroupKey, cardRef]);
 
+  // On mobile, close floating overlays when the user scrolls the page/content.
+  useEffect(() => {
+    if (!isAnyGroupOpen) return;
+    if (!window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
+
+    const handleScroll = (event: Event) => {
+      const activeKey = pinnedChildGroupKey ?? hoveredChildGroupKey;
+      const activeDropdownEl = activeKey ? dropdownEls.current.get(activeKey) : null;
+      const target = event.target;
+
+      if (
+        activeDropdownEl &&
+        target instanceof Node &&
+        activeDropdownEl.contains(target)
+      ) {
+        return;
+      }
+
+      setPinnedChildGroupKey(null);
+      setHoveredChildGroupKey(null);
+    };
+
+    window.addEventListener("scroll", handleScroll, true);
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [isAnyGroupOpen, pinnedChildGroupKey, hoveredChildGroupKey]);
+
+  const resetFlipForGroup = (groupKey: string) => {
+    setFlippedVerticalGroups((prev) => {
+      if (!prev.has(groupKey)) return prev;
+      const next = new Set(prev);
+      next.delete(groupKey);
+      return next;
+    });
+    setFlippedHorizontalGroups((prev) => {
+      if (!prev.has(groupKey)) return prev;
+      const next = new Set(prev);
+      next.delete(groupKey);
+      return next;
+    });
+  };
+
   const handleChildGroupToggle = (
     groupKey: string,
     event: MouseEvent<HTMLButtonElement>,
   ) => {
     event.stopPropagation();
     setPinnedChildGroupKey((prev) => (prev === groupKey ? null : groupKey));
-    setFlippedGroups((prev) => {
-      if (!prev.has(groupKey)) return prev;
-      const next = new Set(prev);
-      next.delete(groupKey);
-      return next;
-    });
+    resetFlipForGroup(groupKey);
   };
 
   const handleChildGroupHover = (groupKey: string) => {
@@ -104,13 +158,8 @@ export function ChildGroupDropdown({
     if (pinnedChildGroupKey && pinnedChildGroupKey !== groupKey) {
       setPinnedChildGroupKey(null);
     }
-    // Reset flip so the dropdown renders at top-0 and useLayoutEffect can measure correctly.
-    setFlippedGroups((prev) => {
-      if (!prev.has(groupKey)) return prev;
-      const next = new Set(prev);
-      next.delete(groupKey);
-      return next;
-    });
+    // Reset placement flags so the dropdown renders in its default position before measuring.
+    resetFlipForGroup(groupKey);
     setHoveredChildGroupKey(groupKey);
   };
 
@@ -132,13 +181,14 @@ export function ChildGroupDropdown({
         const isHoverOpen =
           pinnedChildGroupKey === null && hoveredChildGroupKey === groupKey;
         const isOpen = isPinnedOpen || isHoverOpen;
-        const isFlipped = flippedGroups.has(groupKey);
+        const isFlippedVertical = flippedVerticalGroups.has(groupKey);
+        const isFlippedHorizontal = flippedHorizontalGroups.has(groupKey);
 
         return (
           <div
             key={groupKey}
             data-child-group-key={groupKey}
-            className="relative inline-block"
+            className="inline-block md:relative"
             onMouseEnter={() => handleChildGroupHover(groupKey)}
             onMouseLeave={handleChildGroupLeave}
           >
@@ -162,36 +212,55 @@ export function ChildGroupDropdown({
                   else dropdownEls.current.delete(groupKey);
                 }}
                 inert={!isOpen}
-                className={`absolute left-full ml-2 z-20 min-w-[20rem] w-max max-w-[min(42rem,92vw)] rounded-lg border border-slate-200 bg-white shadow-lg overflow-hidden transition-opacity duration-100 ${
+                className={`absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md transition-opacity duration-100 md:mt-0 md:min-w-[20rem] md:w-max md:max-w-[min(42rem,92vw)] md:shadow-lg ${
                   isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                } ${isFlipped ? "bottom-0 top-auto" : "top-0"}`}
+                } ${
+                  isFlippedHorizontal
+                    ? "md:left-auto md:right-full md:mr-2 md:ml-0"
+                    : "md:left-full md:right-auto md:ml-2 md:mr-0"
+                } ${
+                  isFlippedVertical
+                    ? "md:top-auto md:bottom-0"
+                    : "md:top-0 md:bottom-auto"
+                }`}
               >
-                {items.map((item) => {
-                  const childHref = buildContentUrl(item);
+                <div className="relative">
+                  <div className="max-h-[min(38vh,14rem)] overflow-x-hidden overflow-y-auto overscroll-contain md:max-h-[min(70vh,32rem)]">
+                    {items.map((item) => {
+                      const childHref = buildContentUrl(item);
 
-                  return (
-                    <Link
-                      key={item.id}
-                      to={childHref}
-                      state={{
-                        fromSearch: true,
-                        searchQuery,
-                        sourceTemasideId: resultId,
-                        sourceContentId: item.id,
-                        sourceContentTitle: resultTitle,
-                        searchCategoryId: group.info_type,
-                        searchCategoryName: group.display_name,
-                        contentType: item.info_type,
-                      }}
-                      className="group/item flex w-full items-center justify-between gap-3 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] border-b border-slate-100 last:border-b-0"
-                    >
-                      <span className="group-hover/item:underline">
-                        {item.title}
-                      </span>
-                      <IoArrowForward className="h-3.5 w-3.5 shrink-0 opacity-60" />
-                    </Link>
-                  );
-                })}
+                      return (
+                        <Link
+                          key={item.id}
+                          to={childHref}
+                          state={{
+                            fromSearch: true,
+                            searchQuery,
+                            sourceTemasideId: resultId,
+                            sourceContentId: item.id,
+                            sourceContentTitle: resultTitle,
+                            searchCategoryId: group.info_type,
+                            searchCategoryName: group.display_name,
+                            contentType: item.info_type,
+                          }}
+                          className="group/item flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] last:border-b-0"
+                        >
+                          <span className="min-w-0 break-words group-hover/item:underline">
+                            {item.title}
+                          </span>
+                          <IoArrowForward className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {items.length > 4 && (
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white/85 to-transparent md:hidden"
+                    />
+                  )}
+                </div>
               </div>
             )}
           </div>

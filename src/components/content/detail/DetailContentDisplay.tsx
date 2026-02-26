@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
@@ -78,6 +78,7 @@ export function DetailContentDisplay({
 }: DetailContentDisplayProps) {
   const navigate = useNavigate()
   const location = useLocation()
+  const mobileSectionsNavRef = useRef<HTMLDetailsElement>(null)
   const normalizedType = normalizeContentType(content.content_type)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const hasBodyContent = useMemo(() => hasVisibleContent(content.body), [content.body])
@@ -148,6 +149,17 @@ export function DetailContentDisplay({
     activeSectionId && sections.some((section) => section.id === activeSectionId)
       ? activeSectionId
       : sections[0]?.id || null
+
+  const handleSectionNavigation = (sectionId: string, closeMobileNav = false) => {
+    const target = document.getElementById(sectionId)
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    setActiveSectionId(sectionId)
+    if (closeMobileNav) {
+      mobileSectionsNavRef.current?.removeAttribute('open')
+    }
+  }
 
   useEffect(() => {
     if (sections.length === 0) return
@@ -220,9 +232,9 @@ export function DetailContentDisplay({
 
       <div className={showSidebarLayout ? 'grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]' : ''}>
         {showSidebarLayout && (
-        <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
+        <aside className="space-y-6 border-slate-200 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:border-r lg:pr-6">
           {sections.length > 1 && (
-            <nav aria-label="Innholdsnavigasjon">
+            <nav aria-label="Innholdsnavigasjon" className="hidden lg:block">
               <ul className="m-0 list-none border-t border-slate-200 p-0">
                 {sections.map((section) => {
                   const isActive = highlightedSectionId === section.id
@@ -230,13 +242,7 @@ export function DetailContentDisplay({
                     <li key={section.id} className="border-b border-slate-200">
                       <button
                         type="button"
-                        onClick={() => {
-                          const target = document.getElementById(section.id)
-                          if (target) {
-                            target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                          }
-                          setActiveSectionId(section.id)
-                        }}
+                        onClick={() => handleSectionNavigation(section.id)}
                         className={`w-full px-0 py-3 text-left text-sm leading-6 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#025169] hover:underline ${
                           isActive
                             ? 'font-semibold text-[#025169] underline [text-underline-offset:0.15rem]'
@@ -332,6 +338,43 @@ export function DetailContentDisplay({
         )}
 
         <section className="min-w-0 space-y-8">
+          {sections.length > 1 && (
+            <details
+              ref={mobileSectionsNavRef}
+              className="group/sections rounded-lg border border-slate-200 bg-white lg:hidden"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 group-open/sections:rounded-b-none">
+                <span>Innhold på siden</span>
+                <ChevronRightIcon
+                  aria-hidden="true"
+                  className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sections:rotate-90 group-open/sections:text-[#025169]"
+                />
+              </summary>
+              <div className="border-t border-slate-200 p-2">
+                <ul className="m-0 list-none space-y-1 p-0">
+                  {sections.map((section) => {
+                    const isActive = highlightedSectionId === section.id
+                    return (
+                      <li key={`mobile-section-${section.id}`}>
+                        <button
+                          type="button"
+                          onClick={() => handleSectionNavigation(section.id, true)}
+                          className={`w-full rounded-md border px-3 py-2.5 text-left text-sm leading-5 transition-colors ${
+                            isActive
+                              ? 'border-[#025169]/25 bg-[#e8f4f8] text-[#025169]'
+                              : 'border-transparent bg-transparent text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          {section.title}
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            </details>
+          )}
+
           {enrichedError && (
             <Alert data-color="warning">
               <Paragraph style={{ marginTop: 0, marginBottom: 0 }}>

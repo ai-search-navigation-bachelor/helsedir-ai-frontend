@@ -42,7 +42,7 @@ export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
 
   if (isLoading) {
     return (
-      <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-8 lg:pb-10">
+      <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12 lg:pb-10">
         <TemasideLoadingSkeleton />
       </div>
     )
@@ -69,7 +69,7 @@ export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-8 lg:pb-10">
+    <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12 lg:pb-10">
       <Breadcrumb items={breadcrumbItems} />
 
       {isLeafLoading && <TemasideLoadingSkeleton />}

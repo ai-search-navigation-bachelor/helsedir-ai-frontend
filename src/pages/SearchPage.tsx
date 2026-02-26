@@ -33,7 +33,7 @@ export function SearchPage() {
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-6">
+    <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-6 sm:px-6 lg:px-12">
       {isLoading && <SearchPageLoadingSkeleton />}
 
       {error && (

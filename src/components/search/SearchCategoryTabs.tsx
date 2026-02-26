@@ -34,14 +34,30 @@ export function SearchCategoryTabs({
     if (!animate) {
       requestAnimationFrame(() => setAnimate(true));
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, tabs, categoryCounts]);
+
+  useEffect(() => {
+    const el = buttonRefs.current.get(activeTab);
+    if (!el) return;
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
+
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }, [activeTab]);
 
   const allTabs = [{ id: "all", label: "Alle" }, ...tabs];
 
   return (
     <div className="mb-5 border-b border-slate-300">
-      <div ref={containerRef} className="relative flex flex-wrap items-center gap-x-4 gap-y-1.5 -mb-px">
+      <div
+        ref={containerRef}
+        className="relative -mx-1 flex flex-nowrap items-center gap-2 overflow-x-auto px-1 pb-2 md:mx-0 md:-mb-px md:flex-wrap md:gap-x-4 md:gap-y-1.5 md:overflow-visible md:px-0 md:pb-0"
+      >
         {allTabs.map((tab) => (
           <button
             key={tab.id}
@@ -54,19 +70,27 @@ export function SearchCategoryTabs({
             }}
             type="button"
             onClick={() => onTabChange(tab.id)}
-            className={`inline-flex items-center gap-1.5 px-1.5 pt-2 pb-3 text-[0.95rem] font-medium transition-colors font-title ${
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.9rem] font-medium transition-colors font-title md:rounded-none md:border-0 md:bg-transparent md:px-1.5 md:pt-2 md:pb-3 md:text-[0.95rem] ${
               activeTab === tab.id
-                ? "text-[#047FA4]"
-                : "text-slate-700 hover:text-slate-900"
+                ? "border-[#047FA4] bg-[#047FA4] text-white md:text-[#047FA4]"
+                : "border-transparent bg-transparent text-slate-700 hover:bg-slate-100 hover:text-slate-900 md:hover:bg-transparent"
             }`}
           >
             {tab.label}
-            <span className={activeTab === tab.id ? "text-[#047FA4]" : "text-slate-600"}>{categoryCounts[tab.id] || 0}</span>
+            <span
+              className={
+                activeTab === tab.id
+                  ? "text-white md:text-[#047FA4]"
+                  : "text-slate-600"
+              }
+            >
+              {categoryCounts[tab.id] || 0}
+            </span>
           </button>
         ))}
 
         <div
-          className="absolute bottom-0 h-0.5 bg-[#047FA4] rounded-full"
+          className="absolute bottom-0 hidden h-0.5 rounded-full bg-[#047FA4] md:block"
           style={{
             left: indicator.left,
             width: indicator.width,
