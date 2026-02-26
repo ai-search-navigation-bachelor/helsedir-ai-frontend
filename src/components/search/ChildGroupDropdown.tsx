@@ -98,6 +98,34 @@ export function ChildGroupDropdown({
     };
   }, [pinnedChildGroupKey, cardRef]);
 
+  // On mobile, close floating overlays when the user scrolls the page/content.
+  useEffect(() => {
+    if (!isAnyGroupOpen) return;
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
+
+    const handleScroll = (event: Event) => {
+      const activeKey = pinnedChildGroupKey ?? hoveredChildGroupKey;
+      const activeDropdownEl = activeKey ? dropdownEls.current.get(activeKey) : null;
+      const target = event.target;
+
+      if (
+        activeDropdownEl &&
+        target instanceof Node &&
+        activeDropdownEl.contains(target)
+      ) {
+        return;
+      }
+
+      setPinnedChildGroupKey(null);
+      setHoveredChildGroupKey(null);
+    };
+
+    window.addEventListener("scroll", handleScroll, true);
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [isAnyGroupOpen, pinnedChildGroupKey, hoveredChildGroupKey]);
+
   const handleChildGroupToggle = (
     groupKey: string,
     event: MouseEvent<HTMLButtonElement>,
@@ -191,7 +219,7 @@ export function ChildGroupDropdown({
                   else dropdownEls.current.delete(groupKey);
                 }}
                 inert={!isOpen}
-                className={`absolute left-0 right-0 top-full z-20 mt-2 max-h-[min(60vh,24rem)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-white shadow-lg transition-opacity duration-100 md:mt-0 md:max-h-[min(70vh,32rem)] md:min-w-[20rem] md:w-max md:max-w-[min(42rem,92vw)] ${
+                className={`absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md transition-opacity duration-100 md:mt-0 md:min-w-[20rem] md:w-max md:max-w-[min(42rem,92vw)] md:shadow-lg ${
                   isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                 } ${
                   isFlippedHorizontal
@@ -203,32 +231,43 @@ export function ChildGroupDropdown({
                     : "md:top-0 md:bottom-auto"
                 }`}
               >
-                {items.map((item) => {
-                  const childHref = buildContentUrl(item);
+                <div className="relative">
+                  <div className="max-h-[min(38vh,14rem)] overflow-x-hidden overflow-y-auto overscroll-contain md:max-h-[min(70vh,32rem)]">
+                    {items.map((item) => {
+                      const childHref = buildContentUrl(item);
 
-                  return (
-                    <Link
-                      key={item.id}
-                      to={childHref}
-                      state={{
-                        fromSearch: true,
-                        searchQuery,
-                        sourceTemasideId: resultId,
-                        sourceContentId: item.id,
-                        sourceContentTitle: resultTitle,
-                        searchCategoryId: group.info_type,
-                        searchCategoryName: group.display_name,
-                        contentType: item.info_type,
-                      }}
-                      className="group/item flex w-full items-center justify-between gap-3 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] border-b border-slate-100 last:border-b-0"
-                    >
-                      <span className="min-w-0 break-words group-hover/item:underline">
-                        {item.title}
-                      </span>
-                      <IoArrowForward className="h-3.5 w-3.5 shrink-0 opacity-60" />
-                    </Link>
-                  );
-                })}
+                      return (
+                        <Link
+                          key={item.id}
+                          to={childHref}
+                          state={{
+                            fromSearch: true,
+                            searchQuery,
+                            sourceTemasideId: resultId,
+                            sourceContentId: item.id,
+                            sourceContentTitle: resultTitle,
+                            searchCategoryId: group.info_type,
+                            searchCategoryName: group.display_name,
+                            contentType: item.info_type,
+                          }}
+                          className="group/item flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] last:border-b-0"
+                        >
+                          <span className="min-w-0 break-words group-hover/item:underline">
+                            {item.title}
+                          </span>
+                          <IoArrowForward className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {items.length > 4 && (
+                    <div
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-white/85 to-transparent md:hidden"
+                    />
+                  )}
+                </div>
               </div>
             )}
           </div>
