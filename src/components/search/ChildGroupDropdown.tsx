@@ -33,7 +33,8 @@ export function ChildGroupDropdown({
 
   const [pinnedChildGroupKey, setPinnedChildGroupKey] = useState<string | null>(null);
   const [hoveredChildGroupKey, setHoveredChildGroupKey] = useState<string | null>(null);
-  const [flippedGroups, setFlippedGroups] = useState<Set<string>>(new Set());
+  const [flippedVerticalGroups, setFlippedVerticalGroups] = useState<Set<string>>(new Set());
+  const [flippedHorizontalGroups, setFlippedHorizontalGroups] = useState<Set<string>>(new Set());
 
   const isAnyGroupOpen = pinnedChildGroupKey !== null || hoveredChildGroupKey !== null;
 
@@ -42,21 +43,36 @@ export function ChildGroupDropdown({
     onOpenChange(isAnyGroupOpen);
   }, [isAnyGroupOpen, onOpenChange]);
 
-  // After each render, check if the active dropdown (positioned at top-0) overflows the
-  // viewport bottom. If so, flip it upward. Skip the check once already flipped to avoid
-  // an infinite loop. Runs in useLayoutEffect so the correction happens before browser paint.
+  // On desktop, correct dropdown placement if it overflows viewport bounds.
+  // Runs in useLayoutEffect so the correction happens before browser paint.
   useLayoutEffect(() => {
     const activeKey = pinnedChildGroupKey ?? hoveredChildGroupKey;
-    if (!activeKey || flippedGroups.has(activeKey)) return;
+    if (!activeKey) return;
+    if (window.matchMedia("(max-width: 767px)").matches) return;
 
     const el = dropdownEls.current.get(activeKey);
     if (!el) return;
     const rect = el.getBoundingClientRect();
+
     if (rect.bottom > window.innerHeight - 8) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional layout correction before paint
-      setFlippedGroups((prev) => new Set([...prev, activeKey]));
+      setFlippedVerticalGroups((prev) =>
+        prev.has(activeKey) ? prev : new Set([...prev, activeKey]),
+      );
     }
-  }, [pinnedChildGroupKey, hoveredChildGroupKey, flippedGroups]);
+
+    if (rect.right > window.innerWidth - 8) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional layout correction before paint
+      setFlippedHorizontalGroups((prev) =>
+        prev.has(activeKey) ? prev : new Set([...prev, activeKey]),
+      );
+    }
+  }, [
+    pinnedChildGroupKey,
+    hoveredChildGroupKey,
+    flippedVerticalGroups,
+    flippedHorizontalGroups,
+  ]);
 
   // Clean up leave timer on unmount
   useEffect(() => {
@@ -88,7 +104,13 @@ export function ChildGroupDropdown({
   ) => {
     event.stopPropagation();
     setPinnedChildGroupKey((prev) => (prev === groupKey ? null : groupKey));
-    setFlippedGroups((prev) => {
+    setFlippedVerticalGroups((prev) => {
+      if (!prev.has(groupKey)) return prev;
+      const next = new Set(prev);
+      next.delete(groupKey);
+      return next;
+    });
+    setFlippedHorizontalGroups((prev) => {
       if (!prev.has(groupKey)) return prev;
       const next = new Set(prev);
       next.delete(groupKey);
@@ -104,8 +126,14 @@ export function ChildGroupDropdown({
     if (pinnedChildGroupKey && pinnedChildGroupKey !== groupKey) {
       setPinnedChildGroupKey(null);
     }
-    // Reset flip so the dropdown renders at top-0 and useLayoutEffect can measure correctly.
-    setFlippedGroups((prev) => {
+    // Reset placement flags so the dropdown renders in its default position before measuring.
+    setFlippedVerticalGroups((prev) => {
+      if (!prev.has(groupKey)) return prev;
+      const next = new Set(prev);
+      next.delete(groupKey);
+      return next;
+    });
+    setFlippedHorizontalGroups((prev) => {
       if (!prev.has(groupKey)) return prev;
       const next = new Set(prev);
       next.delete(groupKey);
@@ -132,13 +160,14 @@ export function ChildGroupDropdown({
         const isHoverOpen =
           pinnedChildGroupKey === null && hoveredChildGroupKey === groupKey;
         const isOpen = isPinnedOpen || isHoverOpen;
-        const isFlipped = flippedGroups.has(groupKey);
+        const isFlippedVertical = flippedVerticalGroups.has(groupKey);
+        const isFlippedHorizontal = flippedHorizontalGroups.has(groupKey);
 
         return (
           <div
             key={groupKey}
             data-child-group-key={groupKey}
-            className="relative inline-block"
+            className="inline-block md:relative"
             onMouseEnter={() => handleChildGroupHover(groupKey)}
             onMouseLeave={handleChildGroupLeave}
           >
@@ -162,9 +191,17 @@ export function ChildGroupDropdown({
                   else dropdownEls.current.delete(groupKey);
                 }}
                 inert={!isOpen}
-                className={`absolute left-full ml-2 z-20 min-w-[20rem] w-max max-w-[min(42rem,92vw)] rounded-lg border border-slate-200 bg-white shadow-lg overflow-hidden transition-opacity duration-100 ${
+                className={`absolute left-0 right-0 top-full z-20 mt-2 max-h-[min(60vh,24rem)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-white shadow-lg transition-opacity duration-100 md:mt-0 md:max-h-[min(70vh,32rem)] md:min-w-[20rem] md:w-max md:max-w-[min(42rem,92vw)] ${
                   isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                } ${isFlipped ? "bottom-0 top-auto" : "top-0"}`}
+                } ${
+                  isFlippedHorizontal
+                    ? "md:left-auto md:right-full md:mr-2 md:ml-0"
+                    : "md:left-full md:right-auto md:ml-2 md:mr-0"
+                } ${
+                  isFlippedVertical
+                    ? "md:top-auto md:bottom-0"
+                    : "md:top-0 md:bottom-auto"
+                }`}
               >
                 {items.map((item) => {
                   const childHref = buildContentUrl(item);
@@ -185,7 +222,7 @@ export function ChildGroupDropdown({
                       }}
                       className="group/item flex w-full items-center justify-between gap-3 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] border-b border-slate-100 last:border-b-0"
                     >
-                      <span className="group-hover/item:underline">
+                      <span className="min-w-0 break-words group-hover/item:underline">
                         {item.title}
                       </span>
                       <IoArrowForward className="h-3.5 w-3.5 shrink-0 opacity-60" />
