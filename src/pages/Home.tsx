@@ -4,13 +4,13 @@ import { CategoryButtons } from '../components/ui/CategoryButtons'
 export function Home() {
   return (
     <>
-      <section className="w-full max-w-screen-xl mx-auto px-12 pt-8 pb-6">
+      <section className="mx-auto w-full max-w-screen-xl px-4 pt-8 pb-6 sm:px-6 lg:px-12">
         <h2 className="font-title mb-5 text-[1.15rem] font-semibold text-[#334155] tracking-[-0.01em]">
           Utforsk etter tema
         </h2>
         <CategoryButtons />
       </section>
-      <section className="w-full max-w-screen-xl mx-auto px-12 pb-12">
+      <section className="mx-auto w-full max-w-screen-xl px-4 pb-12 sm:px-6 lg:px-12">
         <h2 className="font-title mb-5 text-[1.15rem] font-semibold text-[#334155] tracking-[-0.01em]">
           Nyttige ressurser
         </h2>
