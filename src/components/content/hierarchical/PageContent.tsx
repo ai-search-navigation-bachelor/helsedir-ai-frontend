@@ -202,7 +202,7 @@ export function PageContent({
             {previousPage ? (
               <button
                 type="button"
-                onClick={() => onSelectPage(previousPage.id)}
+                onClick={() => onSelectPage(previousPage.id, undefined, true)}
                 className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left cursor-pointer transition-all hover:border-[#025169]/40 hover:shadow-sm"
                 aria-label={`Gå til forrige kapittel ${previousPage.numbering}`}
               >
@@ -223,7 +223,7 @@ export function PageContent({
             {nextPage ? (
               <button
                 type="button"
-                onClick={() => onSelectPage(nextPage.id)}
+                onClick={() => onSelectPage(nextPage.id, undefined, true)}
                 className="group flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-right cursor-pointer transition-all hover:border-[#025169]/40 hover:shadow-sm"
                 aria-label={`Gå til neste kapittel ${nextPage.numbering}`}
               >
