@@ -1,6 +1,6 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppLayout } from './components/layout'
-import { Home, ContentDetail, CategoryLandingPage, SearchPage, TemasideHubPage, TemasideLeafPage } from './pages'
+import { Home, ContentDetail, SearchPage, TemasideHubPage, TemasideLeafPage, NotFound } from './pages'
 import { TEMASIDE_CATEGORIES } from './constants/temasider'
 import { CONTENT_CATEGORY_GROUPS, CONTENT_ONLY_PREFIXES } from './constants/contentRoutes'
 
@@ -14,7 +14,7 @@ function App() {
         {/* Path-based content routes (e.g. /retningslinjer/adhd) */}
         {CONTENT_CATEGORY_GROUPS.map((group) => (
           <Route key={group.pathPrefix} path={group.pathPrefix}>
-            <Route index element={<CategoryLandingPage group={group} />} />
+            <Route index element={<Navigate to="/" replace />} />
             <Route path="*" element={<ContentDetail pathPrefix={group.pathPrefix} />} />
           </Route>
         ))}
@@ -44,6 +44,9 @@ function App() {
 
         {/* Legacy ID-based content route (fallback) */}
         <Route path="content/:id" element={<ContentDetail />} />
+
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   )

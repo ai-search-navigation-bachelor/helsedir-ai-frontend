@@ -29,6 +29,7 @@ function getCategoryFromTemasidePath(temasidePath: string): { label: string; hre
 function extractDirectParent(content: ContentDetail): ParentChainEntry | null {
   const forelderLink = content.links?.find((link) => link.rel === 'forelder')
   if (!forelderLink?.tittel) return null
+  if (forelderLink.type?.trim().toLowerCase() === 'kapittel') return null
 
   const id = forelderLink.id || getContentIdFromHref(forelderLink.href)
   if (!id) return null
@@ -37,7 +38,7 @@ function extractDirectParent(content: ContentDetail): ParentChainEntry | null {
     ? buildContentUrl({ path: forelderLink.path, id })
     : `/content/${id}`
 
-  return { id, tittel: forelderLink.tittel, href }
+  return { id, tittel: forelderLink.tittel, href, contentType: forelderLink.type }
 }
 
 export function buildContentBreadcrumbItems(
@@ -60,11 +61,12 @@ export function buildContentBreadcrumbItems(
     items.push({ label: temaside.tittel, href: temaside.href, group: 'tema' })
   }
 
-  // Add parent chain entries (skip temaside duplicate and current content)
+  // Add parent chain entries (skip temaside duplicate, current content, and kapittel types)
   if (parentChain.length > 0) {
     for (const entry of parentChain) {
       if (temaside && entry.id === temaside.id) continue
       if (entry.id === content.id) continue
+      if (entry.contentType?.trim().toLowerCase() === 'kapittel') continue
       items.push({ label: entry.tittel, href: entry.href, group: 'parent' })
     }
   } else {

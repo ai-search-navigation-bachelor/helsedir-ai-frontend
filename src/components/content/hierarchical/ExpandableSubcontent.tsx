@@ -34,12 +34,12 @@ interface SubSectionProps {
 function SubSection({ label, html }: SubSectionProps) {
   return (
     <details className="group/sub border-t border-slate-200">
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-[#025169]" />
+      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
         {label}
       </summary>
       <div
-        className="content-html pb-4 pl-6 text-sm leading-6 text-slate-700"
+        className="content-html pb-4 pl-6 text-[0.9375rem] font-medium leading-7 text-slate-700"
         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
       />
     </details>
@@ -56,21 +56,21 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
   const hasVurdering = Boolean(tradeoffs || preferences)
   return (
     <details className="group/sub border-t border-slate-200">
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-[#025169]" />
+      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
         Begrunnelse
       </summary>
       <div className="pb-2 pl-6">
         {html && (
           <div
-            className="content-html pb-4 text-sm leading-6 text-slate-700"
+            className="content-html pb-4 text-[0.9375rem] font-medium leading-7 text-slate-700"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
           />
         )}
         {hasVurdering && (
           <details className="group/vurdering border-t border-slate-200">
-            <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-[#025169]">
-              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-hover/vurdering:text-[#025169]" />
+            <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-hover/vurdering:text-brand" />
               Vurdering
             </summary>
             <div className="space-y-4 pb-4 pl-6">
@@ -80,7 +80,7 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
                     Fordeler og ulemper
                   </Heading>
                   <div
-                    className="content-html text-sm leading-6 text-slate-700"
+                    className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tradeoffs) }}
                   />
                 </div>
@@ -91,7 +91,7 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
                     Verdier og preferanser
                   </Heading>
                   <div
-                    className="content-html text-sm leading-6 text-slate-700"
+                    className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preferences) }}
                   />
                 </div>
@@ -147,7 +147,7 @@ export function ExpandableSubcontent({
   return (
     <details
       key={itemKey}
-      className="group rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm"
+      className="expandable-subcontent group rounded-lg border border-slate-200 bg-white transition-colors open:border-brand/30 open:shadow-sm"
       style={{ marginLeft: `${depth * 14}px` }}
       open={isOpen || undefined}
       data-expandable-id={item.id || undefined}
@@ -159,8 +159,8 @@ export function ExpandableSubcontent({
       <summary className="cursor-pointer list-none rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open:rounded-b-none">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90 group-open:text-[#025169]" />
-            <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 group-open:text-[#025169]">
+            <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90 group-open:text-brand" />
+            <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 group-open:text-brand">
               {title}
             </span>
           </div>
@@ -181,7 +181,7 @@ export function ExpandableSubcontent({
                   },
                 })
               }}
-              className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 cursor-pointer whitespace-nowrap hover:border-[#025169] hover:text-[#025169]"
+              className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 cursor-pointer whitespace-nowrap hover:border-brand hover:text-brand"
             >
               Åpne side
             </button>
@@ -194,7 +194,7 @@ export function ExpandableSubcontent({
           <p className="m-0 py-2 text-sm italic text-slate-400">Laster innhold...</p>
         )}
         {strength && (
-          <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#025169]">
+          <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-widest text-brand">
             {strength}
           </p>
         )}
@@ -220,7 +220,7 @@ export function ExpandableSubcontent({
 
         {body && (
           <div
-            className="content-html text-sm leading-6 text-slate-800"
+            className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }}
           />
         )}
