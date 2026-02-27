@@ -142,7 +142,7 @@ export function PageContent({
                 <li key={child.id} className="border-b border-slate-100">
                   <button
                     type="button"
-                    onClick={() => onSelectPage(child.id)}
+                    onClick={() => onSelectPage(child.id, undefined, true)}
                     className="group flex w-full items-center gap-4 py-3.5 text-left border-0 bg-transparent cursor-pointer transition-colors hover:bg-[#f8fafc] focus-visible:outline-2 focus-visible:outline-[#025169] focus-visible:outline-offset-[-2px]"
                   >
                     <span className="w-8 shrink-0 text-right text-sm font-bold tabular-nums text-[#025169]">
