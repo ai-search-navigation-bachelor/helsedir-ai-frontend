@@ -4,7 +4,9 @@ import { Button } from '@digdir/designsystemet-react'
 import { useSearchStore } from '../../stores/searchStore'
 import { useContentDetailBreadcrumbs } from '../../hooks/useContentDetailBreadcrumbs'
 import { Breadcrumb } from '../ui/Breadcrumb'
-import { ContentPageLoadingSkeleton } from './ContentSkeletons'
+import { isRetningslinjeContentType, normalizeContentType } from '../../constants/content'
+import { countUniqueChildLinks } from './shared/linkUtils'
+import { ContentPageLoadingSkeleton, DetailPageLoadingSkeleton } from './ContentSkeletons'
 import type { ContentDetail } from '../../types'
 
 interface ContentPageLayoutProps {
@@ -37,9 +39,12 @@ export function ContentPageLayout({ content, children }: ContentPageLayoutProps)
   })
 
   if (isParentChainLoading) {
+    const normalizedType = normalizeContentType(content.content_type)
+    const isHierarchical = isRetningslinjeContentType(normalizedType) || countUniqueChildLinks(content.links) > 0
+
     return (
       <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">
-        <ContentPageLoadingSkeleton />
+        {isHierarchical ? <ContentPageLoadingSkeleton /> : <DetailPageLoadingSkeleton />}
       </div>
     )
   }
