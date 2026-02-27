@@ -12,6 +12,7 @@ import type { NestedContent } from '../../../types'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { ContentBodyLoadingSkeleton } from '../ContentSkeletons'
 import { PageContent } from './PageContent'
+import type { PageNode } from './types'
 import { SidebarTree } from './SidebarTree'
 import {
   buildPageTree,
@@ -680,14 +681,14 @@ export function HierarchicalContentDisplay({
 
           {!activePage && !isChaptersLoading && orderedPageIds.length > 0 && (
             <div>
-              {orderedPageIds.map((pageId, index) => {
-                const page = pageTree.pagesById.get(pageId)
-                if (!page || page.isPlaceholder) return null
-                return (
+              {orderedPageIds
+                .map((pageId) => pageTree.pagesById.get(pageId))
+                .filter((page): page is PageNode => !!page && !page.isPlaceholder && page.depth <= 1)
+                .map((page, index) => (
                   <div key={page.id} style={{
-                    marginTop: index === 0 ? 0 : page.depth <= 1 ? 40 : 8,
-                    paddingTop: index > 0 && page.depth <= 1 ? 40 : undefined,
-                    borderTop: index > 0 && page.depth <= 1 ? '1px solid #e2e8f0' : undefined,
+                    marginTop: index === 0 ? 0 : 40,
+                    paddingTop: index > 0 ? 40 : undefined,
+                    borderTop: index > 0 ? '1px solid #e2e8f0' : undefined,
                   }}>
                     <PageContent
                       activePage={page}
@@ -696,8 +697,8 @@ export function HierarchicalContentDisplay({
                       isOverview
                     />
                   </div>
-                )
-              })}
+                ))
+              }
             </div>
           )}
 

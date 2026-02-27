@@ -47,13 +47,13 @@ export function PageContent({
     ? documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
     : documentLinks
   const primaryDocument = visibleDocumentLinks[0]
-  const showChildNavigation = !isOverview && !hasIntro && !hasBody && activePage.childrenIds.length > 0
+  const showChildNavigation = activePage.childrenIds.length > 0 && (isOverview || (!hasIntro && !hasBody))
   const headingLevel = isOverview ? Math.max(2, Math.min(2 + activePage.depth - 1, 5)) as 2 | 3 | 4 | 5 : 2
   const headingSize = activePage.depth <= 1 ? 'md' : 'sm'
 
   return (
     <article>
-      <div className={isOverview && activePage.depth > 1 ? 'mb-1' : 'mb-6'}>
+      <div className="mb-6">
         {isOverview ? (
           <button
             type="button"
@@ -127,10 +127,12 @@ export function PageContent({
       )}
 
       {showChildNavigation && (
-        <section className="mt-6">
-          <Heading level={3} data-size="sm" className="font-title" style={{ marginBottom: 10 }}>
-            {activePage.childrenIds.length === 1 ? 'Kapittel' : 'Kapitler'}
-          </Heading>
+        <section className={isOverview ? '' : 'mt-6'}>
+          {!isOverview && (
+            <Heading level={3} data-size="sm" className="font-title" style={{ marginBottom: 10 }}>
+              {activePage.childrenIds.length === 1 ? 'Kapittel' : 'Kapitler'}
+            </Heading>
+          )}
           <ul className="m-0 list-none border-t border-slate-100 p-0">
             {activePage.childrenIds.map((childId) => {
               const child = pagesById.get(childId)
