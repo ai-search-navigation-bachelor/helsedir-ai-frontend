@@ -39,7 +39,7 @@ function SubSection({ label, html }: SubSectionProps) {
         {label}
       </summary>
       <div
-        className="content-html pb-4 pl-6 text-sm leading-6 text-slate-700"
+        className="content-html pb-4 pl-6 text-[0.9375rem] font-medium leading-7 text-slate-700"
         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
       />
     </details>
@@ -63,7 +63,7 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
       <div className="pb-2 pl-6">
         {html && (
           <div
-            className="content-html pb-4 text-sm leading-6 text-slate-700"
+            className="content-html pb-4 text-[0.9375rem] font-medium leading-7 text-slate-700"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
           />
         )}
@@ -80,7 +80,7 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
                     Fordeler og ulemper
                   </Heading>
                   <div
-                    className="content-html text-sm leading-6 text-slate-700"
+                    className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tradeoffs) }}
                   />
                 </div>
@@ -91,7 +91,7 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
                     Verdier og preferanser
                   </Heading>
                   <div
-                    className="content-html text-sm leading-6 text-slate-700"
+                    className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preferences) }}
                   />
                 </div>
@@ -220,7 +220,7 @@ export function ExpandableSubcontent({
 
         {body && (
           <div
-            className="content-html text-sm leading-6 text-slate-800"
+            className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }}
           />
         )}

@@ -191,6 +191,40 @@ body {
   }
 }
 
+/* Scale down headings and spacing inside expandable elements */
+details .content-html h2 {
+  font-size: 1.125rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  padding-top: 0;
+}
+
+details .content-html h3 {
+  font-size: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+details .content-html h4 {
+  font-size: 0.9375rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.375rem;
+}
+
+details .content-html p {
+  margin-bottom: 0.75rem;
+}
+
+details .content-html ul,
+details .content-html ol {
+  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+}
+
+details .content-html li {
+  margin-bottom: 0.375rem;
+}
+
 /* Ensure search component is responsive */
 [data-ds-component="search"] {
   width: 100% !important;
