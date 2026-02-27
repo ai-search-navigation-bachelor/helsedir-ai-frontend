@@ -152,9 +152,8 @@ export function ExpandableSubcontent({
       open={isOpen || undefined}
       data-expandable-id={item.id || undefined}
       onToggle={(e) => {
-        if (e.target === e.currentTarget) {
-          setIsOpen((e.target as HTMLDetailsElement).open)
-        }
+        if (e.target !== e.currentTarget) return
+        setIsOpen(e.currentTarget.open)
       }}
     >
       <summary className="cursor-pointer list-none rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open:rounded-b-none">

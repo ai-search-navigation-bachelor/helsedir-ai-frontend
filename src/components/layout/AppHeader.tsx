@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@digdir/designsystemet-react";
 import { Link } from "react-router-dom";
 
@@ -13,6 +13,7 @@ type AppHeaderProps = {
 
 export function AppHeader({ searchVisible = false }: AppHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuContainerRef = useRef<HTMLDivElement>(null);
 
   return (
       <div
@@ -21,7 +22,7 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
       >
         <header>
           <div className="w-full box-border">
-            <div className={`w-full max-w-7xl mx-auto flex items-center justify-between gap-6 box-border px-12 pt-10 ${searchVisible ? "pb-5" : "pb-10"}`}>
+            <div className={`mx-auto flex w-full max-w-7xl items-center justify-between gap-3 box-border px-4 pt-6 sm:gap-4 sm:px-6 sm:pt-8 lg:gap-6 lg:px-12 lg:pt-10 ${searchVisible ? "pb-4 sm:pb-5" : "pb-6 sm:pb-8 lg:pb-10"}`}>
               <Link
                 to="/"
                 aria-label="Helsedirektoratet"
@@ -53,7 +54,7 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
                   Søk
                   <IoSearch size={18} />
                 </Button>
-                <div className="relative">
+                <div ref={menuContainerRef} className="relative">
                   <Button
                     variant="secondary"
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -67,6 +68,7 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
                   <MenuDropdown
                     isOpen={isMenuOpen}
                     onClose={() => setIsMenuOpen(false)}
+                    containerRef={menuContainerRef}
                   />
                 </div>
               </div>

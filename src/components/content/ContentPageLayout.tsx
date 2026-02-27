@@ -27,14 +27,14 @@ export function ContentPageLayout({ content, children }: ContentPageLayoutProps)
 
   if (isParentChainLoading) {
     return (
-      <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-8">
+      <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">
         <ContentPageLoadingSkeleton />
       </div>
     )
   }
 
   return (
-    <div className="max-w-screen-xl mx-auto px-12 pt-2 pb-8">
+    <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">
       {activeBreadcrumbItems.length > 0 ? (
         <Breadcrumb items={activeBreadcrumbItems} collapsible={collapsible} />
       ) : (
