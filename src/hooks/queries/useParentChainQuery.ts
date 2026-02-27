@@ -13,6 +13,7 @@ export interface ParentChainEntry {
   id: string
   tittel: string
   href: string
+  contentType?: string
 }
 
 export interface ParentChainResult {
@@ -105,6 +106,7 @@ async function fetchParentChain(
       id: parent.id,
       tittel: parent.title,
       href,
+      contentType: parent.content_type,
     })
 
     // Overwrite temaside with the one from the highest ancestor found so far
