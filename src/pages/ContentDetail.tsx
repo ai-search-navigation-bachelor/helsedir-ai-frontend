@@ -1,10 +1,10 @@
 import { useLocation, useParams } from 'react-router-dom'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
-import { isTemasideContentType, normalizeContentType } from '../constants/content'
+import { isRetningslinjeContentType, isTemasideContentType, normalizeContentType } from '../constants/content'
 import { useContentDetailQuery } from '../hooks/queries/useContentDetailQuery'
 import { useTemasideCanonicalRedirect } from '../hooks/useTemasideCanonicalRedirect'
 import { useSearchStore } from '../stores/searchStore'
-import { ContentPageLoadingSkeleton } from '../components/content/ContentSkeletons'
+import { ContentPageLoadingSkeleton, DetailPageLoadingSkeleton } from '../components/content/ContentSkeletons'
 import { ContentPageLayout } from '../components/content/ContentPageLayout'
 import { ContentDisplay } from '../components/content/ContentDisplay'
 
@@ -36,9 +36,14 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
   useTemasideCanonicalRedirect(content)
 
   if (isLoading) {
+    // When route state carries the content type, trust it; otherwise fall back to path prefix heuristic
+    const useHierarchicalSkeleton = routeContentType
+      ? isRetningslinjeContentType(routeContentType)
+      : pathPrefix === 'retningslinjer'
+
     return (
-      <div className="mx-auto max-w-screen-xl px-4 pt-4 pb-8 sm:px-6 lg:px-12">
-        <ContentPageLoadingSkeleton />
+      <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">
+        {useHierarchicalSkeleton ? <ContentPageLoadingSkeleton /> : <DetailPageLoadingSkeleton />}
       </div>
     )
   }

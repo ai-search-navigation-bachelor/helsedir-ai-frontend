@@ -1,12 +1,22 @@
 import { Skeleton } from '@digdir/designsystemet-react'
 
+/** Placeholder for the breadcrumb row so content doesn't jump when it appears. */
+function BreadcrumbSkeleton() {
+  return (
+    <div aria-hidden="true" style={{ marginBottom: 20 }}>
+      <Skeleton variant="text" width={28} style={{ fontSize: '0.9rem', lineHeight: 1.5 }} />
+    </div>
+  )
+}
+
+/** Matches ContentPageHeader: small uppercase label + large title lines. */
 function HeaderSkeleton() {
   return (
-    <header className="space-y-3">
-      <Skeleton width={132} height={30} className="rounded-full" />
-      <div className="space-y-2">
-        <Skeleton variant="text" width={28} />
-        <Skeleton variant="text" width={22} />
+    <header className="pb-1">
+      <Skeleton variant="text" width={10} style={{ fontSize: '0.75rem', lineHeight: '1rem', marginBottom: 8 }} />
+      <div className="space-y-1">
+        <Skeleton variant="text" width={85} style={{ fontSize: '1.875rem', lineHeight: 1.2 }} />
+        <Skeleton variant="text" width={60} style={{ fontSize: '1.875rem', lineHeight: 1.2 }} />
       </div>
     </header>
   )
@@ -50,10 +60,11 @@ export function ContentBodyLoadingSkeleton({ blocks = 4 }: { blocks?: number }) 
 
 export function ContentPageLoadingSkeleton() {
   return (
-    <div className="flex flex-col gap-8" aria-label="Laster innhold" aria-busy="true">
+    <div aria-label="Laster innhold" aria-busy="true">
+      <BreadcrumbSkeleton />
       <HeaderSkeleton />
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]">
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]">
         <aside className="border-slate-200 lg:border-r lg:pr-6">
           <ContentSidebarLoadingSkeleton />
         </aside>
@@ -62,6 +73,19 @@ export function ContentPageLoadingSkeleton() {
           <ContentBodyLoadingSkeleton />
         </section>
       </div>
+    </div>
+  )
+}
+
+export function DetailPageLoadingSkeleton() {
+  return (
+    <div aria-label="Laster innhold" aria-busy="true">
+      <BreadcrumbSkeleton />
+      <HeaderSkeleton />
+
+      <section className="mt-8 min-w-0">
+        <ContentBodyLoadingSkeleton blocks={3} />
+      </section>
     </div>
   )
 }

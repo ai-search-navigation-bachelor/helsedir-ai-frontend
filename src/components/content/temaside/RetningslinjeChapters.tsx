@@ -40,7 +40,7 @@ export function RetningslinjeChapters({
   return (
     <ul className="ml-6 mr-4 mb-2 mt-0.5">
       {visible.map((ch, i) => (
-        <li key={ch.id ?? ch.href}>
+        <li key={ch.id ?? ch.href} className="border-b border-gray-100 last:border-0">
           <Link
             to={parentUrl}
             state={{

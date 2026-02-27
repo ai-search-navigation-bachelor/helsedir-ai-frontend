@@ -43,6 +43,7 @@ export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12 lg:pb-10">
+        {breadcrumbItems && breadcrumbItems.length > 0 && <Breadcrumb items={breadcrumbItems} />}
         <TemasideLoadingSkeleton />
       </div>
     )

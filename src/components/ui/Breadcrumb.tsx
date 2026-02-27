@@ -106,7 +106,7 @@ export function Breadcrumb({ items, collapsible = false }: BreadcrumbProps) {
                   color: linkColor,
                   fontSize: 'inherit',
                   fontFamily: 'inherit',
-                  padding: '2px 4px',
+                  padding: '0 4px',
                   borderRadius: '4px',
                   textDecoration: 'underline',
                   textDecorationColor: ds.color('logobla-1', 'border-subtle'),

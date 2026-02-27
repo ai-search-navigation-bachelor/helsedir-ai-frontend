@@ -98,9 +98,10 @@ export function useTemasideHubPageModel(
     [category?.title, nodeByPath, temaPath],
   )
 
+  const isHubPath = temaPath.split('/').filter(Boolean).length <= 1
   const breadcrumbItems = useMemo(
-    () => sanitizeTemasideBreadcrumbItems(trailByPath[temaPath] || generatedBreadcrumbItems),
-    [generatedBreadcrumbItems, temaPath, trailByPath],
+    () => sanitizeTemasideBreadcrumbItems(isHubPath ? generatedBreadcrumbItems : (trailByPath[temaPath] || generatedBreadcrumbItems)),
+    [generatedBreadcrumbItems, isHubPath, temaPath, trailByPath],
   )
 
   const buildTrailForLinkedPath = useCallback(
