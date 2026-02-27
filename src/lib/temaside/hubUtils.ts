@@ -36,7 +36,8 @@ export function buildTemasideBreadcrumbItems(
   const items: BreadcrumbItem[] = [{ label: 'Forside', href: '/' }]
   const segments = temaPath.split('/').filter(Boolean)
 
-  if (segments.length === 0) {
+  // Hub page (0–1 segments) — only show "Forside", don't link to self
+  if (segments.length <= 1) {
     return items
   }
 
@@ -47,14 +48,12 @@ export function buildTemasideBreadcrumbItems(
     href: categoryPath,
   })
 
-  if (segments.length > 1) {
-    const currentNodeTitle = nodeByPath.get(temaPath)?.title
-    const currentSegment = segments[segments.length - 1]
-    items.push({
-      label: currentNodeTitle || titleizeSegment(currentSegment) || temaPath,
-      href: temaPath,
-    })
-  }
+  const currentNodeTitle = nodeByPath.get(temaPath)?.title
+  const currentSegment = segments[segments.length - 1]
+  items.push({
+    label: currentNodeTitle || titleizeSegment(currentSegment) || temaPath,
+    href: '#',
+  })
 
   return items
 }
