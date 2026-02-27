@@ -684,7 +684,11 @@ export function HierarchicalContentDisplay({
                 const page = pageTree.pagesById.get(pageId)
                 if (!page || page.isPlaceholder) return null
                 return (
-                  <div key={page.id} style={{ marginTop: index === 0 ? 0 : page.depth <= 1 ? 40 : 8 }}>
+                  <div key={page.id} style={{
+                    marginTop: index === 0 ? 0 : page.depth <= 1 ? 40 : 8,
+                    paddingTop: index > 0 && page.depth <= 1 ? 40 : undefined,
+                    borderTop: index > 0 && page.depth <= 1 ? '1px solid #e2e8f0' : undefined,
+                  }}>
                     <PageContent
                       activePage={page}
                       pagesById={pageTree.pagesById}
