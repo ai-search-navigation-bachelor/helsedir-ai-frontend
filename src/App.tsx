@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppLayout } from './components/layout'
-import { Home, ContentDetail, SearchPage, TemasideHubPage, TemasideLeafPage } from './pages'
+import { Home, ContentDetail, SearchPage, TemasideHubPage, TemasideLeafPage, NotFound } from './pages'
 import { TEMASIDE_CATEGORIES } from './constants/temasider'
 import { CONTENT_CATEGORY_GROUPS, CONTENT_ONLY_PREFIXES } from './constants/contentRoutes'
 
@@ -44,6 +44,9 @@ function App() {
 
         {/* Legacy ID-based content route (fallback) */}
         <Route path="content/:id" element={<ContentDetail />} />
+
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   )
