@@ -24,13 +24,22 @@ export function ContentPageLayout({ content, children }: ContentPageLayoutProps)
 
   useEffect(() => {
     let meta = document.querySelector('meta[name="content-id"]') as HTMLMetaElement | null
+    const previousValue = meta?.content
+    let createdMeta = false
     if (!meta) {
       meta = document.createElement('meta')
       meta.name = 'content-id'
       document.head.appendChild(meta)
+      createdMeta = true
     }
     meta.content = content.id
-    return () => { meta.remove() }
+    return () => {
+      if (createdMeta) {
+        meta.remove()
+      } else if (previousValue !== undefined) {
+        meta.content = previousValue
+      }
+    }
   }, [content.id])
 
   const { activeBreadcrumbItems, isParentChainLoading, collapsible } = useContentDetailBreadcrumbs({

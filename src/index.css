@@ -3,6 +3,7 @@
 @theme {
   --font-sans: "Open Sans", sans-serif;
   --font-title: "Source Serif 4 Variable", serif;
+  --color-brand: #025169;
 }
 
 html {
@@ -191,37 +192,37 @@ body {
   }
 }
 
-/* Scale down headings and spacing inside expandable elements */
-details .content-html h2 {
+/* Scale down headings and spacing inside expandable subcontent */
+.expandable-subcontent .content-html h2 {
   font-size: 1.125rem;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
   padding-top: 0;
 }
 
-details .content-html h3 {
+.expandable-subcontent .content-html h3 {
   font-size: 1rem;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
 }
 
-details .content-html h4 {
+.expandable-subcontent .content-html h4 {
   font-size: 0.9375rem;
   margin-top: 0.75rem;
   margin-bottom: 0.375rem;
 }
 
-details .content-html p {
+.expandable-subcontent .content-html p {
   margin-bottom: 0.75rem;
 }
 
-details .content-html ul,
-details .content-html ol {
+.expandable-subcontent .content-html ul,
+.expandable-subcontent .content-html ol {
   margin-bottom: 0.75rem;
   padding-left: 1.5rem;
 }
 
-details .content-html li {
+.expandable-subcontent .content-html li {
   margin-bottom: 0.375rem;
 }
 
