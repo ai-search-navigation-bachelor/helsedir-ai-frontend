@@ -44,7 +44,7 @@ export function buildTemasideBreadcrumbItems(
   const categoryPath = `/${segments[0]}`
   const categoryNodeTitle = nodeByPath.get(categoryPath)?.title
   items.push({
-    label: categoryNodeTitle || categoryTitle || titleizeSegment(segments[0]) || categoryPath,
+    label: categoryTitle || categoryNodeTitle || titleizeSegment(segments[0]) || categoryPath,
     href: categoryPath,
   })
 
