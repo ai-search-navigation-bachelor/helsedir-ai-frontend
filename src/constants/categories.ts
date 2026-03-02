@@ -5,7 +5,7 @@
 export const SEARCH_MAIN_CATEGORIES = [
   {
     id: 'retningslinjer',
-    label: 'Retningslinje',
+    label: 'Retningslinjer og forløp',
     subcategoryIds: [
       'retningslinje',
       'nasjonalt-forlop',
@@ -17,12 +17,12 @@ export const SEARCH_MAIN_CATEGORIES = [
   },
   {
     id: 'faglige-rad',
-    label: 'Faglige råd',
+    label: 'Faglige råd og anbefalinger',
     subcategoryIds: ['anbefaling', 'rad', 'faglig-rad', 'pico'],
   },
   {
     id: 'veiledere',
-    label: 'Veiledere',
+    label: 'Veiledere og verktøy',
     subcategoryIds: [
       'takst-med-merknad',
       'veiviser',
@@ -39,7 +39,7 @@ export const SEARCH_MAIN_CATEGORIES = [
   },
   {
     id: 'lovfortolkning',
-    label: 'Lovfortolkning',
+    label: 'Regelverk og lovfortolkning',
     subcategoryIds: [
       'lov-eller-forskriftstekst-med-kommentar',
       'lovfortolkning',
@@ -50,12 +50,12 @@ export const SEARCH_MAIN_CATEGORIES = [
   },
   {
     id: 'statistikk-og-rapporter',
-    label: 'Statistikk og rapport',
+    label: 'Statistikk og rapporter',
     subcategoryIds: ['rapport', 'statistikkelement', 'statistikk'],
   },
   {
     id: 'temaside',
-    label: 'Temaside',
+    label: 'Temasider',
     subcategoryIds: ['temaside'],
   },
 ] as const
