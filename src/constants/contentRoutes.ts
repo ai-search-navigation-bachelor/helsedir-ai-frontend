@@ -36,9 +36,7 @@ export const CONTENT_CATEGORY_GROUPS: readonly ContentCategoryGroup[] = [
     searchCategoryId: 'retningslinjer',
     infoTypes: [
       'retningslinje',
-      'nasjonal-veileder',
       'prioriteringsveileder',
-      'normen-dokument',
     ],
   },
   {
@@ -69,9 +67,11 @@ export const CONTENT_CATEGORY_GROUPS: readonly ContentCategoryGroup[] = [
     subtitle: 'Veiledere, veivisere og e-helsestandarder',
     searchCategoryId: 'veiledere',
     infoTypes: [
+      'nasjonal-veileder',
       'veileder',
       'veiledning',
       'veiviser',
+      'normen-dokument',
       'ehelsestandard',
       'takst-med-merknad',
       'tilskudd',
@@ -81,7 +81,7 @@ export const CONTENT_CATEGORY_GROUPS: readonly ContentCategoryGroup[] = [
     pathPrefix: 'rundskriv',
     label: 'Rundskriv',
     subtitle: 'Rundskriv fra Helsedirektoratet',
-    searchCategoryId: 'rundskriv',
+    searchCategoryId: 'regelverk',
     infoTypes: [
       'rundskriv',
     ],
@@ -90,7 +90,7 @@ export const CONTENT_CATEGORY_GROUPS: readonly ContentCategoryGroup[] = [
     pathPrefix: 'lovfortolkning',
     label: 'Lovfortolkning',
     subtitle: 'Lovfortolkninger, regelverk og kommentarer',
-    searchCategoryId: 'lovfortolkning',
+    searchCategoryId: 'regelverk',
     infoTypes: [
       'lovfortolkning',
       'lov-eller-forskriftstekst-med-kommentar',

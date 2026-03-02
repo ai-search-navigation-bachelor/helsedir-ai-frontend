@@ -9,8 +9,7 @@ export const MAIN_TAB_ORDER: readonly SearchMainCategoryId[] = [
   'retningslinjer',
   'faglige-rad',
   'veiledere',
-  'rundskriv',
-  'lovfortolkning',
+  'regelverk',
   'statistikk-og-rapporter',
 ]
 
