@@ -1,10 +1,11 @@
-import { ds, colors } from '../../styles/dsTokens'
+import { colors } from '../../styles/dsTokens'
+import { resolveScoreColor, type ScoreColorKey } from './scoreColors'
 
 interface ScoreLegendProps {
   mode: 'hybrid' | 'keyword'
 }
 
-function Dot({ color }: { color: string }) {
+function Dot({ color }: { color: ScoreColorKey }) {
   return (
     <span
       style={{
@@ -12,14 +13,14 @@ function Dot({ color }: { color: string }) {
         width: '8px',
         height: '8px',
         borderRadius: '50%',
-        backgroundColor: color,
+        backgroundColor: resolveScoreColor(color),
         flexShrink: 0,
       }}
     />
   )
 }
 
-function LegendRow({ color, label, desc }: { color: string; label: string; desc: string }) {
+function LegendRow({ color, label, desc }: { color: ScoreColorKey; label: string; desc: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px' }}>
       <Dot color={color} />
@@ -37,7 +38,7 @@ export function ScoreLegend({ mode }: ScoreLegendProps) {
         padding: '7px 10px',
         borderRadius: '6px',
         border: `1px solid ${colors.borderSubtle}`,
-        backgroundColor: 'white',
+        backgroundColor: colors.surface,
         fontSize: '0.70rem',
         color: colors.textSubtle,
         display: 'flex',
@@ -47,17 +48,17 @@ export function ScoreLegend({ mode }: ScoreLegendProps) {
     >
       {mode === 'hybrid' ? (
         <>
-          <LegendRow color="#3b82f6" label="BM25×w" desc="ordbasert score × BM25-vekt" />
-          <LegendRow color="#10b981" label="Sem.×w" desc="semantisk score × semantisk vekt" />
+          <LegendRow color="bm25" label="BM25×w" desc="ordbasert score × BM25-vekt" />
+          <LegendRow color="semantic" label="Sem.×w" desc="semantisk score × semantisk vekt" />
           <LegendRow
-            color={ds.color('logobla-1', 'text-default')}
+            color="rrf"
             label="RRF-norm"
             desc="endelig RRF-score normalisert til 1 (topp-treff = 1.0)"
           />
         </>
       ) : (
         <LegendRow
-          color={ds.color('logobla-1', 'text-default')}
+          color="rrf"
           label="Final"
           desc="endelig score fra keyword-søk (tittelbasert)"
         />

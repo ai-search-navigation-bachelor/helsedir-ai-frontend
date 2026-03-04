@@ -23,13 +23,7 @@ export const HELSEDIR_STYLE_CONFIG: WeightConfig = {
 export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
   {
     label: 'Vår løsning',
-    config: {
-      bm25_weight: 0.3,
-      semantic_weight: 0.7,
-      rrf_k: 60,
-      temaside_boost: 1.15,
-      retningslinje_boost: 1.1,
-    },
+    config: { ...DEFAULT_CONFIG },
   },
   {
     label: 'Balansert',
