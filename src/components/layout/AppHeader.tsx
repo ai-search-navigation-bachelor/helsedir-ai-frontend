@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import { colors } from "../../styles/dsTokens";
 import { MenuDropdown } from "../ui/MenuDropdown";
+import { RolePicker } from "../ui/RolePicker";
 
 import { IoSearch, IoMenu, IoClose } from "react-icons/io5";
 
@@ -43,6 +44,7 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
               </Link>
 
               <div className="flex gap-3 items-center shrink-0 min-w-0">
+                <RolePicker />
                 <Button
                   variant="secondary"
                   onClick={() => {
