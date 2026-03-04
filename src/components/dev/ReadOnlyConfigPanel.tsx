@@ -13,6 +13,8 @@ interface ReadOnlyConfigPanelProps {
 const noop = () => { /* read-only */ }
 
 export function ReadOnlyConfigPanel({ label, sublabel, config, rowLabels }: ReadOnlyConfigPanelProps) {
+  const idBase = label.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+
   return (
     <div
       style={{
@@ -38,6 +40,7 @@ export function ReadOnlyConfigPanel({ label, sublabel, config, rowLabels }: Read
         {sublabel}
       </p>
       <SliderRow
+        id={`${idBase}-bm25`}
         label={rowLabels?.bm25 ?? 'BM25-vekt'}
         value={config.bm25_weight}
         min={0}
@@ -47,6 +50,7 @@ export function ReadOnlyConfigPanel({ label, sublabel, config, rowLabels }: Read
         disabled
       />
       <SliderRow
+        id={`${idBase}-semantic`}
         label={rowLabels?.semantic ?? 'Semantisk vekt'}
         value={config.semantic_weight}
         min={0}
@@ -56,6 +60,7 @@ export function ReadOnlyConfigPanel({ label, sublabel, config, rowLabels }: Read
         disabled
       />
       <SliderRow
+        id={`${idBase}-rrf`}
         label={rowLabels?.rrf ?? 'RRF-k'}
         value={config.rrf_k}
         min={config.rrf_k === 0 ? 0 : 1}

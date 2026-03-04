@@ -21,7 +21,9 @@ export function computeStats(response: SearchResponse): ResultStats {
 
 export function computeRankMap(results: SearchResult[]): Map<string, number> {
   const map = new Map<string, number>()
-  results.forEach((r, i) => map.set(r.id, i + 1))
+  for (const [i, r] of results.entries()) {
+    map.set(r.id, i + 1)
+  }
   return map
 }
 

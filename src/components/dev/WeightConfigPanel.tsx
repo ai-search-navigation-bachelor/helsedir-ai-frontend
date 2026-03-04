@@ -1,4 +1,4 @@
-import { Heading } from '@digdir/designsystemet-react'
+import { Button, Heading } from '@digdir/designsystemet-react'
 import { ds, colors } from '../../styles/dsTokens'
 import type { WeightConfig } from '../../types/dev'
 import { PRESETS } from '../../constants/dev'
@@ -11,6 +11,8 @@ interface WeightConfigPanelProps {
 }
 
 export function WeightConfigPanel({ label, config, onChange }: WeightConfigPanelProps) {
+  const idBase = label.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+
   return (
     <div
       style={{
@@ -42,6 +44,7 @@ export function WeightConfigPanel({ label, config, onChange }: WeightConfigPanel
           <span>Semantisk: {config.semantic_weight.toFixed(2)}</span>
         </div>
         <input
+          id={`${idBase}-bm25-semantic`}
           type="range"
           min={0}
           max={1}
@@ -87,6 +90,7 @@ export function WeightConfigPanel({ label, config, onChange }: WeightConfigPanel
       </div>
 
       <SliderRow
+        id={`${idBase}-rrf`}
         label="RRF-k"
         value={config.rrf_k}
         min={1}
@@ -98,22 +102,21 @@ export function WeightConfigPanel({ label, config, onChange }: WeightConfigPanel
       {/* Presets */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '16px' }}>
         {PRESETS.map(({ label: presetLabel, config: preset }) => (
-          <button
+          <Button
             key={presetLabel}
             type="button"
+            variant="secondary"
             onClick={() => onChange(preset)}
+            data-size="sm"
             style={{
               padding: '4px 12px',
               fontSize: '0.78rem',
               borderRadius: '20px',
-              border: `1px solid ${colors.border}`,
-              backgroundColor: 'white',
-              cursor: 'pointer',
               color: colors.text,
             }}
           >
             {presetLabel}
-          </button>
+          </Button>
         ))}
       </div>
     </div>
