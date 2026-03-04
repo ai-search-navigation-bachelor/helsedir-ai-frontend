@@ -21,6 +21,12 @@ export interface SearchOptions extends BaseRequestOptions {
   search_id?: string
   category?: string
   log?: boolean
+  method?: 'hybrid' | 'keyword' | 'semantic'
+  bm25_weight?: number
+  semantic_weight?: number
+  rrf_k?: number
+  temaside_boost?: number
+  retningslinje_boost?: number
 }
 
 /**
@@ -45,7 +51,21 @@ function emptySearchResponse(): SearchResponse {
  */
 export async function search(
   query: string,
-  { signal, offset = 0, limit = 15, role, search_id, category, log }: SearchOptions = {},
+  {
+    signal,
+    offset = 0,
+    limit = 15,
+    role,
+    search_id,
+    category,
+    log,
+    method,
+    bm25_weight,
+    semantic_weight,
+    rrf_k,
+    temaside_boost,
+    retningslinje_boost,
+  }: SearchOptions = {},
 ): Promise<SearchResponse> {
   const trimmed = query.trim()
 
@@ -61,9 +81,26 @@ export async function search(
     search_id,
     category,
     log,
+    method,
+    bm25_weight,
+    semantic_weight,
+    rrf_k,
+    temaside_boost,
+    retningslinje_boost,
   })
 
   return httpRequest<SearchResponse>(url, { signal })
+}
+
+/**
+ * Keyword search - title-based matching, no semantic component
+ * Uses the unified /search endpoint with method=keyword
+ */
+export async function searchKeyword(
+  query: string,
+  { signal, limit = 20, role }: BaseRequestOptions & { limit?: number } = {},
+): Promise<SearchResponse> {
+  return search(query, { signal, limit, role, method: 'keyword' })
 }
 
 /**
