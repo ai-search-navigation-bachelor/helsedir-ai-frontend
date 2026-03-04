@@ -80,9 +80,12 @@ export function DevPage() {
         <input
           id="dev-query"
           type="text"
+          aria-label="Søkeord for utviklerverktøy"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') void runSearch() }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && query.trim() && !isLoading) void runSearch()
+          }}
           placeholder="Skriv inn søkeord og trykk Enter..."
           style={{
             flex: 1,
@@ -90,7 +93,6 @@ export function DevPage() {
             fontSize: '1rem',
             borderRadius: '8px',
             border: `1.5px solid ${colors.border}`,
-            outline: 'none',
             boxSizing: 'border-box',
             color: colors.text,
           }}

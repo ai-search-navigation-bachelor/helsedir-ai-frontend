@@ -1,6 +1,7 @@
 import React from 'react'
 import { Heading } from '@digdir/designsystemet-react'
 import { colors } from '../../styles/dsTokens'
+import { SEARCH_MAIN_CATEGORIES } from '../../constants/categories'
 
 interface CategoryBreakdownTableProps {
   countsA: Record<string, number>
@@ -34,9 +35,14 @@ function deltaColor(delta: number): string {
 }
 
 export function CategoryBreakdownTable({ countsA, countsB, countsC }: CategoryBreakdownTableProps) {
-  const allKeys = Array.from(
-    new Set([...Object.keys(countsA), ...Object.keys(countsB), ...Object.keys(countsC)]),
-  ).sort()
+  const keySet = new Set([...Object.keys(countsA), ...Object.keys(countsB), ...Object.keys(countsC)])
+  const preferredOrder = SEARCH_MAIN_CATEGORIES.flatMap((category) => [...category.subcategoryIds])
+  const preferredOrderKeys: string[] = [...preferredOrder]
+  const preferredOrderSet = new Set<string>(preferredOrderKeys)
+
+  const orderedKnownKeys = preferredOrderKeys.filter((key) => keySet.has(key))
+  const unknownKeys = Array.from(keySet).filter((key) => !preferredOrderSet.has(key)).sort()
+  const allKeys = [...orderedKnownKeys, ...unknownKeys]
 
   if (allKeys.length === 0) return null
 
