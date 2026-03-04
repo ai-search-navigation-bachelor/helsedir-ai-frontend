@@ -10,6 +10,7 @@ import {
 import { buildTabs } from '../lib/search/searchPageModel'
 import { useSearchInfiniteQuery, prefetchCategorySearch } from './queries/useSearchInfiniteQuery'
 import { useSearchStore } from '../stores/searchStore'
+import { useRoleStore } from '../stores/roleStore'
 import { search } from '../api'
 
 type ActiveTab = SearchMainCategoryId | 'all'
@@ -85,6 +86,8 @@ export function useSearchPageModel() {
   const searchQueryFromStore = useSearchStore((state) => state.searchQuery)
   const setSearchData = useSearchStore((state) => state.setSearchData)
 
+  const role = useRoleStore((state) => state.role) ?? undefined
+
   const apiCategory = useMemo(() => toApiCategory(activeTab), [activeTab])
 
   const queryClient = useQueryClient()
@@ -125,6 +128,7 @@ export function useSearchPageModel() {
     enabled: hasQuery && !categoryKnownEmpty,
     category: apiCategory,
     search_id: effectiveSearchId,
+    role,
   })
 
   const pages = data?.pages
@@ -159,6 +163,7 @@ export function useSearchPageModel() {
         searchQuery,
         mainCategory.subcategoryIds.join(','),
         search_id,
+        role,
       )
     })
   }, [pages, queryClient, searchQuery])
@@ -243,6 +248,7 @@ export function useSearchPageModel() {
           search_id: effectiveSearchId,
           log: true,
           limit: 1,
+          role,
         }).catch(() => {})
       }
     }
