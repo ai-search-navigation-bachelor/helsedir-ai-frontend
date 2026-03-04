@@ -154,21 +154,21 @@ export function DevResultItem({
               <ScoreBar
                 label={config ? 'BM25×w' : 'BM25'}
                 value={weightedBm25 ?? bm25}
-                color="#3b82f6"
+                color="bm25"
               />
             )}
             {semantic !== undefined && (
               <ScoreBar
                 label={config ? 'Sem.×w' : 'Sem.'}
                 value={weightedSemantic ?? semantic}
-                color="#10b981"
+                color="semantic"
               />
             )}
             {maxScore != null && maxScore > 0 && (
               <ScoreBar
                 label="RRF-norm"
                 value={result.score / maxScore}
-                color={ds.color('logobla-1', 'text-default')}
+                color="rrf"
               />
             )}
           </div>

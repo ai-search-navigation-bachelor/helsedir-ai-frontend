@@ -80,9 +80,12 @@ export function DevPage() {
         <input
           id="dev-query"
           type="text"
+          aria-label="Søkeord for utviklerverktøy"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') void runSearch() }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && query.trim() && !isLoading) void runSearch()
+          }}
           placeholder="Skriv inn søkeord og trykk Enter..."
           style={{
             flex: 1,
@@ -90,7 +93,6 @@ export function DevPage() {
             fontSize: '1rem',
             borderRadius: '8px',
             border: `1.5px solid ${colors.border}`,
-            outline: 'none',
             boxSizing: 'border-box',
             color: colors.text,
           }}
@@ -119,7 +121,7 @@ export function DevPage() {
         />
         <ReadOnlyConfigPanel
           label="Konfig C — Helsedir-stil"
-          sublabel="Fast referanse — keyword-søk (method=keyword)"
+          sublabel="Fast referanse — method=keyword. Tittel vektes ×2 over brødtekst, norske stoppord fjernes, Snowball-stemming, synonymer (f.eks. sukkersyke→diabetes). Innebygde booster: retningslinje ×1.3, veileder ×1.2, temaside ×1.15. RRF brukes ikke."
           config={HELSEDIR_STYLE_CONFIG}
           rowLabels={{ bm25: 'Keyword search vekt', rrf: 'RRF-k (ikke brukt)' }}
         />
@@ -199,7 +201,7 @@ export function DevPage() {
 
             <ResultsColumn
               title={`Keyword-søk — ${slotHelsedir.response?.total ?? 0} treff`}
-              subtitle="Keyword-søk · tittelbasert matching · RRF brukes ikke"
+              subtitle="method=keyword · tittel ×2 · stoppord · stemming · synonymer · innebygde booster"
               mode="keyword"
               loading={slotHelsedir.loading}
               loadingLabel="Laster keyword-søk resultater"

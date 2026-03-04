@@ -5,12 +5,14 @@ import { TEMASIDE_CATEGORIES } from './constants/temasider'
 import { CONTENT_CATEGORY_GROUPS, CONTENT_ONLY_PREFIXES } from './constants/contentRoutes'
 
 function App() {
+  const showDevRoute = import.meta.env.DEV
+
   return (
     <Routes>
       <Route path="/" element={<AppLayout />}>
         <Route index element={<Home />} />
         <Route path="search" element={<SearchPage />} />
-        <Route path="dev" element={<DevPage />} />
+        {showDevRoute && <Route path="dev" element={<DevPage />} />}
 
         {/* Path-based content routes (e.g. /retningslinjer/adhd) */}
         {CONTENT_CATEGORY_GROUPS.map((group) => (

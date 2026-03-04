@@ -1,6 +1,7 @@
 import { ds, colors } from '../../styles/dsTokens'
 
 interface SliderRowProps {
+  id: string
   label: string
   value: number
   min: number
@@ -10,7 +11,7 @@ interface SliderRowProps {
   disabled?: boolean
 }
 
-export function SliderRow({ label, value, min, max, step, onChange, disabled }: SliderRowProps) {
+export function SliderRow({ id, label, value, min, max, step, onChange, disabled }: SliderRowProps) {
   return (
     <div style={{ marginBottom: '14px' }}>
       <div
@@ -21,6 +22,7 @@ export function SliderRow({ label, value, min, max, step, onChange, disabled }: 
         }}
       >
         <label
+          htmlFor={id}
           style={{
             fontSize: '0.875rem',
             fontWeight: 500,
@@ -43,6 +45,7 @@ export function SliderRow({ label, value, min, max, step, onChange, disabled }: 
         </span>
       </div>
       <input
+        id={id}
         type="range"
         min={min}
         max={max}

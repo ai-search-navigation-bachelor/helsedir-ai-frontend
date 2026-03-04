@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useRef, useState } from 'react'
+import { useQueries } from '@tanstack/react-query'
 import { search, searchKeyword } from '../api/search'
 import type { SlotState, ResultStats } from '../types/dev'
 import { DEFAULT_CONFIG, HELSEDIR_STYLE_CONFIG } from '../constants/dev'
@@ -6,6 +7,20 @@ import { computeStats, computeRankMap, getRankDiff } from '../components/dev/uti
 
 function initialSlot(config: SlotState['config']): SlotState {
   return { config, response: null, loading: false, error: null }
+}
+
+interface SearchRun {
+  runId: number
+  query: string
+  configA: SlotState['config']
+  configB: SlotState['config']
+}
+
+function isAbortLikeError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.name === 'AbortError' || error.name === 'CanceledError')
+  )
 }
 
 export interface DevSearchReturn {
@@ -34,56 +49,116 @@ export function useDevSearch(): DevSearchReturn {
   const [slotHelsedir, setSlotHelsedir] = useState<SlotState>(() =>
     initialSlot({ ...HELSEDIR_STYLE_CONFIG }),
   )
+  const pendingRunRef = useRef<SearchRun | null>(null)
+  const runIdRef = useRef(0)
 
-  const abortRef = useRef<{ a?: AbortController; b?: AbortController; h?: AbortController }>({})
-
-  useEffect(() => {
-    return () => {
-      abortRef.current.a?.abort()
-      abortRef.current.b?.abort()
-      abortRef.current.h?.abort()
-    }
-  }, [])
+  const [queryA, queryB, queryH] = useQueries({
+    queries: [
+      {
+        queryKey: ['dev-search', 'a'],
+        enabled: false,
+        retry: false,
+        queryFn: ({ signal }) => {
+          const run = pendingRunRef.current
+          if (!run) throw new Error('Mangler aktivt søk for Konfig A')
+          return search(run.query, {
+            signal,
+            limit: 20,
+            log: false,
+            method: 'hybrid',
+            ...run.configA,
+          })
+        },
+      },
+      {
+        queryKey: ['dev-search', 'b'],
+        enabled: false,
+        retry: false,
+        queryFn: ({ signal }) => {
+          const run = pendingRunRef.current
+          if (!run) throw new Error('Mangler aktivt søk for Konfig B')
+          return search(run.query, {
+            signal,
+            limit: 20,
+            log: false,
+            method: 'hybrid',
+            ...run.configB,
+          })
+        },
+      },
+      {
+        queryKey: ['dev-search', 'keyword'],
+        enabled: false,
+        retry: false,
+        queryFn: ({ signal }) => {
+          const run = pendingRunRef.current
+          if (!run) throw new Error('Mangler aktivt søk for Helsedir')
+          return searchKeyword(run.query, { signal, limit: 20 })
+        },
+      },
+    ],
+  })
 
   async function runSearch() {
     const trimmed = query.trim()
     if (!trimmed) return
 
-    abortRef.current.a?.abort()
-    abortRef.current.b?.abort()
-    abortRef.current.h?.abort()
-
-    const controllerA = new AbortController()
-    const controllerB = new AbortController()
-    const controllerH = new AbortController()
-    abortRef.current = { a: controllerA, b: controllerB, h: controllerH }
+    const runId = ++runIdRef.current
+    pendingRunRef.current = {
+      runId,
+      query: trimmed,
+      configA: { ...slotA.config },
+      configB: { ...slotB.config },
+    }
 
     setSlotA((s) => ({ ...s, loading: true, error: null }))
     setSlotB((s) => ({ ...s, loading: true, error: null }))
     setSlotHelsedir((s) => ({ ...s, loading: true, error: null }))
 
     const [resultA, resultB, resultH] = await Promise.allSettled([
-      search(trimmed, { signal: controllerA.signal, limit: 20, log: false, method: 'hybrid', ...slotA.config }),
-      search(trimmed, { signal: controllerB.signal, limit: 20, log: false, method: 'hybrid', ...slotB.config }),
-      searchKeyword(trimmed, { signal: controllerH.signal, limit: 20 }),
+      queryA.refetch(),
+      queryB.refetch(),
+      queryH.refetch(),
     ])
 
-    if (resultA.status === 'fulfilled') {
-      setSlotA((s) => ({ ...s, loading: false, response: resultA.value }))
-    } else if ((resultA.reason as Error)?.name !== 'AbortError') {
-      setSlotA((s) => ({ ...s, loading: false, error: 'Søk A feilet. Sjekk konsollen for detaljer.' }))
+    if (runId !== runIdRef.current) {
+      return
     }
 
-    if (resultB.status === 'fulfilled') {
-      setSlotB((s) => ({ ...s, loading: false, response: resultB.value }))
-    } else if ((resultB.reason as Error)?.name !== 'AbortError') {
-      setSlotB((s) => ({ ...s, loading: false, error: 'Søk B feilet. Sjekk konsollen for detaljer.' }))
+    if (resultA.status === 'fulfilled' && resultA.value.status === 'success') {
+      setSlotA((s) => ({ ...s, loading: false, response: resultA.value.data ?? null }))
+    } else {
+      const error =
+        resultA.status === 'fulfilled' ? resultA.value.error : resultA.reason
+      setSlotA((s) => ({
+        ...s,
+        loading: false,
+        error: isAbortLikeError(error) ? null : 'Søk A feilet. Sjekk konsollen for detaljer.',
+      }))
     }
 
-    if (resultH.status === 'fulfilled') {
-      setSlotHelsedir((s) => ({ ...s, loading: false, response: resultH.value }))
-    } else if ((resultH.reason as Error)?.name !== 'AbortError') {
-      setSlotHelsedir((s) => ({ ...s, loading: false, error: 'Helsedir-søk feilet. Sjekk konsollen for detaljer.' }))
+    if (resultB.status === 'fulfilled' && resultB.value.status === 'success') {
+      setSlotB((s) => ({ ...s, loading: false, response: resultB.value.data ?? null }))
+    } else {
+      const error =
+        resultB.status === 'fulfilled' ? resultB.value.error : resultB.reason
+      setSlotB((s) => ({
+        ...s,
+        loading: false,
+        error: isAbortLikeError(error) ? null : 'Søk B feilet. Sjekk konsollen for detaljer.',
+      }))
+    }
+
+    if (resultH.status === 'fulfilled' && resultH.value.status === 'success') {
+      setSlotHelsedir((s) => ({ ...s, loading: false, response: resultH.value.data ?? null }))
+    } else {
+      const error =
+        resultH.status === 'fulfilled' ? resultH.value.error : resultH.reason
+      setSlotHelsedir((s) => ({
+        ...s,
+        loading: false,
+        error: isAbortLikeError(error) ? null : 'Helsedir-søk feilet. Sjekk konsollen for detaljer.',
+      }))
     }
   }
 
