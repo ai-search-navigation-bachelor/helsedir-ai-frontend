@@ -1,40 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { IconType } from 'react-icons'
 import { IoChevronDown, IoPeople, IoPerson } from 'react-icons/io5'
-import {
-  FaUserNurse,
-  FaUserMd,
-  FaUserTie,
-  FaStethoscope,
-  FaLaptopMedical,
-  FaFlask,
-  FaBriefcase,
-  FaBalanceScale,
-  FaNewspaper,
-  FaLandmark,
-} from 'react-icons/fa'
 import { useRolesQuery } from '../../hooks/queries/useRolesQuery'
 import { useRoleStore } from '../../stores/roleStore'
-
-const ROLE_ICONS: Record<string, IconType> = {
-  lege: FaUserMd,
-  sykepleier: FaUserNurse,
-  helsepersonell: FaStethoscope,
-  leder: FaUserTie,
-  offentlig: FaLandmark,
-  'it': FaLaptopMedical,
-  forskning: FaFlask,
-  næringsliv: FaBriefcase,
-  media: FaNewspaper,
-  jus: FaBalanceScale,
-}
-
-function getRoleIcon(slug: string, displayName?: string): IconType {
-  if (ROLE_ICONS[slug]) return ROLE_ICONS[slug]
-  const lower = `${slug} ${displayName ?? ''}`.toLowerCase()
-  const key = Object.keys(ROLE_ICONS).find((k) => lower.includes(k))
-  return key ? ROLE_ICONS[key] : IoPerson
-}
+import { getRoleIcon } from '../../utils/roleIcons'
 
 export function RolePicker() {
   const { data: roles } = useRolesQuery()
