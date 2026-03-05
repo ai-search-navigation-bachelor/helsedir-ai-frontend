@@ -76,7 +76,8 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
                   {RoleIcon && !isMenuOpen && (
                     <span
                       className="role-badge"
-                      aria-label={`Rolle: ${selectedRole?.display_name}`}
+                      role="img"
+                      aria-label={`Rolle: ${selectedRole?.display_name ?? ''}`}
                     >
                       <RoleIcon size={11} />
                     </span>

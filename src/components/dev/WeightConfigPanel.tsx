@@ -89,6 +89,7 @@ export function WeightConfigPanel({ label, config, onChange }: WeightConfigPanel
           className="dev-bm25-sem"
           id={`${idBase}-bm25-semantic`}
           type="range"
+          aria-label="BM25 / Semantisk vektbalanse"
           min={0}
           max={1}
           step={0.05}

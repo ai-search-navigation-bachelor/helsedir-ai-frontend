@@ -320,7 +320,7 @@ export function DevPage() {
                   result={r}
                   rankDiff={null}
                   config={slotA.config}
-                  scoringMode="hybrid"
+
                   maxScore={slotA.response!.results[0]?.score}
                 />
               ))}
@@ -340,7 +340,7 @@ export function DevPage() {
                   result={r}
                   rankDiff={getRankDiff(r.id, rankMapA, rankMapB)}
                   config={slotB.config}
-                  scoringMode="hybrid"
+
                   maxScore={slotB.response!.results[0]?.score}
                 />
               ))}
@@ -358,7 +358,7 @@ export function DevPage() {
                   rank={i + 1}
                   result={r}
                   rankDiff={null}
-                  scoringMode="keyword"
+
                   maxScore={slotHelsedir.response!.results[0]?.score}
                 />
               ))}

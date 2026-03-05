@@ -26,7 +26,7 @@ const tdStyle: React.CSSProperties = {
 }
 
 function RoleBoostCell({ stats }: { stats: ResultStats }) {
-  const { roleBoosted, rolePenalized, roleNeutral } = stats
+  const { roleBoosted = 0, rolePenalized = 0, roleNeutral = 0 } = stats
   const hasAny = roleBoosted > 0 || rolePenalized > 0
 
   if (!hasAny) {

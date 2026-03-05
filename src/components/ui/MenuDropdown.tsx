@@ -100,7 +100,9 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
               <li
                 role="option"
                 aria-selected={role === null}
+                tabIndex={0}
                 onClick={() => { setRole(null); setRoleExpanded(false); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setRole(null); setRoleExpanded(false); } }}
                 className={`menu-role-option${role === null ? ' menu-role-option--selected' : ''}`}
               >
                 <IoPeople size={15} className="menu-role-option-icon" />
@@ -113,7 +115,9 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
                     key={r.slug}
                     role="option"
                     aria-selected={role === r.slug}
+                    tabIndex={0}
                     onClick={() => { setRole(r.slug); setRoleExpanded(false); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setRole(r.slug); setRoleExpanded(false); } }}
                     className={`menu-role-option${role === r.slug ? ' menu-role-option--selected' : ''}`}
                   >
                     <Icon size={15} className="menu-role-option-icon" />

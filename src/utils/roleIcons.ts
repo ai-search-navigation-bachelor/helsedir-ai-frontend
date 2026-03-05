@@ -29,6 +29,7 @@ export const ROLE_ICONS: Record<string, IconType> = {
 export function getRoleIcon(slug: string, displayName?: string): IconType {
   if (ROLE_ICONS[slug]) return ROLE_ICONS[slug]
   const lower = `${slug} ${displayName ?? ''}`.toLowerCase()
-  const key = Object.keys(ROLE_ICONS).find((k) => lower.includes(k))
+  const re = (k: string) => new RegExp(`\\b${k}\\b`)
+  const key = Object.keys(ROLE_ICONS).find((k) => re(k).test(lower))
   return key ? ROLE_ICONS[key] : IoPerson
 }

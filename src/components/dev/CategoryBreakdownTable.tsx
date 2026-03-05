@@ -75,6 +75,8 @@ export function CategoryBreakdownTable({ countsA, countsB, countsC }: CategoryBr
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-controls="category-breakdown-panel"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -106,6 +108,7 @@ export function CategoryBreakdownTable({ countsA, countsB, countsC }: CategoryBr
 
       {isOpen && (
         <div
+          id="category-breakdown-panel"
           style={{
             borderRadius: '10px',
             overflow: 'hidden',
