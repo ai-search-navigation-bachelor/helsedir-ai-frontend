@@ -1,11 +1,9 @@
-import { ds } from '../../styles/dsTokens'
-
 export type ScoreColorKey = 'bm25' | 'semantic' | 'rrf'
 
 const SCORE_COLOR_MAP: Record<ScoreColorKey, string> = {
-  bm25: ds.color('bla-2', 'base-default'),
-  semantic: ds.color('gronn-2', 'base-default'),
-  rrf: ds.color('logobla-1', 'text-default'),
+  bm25: '#0284c7',     // sky-600 (darker for light bg)
+  semantic: '#059669',  // emerald-600
+  rrf: '#047FA4',       // Helsedir logobla-2
 }
 
 export function resolveScoreColor(color: ScoreColorKey): string {
