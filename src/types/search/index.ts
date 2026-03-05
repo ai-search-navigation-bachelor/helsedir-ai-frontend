@@ -15,6 +15,7 @@ export interface SearchResult {
   bm25_score?: number;
   semantic_score?: number;
   rrf_score?: number;
+  role_boost?: number | null;
   explanation?: string;
   children?: SearchResultChildGroup[] | null;
 }

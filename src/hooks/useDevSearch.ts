@@ -14,6 +14,7 @@ interface SearchRun {
   query: string
   configA: SlotState['config']
   configB: SlotState['config']
+  role: string | null
 }
 
 function isAbortLikeError(error: unknown): boolean {
@@ -39,7 +40,7 @@ export interface DevSearchReturn {
   rankMapA: Map<string, number>
   rankMapB: Map<string, number>
   getRankDiff: typeof getRankDiff
-  runSearch: () => Promise<void>
+  runSearch: (role?: string | null) => Promise<void>
 }
 
 export function useDevSearch(): DevSearchReturn {
@@ -63,9 +64,10 @@ export function useDevSearch(): DevSearchReturn {
           if (!run) throw new Error('Mangler aktivt søk for Konfig A')
           return search(run.query, {
             signal,
-            limit: 20,
+            limit: 100,
             log: false,
             method: 'hybrid',
+            role: run.role ?? undefined,
             ...run.configA,
           })
         },
@@ -79,9 +81,10 @@ export function useDevSearch(): DevSearchReturn {
           if (!run) throw new Error('Mangler aktivt søk for Konfig B')
           return search(run.query, {
             signal,
-            limit: 20,
+            limit: 100,
             log: false,
             method: 'hybrid',
+            role: run.role ?? undefined,
             ...run.configB,
           })
         },
@@ -93,13 +96,13 @@ export function useDevSearch(): DevSearchReturn {
         queryFn: ({ signal }) => {
           const run = pendingRunRef.current
           if (!run) throw new Error('Mangler aktivt søk for Helsedir')
-          return searchKeyword(run.query, { signal, limit: 20 })
+          return searchKeyword(run.query, { signal, limit: 100, role: run.role ?? undefined })
         },
       },
     ],
   })
 
-  async function runSearch() {
+  async function runSearch(role?: string | null) {
     const trimmed = query.trim()
     if (!trimmed) return
 
@@ -109,6 +112,7 @@ export function useDevSearch(): DevSearchReturn {
       query: trimmed,
       configA: { ...slotA.config },
       configB: { ...slotB.config },
+      role: role ?? null,
     }
 
     setSlotA((s) => ({ ...s, loading: true, error: null }))
