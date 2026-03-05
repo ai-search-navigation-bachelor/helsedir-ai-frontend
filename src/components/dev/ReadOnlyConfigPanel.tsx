@@ -1,5 +1,3 @@
-import { Heading } from '@digdir/designsystemet-react'
-import { colors } from '../../styles/dsTokens'
 import type { WeightConfig } from '../../types/dev'
 import { SliderRow } from './SliderRow'
 
@@ -21,20 +19,31 @@ export function ReadOnlyConfigPanel({ label, sublabel, config, rowLabels }: Read
         flex: 1,
         minWidth: '280px',
         padding: '20px',
-        border: `1px dashed ${colors.border}`,
-        borderRadius: '12px',
-        backgroundColor: colors.surface,
+        borderRadius: '10px',
+        backgroundColor: '#f8fafc',
+        border: '1px dashed #cbd5e1',
       }}
     >
-      <Heading level={3} data-size="xs" style={{ marginBottom: '4px' }}>
+      <h3
+        style={{
+          fontSize: '0.85rem',
+          fontWeight: 700,
+          color: '#64748b',
+          marginBottom: '4px',
+          marginTop: 0,
+          letterSpacing: '0.02em',
+          textTransform: 'uppercase',
+        }}
+      >
         {label}
-      </Heading>
+      </h3>
       <p
         style={{
-          fontSize: '0.75rem',
-          color: colors.textSubtle,
+          fontSize: '0.72rem',
+          color: '#94a3b8',
           marginBottom: '16px',
           marginTop: 0,
+          lineHeight: 1.5,
         }}
       >
         {sublabel}
