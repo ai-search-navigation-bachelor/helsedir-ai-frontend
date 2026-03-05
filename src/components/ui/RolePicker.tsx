@@ -23,8 +23,15 @@ export function RolePicker() {
         setOpen(false)
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [])
 
   const hasRoles = roles && roles.length > 0
@@ -33,7 +40,8 @@ export function RolePicker() {
     <div ref={ref} className="role-picker">
       <button
         type="button"
-        onClick={() => hasRoles && setOpen((o) => !o)}
+        onClick={() => setOpen((o) => !o)}
+        disabled={!hasRoles}
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label="Velg rolle"
@@ -205,7 +213,14 @@ function RoleOption({ label, Icon, selected, onSelect }: {
     <li
       role="option"
       aria-selected={selected}
+      tabIndex={0}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect()
+        }
+      }}
       className={`role-picker__option${selected ? ' role-picker__option--selected' : ''}`}
     >
       <Icon size={16} className="role-picker__option-icon" />
