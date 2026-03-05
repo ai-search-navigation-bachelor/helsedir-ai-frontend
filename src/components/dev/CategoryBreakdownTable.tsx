@@ -1,7 +1,6 @@
-import React from 'react'
-import { Heading } from '@digdir/designsystemet-react'
-import { colors } from '../../styles/dsTokens'
+import { useState } from 'react'
 import { SEARCH_MAIN_CATEGORIES } from '../../constants/categories'
+import { formatInfoTypeLabel } from './utils'
 
 interface CategoryBreakdownTableProps {
   countsA: Record<string, number>
@@ -9,32 +8,52 @@ interface CategoryBreakdownTableProps {
   countsC: Record<string, number>
 }
 
-const thStyle: React.CSSProperties = {
-  padding: '10px 16px',
-  textAlign: 'left',
-  fontWeight: 600,
-  fontSize: '0.875rem',
-  color: colors.text,
-}
-
-const tdStyle: React.CSSProperties = {
-  padding: '8px 16px',
-  fontSize: '0.875rem',
-  color: colors.text,
-}
-
-function formatDelta(delta: number): string {
-  if (delta === 0) return '—'
-  return delta > 0 ? `+${delta}` : String(delta)
-}
-
-function deltaColor(delta: number): string {
-  if (delta > 0) return '#166534'
-  if (delta < 0) return '#991b1b'
-  return colors.textSubtle
+function Bar({ value, max, color }: { value: number; max: number; color: string }) {
+  const pct = max > 0 ? (value / max) * 100 : 0
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <span
+        style={{
+          minWidth: '28px',
+          fontSize: '0.78rem',
+          fontWeight: 600,
+          color: '#1e293b',
+          fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+          fontVariantNumeric: 'tabular-nums',
+          textAlign: 'right',
+          flexShrink: 0,
+        }}
+      >
+        {value}
+      </span>
+      <div
+        style={{
+          flex: 1,
+          height: '6px',
+          borderRadius: '3px',
+          backgroundColor: '#e2e8f0',
+          overflow: 'hidden',
+          minWidth: '40px',
+        }}
+      >
+        <div
+          style={{
+            width: `${pct}%`,
+            minWidth: value > 0 ? '3px' : 0,
+            height: '100%',
+            borderRadius: '3px',
+            backgroundColor: color,
+            transition: 'width 0.3s ease',
+          }}
+        />
+      </div>
+    </div>
+  )
 }
 
 export function CategoryBreakdownTable({ countsA, countsB, countsC }: CategoryBreakdownTableProps) {
+  const [isOpen, setIsOpen] = useState(false)
+
   const keySet = new Set([...Object.keys(countsA), ...Object.keys(countsB), ...Object.keys(countsC)])
   const preferredOrder = SEARCH_MAIN_CATEGORIES.flatMap((category) => [...category.subcategoryIds])
   const preferredOrderKeys: string[] = [...preferredOrder]
@@ -46,70 +65,127 @@ export function CategoryBreakdownTable({ countsA, countsB, countsC }: CategoryBr
 
   if (allKeys.length === 0) return null
 
+  const maxCount = Math.max(
+    ...allKeys.flatMap((k) => [countsA[k] ?? 0, countsB[k] ?? 0, countsC[k] ?? 0]),
+    1,
+  )
+
   return (
     <div style={{ marginTop: '28px' }}>
-      <Heading level={3} data-size="xs" style={{ marginBottom: '12px' }}>
-        Kategorifordeling
-      </Heading>
-      <div
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
         style={{
-          border: `1px solid ${colors.borderSubtle}`,
-          borderRadius: '10px',
-          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          background: 'none',
+          border: 'none',
+          color: '#475569',
+          fontSize: '0.78rem',
+          fontWeight: 600,
+          cursor: 'pointer',
+          padding: '4px 0',
+          letterSpacing: '0.03em',
+          textTransform: 'uppercase',
+          marginBottom: '12px',
         }}
       >
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ backgroundColor: colors.surfaceTinted }}>
-              <th style={thStyle}>Kategori</th>
-              <th style={{ ...thStyle, textAlign: 'center' }}>A</th>
-              <th style={{ ...thStyle, textAlign: 'center' }}>B</th>
-              <th style={{ ...thStyle, textAlign: 'center' }}>C</th>
-              <th style={{ ...thStyle, textAlign: 'center' }}>Delta B-A</th>
-              <th style={{ ...thStyle, textAlign: 'center' }}>Delta C-A</th>
-            </tr>
-          </thead>
-          <tbody>
+        <span
+          style={{
+            display: 'inline-block',
+            transition: 'transform 0.2s ease',
+            transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+            fontSize: '0.65rem',
+          }}
+        >
+          {'\u25B6'}
+        </span>
+        {`Kategorifordeling \u2013 treff per innholdstype`}
+      </button>
+
+      {isOpen && (
+        <div
+          style={{
+            borderRadius: '10px',
+            overflow: 'hidden',
+            backgroundColor: '#fff',
+            border: '1px solid #e2e8f0',
+          }}
+        >
+          {/* Column headers */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '160px 1fr 1fr 1fr',
+              gap: '8px',
+              padding: '10px 16px',
+              backgroundColor: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0',
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              color: '#64748b',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
+          >
+            <span>Kategori</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#047FA4', display: 'inline-block', flexShrink: 0 }} />
+              Konfig A
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#0284c7', display: 'inline-block', flexShrink: 0 }} />
+              Konfig B
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: '#94a3b8', display: 'inline-block', flexShrink: 0 }} />
+              Keyword
+            </div>
+          </div>
+
+          {/* Category rows */}
+          <div style={{ padding: '2px 0' }}>
             {allKeys.map((key) => {
               const a = countsA[key] ?? 0
               const b = countsB[key] ?? 0
               const c = countsC[key] ?? 0
-              const deltaBA = b - a
-              const deltaCA = c - a
+              const displayName = formatInfoTypeLabel(key)
+
               return (
-                <tr key={key} style={{ borderTop: `1px solid ${colors.borderSubtle}` }}>
-                  <td style={tdStyle}>{key}</td>
-                  <td style={{ ...tdStyle, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{a}</td>
-                  <td style={{ ...tdStyle, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>{b}</td>
-                  <td style={{ ...tdStyle, textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: colors.textSubtle }}>{c}</td>
-                  <td
+                <div
+                  key={key}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '160px 1fr 1fr 1fr',
+                    gap: '8px',
+                    alignItems: 'center',
+                    padding: '5px 16px',
+                    borderTop: '1px solid #f1f5f9',
+                  }}
+                >
+                  <span
                     style={{
-                      ...tdStyle,
-                      textAlign: 'center',
-                      fontVariantNumeric: 'tabular-nums',
-                      fontWeight: deltaBA !== 0 ? 600 : 400,
-                      color: deltaColor(deltaBA),
+                      fontSize: '0.8rem',
+                      fontWeight: 500,
+                      color: '#475569',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
+                    title={key}
                   >
-                    {formatDelta(deltaBA)}
-                  </td>
-                  <td
-                    style={{
-                      ...tdStyle,
-                      textAlign: 'center',
-                      fontVariantNumeric: 'tabular-nums',
-                      fontWeight: deltaCA !== 0 ? 600 : 400,
-                      color: deltaColor(deltaCA),
-                    }}
-                  >
-                    {formatDelta(deltaCA)}
-                  </td>
-                </tr>
+                    {displayName}
+                  </span>
+                  <Bar value={a} max={maxCount} color="#047FA4" />
+                  <Bar value={b} max={maxCount} color="#0284c7" />
+                  <Bar value={c} max={maxCount} color="#94a3b8" />
+                </div>
               )
             })}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
