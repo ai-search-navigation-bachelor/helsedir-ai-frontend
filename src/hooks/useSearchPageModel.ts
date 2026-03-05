@@ -142,14 +142,15 @@ export function useSearchPageModel() {
   }, [pages, trimmedQuery, setSearchData])
 
   // Prefetch first page of each category that has results
-  const prefetchedForSearchId = useRef<string | null>(null)
+  const prefetchedForKey = useRef<string | null>(null)
 
   useEffect(() => {
     const fp = pages?.[0]
     if (!fp?.search_id || !fp.category_counts) return
-    if (fp.search_id === prefetchedForSearchId.current) return
+    const cacheKey = `${fp.search_id}:${role ?? ''}`
+    if (cacheKey === prefetchedForKey.current) return
 
-    prefetchedForSearchId.current = fp.search_id
+    prefetchedForKey.current = cacheKey
     const { search_id, category_counts } = fp
 
     SEARCH_MAIN_CATEGORIES.forEach((mainCategory) => {
@@ -166,7 +167,7 @@ export function useSearchPageModel() {
         role,
       )
     })
-  }, [pages, queryClient, searchQuery])
+  }, [pages, queryClient, searchQuery, role])
 
   // Flatten all pages into a single results array with category metadata
   const allResults = useMemo(() => {

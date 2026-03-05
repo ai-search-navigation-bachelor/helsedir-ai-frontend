@@ -10,7 +10,6 @@ interface DevResultItemProps {
   result: SearchResult
   rankDiff: number | null
   config?: WeightConfig
-  scoringMode?: 'hybrid' | 'keyword'
   maxScore?: number
 }
 

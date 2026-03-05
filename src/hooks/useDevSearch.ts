@@ -96,7 +96,7 @@ export function useDevSearch(): DevSearchReturn {
         queryFn: ({ signal }) => {
           const run = pendingRunRef.current
           if (!run) throw new Error('Mangler aktivt søk for Helsedir')
-          return searchKeyword(run.query, { signal, limit: 100 })
+          return searchKeyword(run.query, { signal, limit: 100, role: run.role ?? undefined })
         },
       },
     ],
