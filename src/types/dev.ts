@@ -21,4 +21,7 @@ export interface ResultStats {
   minScore: number
   maxScore: number
   categoryCounts: Record<string, number>
+  roleBoosted: number
+  rolePenalized: number
+  roleNeutral: number
 }
