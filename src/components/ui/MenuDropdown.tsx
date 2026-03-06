@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { HiArrowRight, HiBeaker } from 'react-icons/hi2';
 import { IoChevronDown, IoPeople } from 'react-icons/io5';
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider';
 import { useRolesQuery } from '../../hooks/queries/useRolesQuery';
 import { useRoleStore } from '../../stores/roleStore';
-import { getRoleIcon } from '../../utils/roleIcons';
+import { RoleIcon } from '../../utils/roleIcons';
 
 interface MenuItem {
   path: string;
@@ -41,7 +41,10 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
 
   const selected = roles?.find((r) => r.slug === role);
   const selectedLabel = selected?.display_name ?? 'Alle';
-  const SelectedIcon = selected ? getRoleIcon(selected.slug, selected.display_name) : IoPeople;
+  const handleClose = useCallback(() => {
+    setRoleExpanded(false);
+    onClose();
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -52,17 +55,13 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
       const insideContainer = containerRef?.current?.contains(target);
 
       if (!insideDropdown && !insideContainer) {
-        onClose();
+        handleClose();
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose, containerRef]);
-
-  useEffect(() => {
-    if (!isOpen) setRoleExpanded(false);
-  }, [isOpen]);
+  }, [isOpen, containerRef, handleClose]);
 
   if (!isOpen) return null;
 
@@ -80,7 +79,11 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
             aria-expanded={roleExpanded}
           >
             <div className="flex items-center gap-2.5">
-              <SelectedIcon size={16} className="text-[#025169] opacity-80" />
+              {selected ? (
+                <RoleIcon slug={selected.slug} displayName={selected.display_name} size={16} className="text-[#025169] opacity-80" />
+              ) : (
+                <IoPeople size={16} className="text-[#025169] opacity-80" />
+              )}
               <div className="flex flex-col items-start">
                 <span className="text-[0.7rem] font-medium text-[#025169] uppercase tracking-wide opacity-70">Rolle</span>
                 <span className="text-[0.95rem] font-semibold text-[#025169]">{selectedLabel}</span>
@@ -109,7 +112,6 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
                 Alle
               </li>
               {roles.map((r) => {
-                const Icon = getRoleIcon(r.slug, r.display_name);
                 return (
                   <li
                     key={r.slug}
@@ -120,7 +122,7 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setRole(r.slug); setRoleExpanded(false); } }}
                     className={`menu-role-option${role === r.slug ? ' menu-role-option--selected' : ''}`}
                   >
-                    <Icon size={15} className="menu-role-option-icon" />
+                    <RoleIcon slug={r.slug} displayName={r.display_name} size={15} className="menu-role-option-icon" />
                     {r.display_name}
                   </li>
                 );
@@ -154,7 +156,7 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
               target="_blank"
               rel="noopener noreferrer"
               className={className}
-              onClick={onClose}
+              onClick={handleClose}
             >
               {content}
             </a>
@@ -163,7 +165,7 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
               key={item.path}
               to={item.path}
               className={className}
-              onClick={onClose}
+              onClick={handleClose}
             >
               {content}
             </Link>
@@ -175,7 +177,7 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
           <Link
             to="/dev"
             className="group flex items-center justify-between py-3 px-4 rounded-lg transition-colors duration-100 hover:bg-[#e8f4f8]"
-            onClick={onClose}
+            onClick={handleClose}
           >
             <span className="flex items-center gap-2 text-[0.95rem] text-gray-500 group-hover:text-[#025169] transition-colors">
               <HiBeaker size={16} />
