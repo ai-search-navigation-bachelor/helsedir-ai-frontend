@@ -33,3 +33,7 @@ export type {
 // Theme pages
 export { getThemePages } from './themePages'
 export type { ThemePage, ThemePagesOptions, ThemePagesResponse } from './themePages'
+
+// Roles
+export { fetchRoles } from './roles'
+export type { Role } from './roles'

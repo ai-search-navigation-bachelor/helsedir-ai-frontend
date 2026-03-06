@@ -4,6 +4,9 @@ import { Link } from "react-router-dom";
 
 import { colors } from "../../styles/dsTokens";
 import { MenuDropdown } from "../ui/MenuDropdown";
+import { useRoleStore } from "../../stores/roleStore";
+import { useRolesQuery } from "../../hooks/queries/useRolesQuery";
+import { getRoleIcon } from "../../utils/roleIcons";
 
 import { IoSearch, IoMenu, IoClose } from "react-icons/io5";
 
@@ -14,6 +17,11 @@ type AppHeaderProps = {
 export function AppHeader({ searchVisible = false }: AppHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuContainerRef = useRef<HTMLDivElement>(null);
+
+  const role = useRoleStore((s) => s.role);
+  const { data: roles } = useRolesQuery();
+  const selectedRole = roles?.find((r) => r.slug === role);
+  const RoleIcon = selectedRole ? getRoleIcon(selectedRole.slug, selectedRole.display_name) : null;
 
   return (
       <div
@@ -65,6 +73,15 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
                     {isMenuOpen ? <IoClose size={18} /> : <IoMenu size={18} />}
                     Meny
                   </Button>
+                  {RoleIcon && !isMenuOpen && (
+                    <span
+                      className="role-badge"
+                      role="img"
+                      aria-label={`Rolle: ${selectedRole?.display_name ?? ''}`}
+                    >
+                      <RoleIcon size={11} />
+                    </span>
+                  )}
                   <MenuDropdown
                     isOpen={isMenuOpen}
                     onClose={() => setIsMenuOpen(false)}
@@ -75,6 +92,29 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
             </div>
           </div>
         </header>
+        <style>{`
+          .role-badge {
+            position: absolute;
+            top: -4px;
+            right: -6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #025169;
+            color: #fff;
+            border: 2px solid ${colors.headerBg};
+            pointer-events: none;
+            animation: roleBadgePop 0.25s ease;
+          }
+          @keyframes roleBadgePop {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+          }
+        `}</style>
       </div>
   );
 }

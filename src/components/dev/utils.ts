@@ -10,18 +10,34 @@ export function computeStats(response: SearchResponse): ResultStats {
       : top10.reduce((sum, r) => sum + r.score, 0) / top10.length
 
   const scores = results.map((r) => r.score)
+
+  let roleBoosted = 0
+  let rolePenalized = 0
+  let roleNeutral = 0
+  for (const r of results) {
+    const rb = r.role_boost
+    if (rb != null && rb > 1.0) roleBoosted++
+    else if (rb != null && rb < 1.0) rolePenalized++
+    else roleNeutral++
+  }
+
   return {
     total: response.total,
     avgScoreTop10: Math.round(avgScoreTop10 * 10000) / 10000,
     minScore: scores.length ? Math.round(Math.min(...scores) * 10000) / 10000 : 0,
     maxScore: scores.length ? Math.round(Math.max(...scores) * 10000) / 10000 : 0,
     categoryCounts: response.category_counts,
+    roleBoosted,
+    rolePenalized,
+    roleNeutral,
   }
 }
 
 export function computeRankMap(results: SearchResult[]): Map<string, number> {
   const map = new Map<string, number>()
-  results.forEach((r, i) => map.set(r.id, i + 1))
+  for (const [i, r] of results.entries()) {
+    map.set(r.id, i + 1)
+  }
   return map
 }
 
