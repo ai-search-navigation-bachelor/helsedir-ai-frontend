@@ -32,6 +32,9 @@ export function mapHelsedirContentToDetail(source: NestedContent): ContentDetail
     title: source.tittel || source.title || source.id,
     body: source.tekst || source.body || '',
     content_type: contentType,
+    has_text_content: source.has_text_content,
+    document_url: source.document_url || (typeof source.data?.fil === 'string' ? source.data.fil : null),
+    is_pdf_only: source.is_pdf_only,
     links: toContentLinks(source),
   }
 }
