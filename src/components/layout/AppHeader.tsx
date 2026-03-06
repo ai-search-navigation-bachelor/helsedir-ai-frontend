@@ -6,7 +6,7 @@ import { colors } from "../../styles/dsTokens";
 import { MenuDropdown } from "../ui/MenuDropdown";
 import { useRoleStore } from "../../stores/roleStore";
 import { useRolesQuery } from "../../hooks/queries/useRolesQuery";
-import { getRoleIcon } from "../../utils/roleIcons";
+import { RoleIcon } from "../../utils/roleIcons";
 
 import { IoSearch, IoMenu, IoClose } from "react-icons/io5";
 
@@ -21,7 +21,6 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
   const role = useRoleStore((s) => s.role);
   const { data: roles } = useRolesQuery();
   const selectedRole = roles?.find((r) => r.slug === role);
-  const RoleIcon = selectedRole ? getRoleIcon(selectedRole.slug, selectedRole.display_name) : null;
 
   return (
       <div
@@ -73,13 +72,13 @@ export function AppHeader({ searchVisible = false }: AppHeaderProps) {
                     {isMenuOpen ? <IoClose size={18} /> : <IoMenu size={18} />}
                     Meny
                   </Button>
-                  {RoleIcon && !isMenuOpen && (
+                  {selectedRole && !isMenuOpen && (
                     <span
                       className="role-badge"
                       role="img"
                       aria-label={`Rolle: ${selectedRole?.display_name ?? ''}`}
                     >
-                      <RoleIcon size={11} />
+                      <RoleIcon slug={selectedRole.slug} displayName={selectedRole.display_name} size={11} />
                     </span>
                   )}
                   <MenuDropdown
