@@ -15,6 +15,7 @@ interface UseContentDetailQueryOptions {
   contentPath?: string
   searchId?: string
   routeContentType?: string
+  skipHelsedirFallback?: boolean
 }
 
 export function useContentDetailQuery({
@@ -22,6 +23,7 @@ export function useContentDetailQuery({
   contentPath,
   searchId,
   routeContentType,
+  skipHelsedirFallback = false,
 }: UseContentDetailQueryOptions) {
   const queryClient = useQueryClient()
   const normalizedRouteContentType = normalizeContentType(routeContentType)
@@ -60,7 +62,7 @@ export function useContentDetailQuery({
           throw backendError
         }
 
-        if (!contentId || !shouldFallbackToTypedEndpoint(backendError)) {
+        if (skipHelsedirFallback || !contentId || !shouldFallbackToTypedEndpoint(backendError)) {
           throw backendError
         }
 
