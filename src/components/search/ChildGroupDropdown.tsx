@@ -242,6 +242,7 @@ export function ChildGroupDropdown({
                             searchCategoryId: group.info_type,
                             searchCategoryName: group.display_name,
                             contentType: item.info_type,
+                            skipHelsedirFallback: Boolean(item.is_pdf_only && item.document_url?.trim()),
                           }}
                           className="group/item flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] last:border-b-0"
                         >

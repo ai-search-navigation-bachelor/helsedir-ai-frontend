@@ -71,6 +71,7 @@ export function SearchResultCard({
             searchCategoryId: result.categoryId,
             searchCategoryName: result.categoryName,
             contentType: result.info_type,
+            skipHelsedirFallback: Boolean(result.is_pdf_only && documentUrl),
           }}
           aria-label={`Åpne ${result.title}`}
           className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#025169]"

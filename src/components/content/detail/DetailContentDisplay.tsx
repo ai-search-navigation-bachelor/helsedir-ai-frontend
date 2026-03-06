@@ -204,15 +204,15 @@ export function DetailContentDisplay({
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
   const documentLinks = useMemo(
     () => {
-      if (isPdfOnlyContent && backendDocumentUrl) {
-        return [{ href: backendDocumentUrl, label: 'Åpne PDF', isPdf: true }]
-      }
-
       const links = getDocumentLinks(enrichedContent, content.links)
       if (!backendDocumentUrl) return links
       if (links.some((document) => document.href === backendDocumentUrl)) return links
 
-      return [{ href: backendDocumentUrl, label: 'Åpne PDF i ny fane', isPdf: true }, ...links]
+      return [{
+        href: backendDocumentUrl,
+        label: isPdfOnlyContent ? 'Åpne PDF' : 'Åpne PDF i ny fane',
+        isPdf: true,
+      }, ...links]
     },
     [backendDocumentUrl, content.links, enrichedContent, isPdfOnlyContent],
   )
@@ -477,5 +477,3 @@ export function DetailContentDisplay({
     </div>
   )
 }
-
-
