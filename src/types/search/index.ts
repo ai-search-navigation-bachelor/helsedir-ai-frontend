@@ -11,6 +11,9 @@ export interface SearchResult {
   title: string;
   info_type: string;
   path?: string;
+  has_text_content?: boolean;
+  document_url?: string | null;
+  is_pdf_only?: boolean;
   score: number;
   bm25_score?: number;
   semantic_score?: number;

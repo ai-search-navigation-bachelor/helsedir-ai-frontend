@@ -38,6 +38,8 @@ export function SearchResultCard({
   const contentHref = isTemaside
     ? normalizedTemasidePath || buildContentUrl(result)
     : buildContentUrl(result);
+  const documentUrl = result.document_url?.trim() || "";
+  const isPdfOnly = Boolean(result.is_pdf_only && documentUrl);
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     setIsAnyGroupOpen(isOpen);
@@ -49,33 +51,51 @@ export function SearchResultCard({
       className="group relative bg-white border-l-[3px] border-[#025169] px-5 py-4 rounded-xl ring-1 ring-gray-100 shadow-sm transition-shadow duration-150 hover:shadow-md"
       style={isAnyGroupOpen ? { zIndex: 100 } : undefined}
     >
-      <Link
-        to={contentHref}
-        state={{
-          fromSearch: true,
-          searchQuery,
-          sourceTemasideId,
-          sourceContentId: sourceTemasideId,
-          sourceContentTitle: sourceTemasideId ? undefined : result.title,
-          searchCategoryId: result.categoryId,
-          searchCategoryName: result.categoryName,
-          contentType: result.info_type,
-        }}
-        aria-label={`Åpne ${result.title}`}
-        className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#025169]"
-      />
+      {isPdfOnly ? (
+        <a
+          href={documentUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Åpne PDF for ${result.title} i ny fane`}
+          className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#025169]"
+        />
+      ) : (
+        <Link
+          to={contentHref}
+          state={{
+            fromSearch: true,
+            searchQuery,
+            sourceTemasideId,
+            sourceContentId: sourceTemasideId,
+            sourceContentTitle: sourceTemasideId ? undefined : result.title,
+            searchCategoryId: result.categoryId,
+            searchCategoryName: result.categoryName,
+            contentType: result.info_type,
+            skipHelsedirFallback: Boolean(result.is_pdf_only && documentUrl),
+          }}
+          aria-label={`Åpne ${result.title}`}
+          className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#025169]"
+        />
+      )}
 
       <div className="relative z-10 mb-2 flex items-center justify-between pointer-events-none">
-        <span className="inline-block px-2.5 py-0.5 text-xs font-medium text-[#025169] bg-[#e8f4f8] rounded-full">
-          {categoryLabel}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-block rounded-full bg-[#e8f4f8] px-2.5 py-0.5 text-xs font-medium text-[#025169]">
+            {categoryLabel}
+          </span>
+          {isPdfOnly && (
+            <span className="inline-block rounded-full bg-[#fff7ed] px-2.5 py-0.5 text-xs font-medium text-[#7c2d12]">
+              PDF
+            </span>
+          )}
+        </div>
         <HiArrowRight
           size={16}
-          className="text-[#025169] opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+          className="text-[#025169] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
         />
       </div>
 
-      <h3 className="relative z-10 pointer-events-none font-title text-[1.05rem] font-semibold text-gray-900 mb-1 leading-snug">
+      <h3 className="relative z-10 mb-1 font-title text-[1.05rem] font-semibold leading-snug text-gray-900 pointer-events-none">
         {cardTitle}
       </h3>
 
@@ -84,7 +104,7 @@ export function SearchResultCard({
         !result.explanation.toLowerCase().includes("keyword") &&
         !result.explanation.toLowerCase().includes("semantic") &&
         !result.explanation.toLowerCase().includes("fuzzy match") && (
-          <p className="relative z-10 pointer-events-none text-sm text-gray-600 line-clamp-2 mt-1">
+          <p className="relative z-10 mt-1 line-clamp-2 text-sm text-gray-600 pointer-events-none">
             {result.explanation}
           </p>
         )}

@@ -26,12 +26,18 @@ export function mapHelsedirContentToDetail(source: NestedContent): ContentDetail
     source.type?.trim().toLowerCase() ||
     source.tekniskeData?.infoType?.trim().toLowerCase() ||
     'innhold'
+  const normalizedDocumentUrl = source.document_url?.trim()
 
   return {
     id: source.id,
     title: source.tittel || source.title || source.id,
     body: source.tekst || source.body || '',
     content_type: contentType,
+    has_text_content: source.has_text_content,
+    document_url:
+      normalizedDocumentUrl ||
+      (typeof source.data?.fil === 'string' ? source.data.fil : null),
+    is_pdf_only: source.is_pdf_only,
     links: toContentLinks(source),
   }
 }

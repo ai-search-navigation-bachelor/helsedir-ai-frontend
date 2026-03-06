@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
-import type { IconType } from 'react-icons'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { IoChevronDown, IoPeople, IoPerson } from 'react-icons/io5'
 import { useRolesQuery } from '../../hooks/queries/useRolesQuery'
 import { useRoleStore } from '../../stores/roleStore'
-import { getRoleIcon } from '../../utils/roleIcons'
+import { RoleIcon } from '../../utils/roleIcons'
 
 export function RolePicker() {
   const { data: roles } = useRolesQuery()
@@ -15,7 +14,6 @@ export function RolePicker() {
 
   const selected = roles?.find((r) => r.slug === role)
   const selectedLabel = selected?.display_name ?? 'Velg rolle'
-  const TriggerIcon = selected ? getRoleIcon(selected.slug, selected.display_name) : IoPerson
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -48,7 +46,11 @@ export function RolePicker() {
         className="role-picker__trigger"
         style={{ opacity: hasRoles ? 1 : 0.5, cursor: hasRoles ? 'pointer' : 'default' }}
       >
-        <TriggerIcon size={15} className="role-picker__icon" />
+        {selected ? (
+          <RoleIcon slug={selected.slug} displayName={selected.display_name} size={15} className="role-picker__icon" />
+        ) : (
+          <IoPerson size={15} className="role-picker__icon" />
+        )}
         <span className="role-picker__label">{selectedLabel}</span>
         {hasRoles && (
           <IoChevronDown
@@ -63,7 +65,7 @@ export function RolePicker() {
         <ul role="listbox" aria-label="Roller" className="role-picker__dropdown">
           <RoleOption
             label="Alle"
-            Icon={IoPeople}
+            icon={<IoPeople size={16} className="role-picker__option-icon" />}
             selected={role === null}
             onSelect={() => { setRole(null); setOpen(false) }}
           />
@@ -71,7 +73,7 @@ export function RolePicker() {
             <RoleOption
               key={r.slug}
               label={r.display_name}
-              Icon={getRoleIcon(r.slug, r.display_name)}
+              icon={<RoleIcon slug={r.slug} displayName={r.display_name} size={16} className="role-picker__option-icon" />}
               selected={role === r.slug}
               onSelect={() => { setRole(r.slug); setOpen(false) }}
             />
@@ -203,9 +205,9 @@ export function RolePicker() {
   )
 }
 
-function RoleOption({ label, Icon, selected, onSelect }: {
+function RoleOption({ label, icon, selected, onSelect }: {
   label: string
-  Icon: IconType
+  icon: ReactNode
   selected: boolean
   onSelect: () => void
 }) {
@@ -223,7 +225,7 @@ function RoleOption({ label, Icon, selected, onSelect }: {
       }}
       className={`role-picker__option${selected ? ' role-picker__option--selected' : ''}`}
     >
-      <Icon size={16} className="role-picker__option-icon" />
+      {icon}
       {label}
     </li>
   )
