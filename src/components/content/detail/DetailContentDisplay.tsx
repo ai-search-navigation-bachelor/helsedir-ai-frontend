@@ -94,8 +94,11 @@ export function DetailContentDisplay({
   const hasBackendRecommendationStrength = Boolean(content.anbefaling_fields?.styrke?.trim())
   const hasSufficientBackendRecommendationData =
     hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
+  const backendDocumentUrl = content.document_url?.trim() || ''
+  const isPdfOnlyContent = Boolean(content.is_pdf_only && backendDocumentUrl)
   const shouldSkipHelsedirEnrichment = isTemasideContentType(normalizedType)
   const shouldAttemptEnrichment =
+    !isPdfOnlyContent &&
     !shouldSkipHelsedirEnrichment &&
     (isRecommendationContentType(normalizedType)
       ? !hasSufficientBackendRecommendationData
@@ -200,8 +203,18 @@ export function DetailContentDisplay({
 
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
   const documentLinks = useMemo(
-    () => getDocumentLinks(enrichedContent, content.links),
-    [content.links, enrichedContent],
+    () => {
+      if (isPdfOnlyContent && backendDocumentUrl) {
+        return [{ href: backendDocumentUrl, label: 'Åpne PDF', isPdf: true }]
+      }
+
+      const links = getDocumentLinks(enrichedContent, content.links)
+      if (!backendDocumentUrl) return links
+      if (links.some((document) => document.href === backendDocumentUrl)) return links
+
+      return [{ href: backendDocumentUrl, label: 'Åpne PDF i ny fane', isPdf: true }, ...links]
+    },
+    [backendDocumentUrl, content.links, enrichedContent, isPdfOnlyContent],
   )
   const publicationUrl = useMemo(() => {
     const url = content.url?.trim() || enrichedContent?.url?.trim()
@@ -213,6 +226,7 @@ export function DetailContentDisplay({
     documentLinks.length > 0 &&
     documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
   const shouldShowPublicationLink =
+    !isPdfOnlyContent &&
     Boolean(publicationUrl) && !hasMainSections && hasOnlyHelsedirPdfDocuments
   const visibleDocumentLinks = useMemo(() => {
     if (!shouldShowPublicationLink) return documentLinks
@@ -375,7 +389,7 @@ export function DetailContentDisplay({
             </details>
           )}
 
-          {enrichedError && (
+          {enrichedError && !isPdfOnlyContent && (
             <Alert data-color="warning">
               <Paragraph style={{ marginTop: 0, marginBottom: 0 }}>
                 Kunne ikke hente utvidede innholdsdetaljer fra Helsedirektoratet API akkurat nå.

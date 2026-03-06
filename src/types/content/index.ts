@@ -45,6 +45,9 @@ export interface ContentDetail {
   body: string
   content_type: string
   path?: string
+  has_text_content?: boolean
+  document_url?: string | null
+  is_pdf_only?: boolean
   target_groups?: string[]
   links?: ContentLink[]
   linked_content?: LinkedContentGroup[]
@@ -89,6 +92,9 @@ export interface NestedContent {
   body?: string
   intro?: string
   kortIntro?: string
+  has_text_content?: boolean
+  document_url?: string | null
+  is_pdf_only?: boolean
   status?: string
   forstPublisert?: string
   sistOppdatert?: string
