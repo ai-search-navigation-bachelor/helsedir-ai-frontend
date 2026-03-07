@@ -32,11 +32,6 @@ function getSectionIdFromLocationState(state: unknown) {
   return trimmed.length > 0 ? trimmed : null
 }
 
-function getIsOverviewFromLocationState(state: unknown) {
-  if (!state || typeof state !== 'object') return false
-  return (state as { isOverview?: unknown }).isOverview === true
-}
-
 function toLocationStateObject(state: unknown) {
   if (!state || typeof state !== 'object') return {}
   return state as Record<string, unknown>
@@ -65,10 +60,6 @@ export function HierarchicalContentDisplay({
   const locationSectionId = useMemo(
     () => getSectionIdFromLocationState(location.state),
     [location.state]
-  )
-  const isOverviewFromLocationState = useMemo(
-    () => getIsOverviewFromLocationState(location.state),
-    [location.state],
   )
   const legacySectionId = useMemo(() => {
     const sectionId = new URLSearchParams(location.search).get('section')
@@ -125,10 +116,8 @@ export function HierarchicalContentDisplay({
     const fromLegacyQuery = resolveById(legacySectionId)
     if (fromLegacyQuery) return fromLegacyQuery
 
-    if (isOverviewFromLocationState) return undefined
-
     return undefined
-  }, [contentIdToPageId, isOverviewFromLocationState, legacySectionId, locationSectionId, pageTree])
+  }, [contentIdToPageId, legacySectionId, locationSectionId, pageTree])
   // Lazy-load content for stub pages (sub-chapters with no body/expandable content)
   const activeNodeId = activePage?.node?.id ?? null
   const isStubPage =
@@ -281,7 +270,6 @@ export function HierarchicalContentDisplay({
           replace,
           state: {
             ...toLocationStateObject(location.state),
-            isOverview: false,
             sectionId: pageId,
           },
         },
@@ -302,7 +290,6 @@ export function HierarchicalContentDisplay({
         replace: true,
         state: {
           ...toLocationStateObject(location.state),
-          isOverview: true,
           sectionId: undefined,
         },
       },
