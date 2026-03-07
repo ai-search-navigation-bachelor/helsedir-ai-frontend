@@ -18,8 +18,12 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
   const location = useLocation()
 
   const searchId = useSearchStore((state) => state.searchId)
-  const routeState = (location.state as { contentType?: string } | null) ?? null
+  const routeState = (location.state as {
+    contentType?: string
+    skipHelsedirFallback?: boolean
+  } | null) ?? null
   const routeContentType = routeState?.contentType?.trim().toLowerCase() || ''
+  const skipHelsedirFallback = routeState?.skipHelsedirFallback === true
   const effectiveSearchId = searchId || undefined
 
   // When pathPrefix is provided, reconstruct full path from the wildcard segment
@@ -30,6 +34,7 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
     contentPath,
     searchId: effectiveSearchId,
     routeContentType,
+    skipHelsedirFallback,
   })
 
   // Always called — no-op unless content is a temaside type
