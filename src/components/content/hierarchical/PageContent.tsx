@@ -2,11 +2,12 @@ import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { HiArrowRight } from 'react-icons/hi2'
+import { useNavigate } from 'react-router-dom'
 import type { PageNode } from './types'
 import { hasVisibleContent, getNodeTitle, formatDateLabel } from './treeUtils'
 import { ExpandableSubcontent } from './ExpandableSubcontent'
 import { ExpandableLoadingSkeleton } from '../ContentSkeletons'
-import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
+import { getDocumentLinks, getRelatedLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
 
 interface PageContentProps {
   activePage: PageNode
@@ -29,10 +30,12 @@ export function PageContent({
   isOverview = false,
   autoOpenExpandableId = null,
 }: PageContentProps) {
+  const navigate = useNavigate()
   const isPdfOnlyContent = Boolean(activePage.node.is_pdf_only)
   const hasIntro = hasVisibleContent(activePage.node.intro)
   const hasBody = !isPdfOnlyContent && hasVisibleContent(activePage.node.tekst || activePage.node.body)
   const documentLinks = getDocumentLinks(activePage.node)
+  const relatedLinks = getRelatedLinks(activePage.node)
   const publicationUrl = (() => {
     const url = activePage.node.url?.trim()
     if (!url) return null
@@ -52,8 +55,23 @@ export function PageContent({
       ? { href: publicationUrl, label: 'Åpne side hos Helsedirektoratet', isPdf: false }
       : null
   const primaryDocument = visibleDocumentLinks[0] || publicationFallbackDocument
+  const isPrimaryPdfAction = Boolean(isPdfOnlyContent && primaryDocument?.isPdf)
   const primaryDocumentLabel =
-    isPdfOnlyContent && primaryDocument?.isPdf ? 'Åpne PDF i ny fane' : primaryDocument?.label
+    isPrimaryPdfAction ? 'Åpne PDF i ny fane' : primaryDocument?.label
+  const emptyStateMessage = isPrimaryPdfAction
+    ? 'Denne siden har ikke egen tekst. PDF-en åpnes i ny fane.'
+    : 'Denne siden har ikke egen tekst. Se innholdet hos Helsedirektoratet.'
+  const hasRelatedLinks = relatedLinks.length > 0
+  const fallbackLinks = !hasRelatedLinks && !isPrimaryPdfAction && primaryDocument
+    ? [{
+        href: primaryDocument.href,
+        label: primaryDocumentLabel || primaryDocument.label,
+        isPdf: Boolean(primaryDocument.isPdf),
+        isDocument: true,
+        fileType: primaryDocument.isPdf ? 'PDF' : undefined,
+        openInNewTab: true,
+      }]
+    : []
   const showChildNavigation = activePage.childrenIds.length > 0 && (isOverview || (!hasIntro && !hasBody))
   const headingLevel = isOverview ? Math.max(2, Math.min(2 + activePage.depth - 1, 5)) as 2 | 3 | 4 | 5 : 2
   const headingSize = activePage.depth <= 1 ? 'md' : 'sm'
@@ -99,10 +117,73 @@ export function PageContent({
         />
       )}
 
-      {!hasIntro && !hasBody && primaryDocument && (
+      {!hasIntro && !hasBody && hasRelatedLinks && !isPrimaryPdfAction && (
         <section className="mt-6 space-y-4">
           <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
-            Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
+            Denne siden har ikke egen tekst. Se relaterte rapporter og dokumenter fra Helsedirektoratet.
+          </Paragraph>
+          <ul className="m-0 list-none space-y-3 p-0">
+            {relatedLinks.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={link.internalPath || link.href}
+                  target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
+                  rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
+                  onClick={(event) => {
+                    if (!link.internalPath) return
+                    event.preventDefault()
+                    navigate(link.internalPath)
+                  }}
+                  className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                >
+                  <span className="block font-semibold text-slate-900">{link.label}</span>
+                  <span className="mt-1 block text-xs text-slate-500">
+                    {link.isPdf
+                      ? 'PDF'
+                      : link.isDocument
+                        ? (link.fileType || 'Dokument')
+                        : 'Rapport eller side'}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!hasIntro && !hasBody && fallbackLinks.length > 0 && (
+        <section className="mt-6 space-y-4">
+          <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
+            {emptyStateMessage}
+          </Paragraph>
+          <ul className="m-0 list-none space-y-3 p-0">
+            {fallbackLinks.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={link.href}
+                  target={link.openInNewTab ? '_blank' : undefined}
+                  rel={link.openInNewTab ? 'noopener noreferrer' : undefined}
+                  className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                >
+                  <span className="block font-semibold text-slate-900">{link.label}</span>
+                  <span className="mt-1 block text-xs text-slate-500">
+                    {link.isPdf
+                      ? 'PDF'
+                      : link.isDocument
+                        ? (link.fileType || 'Dokument')
+                        : 'Rapport eller side'}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!hasIntro && !hasBody && !hasRelatedLinks && isPrimaryPdfAction && primaryDocument && (
+        <section className="mt-6 space-y-4">
+          <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
+            {emptyStateMessage}
           </Paragraph>
           <ul className="m-0 list-none space-y-2 p-0">
             {primaryDocument && (

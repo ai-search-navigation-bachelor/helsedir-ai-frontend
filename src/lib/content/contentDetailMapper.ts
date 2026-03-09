@@ -38,6 +38,7 @@ export function mapHelsedirContentToDetail(source: NestedContent): ContentDetail
       normalizedDocumentUrl ||
       (typeof source.data?.fil === 'string' ? source.data.fil : null),
     is_pdf_only: source.is_pdf_only,
+    related_links: source.related_links,
     first_published: source.forstPublisert,
     last_reviewed_date: source.sistFagligOppdatert || source.sistOppdatert,
     links: toContentLinks(source),

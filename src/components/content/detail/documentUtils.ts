@@ -1,9 +1,26 @@
-import type { ContentLink, NestedContent, NestedContentLink } from '../../../types'
+import type {
+  ContentLink,
+  NestedContent,
+  NestedContentLink,
+  RelatedContentLink,
+} from '../../../types'
+import { stripTemasidePrefix } from '../../../lib/path'
 
 interface DocumentLink {
   href: string
   label: string
   isPdf: boolean
+}
+
+interface RelatedDisplayLink {
+  href: string
+  label: string
+  isDocument: boolean
+  isPdf: boolean
+  fileType?: string
+  target?: string
+  openInNewTab: boolean
+  internalPath?: string
 }
 
 interface AttachmentLike {
@@ -40,6 +57,23 @@ function isLikelyPdfType(type: string) {
   return /pdf/i.test(type)
 }
 
+function hasRelatedDocumentMetadata(link: RelatedContentLink) {
+  return Boolean(link.is_document) || isLikelyPdfType(link.file_type || '')
+}
+
+function getInternalContentPath(href: string, isDocument: boolean) {
+  if (isDocument) return undefined
+
+  try {
+    const parsed = new URL(href)
+    if (!/(^|\.)helsedirektoratet\.no$/i.test(parsed.hostname)) return undefined
+    return stripTemasidePrefix(parsed.pathname)
+  } catch {
+    if (!href.startsWith('/')) return undefined
+    return stripTemasidePrefix(href)
+  }
+}
+
 function resolveLabel(label: string | undefined, isPdf: boolean) {
   if (label && label.trim().length > 0) return label.trim()
   return isPdf ? 'Åpne PDF i ny fane' : 'Åpne dokument i ny fane'
@@ -67,6 +101,36 @@ export function asDocumentLink(
     label: resolveLabel(label, pdfFromUrl || pdfFromMeta),
     isPdf: pdfFromUrl || pdfFromMeta,
   } satisfies DocumentLink
+}
+
+export function getRelatedLinks(source?: { related_links?: RelatedContentLink[] | null } | null) {
+  const result: RelatedDisplayLink[] = []
+  const seen = new Set<string>()
+
+  for (const link of source?.related_links ?? []) {
+    const href = link.url?.trim()
+    if (!href || seen.has(href)) continue
+
+    seen.add(href)
+
+    const isPdf = isLikelyPdfUrl(href) || isLikelyPdfType(link.file_type || '')
+    const isDocument = hasRelatedDocumentMetadata(link) || isPdf
+    const target = link.target?.trim() || undefined
+    const internalPath = getInternalContentPath(href, isDocument)
+
+    result.push({
+      href,
+      label: link.title?.trim() || (isPdf ? 'Åpne PDF i ny fane' : 'Åpne lenke'),
+      isDocument,
+      isPdf,
+      fileType: link.file_type?.trim() || undefined,
+      target,
+      openInNewTab: target === '_blank' || isDocument,
+      internalPath,
+    })
+  }
+
+  return result
 }
 
 function getLinkTitle(link: ContentLink | NestedContentLink): string | undefined {
