@@ -6,7 +6,7 @@ import { DEFAULT_CONFIG, HELSEDIR_STYLE_CONFIG } from '../constants/dev'
 import { computeStats, computeRankMap, getRankDiff } from '../components/dev/utils'
 
 function initialSlot(config: SlotState['config']): SlotState {
-  return { config, response: null, loading: false, error: null }
+  return { config, usedConfig: null, response: null, loading: false, error: null }
 }
 
 interface SearchRun {
@@ -14,7 +14,6 @@ interface SearchRun {
   query: string
   configA: SlotState['config']
   configB: SlotState['config']
-  role: string | null
 }
 
 function isAbortLikeError(error: unknown): boolean {
@@ -40,7 +39,7 @@ export interface DevSearchReturn {
   rankMapA: Map<string, number>
   rankMapB: Map<string, number>
   getRankDiff: typeof getRankDiff
-  runSearch: (role?: string | null) => Promise<void>
+  runSearch: () => Promise<void>
 }
 
 export function useDevSearch(): DevSearchReturn {
@@ -67,8 +66,8 @@ export function useDevSearch(): DevSearchReturn {
             limit: 100,
             log: false,
             method: 'hybrid',
-            role: run.role ?? undefined,
             ...run.configA,
+            role: run.configA.role ?? undefined,
           })
         },
       },
@@ -84,8 +83,8 @@ export function useDevSearch(): DevSearchReturn {
             limit: 100,
             log: false,
             method: 'hybrid',
-            role: run.role ?? undefined,
             ...run.configB,
+            role: run.configB.role ?? undefined,
           })
         },
       },
@@ -96,13 +95,13 @@ export function useDevSearch(): DevSearchReturn {
         queryFn: ({ signal }) => {
           const run = pendingRunRef.current
           if (!run) throw new Error('Mangler aktivt søk for Helsedir')
-          return searchKeyword(run.query, { signal, limit: 100, role: run.role ?? undefined })
+          return searchKeyword(run.query, { signal, limit: 100 })
         },
       },
     ],
   })
 
-  async function runSearch(role?: string | null) {
+  async function runSearch() {
     const trimmed = query.trim()
     if (!trimmed) return
 
@@ -112,7 +111,6 @@ export function useDevSearch(): DevSearchReturn {
       query: trimmed,
       configA: { ...slotA.config },
       configB: { ...slotB.config },
-      role: role ?? null,
     }
 
     setSlotA((s) => ({ ...s, loading: true, error: null }))
@@ -130,7 +128,7 @@ export function useDevSearch(): DevSearchReturn {
     }
 
     if (resultA.status === 'fulfilled' && resultA.value.status === 'success') {
-      setSlotA((s) => ({ ...s, loading: false, response: resultA.value.data ?? null }))
+      setSlotA((s) => ({ ...s, loading: false, response: resultA.value.data ?? null, usedConfig: pendingRunRef.current?.configA ?? null }))
     } else {
       const error =
         resultA.status === 'fulfilled' ? resultA.value.error : resultA.reason
@@ -142,7 +140,7 @@ export function useDevSearch(): DevSearchReturn {
     }
 
     if (resultB.status === 'fulfilled' && resultB.value.status === 'success') {
-      setSlotB((s) => ({ ...s, loading: false, response: resultB.value.data ?? null }))
+      setSlotB((s) => ({ ...s, loading: false, response: resultB.value.data ?? null, usedConfig: pendingRunRef.current?.configB ?? null }))
     } else {
       const error =
         resultB.status === 'fulfilled' ? resultB.value.error : resultB.reason

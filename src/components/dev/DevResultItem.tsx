@@ -365,10 +365,11 @@ interface ResultsColumnHeaderProps {
   title: string
   subtitle: string
   extraInfo?: string
+  roleInfo?: string
   mode: 'hybrid' | 'keyword'
 }
 
-export function ResultsColumnHeader({ title, subtitle, extraInfo, mode }: ResultsColumnHeaderProps) {
+export function ResultsColumnHeader({ title, subtitle, extraInfo, roleInfo, mode }: ResultsColumnHeaderProps) {
   return (
     <div
       style={{
@@ -383,6 +384,9 @@ export function ResultsColumnHeader({ title, subtitle, extraInfo, mode }: Result
       <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{subtitle}</p>
       {extraInfo && (
         <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{extraInfo}</p>
+      )}
+      {roleInfo && (
+        <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{roleInfo}</p>
       )}
       <ScoreLegend mode={mode} />
       <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: '6px 0 0', fontStyle: 'italic' }}>
