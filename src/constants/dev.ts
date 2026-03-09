@@ -6,6 +6,9 @@ export const DEFAULT_CONFIG: WeightConfig = {
   rrf_k: 60,
   temaside_boost: 1.15,
   retningslinje_boost: 1.1,
+  role: null,
+  role_boost: 1.15,
+  role_penalty: 0.85,
 }
 
 /**
@@ -18,6 +21,9 @@ export const HELSEDIR_STYLE_CONFIG: WeightConfig = {
   rrf_k: 0,
   temaside_boost: 1.0,
   retningslinje_boost: 1.0,
+  role: null,
+  role_boost: 1.15,
+  role_penalty: 0.85,
 }
 
 export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
@@ -27,32 +33,14 @@ export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
   },
   {
     label: 'Balansert',
-    config: {
-      bm25_weight: 0.5,
-      semantic_weight: 0.5,
-      rrf_k: 60,
-      temaside_boost: 1.15,
-      retningslinje_boost: 1.1,
-    },
+    config: { ...DEFAULT_CONFIG, bm25_weight: 0.5, semantic_weight: 0.5 },
   },
   {
     label: 'Kun semantisk',
-    config: {
-      bm25_weight: 0.0,
-      semantic_weight: 1.0,
-      rrf_k: 60,
-      temaside_boost: 1.15,
-      retningslinje_boost: 1.1,
-    },
+    config: { ...DEFAULT_CONFIG, bm25_weight: 0.0, semantic_weight: 1.0 },
   },
   {
     label: 'Kun BM25',
-    config: {
-      bm25_weight: 1.0,
-      semantic_weight: 0.0,
-      rrf_k: 60,
-      temaside_boost: 1.15,
-      retningslinje_boost: 1.1,
-    },
+    config: { ...DEFAULT_CONFIG, bm25_weight: 1.0, semantic_weight: 0.0 },
   },
 ]

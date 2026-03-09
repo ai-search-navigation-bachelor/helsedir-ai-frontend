@@ -27,6 +27,8 @@ export interface SearchOptions extends BaseRequestOptions {
   rrf_k?: number
   temaside_boost?: number
   retningslinje_boost?: number
+  role_boost?: number
+  role_penalty?: number
 }
 
 /**
@@ -65,6 +67,8 @@ export async function search(
     rrf_k,
     temaside_boost,
     retningslinje_boost,
+    role_boost,
+    role_penalty,
   }: SearchOptions = {},
 ): Promise<SearchResponse> {
   const trimmed = query.trim()
@@ -87,6 +91,8 @@ export async function search(
     rrf_k,
     temaside_boost,
     retningslinje_boost,
+    role_boost,
+    role_penalty,
   })
 
   return httpRequest<SearchResponse>(url, { signal })
