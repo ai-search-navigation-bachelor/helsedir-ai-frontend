@@ -82,7 +82,12 @@ export function DetailContentDisplay({
   const mobileSectionsNavRef = useRef<HTMLDetailsElement>(null)
   const normalizedType = normalizeContentType(content.content_type)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
-  const hasBodyContent = useMemo(() => hasVisibleContent(content.body), [content.body])
+  const backendDocumentUrl = content.document_url?.trim() || ''
+  const isPdfOnlyContent = Boolean(content.is_pdf_only)
+  const hasBodyContent = useMemo(
+    () => !isPdfOnlyContent && hasVisibleContent(content.body),
+    [content.body, isPdfOnlyContent],
+  )
   const backendPractical = content.anbefaling_fields?.praktisk || ''
   const backendRationale = content.anbefaling_fields?.rasjonale || ''
   const backendTradeoffs = content.anbefaling_fields?.fordeler_ulemper || ''
@@ -95,8 +100,6 @@ export function DetailContentDisplay({
   const hasBackendRecommendationStrength = Boolean(content.anbefaling_fields?.styrke?.trim())
   const hasSufficientBackendRecommendationData =
     hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
-  const backendDocumentUrl = content.document_url?.trim() || ''
-  const isPdfOnlyContent = Boolean(content.is_pdf_only && backendDocumentUrl)
   const shouldSkipHelsedirEnrichment = isTemasideContentType(normalizedType)
   const shouldAttemptEnrichment =
     !isPdfOnlyContent &&
@@ -211,7 +214,7 @@ export function DetailContentDisplay({
 
       return [{
         href: backendDocumentUrl,
-        label: isPdfOnlyContent ? 'Åpne PDF' : 'Åpne PDF i ny fane',
+        label: 'Åpne PDF i ny fane',
         isPdf: true,
       }, ...links]
     },
@@ -234,6 +237,7 @@ export function DetailContentDisplay({
     return documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
   }, [documentLinks, shouldShowPublicationLink])
   const primaryDocument = visibleDocumentLinks[0]
+  const primaryDocumentLabel = isPdfOnlyContent ? 'Åpne PDF i ny fane' : primaryDocument?.label
 
   const hasSidebarContent =
     sections.length > 1 ||
@@ -435,7 +439,7 @@ export function DetailContentDisplay({
           ))}
 
           {sections.length === 0 && (primaryDocument || shouldShowPublicationLink) && (
-            <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <section className="space-y-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
                 Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
               </Paragraph>
@@ -446,9 +450,9 @@ export function DetailContentDisplay({
                       href={primaryDocument.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                      className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-brand/90"
                     >
-                      {primaryDocument.label}
+                      {primaryDocumentLabel}
                     </a>
                   </li>
                 )}

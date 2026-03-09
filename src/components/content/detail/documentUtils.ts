@@ -107,6 +107,9 @@ export function getDocumentLinks(source?: NestedContent | null, fallbackLinks?: 
   const dataFile = asDocumentLink(source?.data?.fil as string | undefined, undefined, 'fil')
   if (dataFile) pushUnique(dataFile)
 
+  const backendDocumentUrl = asDocumentLink(source?.document_url || undefined, undefined, 'fil')
+  if (backendDocumentUrl) pushUnique(backendDocumentUrl)
+
   const directUrl = asDocumentLink(source?.url, undefined, 'url')
   if (directUrl) pushUnique(directUrl)
 
