@@ -4,7 +4,6 @@ import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useContentNavigationStore } from '../../../stores'
 import { useHierarchicalChapters } from '../../../hooks/queries/useHierarchicalChapters'
 import { useBackgroundPrefetch } from '../../../hooks/queries/useBackgroundPrefetch'
 import type { ContentDisplayProps } from '../../../types/pages'
@@ -58,9 +57,6 @@ export function HierarchicalContentDisplay({
   const mobileSidebarDialogId = 'mobile-chapter-nav-dialog'
   const mobileSidebarDialogTitleId = 'mobile-chapter-nav-dialog-title'
   const scrollOnNextPageChange = useRef(false)
-  const sectionByContentId = useContentNavigationStore((state) => state.sectionByContentId)
-  const setSectionForContent = useContentNavigationStore((state) => state.setSectionForContent)
-  const storedSectionId = sectionByContentId[content.id] || null
   const locationSectionId = useMemo(
     () => getSectionIdFromLocationState(location.state),
     [location.state]
@@ -121,7 +117,7 @@ export function HierarchicalContentDisplay({
     if (fromLegacyQuery) return fromLegacyQuery
 
     return undefined
-  }, [legacySectionId, locationSectionId, pageTree, contentIdToPageId])
+  }, [contentIdToPageId, legacySectionId, locationSectionId, pageTree])
   // Lazy-load content for stub pages (sub-chapters with no body/expandable content)
   const activeNodeId = activePage?.node?.id ?? null
   const isStubPage =
@@ -299,7 +295,7 @@ export function HierarchicalContentDisplay({
         hash: location.hash,
       },
       {
-        replace: false,
+        replace: true,
         state: {
           ...toLocationStateObject(location.state),
           sectionId: undefined,
@@ -318,9 +314,8 @@ export function HierarchicalContentDisplay({
 
     scrollOnNextPageChange.current = scrollTo === true
     setAutoOpenExpandableId(expandableId ?? null)
-    setSectionForContent(content.id, pageId)
     if (locationSectionId !== pageId || hasLegacySectionParam) {
-      updateHistorySection(pageId, false)
+      updateHistorySection(pageId)
     }
 
     setExpandedIds(() => {
@@ -332,11 +327,9 @@ export function HierarchicalContentDisplay({
       return next
     })
   }, [
-    content.id,
     hasLegacySectionParam,
     locationSectionId,
     pageTree.pagesById,
-    setSectionForContent,
     updateHistorySection,
   ])
 
@@ -464,20 +457,13 @@ export function HierarchicalContentDisplay({
   useEffect(() => {
     if (!activePage?.id) return
 
-    if (storedSectionId !== activePage.id) {
-      setSectionForContent(content.id, activePage.id)
-    }
-
     if (locationSectionId !== activePage.id || hasLegacySectionParam) {
       updateHistorySection(activePage.id, true)
     }
   }, [
     activePage?.id,
-    content.id,
     hasLegacySectionParam,
     locationSectionId,
-    setSectionForContent,
-    storedSectionId,
     updateHistorySection,
   ])
 
