@@ -26,7 +26,7 @@ function toRelatedLinks(source: NestedContent): RelatedContentLink[] | null {
     return source.related_links
   }
 
-  const rawLinks = source.lenker ?? source.links ?? []
+  const rawLinks = [...(source.links ?? []), ...(source.lenker ?? [])]
   const seen = new Set<string>()
   const result: RelatedContentLink[] = []
 

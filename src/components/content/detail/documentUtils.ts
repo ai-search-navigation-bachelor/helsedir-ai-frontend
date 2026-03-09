@@ -62,6 +62,22 @@ function hasRelatedDocumentMetadata(link: RelatedContentLink) {
   return Boolean(link.is_document) || isLikelyPdfType(link.file_type || '')
 }
 
+function getSafeRelatedHref(rawHref: string) {
+  const href = rawHref.trim()
+  if (!href || href.startsWith('//')) return null
+
+  if (href.startsWith('/')) {
+    return href
+  }
+
+  try {
+    const parsed = new URL(href)
+    return /^https?:$/i.test(parsed.protocol) ? href : null
+  } catch {
+    return null
+  }
+}
+
 const ALLOWED_INTERNAL_PREFIXES = new Set([
   ...CONTENT_CATEGORY_GROUPS.map((group) => group.pathPrefix),
   ...CONTENT_ONLY_PREFIXES,
@@ -121,7 +137,7 @@ export function getRelatedLinks(source?: { related_links?: RelatedContentLink[] 
   const seen = new Set<string>()
 
   for (const link of source?.related_links ?? []) {
-    const href = link.url?.trim()
+    const href = link.url ? getSafeRelatedHref(link.url) : null
     if (!href || seen.has(href)) continue
 
     seen.add(href)
