@@ -134,7 +134,7 @@ export function ExpandableSubcontent({
 
   const strength = resolved.data?.styrke || ''
   const status = resolved.status || ''
-  const updated = formatDateLabel(resolved.sistOppdatert || resolved.sistFagligOppdatert)
+  const updated = formatDateLabel(resolved.sistFagligOppdatert || resolved.sistOppdatert)
   const shortIntro = resolved.kortIntro || ''
   const practical = resolved.data?.praktisk || ''
   const rationale = resolved.data?.rasjonale || ''
@@ -198,11 +198,9 @@ export function ExpandableSubcontent({
             {strength}
           </p>
         )}
-        {(status || updated) && (
+        {status && (
           <p className="mb-3 mt-0 text-xs text-slate-400">
-            {status && <span>{status}</span>}
-            {status && updated && <span> · </span>}
-            {updated && <span>Oppdatert {updated}</span>}
+            {status}
           </p>
         )}
 
@@ -241,6 +239,12 @@ export function ExpandableSubcontent({
               />
             ))}
           </div>
+        )}
+
+        {updated && (
+          <p className="mt-4 mb-0 text-xs text-slate-400">
+            Siste faglige endring: {updated}
+          </p>
         )}
       </div>
     </details>
