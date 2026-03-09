@@ -12,7 +12,7 @@ export function toContentLinks(source: NestedContent): ContentLink[] {
     result.push({
       rel: link.rel || 'related',
       type: link.type || 'link',
-      tittel: link.tittel || 'Lenke',
+      title: link.tittel || 'Lenke',
       href,
       strukturId: undefined,
     })
