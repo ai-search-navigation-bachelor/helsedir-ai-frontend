@@ -3,7 +3,7 @@ import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { HiArrowRight } from 'react-icons/hi2'
 import type { PageNode } from './types'
-import { hasVisibleContent, getNodeTitle } from './treeUtils'
+import { hasVisibleContent, getNodeTitle, formatDateLabel } from './treeUtils'
 import { ExpandableSubcontent } from './ExpandableSubcontent'
 import { ExpandableLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
@@ -192,6 +192,18 @@ export function PageContent({
           </section>
         )
       ) : null}
+
+      {!isOverview && (() => {
+        const fagligOppdatert = formatDateLabel(activePage.node.sistFagligOppdatert)
+        if (!fagligOppdatert) return null
+        return (
+          <section className="mt-8">
+            <Paragraph data-size="xs" className="m-0 text-xs text-slate-500">
+              <span className="font-medium text-slate-600">Siste faglige endring:</span> {fagligOppdatert}
+            </Paragraph>
+          </section>
+        )
+      })()}
 
       {/* Page navigation */}
       {(previousPage || nextPage) && (
