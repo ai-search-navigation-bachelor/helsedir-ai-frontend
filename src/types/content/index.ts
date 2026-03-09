@@ -9,12 +9,12 @@
 export interface ContentLink {
   rel: string
   type: string
-  tittel: string
+  title: string
   href: string | null
   id?: string | null
   path?: string | null
   strukturId?: string
-  sist_faglig_oppdatert?: string | null
+  last_reviewed_date?: string | null
   children?: ContentLink[] | null
 }
 
@@ -49,15 +49,12 @@ export interface ContentDetail {
   has_text_content?: boolean
   document_url?: string | null
   is_pdf_only?: boolean
-  target_groups?: string[]
+  role_tags?: string[]
   links?: ContentLink[]
   linked_content?: LinkedContentGroup[]
   status?: string
-  forstPublisert?: string
-  sistOppdatert?: string
-  sistFagligOppdatert?: string
-  forst_publisert?: string
-  sist_faglig_oppdatert?: string
+  first_published?: string
+  last_reviewed_date?: string
   url?: string
   anbefaling_fields?: {
     praktisk?: string
