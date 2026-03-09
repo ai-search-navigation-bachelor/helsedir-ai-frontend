@@ -58,7 +58,7 @@ export function buildContentBreadcrumbItems(
 
   // Add temaside segment
   if (temaside) {
-    items.push({ label: temaside.tittel, href: temaside.href, group: 'tema' })
+    items.push({ label: temaside.title, href: temaside.href, group: 'tema' })
   }
 
   // Add parent chain entries (skip temaside duplicate, current content, and kapittel types)

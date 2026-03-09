@@ -74,6 +74,7 @@ export interface ContentDetail {
 export interface NestedContentLink {
   rel: string
   type?: string
+  title?: string
   tittel?: string
   href?: string
 }

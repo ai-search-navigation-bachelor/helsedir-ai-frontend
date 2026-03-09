@@ -15,6 +15,7 @@ export function contentDetailToNestedContent(
     body: detail.body,
     status: detail.status,
     forstPublisert: detail.first_published,
+    sistOppdatert: detail.last_reviewed_date,
     sistFagligOppdatert: detail.last_reviewed_date,
     url: detail.url,
     data: detail.anbefaling_fields
@@ -105,6 +106,7 @@ async function fetchChapterFromBackend(
   const kapittelStubs: NestedContent[] = kapittelChildren.map((l) => ({
     id: l.id || l.href || '',
     tittel: l.title,
+    title: l.title,
     type: l.type,
     sistFagligOppdatert: l.last_reviewed_date || undefined,
   }))
@@ -154,6 +156,7 @@ async function fetchChapterFromHelsedir(href: string, signal?: AbortSignal): Pro
   const kapittelStubs: NestedContent[] = kapittelChildren.map((l) => ({
     id: (l.href ? extractBackendId(l.href) : null) || l.href || '',
     tittel: l.tittel || '',
+    title: l.tittel || '',
     type: l.type || 'kapittel',
   }))
 
