@@ -121,7 +121,7 @@ export function ExpandableSubcontent({
     queryKey: ['expandable-content', item.id],
     queryFn: async ({ signal }) => {
       if (!item.id) return null
-      return fetchChapter(item.id, signal)
+      return fetchChapter(item.id, signal, item.sistFagligOppdatert)
     },
     enabled: isOpen && isStub,
     staleTime: 5 * 60 * 1000,
@@ -134,7 +134,7 @@ export function ExpandableSubcontent({
 
   const strength = resolved.data?.styrke || ''
   const status = resolved.status || ''
-  const updated = formatDateLabel(resolved.sistOppdatert || resolved.sistFagligOppdatert)
+  const fagligOppdatert = formatDateLabel(resolved.sistFagligOppdatert)
   const shortIntro = resolved.kortIntro || ''
   const practical = resolved.data?.praktisk || ''
   const rationale = resolved.data?.rasjonale || ''
@@ -198,11 +198,9 @@ export function ExpandableSubcontent({
             {strength}
           </p>
         )}
-        {(status || updated) && (
+        {status && (
           <p className="mb-3 mt-0 text-xs text-slate-400">
-            {status && <span>{status}</span>}
-            {status && updated && <span> · </span>}
-            {updated && <span>Oppdatert {updated}</span>}
+            {status}
           </p>
         )}
 
@@ -241,6 +239,12 @@ export function ExpandableSubcontent({
               />
             ))}
           </div>
+        )}
+
+        {fagligOppdatert && (
+          <p className="mt-4 mb-0 text-xs text-slate-400">
+            Siste faglige endring: {fagligOppdatert}
+          </p>
         )}
       </div>
     </details>
