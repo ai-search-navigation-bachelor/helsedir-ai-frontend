@@ -45,7 +45,7 @@ function resolveLabel(label: string | undefined, isPdf: boolean) {
   return isPdf ? 'Åpne PDF i ny fane' : 'Åpne dokument i ny fane'
 }
 
-function asDocumentLink(
+export function asDocumentLink(
   href: string | undefined,
   label?: string,
   rel?: string,

@@ -15,7 +15,7 @@ import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedConte
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
-import { getDocumentLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
+import { asDocumentLink, getDocumentLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
 import { hasVisibleContent } from '../shared/contentTextUtils'
 import {
   buildContentSections,
@@ -101,8 +101,9 @@ export function DetailContentDisplay({
   const hasSufficientBackendRecommendationData =
     hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
   const shouldSkipHelsedirEnrichment = isTemasideContentType(normalizedType)
+  const shouldSkipPdfOnlyEnrichment = isPdfOnlyContent && Boolean(backendDocumentUrl)
   const shouldAttemptEnrichment =
-    !isPdfOnlyContent &&
+    !shouldSkipPdfOnlyEnrichment &&
     !shouldSkipHelsedirEnrichment &&
     (isRecommendationContentType(normalizedType)
       ? !hasSufficientBackendRecommendationData
@@ -119,7 +120,11 @@ export function DetailContentDisplay({
   })
 
   const sections = useMemo<ContentSection[]>(() => {
-    const mainBody = hasBodyContent ? content.body : enrichedContent?.tekst || enrichedContent?.body || ''
+    const mainBody = hasBodyContent
+      ? content.body
+      : isPdfOnlyContent
+        ? ''
+        : enrichedContent?.tekst || enrichedContent?.body || ''
     const practical = hasVisibleContent(backendPractical)
       ? backendPractical
       : enrichedContent?.data?.praktisk || ''
@@ -149,6 +154,7 @@ export function DetailContentDisplay({
     content.body,
     enrichedContent,
     hasBodyContent,
+    isPdfOnlyContent,
     primarySectionTitle,
   ])
 
@@ -212,13 +218,12 @@ export function DetailContentDisplay({
       if (!backendDocumentUrl) return links
       if (links.some((document) => document.href === backendDocumentUrl)) return links
 
-      return [{
-        href: backendDocumentUrl,
-        label: 'Åpne PDF i ny fane',
-        isPdf: true,
-      }, ...links]
+      const backendDocumentLink = asDocumentLink(backendDocumentUrl, undefined, 'fil')
+      if (!backendDocumentLink) return links
+
+      return [backendDocumentLink, ...links]
     },
-    [backendDocumentUrl, content.links, enrichedContent, isPdfOnlyContent],
+    [backendDocumentUrl, content.links, enrichedContent],
   )
   const publicationUrl = useMemo(() => {
     const url = content.url?.trim() || enrichedContent?.url?.trim()
@@ -230,14 +235,20 @@ export function DetailContentDisplay({
     documentLinks.length > 0 &&
     documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
   const shouldShowPublicationLink =
-    !isPdfOnlyContent &&
-    Boolean(publicationUrl) && !hasMainSections && hasOnlyHelsedirPdfDocuments
+    Boolean(publicationUrl) &&
+    !hasMainSections &&
+    (hasOnlyHelsedirPdfDocuments || documentLinks.length === 0)
   const visibleDocumentLinks = useMemo(() => {
     if (!shouldShowPublicationLink) return documentLinks
     return documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
   }, [documentLinks, shouldShowPublicationLink])
-  const primaryDocument = visibleDocumentLinks[0]
-  const primaryDocumentLabel = isPdfOnlyContent ? 'Åpne PDF i ny fane' : primaryDocument?.label
+  const publicationFallbackDocument =
+    shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length === 0
+      ? { href: publicationUrl, label: 'Åpne side hos Helsedirektoratet', isPdf: false }
+      : null
+  const primaryDocument = visibleDocumentLinks[0] || publicationFallbackDocument
+  const primaryDocumentLabel =
+    isPdfOnlyContent && primaryDocument?.isPdf ? 'Åpne PDF i ny fane' : primaryDocument?.label
 
   const hasSidebarContent =
     sections.length > 1 ||
@@ -438,7 +449,7 @@ export function DetailContentDisplay({
             </article>
           ))}
 
-          {sections.length === 0 && (primaryDocument || shouldShowPublicationLink) && (
+          {sections.length === 0 && primaryDocument && (
             <section className="space-y-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
                 Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
@@ -456,7 +467,7 @@ export function DetailContentDisplay({
                     </a>
                   </li>
                 )}
-                {shouldShowPublicationLink && publicationUrl && (
+                {shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length > 0 && (
                   <li>
                     <a
                       href={publicationUrl}
