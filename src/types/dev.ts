@@ -6,10 +6,14 @@ export interface WeightConfig {
   rrf_k: number
   temaside_boost: number
   retningslinje_boost: number
+  role: string | null
+  role_boost: number
+  role_penalty: number
 }
 
 export interface SlotState {
   config: WeightConfig
+  usedConfig: WeightConfig | null
   response: SearchResponse | null
   loading: boolean
   error: string | null

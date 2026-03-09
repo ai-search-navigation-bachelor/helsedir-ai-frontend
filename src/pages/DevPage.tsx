@@ -12,7 +12,6 @@ import {
 } from '../components/dev'
 
 export function DevPage() {
-  const [devRole, setDevRole] = useState<string | null>(null)
   const [configOpen, setConfigOpen] = useState(true)
   const [guideOpen, setGuideOpen] = useState(false)
   const { data: roles } = useRolesQuery()
@@ -75,7 +74,7 @@ export function DevPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && query.trim() && !isLoading) void runSearch(devRole)
+              if (e.key === 'Enter' && query.trim() && !isLoading) void runSearch()
             }}
             placeholder={`Skriv s\u00F8keord...`}
             style={{
@@ -101,43 +100,9 @@ export function DevPage() {
           />
         </div>
 
-        <select
-          aria-label="Velg rolle"
-          value={devRole ?? ''}
-          onChange={(e) => setDevRole(e.target.value || null)}
-          style={{
-            padding: '10px 14px',
-            fontSize: '0.88rem',
-            borderRadius: '8px',
-            border: '1px solid #d1d5db',
-            backgroundColor: '#fff',
-            color: '#1e293b',
-            outline: 'none',
-            cursor: 'pointer',
-            minWidth: '150px',
-            WebkitAppearance: 'menulist',
-            MozAppearance: 'menulist',
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = '#047FA4'
-            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(4, 127, 164, 0.12)'
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = '#d1d5db'
-            e.currentTarget.style.boxShadow = 'none'
-          }}
-        >
-          <option value="">Ingen rolle</option>
-          {roles?.map((r) => (
-            <option key={r.slug} value={r.slug}>
-              {r.display_name}
-            </option>
-          ))}
-        </select>
-
         <button
           type="button"
-          onClick={() => void runSearch(devRole)}
+          onClick={() => void runSearch()}
           disabled={!query.trim() || isLoading}
           style={{
             padding: '10px 0',
@@ -262,11 +227,13 @@ export function DevPage() {
               label="Konfig A"
               config={slotA.config}
               onChange={(cfg) => setSlotA((s) => ({ ...s, config: cfg }))}
+              roles={roles}
             />
             <WeightConfigPanel
               label="Konfig B"
               config={slotB.config}
               onChange={(cfg) => setSlotB((s) => ({ ...s, config: cfg }))}
+              roles={roles}
             />
             <ReadOnlyConfigPanel
               label="Keyword-referanse"
@@ -308,8 +275,9 @@ export function DevPage() {
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             <ResultsColumn
               title={`Konfig A \u2014 ${slotA.response?.total ?? 0} treff`}
-              subtitle={`BM25: ${slotA.config.bm25_weight.toFixed(2)} \u00B7 Sem: ${slotA.config.semantic_weight.toFixed(2)} \u00B7 RRF-k: ${slotA.config.rrf_k}`}
-              extraInfo={`Boost: temaside ${slotA.config.temaside_boost.toFixed(2)} \u00B7 retningslinje ${slotA.config.retningslinje_boost.toFixed(2)}`}
+              subtitle={`BM25: ${slotA.usedConfig?.bm25_weight.toFixed(2)} \u00B7 Sem: ${slotA.usedConfig?.semantic_weight.toFixed(2)} \u00B7 RRF-k: ${slotA.usedConfig?.rrf_k}`}
+              extraInfo={`Boost: temaside ${slotA.usedConfig?.temaside_boost.toFixed(2)} \u00B7 retningslinje ${slotA.usedConfig?.retningslinje_boost.toFixed(2)}`}
+              roleInfo={slotA.usedConfig?.role ? `Rolle: ${slotA.usedConfig.role} \u00B7 boost ${slotA.usedConfig.role_boost.toFixed(2)} \u00B7 straff ${slotA.usedConfig.role_penalty.toFixed(2)}` : undefined}
               mode="hybrid"
               loading={slotA.loading}
             >
@@ -328,8 +296,9 @@ export function DevPage() {
 
             <ResultsColumn
               title={`Konfig B \u2014 ${slotB.response?.total ?? 0} treff`}
-              subtitle={`BM25: ${slotB.config.bm25_weight.toFixed(2)} \u00B7 Sem: ${slotB.config.semantic_weight.toFixed(2)} \u00B7 RRF-k: ${slotB.config.rrf_k}`}
-              extraInfo={`Boost: temaside ${slotB.config.temaside_boost.toFixed(2)} \u00B7 retningslinje ${slotB.config.retningslinje_boost.toFixed(2)}`}
+              subtitle={`BM25: ${slotB.usedConfig?.bm25_weight.toFixed(2)} \u00B7 Sem: ${slotB.usedConfig?.semantic_weight.toFixed(2)} \u00B7 RRF-k: ${slotB.usedConfig?.rrf_k}`}
+              extraInfo={`Boost: temaside ${slotB.usedConfig?.temaside_boost.toFixed(2)} \u00B7 retningslinje ${slotB.usedConfig?.retningslinje_boost.toFixed(2)}`}
+              roleInfo={slotB.usedConfig?.role ? `Rolle: ${slotB.usedConfig.role} \u00B7 boost ${slotB.usedConfig.role_boost.toFixed(2)} \u00B7 straff ${slotB.usedConfig.role_penalty.toFixed(2)}` : undefined}
               mode="hybrid"
               loading={slotB.loading}
             >
@@ -420,12 +389,13 @@ interface ResultsColumnProps {
   title: string
   subtitle: string
   extraInfo?: string
+  roleInfo?: string
   mode: 'hybrid' | 'keyword'
   loading: boolean
   children: React.ReactNode
 }
 
-function ResultsColumn({ title, subtitle, extraInfo, mode, loading, children }: ResultsColumnProps) {
+function ResultsColumn({ title, subtitle, extraInfo, roleInfo, mode, loading, children }: ResultsColumnProps) {
   return (
     <div
       style={{
@@ -437,7 +407,7 @@ function ResultsColumn({ title, subtitle, extraInfo, mode, loading, children }: 
         border: '1px solid #e2e8f0',
       }}
     >
-      <ResultsColumnHeader title={title} subtitle={subtitle} extraInfo={extraInfo} mode={mode} />
+      <ResultsColumnHeader title={title} subtitle={subtitle} extraInfo={extraInfo} roleInfo={roleInfo} mode={mode} />
       {loading ? (
         <div style={{ padding: '40px', display: 'flex', justifyContent: 'center' }}>
           <div
