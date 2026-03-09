@@ -285,7 +285,7 @@ export function DetailContentDisplay({
               <ul className="m-0 list-none space-y-1.5 p-0">
                 {contextualNavigationLinks.map((link) => {
                   const label =
-                    link.tittel ||
+                    link.title ||
                     LINK_LABEL_BY_REL[link.rel] ||
                     `${link.rel.charAt(0).toUpperCase()}${link.rel.slice(1)}`
                   return (
@@ -475,7 +475,7 @@ export function DetailContentDisplay({
           )}
 
           {(() => {
-            const fagligOppdatert = formatDateLabel(content.sist_faglig_oppdatert || content.sistFagligOppdatert || enrichedContent?.sistFagligOppdatert)
+            const fagligOppdatert = formatDateLabel(content.last_reviewed_date || enrichedContent?.sistFagligOppdatert)
             if (!fagligOppdatert) return null
             return (
               <section className="mt-8">
