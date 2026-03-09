@@ -5,7 +5,7 @@ import type { ContentLink } from '../../types'
 
 export interface TemasideInfo {
   id: string | null
-  tittel: string
+  title: string
   href: string
   path: string
 }
@@ -18,7 +18,7 @@ export function extractTemasideInfo(links?: ContentLink[]): TemasideInfo | null 
 
   return {
     id: temasideLink.id ?? null,
-    tittel: temasideLink.title,
+    title: temasideLink.title,
     href: buildContentUrl({ path: temasideLink.path, id: temasideLink.id ?? '' }),
     path: temasideLink.path,
   }
