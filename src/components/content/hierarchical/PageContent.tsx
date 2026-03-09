@@ -43,12 +43,17 @@ export function PageContent({
     documentLinks.length > 0 &&
     documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
   const shouldShowPublicationLink =
-    !isPdfOnlyContent && Boolean(publicationUrl) && !hasMainContent && hasOnlyHelsedirPdfDocuments
+    Boolean(publicationUrl) && !hasMainContent && (hasOnlyHelsedirPdfDocuments || documentLinks.length === 0)
   const visibleDocumentLinks = shouldShowPublicationLink
     ? documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
     : documentLinks
-  const primaryDocument = visibleDocumentLinks[0]
-  const primaryDocumentLabel = isPdfOnlyContent ? 'Åpne PDF i ny fane' : primaryDocument?.label
+  const publicationFallbackDocument =
+    shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length === 0
+      ? { href: publicationUrl, label: 'Åpne side hos Helsedirektoratet', isPdf: false }
+      : null
+  const primaryDocument = visibleDocumentLinks[0] || publicationFallbackDocument
+  const primaryDocumentLabel =
+    isPdfOnlyContent && primaryDocument?.isPdf ? 'Åpne PDF i ny fane' : primaryDocument?.label
   const showChildNavigation = activePage.childrenIds.length > 0 && (isOverview || (!hasIntro && !hasBody))
   const headingLevel = isOverview ? Math.max(2, Math.min(2 + activePage.depth - 1, 5)) as 2 | 3 | 4 | 5 : 2
   const headingSize = activePage.depth <= 1 ? 'md' : 'sm'
@@ -94,7 +99,7 @@ export function PageContent({
         />
       )}
 
-      {!hasIntro && !hasBody && (primaryDocument || shouldShowPublicationLink) && (
+      {!hasIntro && !hasBody && primaryDocument && (
         <section className="mt-6 space-y-4">
           <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
             Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
@@ -112,7 +117,7 @@ export function PageContent({
                 </a>
               </li>
             )}
-            {shouldShowPublicationLink && publicationUrl && (
+            {shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length > 0 && (
               <li>
                 <a
                   href={publicationUrl}
