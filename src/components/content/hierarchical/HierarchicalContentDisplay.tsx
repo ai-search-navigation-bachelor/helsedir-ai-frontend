@@ -509,32 +509,20 @@ export function HierarchicalContentDisplay({
   }, [autoOpenExpandableId, activePage])
 
   const metadataItems = useMemo(() => {
-    if (!activePage?.node) return []
-
     const items: Array<{ label: string; value: string }> = []
-    const node = activePage.node
 
-    if (node.status) {
-      items.push({ label: 'Status', value: node.status })
-    }
-
-    const firstPublished = formatDateLabel(node.forstPublisert)
+    const firstPublished = formatDateLabel(content.forst_publisert || content.forstPublisert)
     if (firstPublished) {
       items.push({ label: 'Først publisert', value: firstPublished })
     }
 
-    const updated = formatDateLabel(node.sistOppdatert)
-    if (updated) {
-      items.push({ label: 'Sist oppdatert', value: updated })
-    }
-
-    const professionallyUpdated = formatDateLabel(node.sistFagligOppdatert)
+    const professionallyUpdated = formatDateLabel(content.sist_faglig_oppdatert || content.sistFagligOppdatert)
     if (professionallyUpdated) {
-      items.push({ label: 'Sist faglig oppdatert', value: professionallyUpdated })
+      items.push({ label: 'Siste faglige endring', value: professionallyUpdated })
     }
 
     return items
-  }, [activePage])
+  }, [content])
 
   const combinedFailedCount = failedEntries.length + (fetchedExpandableResult?.failedStubIds?.length ?? 0)
 
@@ -717,24 +705,26 @@ export function HierarchicalContentDisplay({
             </Alert>
           )}
 
-          {metadataItems.length > 0 && (
-            <section className="mt-8 border-t border-slate-200 pt-6">
-              <Paragraph data-size="xs" className="m-0 mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Nøkkelinformasjon
-              </Paragraph>
-              <ul className="m-0 list-none space-y-1.5 p-0">
-                {metadataItems.map((item) => (
-                  <li key={item.label}>
-                    <Paragraph data-size="xs" className="m-0 text-xs text-slate-500">
-                      <span className="font-medium text-slate-600">{item.label}:</span> {item.value}
-                    </Paragraph>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
         </section>
       </div>
+
+      {!activePage && metadataItems.length > 0 && (
+        <div className="mt-8 pt-6">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-base text-slate-500">
+            {metadataItems.map((item, index) => (
+              <div key={item.label} className="flex items-center gap-x-6 gap-y-2">
+                {index > 0 && (
+                  <span className="hidden sm:inline text-slate-300" aria-hidden="true">|</span>
+                )}
+                <span>
+                  <span className="font-medium text-slate-600">{item.label}:</span>{' '}
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
