@@ -86,7 +86,11 @@ async function fetchChild(
  * Fetch a chapter from the backend and its non-kapittel children in parallel.
  * Kapittel children are returned as stubs (loaded lazily when selected).
  */
-async function fetchChapterFromBackend(id: string, signal?: AbortSignal): Promise<NestedContent> {
+async function fetchChapterFromBackend(
+  id: string,
+  signal?: AbortSignal,
+  fallbackSistFagligOppdatert?: string,
+): Promise<NestedContent> {
   const detail = await getContent(id, undefined, { signal })
   const childLinks = (detail.links ?? []).filter((l) => l.rel === 'barn')
 
@@ -111,7 +115,11 @@ async function fetchChapterFromBackend(id: string, signal?: AbortSignal): Promis
     ...kapittelStubs,
   ]
 
-  return contentDetailToNestedContent(detail, children.length > 0 ? children : undefined)
+  const result = contentDetailToNestedContent(detail, children.length > 0 ? children : undefined)
+  if (!result.sistFagligOppdatert && fallbackSistFagligOppdatert) {
+    result.sistFagligOppdatert = fallbackSistFagligOppdatert
+  }
+  return result
 }
 
 /**
@@ -171,12 +179,13 @@ async function fetchChapterFromHelsedir(href: string, signal?: AbortSignal): Pro
 export async function fetchChapter(
   idOrHref: string,
   signal?: AbortSignal,
+  fallbackSistFagligOppdatert?: string,
 ): Promise<NestedContent> {
   if (idOrHref.startsWith('http')) {
     const backendId = extractBackendId(idOrHref)
     if (backendId) {
       try {
-        return await fetchChapterFromBackend(backendId, signal)
+        return await fetchChapterFromBackend(backendId, signal, fallbackSistFagligOppdatert)
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') throw err
         // Backend doesn't have this chapter — fetch from Helsedir
@@ -184,5 +193,5 @@ export async function fetchChapter(
     }
     return fetchChapterFromHelsedir(idOrHref, signal)
   }
-  return fetchChapterFromBackend(idOrHref, signal)
+  return fetchChapterFromBackend(idOrHref, signal, fallbackSistFagligOppdatert)
 }
