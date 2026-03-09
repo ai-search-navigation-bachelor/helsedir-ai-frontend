@@ -6,6 +6,9 @@ export const DEFAULT_CONFIG: WeightConfig = {
   rrf_k: 60,
   temaside_boost: 1.15,
   retningslinje_boost: 1.1,
+  role: null,
+  role_boost: 1.15,
+  role_penalty: 0.85,
 }
 
 /**
@@ -18,6 +21,9 @@ export const HELSEDIR_STYLE_CONFIG: WeightConfig = {
   rrf_k: 0,
   temaside_boost: 1.0,
   retningslinje_boost: 1.0,
+  role: null,
+  role_boost: 1.15,
+  role_penalty: 0.85,
 }
 
 export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
@@ -33,6 +39,9 @@ export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
       rrf_k: 60,
       temaside_boost: 1.15,
       retningslinje_boost: 1.1,
+      role: null,
+      role_boost: 1.15,
+      role_penalty: 0.85,
     },
   },
   {
@@ -43,6 +52,9 @@ export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
       rrf_k: 60,
       temaside_boost: 1.15,
       retningslinje_boost: 1.1,
+      role: null,
+      role_boost: 1.15,
+      role_penalty: 0.85,
     },
   },
   {
@@ -53,6 +65,9 @@ export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
       rrf_k: 60,
       temaside_boost: 1.15,
       retningslinje_boost: 1.1,
+      role: null,
+      role_boost: 1.15,
+      role_penalty: 0.85,
     },
   },
 ]
