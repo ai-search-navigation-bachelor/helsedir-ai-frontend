@@ -16,6 +16,7 @@ export function contentDetailToNestedContent(
     has_text_content: detail.has_text_content,
     document_url: detail.document_url,
     is_pdf_only: detail.is_pdf_only,
+    related_links: detail.related_links,
     status: detail.status,
     forstPublisert: detail.first_published,
     sistOppdatert: detail.last_reviewed_date,
