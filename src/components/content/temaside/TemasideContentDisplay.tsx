@@ -54,7 +54,7 @@ export function TemasideContentDisplay({ content }: TemasideContentDisplayProps)
     () => sortGroupsByPriority(content.linked_content ?? EMPTY_LINKED_CONTENT),
     [content.linked_content],
   )
-  const parentLabel = parentLink?.tittel ?? null
+  const parentLabel = parentLink?.title ?? null
   const hasContent = groups.length > 0 || childTemasideLinks.length > 0
 
   return (

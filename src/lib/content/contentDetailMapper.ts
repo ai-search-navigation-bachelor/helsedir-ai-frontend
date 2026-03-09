@@ -12,7 +12,7 @@ export function toContentLinks(source: NestedContent): ContentLink[] {
     result.push({
       rel: link.rel || 'related',
       type: link.type || 'link',
-      tittel: link.tittel || 'Lenke',
+      title: link.title || link.tittel || 'Lenke',
       href,
       strukturId: undefined,
     })
@@ -38,6 +38,8 @@ export function mapHelsedirContentToDetail(source: NestedContent): ContentDetail
       normalizedDocumentUrl ||
       (typeof source.data?.fil === 'string' ? source.data.fil : null),
     is_pdf_only: source.is_pdf_only,
+    first_published: source.forstPublisert,
+    last_reviewed_date: source.sistFagligOppdatert || source.sistOppdatert,
     links: toContentLinks(source),
   }
 }

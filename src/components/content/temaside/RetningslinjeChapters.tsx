@@ -11,7 +11,7 @@ const brandColor = ds.color('logobla-1', 'base-default')
 
 function getChapterLinks(links: ContentLink[] | undefined): ContentLink[] {
   return (links ?? []).filter(
-    (l) => l.rel === 'barn' && l.type === 'kapittel' && l.tittel && (l.id || l.href),
+    (l) => l.rel === 'barn' && l.type === 'kapittel' && l.title && (l.id || l.href),
   )
 }
 
@@ -59,7 +59,7 @@ export function RetningslinjeChapters({
               className="text-sm leading-snug group-hover:underline transition-colors"
               style={{ color: brandColor }}
             >
-              {ch.tittel}
+              {ch.title}
             </span>
           </Link>
         </li>

@@ -14,9 +14,9 @@ export function contentDetailToNestedContent(
     type: detail.content_type,
     body: detail.body,
     status: detail.status,
-    forstPublisert: detail.forst_publisert || detail.forstPublisert,
-    sistOppdatert: detail.sistOppdatert,
-    sistFagligOppdatert: detail.sist_faglig_oppdatert || detail.sistFagligOppdatert,
+    forstPublisert: detail.first_published,
+    sistOppdatert: detail.last_reviewed_date,
+    sistFagligOppdatert: detail.last_reviewed_date,
     url: detail.url,
     data: detail.anbefaling_fields
       ? {
@@ -48,7 +48,7 @@ function extractBackendId(href: string): string | null {
  * Prefers backend (by id or by extracting id from href), falls back to Helsedir.
  */
 async function fetchChild(
-  link: { id?: string | null; href?: string | null; sist_faglig_oppdatert?: string | null },
+  link: { id?: string | null; href?: string | null; last_reviewed_date?: string | null },
   signal?: AbortSignal,
 ): Promise<NestedContent | null> {
   const backendId = link.id || (link.href ? extractBackendId(link.href) : null)
@@ -57,8 +57,8 @@ async function fetchChild(
     try {
       const result = contentDetailToNestedContent(await getContent(backendId, undefined, { signal }))
       // Use sist_faglig_oppdatert from parent link as fallback
-      if (!result.sistFagligOppdatert && link.sist_faglig_oppdatert) {
-        result.sistFagligOppdatert = link.sist_faglig_oppdatert
+      if (!result.sistFagligOppdatert && link.last_reviewed_date) {
+        result.sistFagligOppdatert = link.last_reviewed_date
       }
       return result
     } catch (err) {
@@ -70,8 +70,8 @@ async function fetchChild(
   if (link.href) {
     try {
       const result = (await fetchHelsedirContent(link.href, signal)) as unknown as NestedContent
-      if (!result.sistFagligOppdatert && link.sist_faglig_oppdatert) {
-        result.sistFagligOppdatert = link.sist_faglig_oppdatert
+      if (!result.sistFagligOppdatert && link.last_reviewed_date) {
+        result.sistFagligOppdatert = link.last_reviewed_date
       }
       return result
     } catch {
@@ -100,14 +100,15 @@ async function fetchChapterFromBackend(
   const fetched = await Promise.all(contentChildren.map((link) => fetchChild({
     id: link.id,
     href: link.href,
-    sist_faglig_oppdatert: link.sist_faglig_oppdatert,
+    last_reviewed_date: link.last_reviewed_date,
   }, signal)))
 
   const kapittelStubs: NestedContent[] = kapittelChildren.map((l) => ({
     id: l.id || l.href || '',
-    tittel: l.tittel,
+    tittel: l.title,
+    title: l.title,
     type: l.type,
-    sistFagligOppdatert: l.sist_faglig_oppdatert || undefined,
+    sistFagligOppdatert: l.last_reviewed_date || undefined,
   }))
 
   const children = [
@@ -155,6 +156,7 @@ async function fetchChapterFromHelsedir(href: string, signal?: AbortSignal): Pro
   const kapittelStubs: NestedContent[] = kapittelChildren.map((l) => ({
     id: (l.href ? extractBackendId(l.href) : null) || l.href || '',
     tittel: l.tittel || '',
+    title: l.tittel || '',
     type: l.type || 'kapittel',
   }))
 
