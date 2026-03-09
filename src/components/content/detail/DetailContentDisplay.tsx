@@ -10,6 +10,7 @@ import {
   isTemasideContentType,
   normalizeContentType,
 } from '../../../constants/content'
+import { formatDateLabel } from '../../../lib/content/date'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
@@ -472,6 +473,18 @@ export function DetailContentDisplay({
               Ingen innholdsseksjoner tilgjengelig for denne siden.
             </Paragraph>
           )}
+
+          {(() => {
+            const fagligOppdatert = formatDateLabel(content.sist_faglig_oppdatert || content.sistFagligOppdatert)
+            if (!fagligOppdatert) return null
+            return (
+              <section className="mt-8">
+                <Paragraph data-size="xs" className="m-0 text-xs text-slate-500">
+                  <span className="font-medium text-slate-600">Siste faglige endring:</span> {fagligOppdatert}
+                </Paragraph>
+              </section>
+            )
+          })()}
         </section>
       </div>
     </div>
