@@ -135,6 +135,8 @@ export function useDevSearch(): DevSearchReturn {
       setSlotA((s) => ({
         ...s,
         loading: false,
+        response: null,
+        usedConfig: null,
         error: isAbortLikeError(error) ? null : 'Søk A feilet. Sjekk konsollen for detaljer.',
       }))
     }
@@ -147,6 +149,8 @@ export function useDevSearch(): DevSearchReturn {
       setSlotB((s) => ({
         ...s,
         loading: false,
+        response: null,
+        usedConfig: null,
         error: isAbortLikeError(error) ? null : 'Søk B feilet. Sjekk konsollen for detaljer.',
       }))
     }
