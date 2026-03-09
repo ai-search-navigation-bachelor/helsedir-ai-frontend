@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
@@ -266,6 +266,26 @@ export function DetailContentDisplay({
       }]
     : []
 
+  const handleRelatedLinkClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    internalPath?: string,
+  ) => {
+    if (!internalPath) return
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.shiftKey ||
+      event.defaultPrevented
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    navigate(internalPath)
+  }
+
   const hasSidebarContent =
     sections.length > 1 ||
     contextualNavigationLinks.length > 0
@@ -465,7 +485,7 @@ export function DetailContentDisplay({
             </article>
           ))}
 
-          {sections.length === 0 && hasRelatedLinks && !isPrimaryPdfAction && (
+          {sections.length === 0 && hasRelatedLinks && (
             <section className="space-y-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
                 Denne siden har ikke egen tekst. Se relaterte rapporter og dokumenter fra Helsedirektoratet.
@@ -477,11 +497,7 @@ export function DetailContentDisplay({
                       href={link.internalPath || link.href}
                       target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
                       rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
-                      onClick={(event) => {
-                        if (!link.internalPath) return
-                        event.preventDefault()
-                        navigate(link.internalPath)
-                      }}
+                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
                       className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
                     >
                       <span className="block font-semibold text-slate-900">{link.label}</span>
@@ -528,7 +544,7 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length === 0 && !hasRelatedLinks && isPrimaryPdfAction && primaryDocument && (
+          {sections.length === 0 && isPrimaryPdfAction && primaryDocument && (
             <section className="space-y-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
                 {emptyStateMessage}

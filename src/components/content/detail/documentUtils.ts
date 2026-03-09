@@ -5,6 +5,8 @@ import type {
   RelatedContentLink,
 } from '../../../types'
 import { stripTemasidePrefix } from '../../../lib/path'
+import { CONTENT_CATEGORY_GROUPS, CONTENT_ONLY_PREFIXES } from '../../../constants/contentRoutes'
+import { TEMASIDE_CATEGORIES } from '../../../constants/temasider'
 
 interface DocumentLink {
   href: string
@@ -18,7 +20,6 @@ interface RelatedDisplayLink {
   isDocument: boolean
   isPdf: boolean
   fileType?: string
-  target?: string
   openInNewTab: boolean
   internalPath?: string
 }
@@ -61,16 +62,28 @@ function hasRelatedDocumentMetadata(link: RelatedContentLink) {
   return Boolean(link.is_document) || isLikelyPdfType(link.file_type || '')
 }
 
+const ALLOWED_INTERNAL_PREFIXES = new Set([
+  ...CONTENT_CATEGORY_GROUPS.map((group) => group.pathPrefix),
+  ...CONTENT_ONLY_PREFIXES,
+  ...TEMASIDE_CATEGORIES.map((category) => category.slug),
+])
+
+function isAllowedInternalPath(pathname: string) {
+  const [firstSegment] = pathname.split('/').filter(Boolean)
+  return Boolean(firstSegment && ALLOWED_INTERNAL_PREFIXES.has(firstSegment))
+}
+
 function getInternalContentPath(href: string, isDocument: boolean) {
   if (isDocument) return undefined
 
   try {
-    const parsed = new URL(href)
+    const parsed = new URL(href, 'https://www.helsedirektoratet.no')
     if (!/(^|\.)helsedirektoratet\.no$/i.test(parsed.hostname)) return undefined
-    return stripTemasidePrefix(parsed.pathname)
+    const strippedPath = stripTemasidePrefix(parsed.pathname)
+    if (!isAllowedInternalPath(strippedPath)) return undefined
+    return `${strippedPath}${parsed.search}${parsed.hash}`
   } catch {
-    if (!href.startsWith('/')) return undefined
-    return stripTemasidePrefix(href)
+    return undefined
   }
 }
 
@@ -115,7 +128,6 @@ export function getRelatedLinks(source?: { related_links?: RelatedContentLink[] 
 
     const isPdf = isLikelyPdfUrl(href) || isLikelyPdfType(link.file_type || '')
     const isDocument = hasRelatedDocumentMetadata(link) || isPdf
-    const target = link.target?.trim() || undefined
     const internalPath = getInternalContentPath(href, isDocument)
 
     result.push({
@@ -124,8 +136,7 @@ export function getRelatedLinks(source?: { related_links?: RelatedContentLink[] 
       isDocument,
       isPdf,
       fileType: link.file_type?.trim() || undefined,
-      target,
-      openInNewTab: target === '_blank' || isDocument,
+      openInNewTab: link.target?.trim() === '_blank' || isDocument,
       internalPath,
     })
   }
