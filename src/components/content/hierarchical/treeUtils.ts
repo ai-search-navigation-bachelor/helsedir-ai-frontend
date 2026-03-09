@@ -72,12 +72,12 @@ export function buildPageTree(entries: ChapterEntry[]): TreeResult {
 
   entries.forEach((entry) => {
     if (entry.chapter) {
-      addNode(entry.index, entry.chapter, [], null, entry.link.tittel || 'Uten tittel')
+      addNode(entry.index, entry.chapter, [], null, entry.link.title || 'Uten tittel')
       return
     }
 
     const id = toNodeId(entry.index, [])
-    const title = entry.link.tittel || 'Uten tittel'
+    const title = entry.link.title || 'Uten tittel'
     const placeholderNode: NestedContent = {
       id: entry.link.href || `placeholder-${entry.index}`,
       tittel: title,

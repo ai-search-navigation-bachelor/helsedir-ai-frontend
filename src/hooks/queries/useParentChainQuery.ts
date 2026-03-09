@@ -42,7 +42,7 @@ function helsedirToContentDetail(hc: HelselinkContent): ContentDetail {
     links: hc.lenker?.map((l) => ({
       rel: l.rel,
       type: l.type ?? '',
-      tittel: l.tittel ?? '',
+      title: l.tittel ?? '',
       href: l.href ?? null,
       id: l.strukturId ?? null,
       path: null,

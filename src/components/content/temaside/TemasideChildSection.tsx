@@ -25,7 +25,7 @@ export function ChildTemasideSection({ links }: { links: ContentLink[] }) {
     if (!query.trim()) return validLinks
     const q = query.trim().toLowerCase()
     return validLinks.filter((l) => {
-      const title = (l.tittel || titleFromPath(l.href)).toLowerCase()
+      const title = (l.title || titleFromPath(l.href)).toLowerCase()
       return title.includes(q)
     })
   }, [validLinks, query])
@@ -71,7 +71,7 @@ export function ChildTemasideSection({ links }: { links: ContentLink[] }) {
                 className="group flex items-center justify-between gap-3 py-3 no-underline text-inherit transition-colors duration-100 hover:bg-gray-50/60"
               >
                 <p className="min-w-0 text-[0.9375rem] font-medium leading-snug transition-colors" style={{ color: brandColor }}>
-                  {link.tittel || titleFromPath(link.href)}
+                  {link.title || titleFromPath(link.href)}
                 </p>
                 <HiArrowRight
                   size={14}

@@ -69,9 +69,13 @@ function asDocumentLink(
   } satisfies DocumentLink
 }
 
+function getLinkTitle(link: ContentLink | NestedContentLink): string | undefined {
+  return 'title' in link ? link.title : link.tittel
+}
+
 function extractFromLinks(links: Array<ContentLink | NestedContentLink> | undefined) {
   return (links ?? [])
-    .map((link) => asDocumentLink(link.href ?? undefined, link.tittel, link.rel, link.type))
+    .map((link) => asDocumentLink(link.href ?? undefined, getLinkTitle(link), link.rel, link.type))
     .filter((item): item is DocumentLink => Boolean(item))
 }
 
