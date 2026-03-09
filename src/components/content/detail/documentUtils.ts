@@ -45,7 +45,7 @@ function resolveLabel(label: string | undefined, isPdf: boolean) {
   return isPdf ? 'Åpne PDF i ny fane' : 'Åpne dokument i ny fane'
 }
 
-function asDocumentLink(
+export function asDocumentLink(
   href: string | undefined,
   label?: string,
   rel?: string,
@@ -106,6 +106,9 @@ export function getDocumentLinks(source?: NestedContent | null, fallbackLinks?: 
 
   const dataFile = asDocumentLink(source?.data?.fil as string | undefined, undefined, 'fil')
   if (dataFile) pushUnique(dataFile)
+
+  const backendDocumentUrl = asDocumentLink(source?.document_url || undefined, undefined, 'fil')
+  if (backendDocumentUrl) pushUnique(backendDocumentUrl)
 
   const directUrl = asDocumentLink(source?.url, undefined, 'url')
   if (directUrl) pushUnique(directUrl)

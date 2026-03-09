@@ -29,8 +29,9 @@ export function PageContent({
   isOverview = false,
   autoOpenExpandableId = null,
 }: PageContentProps) {
+  const isPdfOnlyContent = Boolean(activePage.node.is_pdf_only)
   const hasIntro = hasVisibleContent(activePage.node.intro)
-  const hasBody = hasVisibleContent(activePage.node.tekst || activePage.node.body)
+  const hasBody = !isPdfOnlyContent && hasVisibleContent(activePage.node.tekst || activePage.node.body)
   const documentLinks = getDocumentLinks(activePage.node)
   const publicationUrl = (() => {
     const url = activePage.node.url?.trim()
@@ -42,11 +43,17 @@ export function PageContent({
     documentLinks.length > 0 &&
     documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
   const shouldShowPublicationLink =
-    Boolean(publicationUrl) && !hasMainContent && hasOnlyHelsedirPdfDocuments
+    Boolean(publicationUrl) && !hasMainContent && (hasOnlyHelsedirPdfDocuments || documentLinks.length === 0)
   const visibleDocumentLinks = shouldShowPublicationLink
     ? documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
     : documentLinks
-  const primaryDocument = visibleDocumentLinks[0]
+  const publicationFallbackDocument =
+    shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length === 0
+      ? { href: publicationUrl, label: 'Åpne side hos Helsedirektoratet', isPdf: false }
+      : null
+  const primaryDocument = visibleDocumentLinks[0] || publicationFallbackDocument
+  const primaryDocumentLabel =
+    isPdfOnlyContent && primaryDocument?.isPdf ? 'Åpne PDF i ny fane' : primaryDocument?.label
   const showChildNavigation = activePage.childrenIds.length > 0 && (isOverview || (!hasIntro && !hasBody))
   const headingLevel = isOverview ? Math.max(2, Math.min(2 + activePage.depth - 1, 5)) as 2 | 3 | 4 | 5 : 2
   const headingSize = activePage.depth <= 1 ? 'md' : 'sm'
@@ -92,8 +99,8 @@ export function PageContent({
         />
       )}
 
-      {!hasIntro && !hasBody && (primaryDocument || shouldShowPublicationLink) && (
-        <section className="mt-6 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      {!hasIntro && !hasBody && primaryDocument && (
+        <section className="mt-6 space-y-4">
           <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
             Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
           </Paragraph>
@@ -104,13 +111,13 @@ export function PageContent({
                   href={primaryDocument.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-brand hover:underline"
+                  className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-brand/90"
                 >
-                  {primaryDocument.label}
+                  {primaryDocumentLabel}
                 </a>
               </li>
             )}
-            {shouldShowPublicationLink && publicationUrl && (
+            {shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length > 0 && (
               <li>
                 <a
                   href={publicationUrl}
