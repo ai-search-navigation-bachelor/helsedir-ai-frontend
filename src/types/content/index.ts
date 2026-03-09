@@ -14,6 +14,7 @@ export interface ContentLink {
   id?: string | null
   path?: string | null
   strukturId?: string
+  sist_faglig_oppdatert?: string | null
   children?: ContentLink[] | null
 }
 
@@ -55,6 +56,8 @@ export interface ContentDetail {
   forstPublisert?: string
   sistOppdatert?: string
   sistFagligOppdatert?: string
+  forst_publisert?: string
+  sist_faglig_oppdatert?: string
   url?: string
   anbefaling_fields?: {
     praktisk?: string
