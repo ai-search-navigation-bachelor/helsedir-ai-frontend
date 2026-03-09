@@ -505,12 +505,12 @@ export function HierarchicalContentDisplay({
   const metadataItems = useMemo(() => {
     const items: Array<{ label: string; value: string }> = []
 
-    const firstPublished = formatDateLabel(content.forst_publisert || content.forstPublisert)
+    const firstPublished = formatDateLabel(content.first_published)
     if (firstPublished) {
       items.push({ label: 'Først publisert', value: firstPublished })
     }
 
-    const professionallyUpdated = formatDateLabel(content.sist_faglig_oppdatert || content.sistFagligOppdatert)
+    const professionallyUpdated = formatDateLabel(content.last_reviewed_date)
     if (professionallyUpdated) {
       items.push({ label: 'Siste faglige endring', value: professionallyUpdated })
     }
