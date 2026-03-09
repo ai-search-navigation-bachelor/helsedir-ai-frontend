@@ -12,13 +12,13 @@ export interface TemasideInfo {
 
 export function extractTemasideInfo(links?: ContentLink[]): TemasideInfo | null {
   const temasideLink = links?.find(
-    (link) => link.rel === 'temaside' && link.tittel && link.path,
+    (link) => link.rel === 'temaside' && link.title && link.path,
   )
   if (!temasideLink?.path) return null
 
   return {
     id: temasideLink.id ?? null,
-    tittel: temasideLink.tittel,
+    tittel: temasideLink.title,
     href: buildContentUrl({ path: temasideLink.path, id: temasideLink.id ?? '' }),
     path: temasideLink.path,
   }

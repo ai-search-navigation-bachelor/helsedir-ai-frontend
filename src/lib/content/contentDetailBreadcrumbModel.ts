@@ -28,7 +28,7 @@ function getCategoryFromTemasidePath(temasidePath: string): { label: string; hre
  */
 function extractDirectParent(content: ContentDetail): ParentChainEntry | null {
   const forelderLink = content.links?.find((link) => link.rel === 'forelder')
-  if (!forelderLink?.tittel) return null
+  if (!forelderLink?.title) return null
   if (forelderLink.type?.trim().toLowerCase() === 'kapittel') return null
 
   const id = forelderLink.id || getContentIdFromHref(forelderLink.href)
@@ -38,7 +38,7 @@ function extractDirectParent(content: ContentDetail): ParentChainEntry | null {
     ? buildContentUrl({ path: forelderLink.path, id })
     : `/content/${id}`
 
-  return { id, tittel: forelderLink.tittel, href, contentType: forelderLink.type }
+  return { id, tittel: forelderLink.title, href, contentType: forelderLink.type }
 }
 
 export function buildContentBreadcrumbItems(
