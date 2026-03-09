@@ -475,7 +475,7 @@ export function DetailContentDisplay({
           )}
 
           {(() => {
-            const fagligOppdatert = formatDateLabel(content.sist_faglig_oppdatert || content.sistFagligOppdatert)
+            const fagligOppdatert = formatDateLabel(content.sist_faglig_oppdatert || content.sistFagligOppdatert || enrichedContent?.sistFagligOppdatert)
             if (!fagligOppdatert) return null
             return (
               <section className="mt-8">

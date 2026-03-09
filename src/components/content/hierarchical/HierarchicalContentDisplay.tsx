@@ -148,7 +148,7 @@ export function HierarchicalContentDisplay({
     queryKey: ['lazy-page-content', activeNodeId],
     queryFn: async ({ signal }) => {
       if (!activeNodeId) return null
-      return fetchChapter(activeNodeId, signal)
+      return fetchChapter(activeNodeId, signal, activePage?.node?.sistFagligOppdatert)
     },
     enabled: Boolean(isStubPage || needsExpandableContent),
     staleTime: 5 * 60 * 1000,
@@ -193,10 +193,18 @@ export function HierarchicalContentDisplay({
     queryFn: async ({ signal }) => {
       const map = new Map<string, NestedContent>()
       const failedStubIds: string[] = []
+      const stubFallbacks = new Map<string, string | undefined>()
+      if (pageWithLazyContent) {
+        for (const child of pageWithLazyContent.expandableChildren) {
+          if (child.id && child.sistFagligOppdatert) {
+            stubFallbacks.set(child.id, child.sistFagligOppdatert)
+          }
+        }
+      }
       await Promise.all(
         expandableStubIds.map(async (stubId) => {
           try {
-            const fetchedChapter = await fetchChapter(stubId, signal)
+            const fetchedChapter = await fetchChapter(stubId, signal, stubFallbacks.get(stubId))
             map.set(stubId, fetchedChapter)
           } catch (err) {
             if (err instanceof Error && err.name === 'AbortError') throw err
