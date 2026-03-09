@@ -1,4 +1,5 @@
 import DOMPurify from 'dompurify'
+import type { MouseEvent } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { HiArrowRight } from 'react-icons/hi2'
@@ -72,6 +73,25 @@ export function PageContent({
         openInNewTab: true,
       }]
     : []
+  const handleRelatedLinkClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    internalPath?: string,
+  ) => {
+    if (!internalPath) return
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.shiftKey ||
+      event.defaultPrevented
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    navigate(internalPath)
+  }
   const showChildNavigation = activePage.childrenIds.length > 0 && (isOverview || (!hasIntro && !hasBody))
   const headingLevel = isOverview ? Math.max(2, Math.min(2 + activePage.depth - 1, 5)) as 2 | 3 | 4 | 5 : 2
   const headingSize = activePage.depth <= 1 ? 'md' : 'sm'
@@ -117,7 +137,7 @@ export function PageContent({
         />
       )}
 
-      {!hasIntro && !hasBody && hasRelatedLinks && !isPrimaryPdfAction && (
+      {!hasIntro && !hasBody && hasRelatedLinks && (
         <section className="mt-6 space-y-4">
           <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
             Denne siden har ikke egen tekst. Se relaterte rapporter og dokumenter fra Helsedirektoratet.
@@ -129,11 +149,7 @@ export function PageContent({
                   href={link.internalPath || link.href}
                   target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
                   rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
-                  onClick={(event) => {
-                    if (!link.internalPath) return
-                    event.preventDefault()
-                    navigate(link.internalPath)
-                  }}
+                  onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
                   className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
                 >
                   <span className="block font-semibold text-slate-900">{link.label}</span>
@@ -180,7 +196,7 @@ export function PageContent({
         </section>
       )}
 
-      {!hasIntro && !hasBody && !hasRelatedLinks && isPrimaryPdfAction && primaryDocument && (
+      {!hasIntro && !hasBody && isPrimaryPdfAction && primaryDocument && (
         <section className="mt-6 space-y-4">
           <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
             {emptyStateMessage}
