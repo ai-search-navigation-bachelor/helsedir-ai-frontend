@@ -37,6 +37,15 @@ export interface LinkedContentGroup {
   items: LinkedContentItem[]
 }
 
+export interface RelatedContentLink {
+  title: string
+  url: string
+  is_document?: boolean
+  file_type?: string | null
+  url_type?: string | null
+  target?: string | null
+}
+
 /**
  * Content detail
  */
@@ -49,6 +58,7 @@ export interface ContentDetail {
   has_text_content?: boolean
   document_url?: string | null
   is_pdf_only?: boolean
+  related_links?: RelatedContentLink[] | null
   role_tags?: string[]
   links?: ContentLink[]
   linked_content?: LinkedContentGroup[]
@@ -96,6 +106,7 @@ export interface NestedContent {
   has_text_content?: boolean
   document_url?: string | null
   is_pdf_only?: boolean
+  related_links?: RelatedContentLink[] | null
   status?: string
   forstPublisert?: string
   sistOppdatert?: string
