@@ -287,8 +287,7 @@ export function DevPage() {
                   rank={i + 1}
                   result={r}
                   rankDiff={null}
-                  config={slotA.config}
-
+                  config={slotA.usedConfig ?? slotA.config}
                   maxScore={slotA.response!.results[0]?.score}
                 />
               ))}
@@ -308,8 +307,7 @@ export function DevPage() {
                   rank={i + 1}
                   result={r}
                   rankDiff={getRankDiff(r.id, rankMapA, rankMapB)}
-                  config={slotB.config}
-
+                  config={slotB.usedConfig ?? slotB.config}
                   maxScore={slotB.response!.results[0]?.score}
                 />
               ))}
