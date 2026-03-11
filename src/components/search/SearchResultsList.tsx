@@ -2,6 +2,7 @@ import { Alert, Paragraph, Spinner } from "@digdir/designsystemet-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchResultCard } from "./SearchResultCard";
 import { useTemasidePathMap } from "../../hooks/queries/useTemasidePathMap";
+import { shouldDisplayTemasideNode } from "../../lib/temaside/visibility";
 import type { SearchResult } from "../../types";
 
 interface SearchResultsListProps {
@@ -41,10 +42,30 @@ export function SearchResultsList({
     [],
   );
 
+  const visibleResults = useMemo(
+    () =>
+      results
+        .filter((result) => result.info_type !== "temaside" || shouldDisplayTemasideNode(result))
+        .map((result) => ({
+          ...result,
+          children: Array.isArray(result.children)
+            ? result.children
+                .map((group) => ({
+                  ...group,
+                  items: Array.isArray(group.items)
+                    ? group.items.filter((item) => item.info_type !== "temaside" || shouldDisplayTemasideNode(item))
+                    : [],
+                }))
+                .filter((group) => group.items.length > 0 || (group.child_count ?? 0) > 0)
+            : result.children,
+        })),
+    [results],
+  );
+
   const sourceTemasideByContentId = useMemo(() => {
     const map = new Map<string, string>();
 
-    results.forEach((result) => {
+    visibleResults.forEach((result) => {
       if (result.info_type !== "temaside" || !Array.isArray(result.children)) {
         return;
       }
@@ -63,7 +84,7 @@ export function SearchResultsList({
     });
 
     return map;
-  }, [results]);
+  }, [visibleResults]);
 
   // Infinite scroll: observe sentinel element
   useEffect(() => {
@@ -85,10 +106,8 @@ export function SearchResultsList({
     return () => observer.disconnect();
   }, [onLoadMore, hasNextPage, isFetchingNextPage]);
 
-  const normalizedLabel = (activeTabLabel || "")
-    .trim()
-    .toLocaleLowerCase("nb-NO");
-  const displayCount = total ?? results.length;
+  const normalizedLabel = (activeTabLabel || "").trim().toLocaleLowerCase("nb-NO");
+  const displayCount = total ?? visibleResults.length;
   const resultsLabel =
     activeTab === "all" || !normalizedLabel
       ? `${displayCount} treff på "${searchQuery}"`
@@ -102,13 +121,13 @@ export function SearchResultsList({
       </div>
 
       {/* Results List */}
-      {results.length === 0 ? (
+      {visibleResults.length === 0 ? (
         <Alert>
           <Paragraph>Ingen resultater funnet i denne kategorien.</Paragraph>
         </Alert>
       ) : (
         <div className="flex flex-col gap-3">
-          {results.map((result, index) => (
+          {visibleResults.map((result, index) => (
             <SearchResultCard
               key={`${result.id}-${index}`}
               result={result}

@@ -38,6 +38,15 @@ export function SectionIcon({ infoType }: { infoType: string }) {
 const isRetningslinje = (infoType: string) =>
   normalizeContentType(infoType) === 'retningslinje'
 
+function getLinkedContentHref(item: LinkedContentItem) {
+  const documentUrl = item.document_url?.trim()
+  if (item.is_pdf_only && documentUrl) {
+    return documentUrl
+  }
+
+  return buildContentUrl(item)
+}
+
 function ContentRow({
   item,
   sourceTemasideId,
@@ -48,31 +57,54 @@ function ContentRow({
   sourceTemasideTitle: string
 }) {
   const showChapters = isRetningslinje(item.info_type)
+  const href = getLinkedContentHref(item)
+  const isPdfOnly = Boolean(item.is_pdf_only && item.document_url?.trim())
 
   return (
     <li className="border-b border-gray-100 last:border-0">
-      <Link
-        to={buildContentUrl(item)}
-        state={{
-          contentType: item.info_type,
-          sourceTemasideId,
-          sourceContentId: item.id,
-          sourceContentTitle: sourceTemasideTitle,
-        }}
-        className="group flex items-center justify-between gap-4 px-5 py-3.5 no-underline text-inherit transition-colors duration-100 hover:bg-gray-50 rounded-xl"
-      >
-        <div className="min-w-0">
-          <p className="text-[0.9375rem] font-medium leading-snug transition-colors" style={{ color: brandColor }}>
-            {item.title}
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">{toContentTypeLabel(item.info_type)}</p>
-        </div>
-        <HiArrowRight
-          size={15}
-          className="flex-shrink-0 transition-all duration-150 group-hover:translate-x-1"
-          style={{ color: brandColor }}
-        />
-      </Link>
+      {isPdfOnly ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center justify-between gap-4 px-5 py-3.5 no-underline text-inherit transition-colors duration-100 hover:bg-gray-50 rounded-xl"
+        >
+          <div className="min-w-0">
+            <p className="text-[0.9375rem] font-medium leading-snug transition-colors" style={{ color: brandColor }}>
+              {item.title}
+            </p>
+            <p className="mt-0.5 text-xs text-gray-400">PDF</p>
+          </div>
+          <HiArrowRight
+            size={15}
+            className="flex-shrink-0 transition-all duration-150 group-hover:translate-x-1"
+            style={{ color: brandColor }}
+          />
+        </a>
+      ) : (
+        <Link
+          to={href}
+          state={{
+            contentType: item.info_type,
+            sourceTemasideId,
+            sourceContentId: item.id,
+            sourceContentTitle: sourceTemasideTitle,
+          }}
+          className="group flex items-center justify-between gap-4 px-5 py-3.5 no-underline text-inherit transition-colors duration-100 hover:bg-gray-50 rounded-xl"
+        >
+          <div className="min-w-0">
+            <p className="text-[0.9375rem] font-medium leading-snug transition-colors" style={{ color: brandColor }}>
+              {item.title}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">{toContentTypeLabel(item.info_type)}</p>
+          </div>
+          <HiArrowRight
+            size={15}
+            className="flex-shrink-0 transition-all duration-150 group-hover:translate-x-1"
+            style={{ color: brandColor }}
+          />
+        </Link>
+      )}
       {showChapters && (
         <RetningslinjeChapters
           itemId={item.id}

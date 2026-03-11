@@ -20,7 +20,9 @@ const INFO_TYPE_PRIORITY: Record<string, number> = Object.fromEntries(
 
 function sortGroupsByPriority(groups: readonly LinkedContentGroup[]): LinkedContentGroup[] {
   const fallback = SEARCH_MAIN_CATEGORIES.length * 100
-  return [...groups].sort((a, b) => {
+  return groups
+    .filter((group) => Array.isArray(group.items) && group.items.length > 0)
+    .sort((a, b) => {
     const aPriority = INFO_TYPE_PRIORITY[a.info_type] ?? fallback
     const bPriority = INFO_TYPE_PRIORITY[b.info_type] ?? fallback
     return aPriority - bPriority

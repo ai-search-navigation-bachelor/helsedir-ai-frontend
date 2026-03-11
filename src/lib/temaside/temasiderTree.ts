@@ -6,12 +6,22 @@ export type ThemeNode = {
   title: string // best-effort display title
   hasPage: boolean // true when this path exists as a real temaside page
   contentId?: string // content id for this temaside path when available
+  hasBodyContent?: boolean
+  hasLinkedContent?: boolean
+  hasChildrenMeta?: boolean
+  childCount?: number
+  shouldDisplay?: boolean
   children: ThemeNode[]
 }
 
 type ThemePathMeta = {
   title?: string
   contentId?: string
+  hasBodyContent?: boolean
+  hasLinkedContent?: boolean
+  hasChildren?: boolean
+  childCount?: number
+  shouldDisplay?: boolean
 }
 
 function titleize(segment: string) {
@@ -48,6 +58,11 @@ export function buildThemeTree(
           title: preferredTitle || titleize(part),
           hasPage: Boolean(preferredTitle || preferredContentId),
           contentId: preferredContentId,
+          hasBodyContent: preferredMeta?.hasBodyContent,
+          hasLinkedContent: preferredMeta?.hasLinkedContent,
+          hasChildrenMeta: preferredMeta?.hasChildren,
+          childCount: preferredMeta?.childCount,
+          shouldDisplay: preferredMeta?.shouldDisplay,
           children: [],
         }
         current.children.push(child)
@@ -59,6 +74,13 @@ export function buildThemeTree(
         if (preferredContentId) {
           child.contentId = preferredContentId
         }
+      }
+      if (preferredMeta) {
+        child.hasBodyContent = preferredMeta.hasBodyContent
+        child.hasLinkedContent = preferredMeta.hasLinkedContent
+        child.hasChildrenMeta = preferredMeta.hasChildren
+        child.childCount = preferredMeta.childCount
+        child.shouldDisplay = preferredMeta.shouldDisplay
       }
       current = child
     }

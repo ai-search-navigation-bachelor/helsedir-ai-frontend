@@ -1,5 +1,4 @@
 import { buildUrl, httpRequest } from '../lib/httpClient'
-import { stripTemasidePrefix } from '../lib/path'
 import type { BaseRequestOptions } from '../types'
 import { BACKEND_BASE_URL } from './backendBaseUrl'
 
@@ -8,6 +7,11 @@ export interface ThemePage {
   title: string
   info_type: string
   path: string
+  has_body_content?: boolean
+  has_linked_content?: boolean
+  has_children?: boolean
+  child_count?: number
+  should_display?: boolean
 }
 
 export interface ThemePagesResponse {
@@ -31,9 +35,6 @@ export async function getThemePages(
 
   return {
     ...response,
-    results: response.results.map((result) => ({
-      ...result,
-      path: stripTemasidePrefix(result.path),
-    })),
+    results: response.results,
   }
 }
