@@ -14,6 +14,8 @@ interface SearchResultCardProps {
   searchQuery: string;
   sourceTemasideId?: string;
   temasidePathById: Map<string, string>;
+  onPinChange?: (cardId: string, hasPinned: boolean) => void;
+  shouldClearPin?: boolean;
 }
 
 export function SearchResultCard({
@@ -21,6 +23,8 @@ export function SearchResultCard({
   searchQuery,
   sourceTemasideId,
   temasidePathById,
+  onPinChange,
+  shouldClearPin = false,
 }: SearchResultCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isAnyGroupOpen, setIsAnyGroupOpen] = useState(false);
@@ -44,6 +48,10 @@ export function SearchResultCard({
   const handleOpenChange = useCallback((isOpen: boolean) => {
     setIsAnyGroupOpen(isOpen);
   }, []);
+
+  const handlePinChange = useCallback((hasPinned: boolean) => {
+    onPinChange?.(result.id, hasPinned);
+  }, [onPinChange, result.id]);
 
   return (
     <div
@@ -117,6 +125,8 @@ export function SearchResultCard({
           searchQuery={searchQuery}
           cardRef={cardRef}
           onOpenChange={handleOpenChange}
+          onPinChange={handlePinChange}
+          shouldClearPin={shouldClearPin}
         />
       )}
     </div>
