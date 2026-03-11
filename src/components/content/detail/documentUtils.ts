@@ -1,5 +1,6 @@
 import type {
   ContentLink,
+  ContentDetail,
   NestedContent,
   NestedContentLink,
   RelatedContentLink,
@@ -28,10 +29,23 @@ interface AttachmentLike {
   href?: string
   url?: string
   fil?: string
+  fileUri?: string
   tittel?: string
   title?: string
+  fileName?: string
   type?: string
   contentType?: string
+  fileType?: string
+}
+
+interface DocumentSource {
+  data?: NestedContent['data']
+  document_url?: string | null
+  url?: string
+  links?: ContentLink[] | NestedContentLink[]
+  lenker?: NestedContentLink[]
+  attachments?: AttachmentLike[] | null
+  ehelsestandard_fields?: ContentDetail['ehelsestandard_fields']
 }
 
 function isLikelyPdfUrl(url: string) {
@@ -103,8 +117,39 @@ function getInternalContentPath(href: string, isDocument: boolean) {
   }
 }
 
-function resolveLabel(label: string | undefined, isPdf: boolean) {
-  if (label && label.trim().length > 0) return label.trim()
+function getFilenameFromHref(href?: string) {
+  if (!href) return null
+
+  try {
+    const parsed = new URL(href, 'https://www.helsedirektoratet.no')
+    const lastSegment = parsed.pathname.split('/').filter(Boolean).pop()
+    if (!lastSegment) return null
+    return decodeURIComponent(lastSegment)
+  } catch {
+    const [pathname] = href.split(/[?#]/)
+    const lastSegment = pathname.split('/').filter(Boolean).pop()
+    if (!lastSegment) return null
+    try {
+      return decodeURIComponent(lastSegment)
+    } catch {
+      return lastSegment
+    }
+  }
+}
+
+function resolveLabel(label: string | undefined, isPdf: boolean, href?: string) {
+  if (label && label.trim().length > 0) {
+    const trimmed = label.trim()
+    try {
+      return decodeURIComponent(trimmed)
+    } catch {
+      return trimmed
+    }
+  }
+  if (isPdf) {
+    const filename = getFilenameFromHref(href)
+    if (filename) return filename
+  }
   return isPdf ? 'Åpne PDF i ny fane' : 'Åpne dokument i ny fane'
 }
 
@@ -127,7 +172,7 @@ export function asDocumentLink(
 
   return {
     href: trimmedHref,
-    label: resolveLabel(label, pdfFromUrl || pdfFromMeta),
+    label: resolveLabel(label, pdfFromUrl || pdfFromMeta, trimmedHref),
     isPdf: pdfFromUrl || pdfFromMeta,
   } satisfies DocumentLink
 }
@@ -148,7 +193,7 @@ export function getRelatedLinks(source?: { related_links?: RelatedContentLink[] 
 
     result.push({
       href,
-      label: link.title?.trim() || (isPdf ? 'Åpne PDF i ny fane' : 'Åpne lenke'),
+      label: link.title?.trim() || (isPdf ? (getFilenameFromHref(href) || 'Åpne PDF i ny fane') : 'Åpne lenke'),
       isDocument,
       isPdf,
       fileType: link.file_type?.trim() || undefined,
@@ -174,16 +219,16 @@ function extractFromAttachments(attachments: AttachmentLike[] | null | undefined
   return (attachments ?? [])
     .map((attachment) =>
       asDocumentLink(
-        attachment.href || attachment.url || attachment.fil,
-        attachment.tittel || attachment.title,
+        attachment.href || attachment.url || attachment.fil || attachment.fileUri,
+        attachment.tittel || attachment.title || attachment.fileName,
         'vedlegg',
-        attachment.type || attachment.contentType,
+        attachment.type || attachment.contentType || attachment.fileType,
       ),
     )
     .filter((item): item is DocumentLink => Boolean(item))
 }
 
-export function getDocumentLinks(source?: NestedContent | null, fallbackLinks?: ContentLink[]) {
+export function getDocumentLinks(source?: DocumentSource | null, fallbackLinks?: ContentLink[]) {
   if (!source && (!fallbackLinks || fallbackLinks.length === 0)) return []
 
   const result: DocumentLink[] = []
@@ -207,6 +252,7 @@ export function getDocumentLinks(source?: NestedContent | null, fallbackLinks?: 
   extractFromLinks(source?.links).forEach(pushUnique)
   extractFromLinks(source?.lenker).forEach(pushUnique)
   extractFromAttachments(source?.attachments).forEach(pushUnique)
+  extractFromAttachments(source?.ehelsestandard_fields?.attachments).forEach(pushUnique)
   extractFromLinks(fallbackLinks).forEach(pushUnique)
 
   return result

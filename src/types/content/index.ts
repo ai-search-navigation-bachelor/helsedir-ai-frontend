@@ -49,6 +49,20 @@ export interface RelatedContentLink {
   target?: string | null
 }
 
+export interface EhelsestandardAttachment {
+  title: string
+  url: string
+  file_type?: string | null
+}
+
+export interface EhelsestandardFields {
+  standard_id?: string
+  standard_type?: string
+  purpose_html?: string
+  applies_to_html?: string
+  attachments?: EhelsestandardAttachment[] | null
+}
+
 /**
  * Content detail
  */
@@ -69,6 +83,7 @@ export interface ContentDetail {
   first_published?: string
   last_reviewed_date?: string
   url?: string
+  ehelsestandard_fields?: EhelsestandardFields | null
   anbefaling_fields?: {
     praktisk?: string
     rasjonale?: string

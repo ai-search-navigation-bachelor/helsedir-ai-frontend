@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { buildContentUrl } from '../../../lib/contentUrl'
 import {
   getDetailContentTypeLabel,
+  isEhelsestandardContentType,
   isRecommendationContentType,
   isTemasideContentType,
   normalizeContentType,
@@ -120,9 +121,12 @@ export function DetailContentDisplay({
   const location = useLocation()
   const mobileSectionsNavRef = useRef<HTMLDetailsElement>(null)
   const normalizedType = normalizeContentType(content.content_type)
+  const isEhelsestandard = isEhelsestandardContentType(normalizedType)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const backendDocumentUrl = content.document_url?.trim() || ''
   const isPdfOnlyContent = Boolean(content.is_pdf_only)
+  const ehelsestandardPurposeHtml = content.ehelsestandard_fields?.purpose_html || ''
+  const ehelsestandardAppliesToHtml = content.ehelsestandard_fields?.applies_to_html || ''
   const hasBodyContent = useMemo(
     () => !isPdfOnlyContent && hasVisibleContent(content.body),
     [content.body, isPdfOnlyContent],
@@ -139,7 +143,8 @@ export function DetailContentDisplay({
   const hasBackendRecommendationStrength = Boolean(content.anbefaling_fields?.styrke?.trim())
   const hasSufficientBackendRecommendationData =
     hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
-  const shouldSkipHelsedirEnrichment = isTemasideContentType(normalizedType)
+  const shouldSkipHelsedirEnrichment =
+    isTemasideContentType(normalizedType) || isEhelsestandardContentType(normalizedType)
   const shouldSkipPdfOnlyEnrichment = isPdfOnlyContent && Boolean(backendDocumentUrl)
   const shouldAttemptEnrichment =
     !shouldSkipPdfOnlyEnrichment &&
@@ -163,7 +168,7 @@ export function DetailContentDisplay({
       ? content.body
       : isPdfOnlyContent
         ? ''
-        : enrichedContent?.tekst || enrichedContent?.body || ''
+        : ehelsestandardPurposeHtml || enrichedContent?.tekst || enrichedContent?.body || ''
     const practical = hasVisibleContent(backendPractical)
       ? backendPractical
       : enrichedContent?.data?.praktisk || ''
@@ -177,7 +182,7 @@ export function DetailContentDisplay({
       ? backendPreferences
       : enrichedContent?.data?.nokkelInfo?.verdierogpreferanser || ''
 
-    return buildContentSections({
+    const result = buildContentSections({
       mainBody,
       practical,
       rationale,
@@ -185,14 +190,27 @@ export function DetailContentDisplay({
       preferences,
       primarySectionTitle,
     })
+
+    if (isEhelsestandard && hasVisibleContent(ehelsestandardAppliesToHtml)) {
+      result.push({
+        id: 'section-standarden-gjelder-for',
+        title: 'Standarden gjelder for',
+        html: ehelsestandardAppliesToHtml,
+      })
+    }
+
+    return result
   }, [
     backendPractical,
     backendPreferences,
     backendRationale,
     backendTradeoffs,
     content.body,
+    ehelsestandardAppliesToHtml,
+    ehelsestandardPurposeHtml,
     enrichedContent,
     hasBodyContent,
+    isEhelsestandard,
     isPdfOnlyContent,
     primarySectionTitle,
   ])
@@ -279,23 +297,27 @@ export function DetailContentDisplay({
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
   const documentLinks = useMemo(
     () => {
-      const links = getDocumentLinks(enrichedContent, content.links)
-      if (!backendDocumentUrl) return links
-      if (links.some((document) => document.href === backendDocumentUrl)) return links
+      const links = [...getDocumentLinks(content, content.links), ...getDocumentLinks(enrichedContent)]
+      const deduplicatedLinks = links.filter(
+        (document, index) => links.findIndex((candidate) => candidate.href === document.href) === index,
+      )
+      if (!backendDocumentUrl) return deduplicatedLinks
+      if (deduplicatedLinks.some((document) => document.href === backendDocumentUrl)) return deduplicatedLinks
 
       const backendDocumentLink = asDocumentLink(backendDocumentUrl, undefined, 'fil')
-      if (!backendDocumentLink) return links
+      if (!backendDocumentLink) return deduplicatedLinks
 
-      return [backendDocumentLink, ...links]
+      return [backendDocumentLink, ...deduplicatedLinks]
     },
-    [backendDocumentUrl, content.links, enrichedContent],
+    [backendDocumentUrl, content, enrichedContent],
   )
   const relatedLinks = useMemo(() => getRelatedLinks(content), [content])
   const publicationUrl = useMemo(() => {
+    if (isEhelsestandard) return null
     const url = content.url?.trim() || enrichedContent?.url?.trim()
     if (!url) return null
     return documentLinks.some((document) => document.href === url) ? null : url
-  }, [content.url, documentLinks, enrichedContent?.url])
+  }, [content.url, documentLinks, enrichedContent?.url, isEhelsestandard])
   const hasMainSections = sections.length > 0
   const hasOnlyHelsedirPdfDocuments =
     documentLinks.length > 0 &&
@@ -555,6 +577,31 @@ export function DetailContentDisplay({
               )}
             </article>
           ))}
+
+          {!showSidebarLayout && sections.length > 0 && visibleDocumentLinks.length > 0 && (
+            <section className="space-y-4">
+              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
+                Dokumenter
+              </Heading>
+              <ul className="m-0 list-none space-y-3 p-0">
+                {visibleDocumentLinks.map((document) => (
+                  <li key={`inline-document-${document.href}`}>
+                    <a
+                      href={document.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{document.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {document.isPdf ? 'PDF' : 'Dokument'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {relatedChildItems.length > 0 && (
             <section className="space-y-3">
