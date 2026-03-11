@@ -158,8 +158,12 @@ export function ChildGroupDropdown({
     if (pinnedChildGroupKey && pinnedChildGroupKey !== groupKey) {
       setPinnedChildGroupKey(null);
     }
-    // Reset placement flags so the dropdown renders in its default position before measuring.
-    resetFlipForGroup(groupKey);
+    // Only reset placement flags when first opening the dropdown, not when the mouse
+    // re-enters the wrapper while moving from the trigger button into the dropdown panel.
+    // Resetting on re-entry would clear the flipped state and cause the panel to jump.
+    if (hoveredChildGroupKey !== groupKey && pinnedChildGroupKey !== groupKey) {
+      resetFlipForGroup(groupKey);
+    }
     setHoveredChildGroupKey(groupKey);
   };
 
