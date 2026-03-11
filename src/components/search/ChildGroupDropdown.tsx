@@ -21,6 +21,8 @@ interface ChildGroupDropdownProps {
   searchQuery: string;
   cardRef: RefObject<HTMLDivElement | null>;
   onOpenChange: (isOpen: boolean) => void;
+  onPinChange?: (hasPinned: boolean) => void;
+  shouldClearPin?: boolean;
 }
 
 export function ChildGroupDropdown({
@@ -30,6 +32,8 @@ export function ChildGroupDropdown({
   searchQuery,
   cardRef,
   onOpenChange,
+  onPinChange,
+  shouldClearPin = false,
 }: ChildGroupDropdownProps) {
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownEls = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -45,6 +49,18 @@ export function ChildGroupDropdown({
   useEffect(() => {
     onOpenChange(isAnyGroupOpen);
   }, [isAnyGroupOpen, onOpenChange]);
+
+  // Notify parent when this card becomes active (any hover or pin) so other cards can clear their pins
+  useEffect(() => {
+    onPinChange?.(isAnyGroupOpen);
+  }, [isAnyGroupOpen, onPinChange]);
+
+  // Clear pin when another card has become the active pinned card
+  useEffect(() => {
+    if (shouldClearPin) {
+      setPinnedChildGroupKey(null);
+    }
+  }, [shouldClearPin]);
 
   // On desktop, correct dropdown placement if it overflows viewport bounds.
   // Runs in useLayoutEffect so the correction happens before browser paint.
