@@ -16,7 +16,9 @@ import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
 import { asDocumentLink, getDocumentLinks, getRelatedLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
+import { ExpandableSubcontent } from '../hierarchical/ExpandableSubcontent'
 import { hasVisibleContent } from '../shared/contentTextUtils'
+import { getContentIdFromHref, getUniqueChildLinks } from '../shared/linkUtils'
 import {
   buildContentSections,
   buildContextualNavigationLinks,
@@ -70,6 +72,43 @@ function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
 interface DetailContentDisplayProps extends ContentDisplayProps {
   typeLabelOverride?: string
   primarySectionTitle?: string
+}
+
+function isReferenceContentType(contentType?: string) {
+  return normalizeContentType(contentType).includes('referanse')
+}
+
+function ReferenceDropdown({
+  items,
+  className = '',
+}: {
+  items: Array<{ id: string; tittel?: string }>
+  className?: string
+}) {
+  if (items.length === 0) return null
+
+  return (
+    <details className={`group/dropdown rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm ${className}`.trim()}>
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open/dropdown:rounded-b-none">
+        <ChevronRightIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/dropdown:rotate-90 group-open/dropdown:text-[#025169]" />
+        <span className="text-[0.9375rem] font-medium text-slate-800 group-open/dropdown:text-[#025169]">
+          Referanser
+        </span>
+      </summary>
+      <div className="border-t border-slate-200 px-4 pb-5 pt-3">
+        <ul className="m-0 list-none space-y-2 p-0">
+          {items.map((item, index) => (
+            <li
+              key={`reference-${item.id || index}`}
+              className="rounded-md bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-700"
+            >
+              {item.tittel || 'Uten tittel'}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </details>
+  )
 }
 
 export function DetailContentDisplay({
@@ -209,6 +248,32 @@ export function DetailContentDisplay({
   const contextualNavigationLinks = useMemo(
     () => buildContextualNavigationLinks(content.id, supportingLinks),
     [content.id, supportingLinks],
+  )
+  const childContentItems = useMemo(
+    () =>
+      getUniqueChildLinks(content.links).map((link) => ({
+        id: link.id || getContentIdFromHref(link.href) || link.href || '',
+        path: link.path || undefined,
+        tittel: link.title || '',
+        type: link.type,
+        children: link.children
+          ?.filter((child) => Boolean(child.id || child.href))
+          .map((child) => ({
+            id: child.id || getContentIdFromHref(child.href) || child.href || '',
+            path: child.path || undefined,
+            tittel: child.title || '',
+            type: child.type,
+          })),
+      })),
+    [content.links],
+  )
+  const referenceItems = useMemo(
+    () => childContentItems.filter((item) => isReferenceContentType(item.type)),
+    [childContentItems],
+  )
+  const relatedChildItems = useMemo(
+    () => childContentItems.filter((item) => !isReferenceContentType(item.type)),
+    [childContentItems],
   )
 
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
@@ -449,7 +514,7 @@ export function DetailContentDisplay({
             </Alert>
           )}
 
-          {sections.map((section) => (
+          {sections.map((section, index) => (
             <article key={section.id} id={section.id} className="scroll-mt-20">
               {sections.length > 1 && (
                 <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
@@ -480,13 +545,36 @@ export function DetailContentDisplay({
                       </div>
                     </details>
                   ))}
+                  {index === 0 && <ReferenceDropdown items={referenceItems} />}
+                </div>
+              )}
+              {index === 0 && (!section.appendedDropdowns || section.appendedDropdowns.length === 0) && (
+                <div className="mt-6">
+                  <ReferenceDropdown items={referenceItems} />
                 </div>
               )}
             </article>
           ))}
 
+          {relatedChildItems.length > 0 && (
+            <section className="space-y-3">
+              <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
+                Relatert innhold
+              </Heading>
+              {relatedChildItems.map((item, index) => (
+                <ExpandableSubcontent
+                  key={`detail-child-${item.id || index}`}
+                  item={item}
+                  itemKey={`detail-child-${item.id || index}`}
+                />
+              ))}
+            </section>
+          )}
+
+          {sections.length === 0 && referenceItems.length > 0 && <ReferenceDropdown items={referenceItems} />}
+
           {sections.length === 0 && hasRelatedLinks && (
-            <section className="space-y-4">
+            <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
                 Denne siden har ikke egen tekst. Se relaterte rapporter og dokumenter fra Helsedirektoratet.
               </Paragraph>
@@ -578,7 +666,7 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length === 0 && !primaryDocument && !shouldShowPublicationLink && (
+          {sections.length === 0 && childContentItems.length === 0 && !primaryDocument && !shouldShowPublicationLink && (
             <Paragraph style={{ marginTop: 0, color: '#64748b' }}>
               Ingen innholdsseksjoner tilgjengelig for denne siden.
             </Paragraph>

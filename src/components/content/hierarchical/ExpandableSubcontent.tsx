@@ -26,6 +26,31 @@ function isPicoNode(node: NestedContent) {
   return getNodeType(node).includes('pico')
 }
 
+function ReferenceDropdown({ items }: { items: NestedContent[] }) {
+  if (items.length === 0) return null
+
+  return (
+    <details className="group/sub border-t border-slate-200">
+      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
+        Referanser
+      </summary>
+      <div className="pb-4 pl-6">
+        <ul className="m-0 list-none space-y-2 p-0">
+          {items.map((child, index) => (
+            <li
+              key={`reference-${child.id || index}`}
+              className="rounded-md bg-slate-50 px-3 py-2 text-[0.9375rem] leading-6 text-slate-700"
+            >
+              {getNodeTitle(child)}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </details>
+  )
+}
+
 interface SubSectionProps {
   label: string
   html: string
@@ -142,6 +167,7 @@ export function ExpandableSubcontent({
   const preferences = resolved.data?.nokkelInfo?.verdierogpreferanser || ''
   const hasStandalonePage = Boolean(item.id) && !isReferenceNode(item) && !isPicoNode(item)
   const children = resolved.children ?? []
+  const referenceChildren = children.filter((child) => isReferenceNode(child))
   const nestedChildren = children.filter((child) => !isReferenceNode(child) && !isPicoNode(child))
 
   return (
@@ -227,6 +253,7 @@ export function ExpandableSubcontent({
         {(rationale || tradeoffs || preferences) && (
           <BegrunnelseSubSection html={rationale} tradeoffs={tradeoffs} preferences={preferences} />
         )}
+        <ReferenceDropdown items={referenceChildren} />
 
         {depth < MAX_SUBCONTENT_DEPTH && nestedChildren.length > 0 && (
           <div className="mt-3 space-y-3">
