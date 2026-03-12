@@ -1,24 +1,38 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { AppLayout } from './components/layout'
-import { Home, ContentDetail, SearchPage, TemasideHubPage, TemasideLeafPage, NotFound, DevPage } from './pages'
-import { TEMASIDE_CATEGORIES } from './constants/temasider'
-import { CONTENT_CATEGORY_GROUPS, CONTENT_ONLY_PREFIXES } from './constants/contentRoutes'
+import { Routes, Route, Navigate } from "react-router-dom";
+import { AppLayout } from "./components/layout";
+import {
+  Home,
+  ContentDetail,
+  SearchPage,
+  TemasideHubPage,
+  TemasideLeafPage,
+  NotFound,
+  DevPage,
+} from "./pages";
+import { TEMASIDE_CATEGORIES } from "./constants/temasider";
+import {
+  CONTENT_CATEGORY_GROUPS,
+  CONTENT_ONLY_PREFIXES,
+} from "./constants/contentRoutes";
 
 function App() {
-  const showDevRoute = import.meta.env.DEV
+  const showDevRoute = import.meta.env.DEV;
 
   return (
     <Routes>
       <Route path="/" element={<AppLayout />}>
         <Route index element={<Home />} />
         <Route path="search" element={<SearchPage />} />
-        {showDevRoute && <Route path="dev" element={<DevPage />} />}
+        <Route path="dev" element={<DevPage />} />
 
         {/* Path-based content routes (e.g. /retningslinjer/adhd) */}
         {CONTENT_CATEGORY_GROUPS.map((group) => (
           <Route key={group.pathPrefix} path={group.pathPrefix}>
             <Route index element={<Navigate to="/" replace />} />
-            <Route path="*" element={<ContentDetail pathPrefix={group.pathPrefix} />} />
+            <Route
+              path="*"
+              element={<ContentDetail pathPrefix={group.pathPrefix} />}
+            />
           </Route>
         ))}
 
@@ -42,7 +56,11 @@ function App() {
 
         {/* Content-only routes (no landing page, just content detail) */}
         {CONTENT_ONLY_PREFIXES.map((prefix) => (
-          <Route key={prefix} path={`${prefix}/*`} element={<ContentDetail pathPrefix={prefix} />} />
+          <Route
+            key={prefix}
+            path={`${prefix}/*`}
+            element={<ContentDetail pathPrefix={prefix} />}
+          />
         ))}
 
         {/* Legacy ID-based content route (fallback) */}
@@ -52,7 +70,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;
