@@ -121,7 +121,6 @@ export function DetailContentDisplay({
   const location = useLocation()
   const mobileSectionsNavRef = useRef<HTMLDetailsElement>(null)
   const normalizedType = normalizeContentType(content.content_type)
-  const isEhelsestandard = isEhelsestandardContentType(normalizedType)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const backendDocumentUrl = content.document_url?.trim() || ''
   const isPdfOnlyContent = Boolean(content.is_pdf_only)
@@ -191,7 +190,7 @@ export function DetailContentDisplay({
       primarySectionTitle,
     })
 
-    if (isEhelsestandard && hasVisibleContent(ehelsestandardAppliesToHtml)) {
+    if (isEhelsestandardContentType(normalizedType) && hasVisibleContent(ehelsestandardAppliesToHtml)) {
       result.push({
         id: 'section-standarden-gjelder-for',
         title: 'Standarden gjelder for',
@@ -210,8 +209,8 @@ export function DetailContentDisplay({
     ehelsestandardPurposeHtml,
     enrichedContent,
     hasBodyContent,
-    isEhelsestandard,
     isPdfOnlyContent,
+    normalizedType,
     primarySectionTitle,
   ])
 
@@ -313,11 +312,11 @@ export function DetailContentDisplay({
   )
   const relatedLinks = useMemo(() => getRelatedLinks(content), [content])
   const publicationUrl = useMemo(() => {
-    if (isEhelsestandard) return null
+    if (isEhelsestandardContentType(normalizedType)) return null
     const url = content.url?.trim() || enrichedContent?.url?.trim()
     if (!url) return null
     return documentLinks.some((document) => document.href === url) ? null : url
-  }, [content.url, documentLinks, enrichedContent?.url, isEhelsestandard])
+  }, [content.url, documentLinks, enrichedContent?.url, normalizedType])
   const hasMainSections = sections.length > 0
   const hasOnlyHelsedirPdfDocuments =
     documentLinks.length > 0 &&
