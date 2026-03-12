@@ -11,7 +11,8 @@ interface UseHierarchicalChaptersOptions {
 function contentLinkToStub(link: ContentLink): NestedContent {
   return {
     id: link.id || link.href || '',
-    tittel: link.tittel,
+    tittel: link.title,
+    title: link.title,
     type: link.type,
     children: link.children
       ?.filter((c) => Boolean(c.id || c.href))

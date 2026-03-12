@@ -21,6 +21,8 @@ interface ChildGroupDropdownProps {
   searchQuery: string;
   cardRef: RefObject<HTMLDivElement | null>;
   onOpenChange: (isOpen: boolean) => void;
+  onPinChange?: (hasPinned: boolean) => void;
+  shouldClearPin?: boolean;
 }
 
 export function ChildGroupDropdown({
@@ -30,26 +32,42 @@ export function ChildGroupDropdown({
   searchQuery,
   cardRef,
   onOpenChange,
+  onPinChange,
+  shouldClearPin = false,
 }: ChildGroupDropdownProps) {
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownEls = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  const [pinnedChildGroupKey, setPinnedChildGroupKey] = useState<string | null>(null);
+  const [pinnedChildGroupKey, setInternalPinnedKey] = useState<string | null>(null);
   const [hoveredChildGroupKey, setHoveredChildGroupKey] = useState<string | null>(null);
   const [flippedVerticalGroups, setFlippedVerticalGroups] = useState<Set<string>>(new Set());
   const [flippedHorizontalGroups, setFlippedHorizontalGroups] = useState<Set<string>>(new Set());
 
-  const isAnyGroupOpen = pinnedChildGroupKey !== null || hoveredChildGroupKey !== null;
+  // Derive effective pinned key — treat as unpinned when the parent signals another card is active
+  const effectivePinnedChildGroupKey = shouldClearPin ? null : pinnedChildGroupKey;
+
+  const isAnyGroupOpen = effectivePinnedChildGroupKey !== null || hoveredChildGroupKey !== null;
 
   // Notify parent whenever open state changes
   useEffect(() => {
     onOpenChange(isAnyGroupOpen);
   }, [isAnyGroupOpen, onOpenChange]);
 
+  // Notify parent when this card becomes active (any hover or pin) so other cards can clear their pins.
+  // Skip the initial mount so we don't fire with isAnyGroupOpen=false on first render.
+  const didMount = useRef(false);
+  useEffect(() => {
+    if (!didMount.current) {
+      didMount.current = true;
+      return;
+    }
+    onPinChange?.(isAnyGroupOpen);
+  }, [isAnyGroupOpen, onPinChange]);
+
   // On desktop, correct dropdown placement if it overflows viewport bounds.
   // Runs in useLayoutEffect so the correction happens before browser paint.
   useLayoutEffect(() => {
-    const activeKey = pinnedChildGroupKey ?? hoveredChildGroupKey;
+    const activeKey = effectivePinnedChildGroupKey ?? hoveredChildGroupKey;
     if (!activeKey) return;
     if (window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
 
@@ -70,7 +88,7 @@ export function ChildGroupDropdown({
       );
     }
   }, [
-    pinnedChildGroupKey,
+    effectivePinnedChildGroupKey,
     hoveredChildGroupKey,
   ]);
 
@@ -83,20 +101,20 @@ export function ChildGroupDropdown({
 
   // Close pinned dropdown when clicking outside the card
   useEffect(() => {
-    if (!pinnedChildGroupKey) return;
+    if (!effectivePinnedChildGroupKey) return;
 
     const handleOutsidePointerDown = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target) return;
       if (cardRef.current?.contains(target)) return;
-      setPinnedChildGroupKey(null);
+      setInternalPinnedKey(null);
     };
 
     document.addEventListener("pointerdown", handleOutsidePointerDown, true);
     return () => {
       document.removeEventListener("pointerdown", handleOutsidePointerDown, true);
     };
-  }, [pinnedChildGroupKey, cardRef]);
+  }, [effectivePinnedChildGroupKey, cardRef]);
 
   // On mobile, close floating overlays when the user scrolls the page/content.
   useEffect(() => {
@@ -104,7 +122,7 @@ export function ChildGroupDropdown({
     if (!window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
 
     const handleScroll = (event: Event) => {
-      const activeKey = pinnedChildGroupKey ?? hoveredChildGroupKey;
+      const activeKey = effectivePinnedChildGroupKey ?? hoveredChildGroupKey;
       const activeDropdownEl = activeKey ? dropdownEls.current.get(activeKey) : null;
       const target = event.target;
 
@@ -116,7 +134,7 @@ export function ChildGroupDropdown({
         return;
       }
 
-      setPinnedChildGroupKey(null);
+      setInternalPinnedKey(null);
       setHoveredChildGroupKey(null);
     };
 
@@ -124,7 +142,7 @@ export function ChildGroupDropdown({
     return () => {
       window.removeEventListener("scroll", handleScroll, true);
     };
-  }, [isAnyGroupOpen, pinnedChildGroupKey, hoveredChildGroupKey]);
+  }, [isAnyGroupOpen, effectivePinnedChildGroupKey, hoveredChildGroupKey]);
 
   const resetFlipForGroup = (groupKey: string) => {
     setFlippedVerticalGroups((prev) => {
@@ -146,7 +164,7 @@ export function ChildGroupDropdown({
     event: MouseEvent<HTMLButtonElement>,
   ) => {
     event.stopPropagation();
-    setPinnedChildGroupKey((prev) => (prev === groupKey ? null : groupKey));
+    setInternalPinnedKey((prev) => (prev === groupKey ? null : groupKey));
     resetFlipForGroup(groupKey);
   };
 
@@ -155,11 +173,15 @@ export function ChildGroupDropdown({
       clearTimeout(leaveTimerRef.current);
       leaveTimerRef.current = null;
     }
-    if (pinnedChildGroupKey && pinnedChildGroupKey !== groupKey) {
-      setPinnedChildGroupKey(null);
+    if (effectivePinnedChildGroupKey && effectivePinnedChildGroupKey !== groupKey) {
+      setInternalPinnedKey(null);
     }
-    // Reset placement flags so the dropdown renders in its default position before measuring.
-    resetFlipForGroup(groupKey);
+    // Only reset placement flags when first opening the dropdown, not when the mouse
+    // re-enters the wrapper while moving from the trigger button into the dropdown panel.
+    // Resetting on re-entry would clear the flipped state and cause the panel to jump.
+    if (hoveredChildGroupKey !== groupKey && effectivePinnedChildGroupKey !== groupKey) {
+      resetFlipForGroup(groupKey);
+    }
     setHoveredChildGroupKey(groupKey);
   };
 
@@ -177,9 +199,9 @@ export function ChildGroupDropdown({
       {childGroups.map((group) => {
         const items = Array.isArray(group.items) ? group.items : [];
         const groupKey = `${resultId}-${group.info_type}`;
-        const isPinnedOpen = pinnedChildGroupKey === groupKey;
+        const isPinnedOpen = effectivePinnedChildGroupKey === groupKey;
         const isHoverOpen =
-          pinnedChildGroupKey === null && hoveredChildGroupKey === groupKey;
+          effectivePinnedChildGroupKey === null && hoveredChildGroupKey === groupKey;
         const isOpen = isPinnedOpen || isHoverOpen;
         const isFlippedVertical = flippedVerticalGroups.has(groupKey);
         const isFlippedHorizontal = flippedHorizontalGroups.has(groupKey);
@@ -242,6 +264,7 @@ export function ChildGroupDropdown({
                             searchCategoryId: group.info_type,
                             searchCategoryName: group.display_name,
                             contentType: item.info_type,
+                            skipHelsedirFallback: Boolean(item.is_pdf_only && item.document_url?.trim()),
                           }}
                           className="group/item flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] last:border-b-0"
                         >

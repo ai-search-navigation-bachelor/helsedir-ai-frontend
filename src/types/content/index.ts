@@ -9,11 +9,12 @@
 export interface ContentLink {
   rel: string
   type: string
-  tittel: string
+  title: string
   href: string | null
   id?: string | null
   path?: string | null
   strukturId?: string
+  last_reviewed_date?: string | null
   children?: ContentLink[] | null
 }
 
@@ -36,6 +37,15 @@ export interface LinkedContentGroup {
   items: LinkedContentItem[]
 }
 
+export interface RelatedContentLink {
+  title: string
+  url: string
+  is_document?: boolean
+  file_type?: string | null
+  url_type?: string | null
+  target?: string | null
+}
+
 /**
  * Content detail
  */
@@ -45,13 +55,16 @@ export interface ContentDetail {
   body: string
   content_type: string
   path?: string
-  target_groups?: string[]
+  has_text_content?: boolean
+  document_url?: string | null
+  is_pdf_only?: boolean
+  related_links?: RelatedContentLink[] | null
+  role_tags?: string[]
   links?: ContentLink[]
   linked_content?: LinkedContentGroup[]
   status?: string
-  forstPublisert?: string
-  sistOppdatert?: string
-  sistFagligOppdatert?: string
+  first_published?: string
+  last_reviewed_date?: string
   url?: string
   anbefaling_fields?: {
     praktisk?: string
@@ -71,6 +84,7 @@ export interface ContentDetail {
 export interface NestedContentLink {
   rel: string
   type?: string
+  title?: string
   tittel?: string
   href?: string
 }
@@ -89,6 +103,10 @@ export interface NestedContent {
   body?: string
   intro?: string
   kortIntro?: string
+  has_text_content?: boolean
+  document_url?: string | null
+  is_pdf_only?: boolean
+  related_links?: RelatedContentLink[] | null
   status?: string
   forstPublisert?: string
   sistOppdatert?: string

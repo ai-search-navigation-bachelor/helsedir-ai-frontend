@@ -10,6 +10,7 @@ import {
 import { buildTabs } from '../lib/search/searchPageModel'
 import { useSearchInfiniteQuery, prefetchCategorySearch } from './queries/useSearchInfiniteQuery'
 import { useSearchStore } from '../stores/searchStore'
+import { useRoleStore } from '../stores/roleStore'
 import { search } from '../api'
 
 type ActiveTab = SearchMainCategoryId | 'all'
@@ -85,6 +86,8 @@ export function useSearchPageModel() {
   const searchQueryFromStore = useSearchStore((state) => state.searchQuery)
   const setSearchData = useSearchStore((state) => state.setSearchData)
 
+  const role = useRoleStore((state) => state.role) ?? undefined
+
   const apiCategory = useMemo(() => toApiCategory(activeTab), [activeTab])
 
   const queryClient = useQueryClient()
@@ -125,6 +128,7 @@ export function useSearchPageModel() {
     enabled: hasQuery && !categoryKnownEmpty,
     category: apiCategory,
     search_id: effectiveSearchId,
+    role,
   })
 
   const pages = data?.pages
@@ -138,14 +142,15 @@ export function useSearchPageModel() {
   }, [pages, trimmedQuery, setSearchData])
 
   // Prefetch first page of each category that has results
-  const prefetchedForSearchId = useRef<string | null>(null)
+  const prefetchedForKey = useRef<string | null>(null)
 
   useEffect(() => {
     const fp = pages?.[0]
     if (!fp?.search_id || !fp.category_counts) return
-    if (fp.search_id === prefetchedForSearchId.current) return
+    const cacheKey = `${fp.search_id}:${role ?? ''}`
+    if (cacheKey === prefetchedForKey.current) return
 
-    prefetchedForSearchId.current = fp.search_id
+    prefetchedForKey.current = cacheKey
     const { search_id, category_counts } = fp
 
     SEARCH_MAIN_CATEGORIES.forEach((mainCategory) => {
@@ -159,9 +164,10 @@ export function useSearchPageModel() {
         searchQuery,
         mainCategory.subcategoryIds.join(','),
         search_id,
+        role,
       )
     })
-  }, [pages, queryClient, searchQuery])
+  }, [pages, queryClient, searchQuery, role])
 
   // Flatten all pages into a single results array with category metadata
   const allResults = useMemo(() => {
@@ -243,6 +249,7 @@ export function useSearchPageModel() {
           search_id: effectiveSearchId,
           log: true,
           limit: 1,
+          role,
         }).catch(() => {})
       }
     }

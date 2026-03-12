@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
@@ -10,11 +10,12 @@ import {
   isTemasideContentType,
   normalizeContentType,
 } from '../../../constants/content'
+import { formatDateLabel } from '../../../lib/content/date'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
-import { getDocumentLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
+import { asDocumentLink, getDocumentLinks, getRelatedLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
 import { hasVisibleContent } from '../shared/contentTextUtils'
 import {
   buildContentSections,
@@ -81,7 +82,12 @@ export function DetailContentDisplay({
   const mobileSectionsNavRef = useRef<HTMLDetailsElement>(null)
   const normalizedType = normalizeContentType(content.content_type)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
-  const hasBodyContent = useMemo(() => hasVisibleContent(content.body), [content.body])
+  const backendDocumentUrl = content.document_url?.trim() || ''
+  const isPdfOnlyContent = Boolean(content.is_pdf_only)
+  const hasBodyContent = useMemo(
+    () => !isPdfOnlyContent && hasVisibleContent(content.body),
+    [content.body, isPdfOnlyContent],
+  )
   const backendPractical = content.anbefaling_fields?.praktisk || ''
   const backendRationale = content.anbefaling_fields?.rasjonale || ''
   const backendTradeoffs = content.anbefaling_fields?.fordeler_ulemper || ''
@@ -95,7 +101,9 @@ export function DetailContentDisplay({
   const hasSufficientBackendRecommendationData =
     hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
   const shouldSkipHelsedirEnrichment = isTemasideContentType(normalizedType)
+  const shouldSkipPdfOnlyEnrichment = isPdfOnlyContent && Boolean(backendDocumentUrl)
   const shouldAttemptEnrichment =
+    !shouldSkipPdfOnlyEnrichment &&
     !shouldSkipHelsedirEnrichment &&
     (isRecommendationContentType(normalizedType)
       ? !hasSufficientBackendRecommendationData
@@ -112,7 +120,11 @@ export function DetailContentDisplay({
   })
 
   const sections = useMemo<ContentSection[]>(() => {
-    const mainBody = hasBodyContent ? content.body : enrichedContent?.tekst || enrichedContent?.body || ''
+    const mainBody = hasBodyContent
+      ? content.body
+      : isPdfOnlyContent
+        ? ''
+        : enrichedContent?.tekst || enrichedContent?.body || ''
     const practical = hasVisibleContent(backendPractical)
       ? backendPractical
       : enrichedContent?.data?.praktisk || ''
@@ -142,6 +154,7 @@ export function DetailContentDisplay({
     content.body,
     enrichedContent,
     hasBodyContent,
+    isPdfOnlyContent,
     primarySectionTitle,
   ])
 
@@ -200,9 +213,19 @@ export function DetailContentDisplay({
 
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
   const documentLinks = useMemo(
-    () => getDocumentLinks(enrichedContent, content.links),
-    [content.links, enrichedContent],
+    () => {
+      const links = getDocumentLinks(enrichedContent, content.links)
+      if (!backendDocumentUrl) return links
+      if (links.some((document) => document.href === backendDocumentUrl)) return links
+
+      const backendDocumentLink = asDocumentLink(backendDocumentUrl, undefined, 'fil')
+      if (!backendDocumentLink) return links
+
+      return [backendDocumentLink, ...links]
+    },
+    [backendDocumentUrl, content.links, enrichedContent],
   )
+  const relatedLinks = useMemo(() => getRelatedLinks(content), [content])
   const publicationUrl = useMemo(() => {
     const url = content.url?.trim() || enrichedContent?.url?.trim()
     if (!url) return null
@@ -213,12 +236,55 @@ export function DetailContentDisplay({
     documentLinks.length > 0 &&
     documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
   const shouldShowPublicationLink =
-    Boolean(publicationUrl) && !hasMainSections && hasOnlyHelsedirPdfDocuments
+    Boolean(publicationUrl) &&
+    !hasMainSections &&
+    (hasOnlyHelsedirPdfDocuments || documentLinks.length === 0)
   const visibleDocumentLinks = useMemo(() => {
     if (!shouldShowPublicationLink) return documentLinks
     return documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
   }, [documentLinks, shouldShowPublicationLink])
-  const primaryDocument = visibleDocumentLinks[0]
+  const publicationFallbackDocument =
+    shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length === 0
+      ? { href: publicationUrl, label: 'Åpne side hos Helsedirektoratet', isPdf: false }
+      : null
+  const primaryDocument = visibleDocumentLinks[0] || publicationFallbackDocument
+  const isPrimaryPdfAction = Boolean(isPdfOnlyContent && primaryDocument?.isPdf)
+  const primaryDocumentLabel =
+    isPrimaryPdfAction ? 'Åpne PDF i ny fane' : primaryDocument?.label
+  const emptyStateMessage = isPrimaryPdfAction
+    ? 'Denne siden har ikke egen tekst. PDF-en åpnes i ny fane.'
+    : 'Denne siden har ikke egen tekst. Se innholdet hos Helsedirektoratet.'
+  const hasRelatedLinks = relatedLinks.length > 0
+  const fallbackLinks = !hasRelatedLinks && !isPrimaryPdfAction && primaryDocument
+    ? [{
+        href: primaryDocument.href,
+        label: primaryDocumentLabel || primaryDocument.label,
+        isPdf: Boolean(primaryDocument.isPdf),
+        isDocument: true,
+        fileType: primaryDocument.isPdf ? 'PDF' : undefined,
+        openInNewTab: true,
+      }]
+    : []
+
+  const handleRelatedLinkClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    internalPath?: string,
+  ) => {
+    if (!internalPath) return
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.shiftKey ||
+      event.defaultPrevented
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    navigate(internalPath)
+  }
 
   const hasSidebarContent =
     sections.length > 1 ||
@@ -270,7 +336,7 @@ export function DetailContentDisplay({
               <ul className="m-0 list-none space-y-1.5 p-0">
                 {contextualNavigationLinks.map((link) => {
                   const label =
-                    link.tittel ||
+                    link.title ||
                     LINK_LABEL_BY_REL[link.rel] ||
                     `${link.rel.charAt(0).toUpperCase()}${link.rel.slice(1)}`
                   return (
@@ -375,7 +441,7 @@ export function DetailContentDisplay({
             </details>
           )}
 
-          {enrichedError && (
+          {enrichedError && !isPdfOnlyContent && (
             <Alert data-color="warning">
               <Paragraph style={{ marginTop: 0, marginBottom: 0 }}>
                 Kunne ikke hente utvidede innholdsdetaljer fra Helsedirektoratet API akkurat nå.
@@ -419,10 +485,69 @@ export function DetailContentDisplay({
             </article>
           ))}
 
-          {sections.length === 0 && (primaryDocument || shouldShowPublicationLink) && (
-            <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+          {sections.length === 0 && hasRelatedLinks && (
+            <section className="space-y-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
-                Denne siden har ikke egen tekst. Dokumentet åpnes i ny fane.
+                Denne siden har ikke egen tekst. Se relaterte rapporter og dokumenter fra Helsedirektoratet.
+              </Paragraph>
+              <ul className="m-0 list-none space-y-3 p-0">
+                {relatedLinks.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.internalPath || link.href}
+                      target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
+                      rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
+                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{link.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {link.isPdf
+                          ? 'PDF'
+                          : link.isDocument
+                            ? (link.fileType || 'Dokument')
+                            : 'Rapport eller side'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {sections.length === 0 && fallbackLinks.length > 0 && (
+            <section className="space-y-4">
+              <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
+                {emptyStateMessage}
+              </Paragraph>
+              <ul className="m-0 list-none space-y-3 p-0">
+                {fallbackLinks.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      target={link.openInNewTab ? '_blank' : undefined}
+                      rel={link.openInNewTab ? 'noopener noreferrer' : undefined}
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{link.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {link.isPdf
+                          ? 'PDF'
+                          : link.isDocument
+                            ? (link.fileType || 'Dokument')
+                            : 'Rapport eller side'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {sections.length === 0 && isPrimaryPdfAction && primaryDocument && (
+            <section className="space-y-4">
+              <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
+                {emptyStateMessage}
               </Paragraph>
               <ul className="m-0 list-none space-y-2 p-0">
                 {primaryDocument && (
@@ -431,13 +556,13 @@ export function DetailContentDisplay({
                       href={primaryDocument.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
+                      className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-brand/90"
                     >
-                      {primaryDocument.label}
+                      {primaryDocumentLabel}
                     </a>
                   </li>
                 )}
-                {shouldShowPublicationLink && publicationUrl && (
+                {shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length > 0 && (
                   <li>
                     <a
                       href={publicationUrl}
@@ -458,10 +583,20 @@ export function DetailContentDisplay({
               Ingen innholdsseksjoner tilgjengelig for denne siden.
             </Paragraph>
           )}
+
+          {(() => {
+            const fagligOppdatert = formatDateLabel(content.last_reviewed_date || enrichedContent?.sistFagligOppdatert)
+            if (!fagligOppdatert) return null
+            return (
+              <section className="mt-8">
+                <Paragraph data-size="xs" className="m-0 text-xs text-slate-500">
+                  <span className="font-medium text-slate-600">Siste faglige endring:</span> {fagligOppdatert}
+                </Paragraph>
+              </section>
+            )
+          })()}
         </section>
       </div>
     </div>
   )
 }
-
-
