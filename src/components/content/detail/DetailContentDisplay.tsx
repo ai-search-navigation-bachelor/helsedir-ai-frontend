@@ -16,7 +16,7 @@ import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedConte
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
-import { asDocumentLink, getDocumentLinks, getRelatedLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
+import { asDocumentLink, getDocumentLinks, getRelatedLinks } from './documentUtils'
 import { ExpandableSubcontent } from '../hierarchical/ExpandableSubcontent'
 import { hasVisibleContent } from '../shared/contentTextUtils'
 import { getContentIdFromHref, getUniqueChildLinks } from '../shared/linkUtils'
@@ -124,11 +124,15 @@ export function DetailContentDisplay({
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const backendDocumentUrl = content.document_url?.trim() || ''
   const isPdfOnlyContent = Boolean(content.is_pdf_only)
-  const ehelsestandardPurposeHtml = content.ehelsestandard_fields?.purpose_html || ''
-  const ehelsestandardAppliesToHtml = content.ehelsestandard_fields?.applies_to_html || ''
   const hasBodyContent = useMemo(
-    () => !isPdfOnlyContent && hasVisibleContent(content.body),
-    [content.body, isPdfOnlyContent],
+    () => {
+      if (isPdfOnlyContent) return false
+      if (typeof content.has_text_content === 'boolean') {
+        return content.has_text_content && hasVisibleContent(content.body)
+      }
+      return hasVisibleContent(content.body)
+    },
+    [content.body, content.has_text_content, isPdfOnlyContent],
   )
   const backendPractical = content.anbefaling_fields?.praktisk || ''
   const backendRationale = content.anbefaling_fields?.rasjonale || ''
@@ -167,7 +171,7 @@ export function DetailContentDisplay({
       ? content.body
       : isPdfOnlyContent
         ? ''
-        : ehelsestandardPurposeHtml || enrichedContent?.tekst || enrichedContent?.body || ''
+        : enrichedContent?.tekst || enrichedContent?.body || ''
     const practical = hasVisibleContent(backendPractical)
       ? backendPractical
       : enrichedContent?.data?.praktisk || ''
@@ -190,14 +194,6 @@ export function DetailContentDisplay({
       primarySectionTitle,
     })
 
-    if (isEhelsestandardContentType(normalizedType) && hasVisibleContent(ehelsestandardAppliesToHtml)) {
-      result.push({
-        id: 'section-standarden-gjelder-for',
-        title: 'Standarden gjelder for',
-        html: ehelsestandardAppliesToHtml,
-      })
-    }
-
     return result
   }, [
     backendPractical,
@@ -205,8 +201,6 @@ export function DetailContentDisplay({
     backendRationale,
     backendTradeoffs,
     content.body,
-    ehelsestandardAppliesToHtml,
-    ehelsestandardPurposeHtml,
     enrichedContent,
     hasBodyContent,
     isPdfOnlyContent,
@@ -312,45 +306,23 @@ export function DetailContentDisplay({
   )
   const relatedLinks = useMemo(() => getRelatedLinks(content), [content])
   const publicationUrl = useMemo(() => {
-    if (isEhelsestandardContentType(normalizedType)) return null
     const url = content.url?.trim() || enrichedContent?.url?.trim()
     if (!url) return null
     return documentLinks.some((document) => document.href === url) ? null : url
-  }, [content.url, documentLinks, enrichedContent?.url, normalizedType])
-  const hasMainSections = sections.length > 0
-  const hasOnlyHelsedirPdfDocuments =
-    documentLinks.length > 0 &&
-    documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
-  const shouldShowPublicationLink =
+  }, [content.url, documentLinks, enrichedContent?.url])
+  const shouldShowPublicationFallback =
     Boolean(publicationUrl) &&
-    !hasMainSections &&
-    (hasOnlyHelsedirPdfDocuments || documentLinks.length === 0)
-  const visibleDocumentLinks = useMemo(() => {
-    if (!shouldShowPublicationLink) return documentLinks
-    return documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
-  }, [documentLinks, shouldShowPublicationLink])
-  const publicationFallbackDocument =
-    shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length === 0
-      ? { href: publicationUrl, label: 'Åpne side hos Helsedirektoratet', isPdf: false }
-      : null
-  const primaryDocument = visibleDocumentLinks[0] || publicationFallbackDocument
-  const isPrimaryPdfAction = Boolean(isPdfOnlyContent && primaryDocument?.isPdf)
-  const primaryDocumentLabel =
-    isPrimaryPdfAction ? 'Åpne PDF i ny fane' : primaryDocument?.label
-  const emptyStateMessage = isPrimaryPdfAction
-    ? 'Denne siden har ikke egen tekst. PDF-en åpnes i ny fane.'
-    : 'Denne siden har ikke egen tekst. Se innholdet hos Helsedirektoratet.'
+    sections.length === 0 &&
+    relatedChildItems.length === 0 &&
+    relatedLinks.length === 0 &&
+    documentLinks.length === 0
+  const visibleDocumentLinks = documentLinks
   const hasRelatedLinks = relatedLinks.length > 0
-  const fallbackLinks = !hasRelatedLinks && !isPrimaryPdfAction && primaryDocument
-    ? [{
-        href: primaryDocument.href,
-        label: primaryDocumentLabel || primaryDocument.label,
-        isPdf: Boolean(primaryDocument.isPdf),
-        isDocument: true,
-        fileType: primaryDocument.isPdf ? 'PDF' : undefined,
-        openInNewTab: true,
-      }]
-    : []
+  const hasAnyActionLinks =
+    visibleDocumentLinks.length > 0 ||
+    shouldShowPublicationFallback ||
+    hasRelatedLinks
+  const resourceSectionTitle = visibleDocumentLinks.length > 0 ? 'Dokumenter' : 'Lenker'
 
   const handleRelatedLinkClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -453,10 +425,10 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length > 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
+          {sections.length > 0 && visibleDocumentLinks.length > 0 && (
             <section className="border-t border-slate-100 pl-7 pt-4">
               <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Dokument
+                {resourceSectionTitle}
               </p>
               <ul className="m-0 list-none space-y-1.5 p-0">
                 {visibleDocumentLinks.map((document) => (
@@ -471,18 +443,6 @@ export function DetailContentDisplay({
                     </a>
                   </li>
                 ))}
-                {shouldShowPublicationLink && publicationUrl && (
-                  <li key={`document-page-${publicationUrl}`}>
-                    <a
-                      href={publicationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-slate-500 hover:text-[#025169] hover:underline"
-                    >
-                      Åpne side hos Helsedirektoratet
-                    </a>
-                  </li>
-                )}
               </ul>
             </section>
           )}
@@ -580,7 +540,7 @@ export function DetailContentDisplay({
           {!showSidebarLayout && sections.length > 0 && visibleDocumentLinks.length > 0 && (
             <section className="space-y-4">
               <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
-                Dokumenter
+                {resourceSectionTitle}
               </Heading>
               <ul className="m-0 list-none space-y-3 p-0">
                 {visibleDocumentLinks.map((document) => (
@@ -598,6 +558,19 @@ export function DetailContentDisplay({
                     </a>
                   </li>
                 ))}
+                {shouldShowPublicationFallback && publicationUrl && (
+                  <li key={`inline-document-page-${publicationUrl}`}>
+                    <a
+                      href={publicationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">Åpne hos Helsedirektoratet</span>
+                      <span className="mt-1 block text-xs text-slate-500">Ekstern side</span>
+                    </a>
+                  </li>
+                )}
               </ul>
             </section>
           )}
@@ -605,7 +578,7 @@ export function DetailContentDisplay({
           {relatedChildItems.length > 0 && (
             <section className="space-y-3">
               <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
-                Relatert innhold
+                Utforsk videre
               </Heading>
               {relatedChildItems.map((item, index) => (
                 <ExpandableSubcontent
@@ -619,11 +592,49 @@ export function DetailContentDisplay({
 
           {sections.length === 0 && referenceItems.length > 0 && <ReferenceDropdown items={referenceItems} />}
 
+          {sections.length === 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationFallback) && (
+            <section className="space-y-4">
+              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
+                {resourceSectionTitle}
+              </Heading>
+              <ul className="m-0 list-none space-y-3 p-0">
+                {visibleDocumentLinks.map((document) => (
+                  <li key={`fallback-document-${document.href}`}>
+                    <a
+                      href={document.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{document.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {document.isPdf ? 'PDF' : 'Dokument'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+                {shouldShowPublicationFallback && publicationUrl && (
+                  <li key={`fallback-document-page-${publicationUrl}`}>
+                    <a
+                      href={publicationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">Åpne hos Helsedirektoratet</span>
+                      <span className="mt-1 block text-xs text-slate-500">Ekstern side</span>
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </section>
+          )}
+
           {sections.length === 0 && hasRelatedLinks && (
-            <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
-                Denne siden har ikke egen tekst. Se relaterte rapporter og dokumenter fra Helsedirektoratet.
-              </Paragraph>
+            <section className="space-y-4">
+              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
+                Videre lenker
+              </Heading>
               <ul className="m-0 list-none space-y-3 p-0">
                 {relatedLinks.map((link) => (
                   <li key={link.href}>
@@ -649,73 +660,12 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length === 0 && fallbackLinks.length > 0 && (
-            <section className="space-y-4">
+          {sections.length === 0 && childContentItems.length === 0 && !hasAnyActionLinks && (
+            <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
-                {emptyStateMessage}
+                Denne siden har ikke egen tekst eller tilgjengelige lenker.
               </Paragraph>
-              <ul className="m-0 list-none space-y-3 p-0">
-                {fallbackLinks.map((link) => (
-                  <li key={link.href}>
-                    <a
-                      href={link.href}
-                      target={link.openInNewTab ? '_blank' : undefined}
-                      rel={link.openInNewTab ? 'noopener noreferrer' : undefined}
-                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
-                    >
-                      <span className="block font-semibold text-slate-900">{link.label}</span>
-                      <span className="mt-1 block text-xs text-slate-500">
-                        {link.isPdf
-                          ? 'PDF'
-                          : link.isDocument
-                            ? (link.fileType || 'Dokument')
-                            : 'Rapport eller side'}
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
             </section>
-          )}
-
-          {sections.length === 0 && isPrimaryPdfAction && primaryDocument && (
-            <section className="space-y-4">
-              <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
-                {emptyStateMessage}
-              </Paragraph>
-              <ul className="m-0 list-none space-y-2 p-0">
-                {primaryDocument && (
-                  <li>
-                    <a
-                      href={primaryDocument.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-brand/90"
-                    >
-                      {primaryDocumentLabel}
-                    </a>
-                  </li>
-                )}
-                {shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length > 0 && (
-                  <li>
-                    <a
-                      href={publicationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
-                    >
-                      Åpne side hos Helsedirektoratet
-                    </a>
-                  </li>
-                )}
-              </ul>
-            </section>
-          )}
-
-          {sections.length === 0 && childContentItems.length === 0 && !primaryDocument && !shouldShowPublicationLink && (
-            <Paragraph style={{ marginTop: 0, color: '#64748b' }}>
-              Ingen innholdsseksjoner tilgjengelig for denne siden.
-            </Paragraph>
           )}
 
           {(() => {
