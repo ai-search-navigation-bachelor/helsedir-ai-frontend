@@ -84,9 +84,10 @@ export function useSearchPageModel() {
 
   const searchIdFromStore = useSearchStore((state) => state.searchId)
   const searchQueryFromStore = useSearchStore((state) => state.searchQuery)
+  const searchRoleFromStore = useSearchStore((state) => state.searchRole)
   const setSearchData = useSearchStore((state) => state.setSearchData)
 
-  const role = useRoleStore((state) => state.role) ?? undefined
+  const role = useRoleStore((state) => state.role)
 
   const apiCategory = useMemo(() => toApiCategory(activeTab), [activeTab])
 
@@ -98,16 +99,20 @@ export function useSearchPageModel() {
 
   // Persist category counts across tab switches so we can skip empty categories
   const [knownCounts, setKnownCounts] = useState<Record<string, number>>({})
-  const [knownCountsQuery, setKnownCountsQuery] = useState('')
+  const [knownCountsScope, setKnownCountsScope] = useState('')
+  const roleKey = role ?? ''
+  const countsScopeKey = `${trimmedQuery}::${roleKey}`
 
-  // Reset counts when the search query changes (setState during render is the
+  // Reset counts when the search query or role changes (setState during render is the
   // recommended React pattern for adjusting state based on changed props)
-  if (trimmedQuery !== knownCountsQuery) {
+  if (countsScopeKey !== knownCountsScope) {
     setKnownCounts({})
-    setKnownCountsQuery(trimmedQuery)
+    setKnownCountsScope(countsScopeKey)
   }
   const effectiveSearchId =
-    trimmedQuery && trimmedQuery === searchQueryFromStore
+    trimmedQuery &&
+    trimmedQuery === searchQueryFromStore &&
+    searchRoleFromStore === role
       ? searchIdFromStore || undefined
       : undefined
 
@@ -128,7 +133,7 @@ export function useSearchPageModel() {
     enabled: hasQuery && !categoryKnownEmpty,
     category: apiCategory,
     search_id: effectiveSearchId,
-    role,
+    role: role ?? undefined,
   })
 
   const pages = data?.pages
@@ -137,9 +142,9 @@ export function useSearchPageModel() {
   useEffect(() => {
     const firstPage = pages?.[0]
     if (firstPage?.search_id && trimmedQuery) {
-      setSearchData(firstPage.search_id, trimmedQuery)
+      setSearchData(firstPage.search_id, trimmedQuery, role)
     }
-  }, [pages, trimmedQuery, setSearchData])
+  }, [pages, role, trimmedQuery, setSearchData])
 
   // Prefetch first page of each category that has results
   const prefetchedForKey = useRef<string | null>(null)
@@ -147,7 +152,7 @@ export function useSearchPageModel() {
   useEffect(() => {
     const fp = pages?.[0]
     if (!fp?.search_id || !fp.category_counts) return
-    const cacheKey = `${fp.search_id}:${role ?? ''}`
+    const cacheKey = `${fp.search_id}:${roleKey}`
     if (cacheKey === prefetchedForKey.current) return
 
     prefetchedForKey.current = cacheKey
@@ -164,7 +169,7 @@ export function useSearchPageModel() {
         searchQuery,
         mainCategory.subcategoryIds.join(','),
         search_id,
-        role,
+        role ?? undefined,
       )
     })
   }, [pages, queryClient, searchQuery, role])
@@ -249,7 +254,7 @@ export function useSearchPageModel() {
           search_id: effectiveSearchId,
           log: true,
           limit: 1,
-          role,
+          role: role ?? undefined,
         }).catch(() => {})
       }
     }
