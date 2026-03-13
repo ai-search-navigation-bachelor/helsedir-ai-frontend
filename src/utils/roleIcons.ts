@@ -60,7 +60,7 @@ export function RoleIcon({ slug, displayName, ...props }: RoleIconProps) {
       return createElement(FaLaptopMedical, props)
     case 'forskning':
       return createElement(FaFlask, props)
-    case 'nÃ¦ringsliv':
+    case 'næringsliv':
       return createElement(FaBriefcase, props)
     case 'media':
       return createElement(FaNewspaper, props)

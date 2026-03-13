@@ -28,9 +28,11 @@ type AppLayoutInnerProps = {
 
 function AppLayoutInner({ isSearchPinnedOpen }: AppLayoutInnerProps) {
   const [isSearchVisible, setIsSearchVisible] = useState(isSearchPinnedOpen)
+  const [searchFocusRequest, setSearchFocusRequest] = useState(0)
 
   useEffect(() => {
     const handleSearchToggle = () => {
+      setSearchFocusRequest((prev) => prev + 1)
       if (isSearchPinnedOpen) {
         setIsSearchVisible(true)
         return
@@ -53,7 +55,7 @@ function AppLayoutInner({ isSearchPinnedOpen }: AppLayoutInnerProps) {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <SkipLink href='#main-content'>Hopp til hovedinnhold</SkipLink>
       <AppHeader searchVisible={isSearchVisible} />
-      {isSearchVisible && <SearchShell />}
+      {isSearchVisible && <SearchShell focusRequest={searchFocusRequest} />}
       <main id='main-content' style={{ overflow: 'visible', flex: 1 }}>
         <Outlet />
       </main>
