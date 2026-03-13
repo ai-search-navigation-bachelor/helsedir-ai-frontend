@@ -40,7 +40,7 @@ function ReferenceDropdown({ items }: { items: NestedContent[] }) {
           {items.map((child, index) => (
             <li
               key={`reference-${child.id || index}`}
-              className="rounded-md bg-slate-50 px-3 py-2 text-[0.9375rem] leading-6 text-slate-700"
+              className="rounded-md px-3 py-2 text-[0.9375rem] leading-6 text-slate-700"
             >
               {getNodeTitle(child)}
             </li>
