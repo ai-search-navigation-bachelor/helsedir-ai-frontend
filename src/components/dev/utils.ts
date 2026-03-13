@@ -72,6 +72,7 @@ export function formatInfoTypeLabel(infoType: string): string {
     'regelverk-lov-eller-forskrift': 'Regelverk',
     'nasjonal-faglig-retningslinje': 'Retningslinje',
     'nasjonalt-forlop': 'Nasjonalt forløp',
+    rad: 'Råd',
   }
   if (map[normalized]) return map[normalized]
   return infoType
