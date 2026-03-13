@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
-import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -20,6 +19,7 @@ import { asDocumentLink, getDocumentLinks, getRelatedLinks } from './documentUti
 import { ExpandableSubcontent } from '../hierarchical/ExpandableSubcontent'
 import { hasVisibleContent } from '../shared/contentTextUtils'
 import { getContentIdFromHref, getUniqueChildLinks } from '../shared/linkUtils'
+import { RichContentHtml } from '../shared/RichContentHtml'
 import {
   buildContentSections,
   buildContextualNavigationLinks,
@@ -48,9 +48,9 @@ function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
             <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
               Fordeler og ulemper
             </Heading>
-            <div
+            <RichContentHtml
               className="content-html text-base leading-7 text-slate-800"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vurdering.tradeoffs) }}
+              html={vurdering.tradeoffs}
             />
           </div>
         )}
@@ -59,9 +59,9 @@ function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
             <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
               Verdier og preferanser
             </Heading>
-            <div
+            <RichContentHtml
               className="content-html text-base leading-7 text-slate-800"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vurdering.preferences) }}
+              html={vurdering.preferences}
             />
           </div>
         )}
@@ -502,9 +502,9 @@ export function DetailContentDisplay({
                   {section.title}
                 </Heading>
               )}
-              <div
+              <RichContentHtml
                 className="content-html text-base leading-7 text-slate-800"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.html) }}
+                html={section.html}
               />
               <VurderingDetails vurdering={section.vurdering} />
               {section.appendedDropdowns && section.appendedDropdowns.length > 0 && (
@@ -518,9 +518,9 @@ export function DetailContentDisplay({
                         </span>
                       </summary>
                       <div className="border-t border-slate-200 pr-4 pl-[2.75rem] pb-5 pt-3">
-                        <div
+                        <RichContentHtml
                           className="content-html text-base leading-7 text-slate-800"
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(dropdown.html) }}
+                          html={dropdown.html}
                         />
                         <VurderingDetails vurdering={dropdown.vurdering} />
                       </div>

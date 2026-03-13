@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -21,6 +20,7 @@ import {
   getSelectedAncestorIds,
 } from './treeUtils'
 import { fetchChapter } from '../../../lib/content/chapterFetch'
+import { RichContentHtml } from '../shared/RichContentHtml'
 
 const DESKTOP_LG_MEDIA_QUERY = '(min-width: 1024px)'
 
@@ -685,9 +685,9 @@ export function HierarchicalContentDisplay({
           )}
 
           {!activePage && !isChaptersLoading && pageTree.rootIds.length === 0 && content.body && (
-            <div
+            <RichContentHtml
               className="content-html text-base leading-7 text-slate-800"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content.body) }}
+              html={content.body}
             />
           )}
 
