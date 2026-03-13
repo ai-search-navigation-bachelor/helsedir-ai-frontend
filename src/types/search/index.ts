@@ -11,6 +11,11 @@ export interface SearchResult {
   title: string;
   info_type: string;
   path?: string;
+  should_display?: boolean;
+  has_body_content?: boolean;
+  has_linked_content?: boolean;
+  has_children?: boolean;
+  child_count?: number;
   has_text_content?: boolean;
   document_url?: string | null;
   is_pdf_only?: boolean;
@@ -26,6 +31,7 @@ export interface SearchResult {
 export interface SearchResultChildGroup {
   info_type: string;
   display_name: string;
+  child_count?: number;
   items: SearchResult[];
 }
 

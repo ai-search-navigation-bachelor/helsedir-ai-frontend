@@ -2,7 +2,6 @@ import { useCallback, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { HiArrowRight } from "react-icons/hi2";
 import { buildContentUrl } from "../../lib/contentUrl";
-import { stripTemasidePrefix } from "../../lib/path";
 import { ChildGroupDropdown } from "./ChildGroupDropdown";
 import type { SearchResult } from "../../types";
 
@@ -36,11 +35,8 @@ export function SearchResultCard({
     : result.title;
   const categoryLabel = result.categoryName;
   const temasidePath = temasidePathById.get(result.id);
-  const normalizedTemasidePath = temasidePath
-    ? stripTemasidePrefix(temasidePath)
-    : undefined;
   const contentHref = isTemaside
-    ? normalizedTemasidePath || buildContentUrl(result)
+    ? temasidePath || buildContentUrl(result)
     : buildContentUrl(result);
   const documentUrl = result.document_url?.trim() || "";
   const isPdfOnly = Boolean(result.is_pdf_only && documentUrl);

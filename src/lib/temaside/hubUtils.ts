@@ -74,6 +74,14 @@ function collectLeafNodes(node: ThemeNode): ThemeNode[] {
   return node.children.flatMap(collectLeafNodes)
 }
 
+function collectDisplayableNodes(node: ThemeNode): ThemeNode[] {
+  if (node.hasPage) {
+    return [node]
+  }
+
+  return node.children.flatMap(collectDisplayableNodes)
+}
+
 function sortByTitle(a: HubLink, b: HubLink) {
   return a.title.localeCompare(b.title, 'nb')
 }
@@ -116,8 +124,8 @@ export function buildHubSections(
 
   if (isFlatStructure) {
     const flatNodes = shouldForceFlat
-      ? collectLeafNodes(node).filter((leaf) => leaf.path !== node.path)
-      : node.children
+      ? collectLeafNodes(node).filter((leaf) => leaf.path !== node.path && leaf.hasPage)
+      : node.children.flatMap((child) => collectDisplayableNodes(child))
 
     return [
       {
@@ -131,12 +139,25 @@ export function buildHubSections(
   }
 
   return node.children
-    .map((section) => {
-      const sectionItems = section.children.length > 0 ? section.children : [section]
+    .flatMap((section) => {
+      if (!section.hasPage) {
+        return {
+          id: section.path,
+          title: section.title,
+          links: collectDisplayableNodes(section)
+            .map((item) => ({ path: item.path, title: item.title }))
+            .sort(sortByTitle),
+        }
+      }
+
+      const sectionItems = section.children.length > 0
+        ? [section, ...section.children.flatMap((item) => collectDisplayableNodes(item))]
+        : [section]
       return {
         id: section.path,
         title: section.title,
         links: sectionItems
+          .filter((item) => item.hasPage)
           .map((item) => ({ path: item.path, title: item.title }))
           .sort(sortByTitle),
       }

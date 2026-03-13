@@ -26,6 +26,9 @@ export interface LinkedContentItem {
   title: string
   info_type: string
   path?: string
+  has_text_content?: boolean
+  document_url?: string | null
+  is_pdf_only?: boolean
 }
 
 /**
@@ -44,6 +47,20 @@ export interface RelatedContentLink {
   file_type?: string | null
   url_type?: string | null
   target?: string | null
+}
+
+export interface EhelsestandardAttachment {
+  title: string
+  url: string
+  file_type?: string | null
+}
+
+export interface EhelsestandardFields {
+  standard_id?: string
+  standard_type?: string
+  purpose_html?: string
+  applies_to_html?: string
+  attachments?: EhelsestandardAttachment[] | null
 }
 
 /**
@@ -66,6 +83,7 @@ export interface ContentDetail {
   first_published?: string
   last_reviewed_date?: string
   url?: string
+  ehelsestandard_fields?: EhelsestandardFields | null
   anbefaling_fields?: {
     praktisk?: string
     rasjonale?: string

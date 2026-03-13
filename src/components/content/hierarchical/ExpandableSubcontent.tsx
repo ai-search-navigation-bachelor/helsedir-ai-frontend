@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useQuery } from '@tanstack/react-query'
@@ -7,9 +6,14 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { buildContentUrl } from '../../../lib/contentUrl'
 import { fetchChapter } from '../../../lib/content/chapterFetch'
+import { RichContentHtml } from '../shared/RichContentHtml'
 import { formatDateLabel, getNodeTitle, getNodeType } from './treeUtils'
 
 const MAX_SUBCONTENT_DEPTH = 8
+
+function isHttpIdentifier(value?: string) {
+  return Boolean(value && /^https?:\/\//i.test(value))
+}
 
 interface ExpandableSubcontentProps {
   item: NestedContent
@@ -26,6 +30,31 @@ function isPicoNode(node: NestedContent) {
   return getNodeType(node).includes('pico')
 }
 
+function ReferenceDropdown({ items }: { items: NestedContent[] }) {
+  if (items.length === 0) return null
+
+  return (
+    <details className="group/sub border-t border-slate-200">
+      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
+        Referanser
+      </summary>
+      <div className="pb-4 pl-6">
+        <ul className="m-0 list-none space-y-2 p-0">
+          {items.map((child, index) => (
+            <li
+              key={`reference-${child.id || index}`}
+              className="rounded-md px-3 py-2 text-[0.9375rem] leading-6 text-slate-700"
+            >
+              {getNodeTitle(child)}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </details>
+  )
+}
+
 interface SubSectionProps {
   label: string
   html: string
@@ -38,9 +67,9 @@ function SubSection({ label, html }: SubSectionProps) {
         <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
         {label}
       </summary>
-      <div
+      <RichContentHtml
         className="content-html pb-4 pl-6 text-[0.9375rem] font-medium leading-7 text-slate-700"
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+        html={html}
       />
     </details>
   )
@@ -62,9 +91,9 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
       </summary>
       <div className="pb-2 pl-6">
         {html && (
-          <div
+          <RichContentHtml
             className="content-html pb-4 text-[0.9375rem] font-medium leading-7 text-slate-700"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
+            html={html}
           />
         )}
         {hasVurdering && (
@@ -79,9 +108,9 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
                   <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 6 }}>
                     Fordeler og ulemper
                   </Heading>
-                  <div
+                  <RichContentHtml
                     className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(tradeoffs) }}
+                    html={tradeoffs}
                   />
                 </div>
               )}
@@ -90,9 +119,9 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
                   <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 6 }}>
                     Verdier og preferanser
                   </Heading>
-                  <div
+                  <RichContentHtml
                     className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(preferences) }}
+                    html={preferences}
                   />
                 </div>
               )}
@@ -140,8 +169,12 @@ export function ExpandableSubcontent({
   const rationale = resolved.data?.rasjonale || ''
   const tradeoffs = resolved.data?.nokkelInfo?.fordelerogulemper || ''
   const preferences = resolved.data?.nokkelInfo?.verdierogpreferanser || ''
-  const hasStandalonePage = Boolean(item.id) && !isReferenceNode(item) && !isPicoNode(item)
+  const hasStandalonePage =
+    (Boolean(item.path) || (Boolean(item.id) && !isHttpIdentifier(item.id))) &&
+    !isReferenceNode(item) &&
+    !isPicoNode(item)
   const children = resolved.children ?? []
+  const referenceChildren = children.filter((child) => isReferenceNode(child))
   const nestedChildren = children.filter((child) => !isReferenceNode(child) && !isPicoNode(child))
 
   return (
@@ -217,9 +250,9 @@ export function ExpandableSubcontent({
         )}
 
         {body && (
-          <div
+          <RichContentHtml
             className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
-            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(body) }}
+            html={body}
           />
         )}
 
@@ -227,6 +260,7 @@ export function ExpandableSubcontent({
         {(rationale || tradeoffs || preferences) && (
           <BegrunnelseSubSection html={rationale} tradeoffs={tradeoffs} preferences={preferences} />
         )}
+        <ReferenceDropdown items={referenceChildren} />
 
         {depth < MAX_SUBCONTENT_DEPTH && nestedChildren.length > 0 && (
           <div className="mt-3 space-y-3">

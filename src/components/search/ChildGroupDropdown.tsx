@@ -249,9 +249,24 @@ export function ChildGroupDropdown({
                 <div className="relative">
                   <div className="max-h-[min(38vh,14rem)] overflow-x-hidden overflow-y-auto overscroll-contain md:max-h-[min(70vh,32rem)]">
                     {items.map((item) => {
-                      const childHref = buildContentUrl(item);
+                      const documentUrl = item.document_url?.trim() || "";
+                      const isPdfOnly = Boolean(item.is_pdf_only && documentUrl);
+                      const childHref = isPdfOnly ? documentUrl : buildContentUrl(item);
 
-                      return (
+                      return isPdfOnly ? (
+                        <a
+                          key={item.id}
+                          href={childHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group/item flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] last:border-b-0"
+                        >
+                          <span className="min-w-0 break-words group-hover/item:underline">
+                            {item.title}
+                          </span>
+                          <IoArrowForward className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                        </a>
+                      ) : (
                         <Link
                           key={item.id}
                           to={childHref}
@@ -264,7 +279,7 @@ export function ChildGroupDropdown({
                             searchCategoryId: group.info_type,
                             searchCategoryName: group.display_name,
                             contentType: item.info_type,
-                            skipHelsedirFallback: Boolean(item.is_pdf_only && item.document_url?.trim()),
+                            skipHelsedirFallback: false,
                           }}
                           className="group/item flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] last:border-b-0"
                         >
