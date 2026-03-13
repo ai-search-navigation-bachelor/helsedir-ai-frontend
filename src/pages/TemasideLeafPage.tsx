@@ -17,6 +17,7 @@ export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
     breadcrumbItems,
     category,
     categoryIcon,
+    contentId,
     customLayout,
     error,
     isError,
@@ -38,7 +39,7 @@ export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
     isLoading: isLeafLoading,
     error: leafError,
   } = useContentDetailQuery({
-    contentPath: temaPath,
+    contentId: contentId ?? undefined,
     routeContentType: 'temaside',
     skipHelsedirFallback: true,
   })
