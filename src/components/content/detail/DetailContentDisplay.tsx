@@ -204,7 +204,6 @@ export function DetailContentDisplay({
     enrichedContent,
     hasBodyContent,
     isPdfOnlyContent,
-    normalizedType,
     primarySectionTitle,
   ])
 

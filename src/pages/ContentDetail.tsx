@@ -77,7 +77,8 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
       return { sectionId: content?.id }
     }
 
-    const { contentType: _ignoredContentType, ...restRouteState } = routeState
+    const restRouteState = { ...routeState }
+    delete restRouteState.contentType
 
     return {
       ...restRouteState,
