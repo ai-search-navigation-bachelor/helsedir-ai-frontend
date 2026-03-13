@@ -56,9 +56,9 @@ function ContentRow({
   sourceTemasideId: string
   sourceTemasideTitle: string
 }) {
-  const showChapters = isRetningslinje(item.info_type)
-  const href = getLinkedContentHref(item)
   const isPdfOnly = Boolean(item.is_pdf_only && item.document_url?.trim())
+  const showChapters = isRetningslinje(item.info_type) && !isPdfOnly
+  const href = getLinkedContentHref(item)
 
   return (
     <li className="border-b border-gray-100 last:border-0">

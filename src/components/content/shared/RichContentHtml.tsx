@@ -12,8 +12,11 @@ export function RichContentHtml({ html, className }: RichContentHtmlProps) {
   const sanitizedHtml = useMemo(() => sanitizeContentHtml(html), [html])
 
   const handleClick = (event: MouseEvent<HTMLDivElement>) => {
-    const target = event.target
-    if (!(target instanceof Element)) return
+    const target =
+      event.target instanceof Element
+        ? event.target
+        : (event.target as Node | null)?.parentElement
+    if (!target) return
 
     const anchor = target.closest<HTMLAnchorElement>('a[data-internal-path]')
     if (!anchor || !event.currentTarget.contains(anchor)) return

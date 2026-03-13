@@ -11,6 +11,10 @@ import { formatDateLabel, getNodeTitle, getNodeType } from './treeUtils'
 
 const MAX_SUBCONTENT_DEPTH = 8
 
+function isHttpIdentifier(value?: string) {
+  return Boolean(value && /^https?:\/\//i.test(value))
+}
+
 interface ExpandableSubcontentProps {
   item: NestedContent
   itemKey: string
@@ -165,7 +169,10 @@ export function ExpandableSubcontent({
   const rationale = resolved.data?.rasjonale || ''
   const tradeoffs = resolved.data?.nokkelInfo?.fordelerogulemper || ''
   const preferences = resolved.data?.nokkelInfo?.verdierogpreferanser || ''
-  const hasStandalonePage = Boolean(item.id) && !isReferenceNode(item) && !isPicoNode(item)
+  const hasStandalonePage =
+    (Boolean(item.path) || (Boolean(item.id) && !isHttpIdentifier(item.id))) &&
+    !isReferenceNode(item) &&
+    !isPicoNode(item)
   const children = resolved.children ?? []
   const referenceChildren = children.filter((child) => isReferenceNode(child))
   const nestedChildren = children.filter((child) => !isReferenceNode(child) && !isPicoNode(child))

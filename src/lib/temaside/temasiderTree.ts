@@ -76,11 +76,21 @@ export function buildThemeTree(
         }
       }
       if (preferredMeta) {
-        child.hasBodyContent = preferredMeta.hasBodyContent
-        child.hasLinkedContent = preferredMeta.hasLinkedContent
-        child.hasChildrenMeta = preferredMeta.hasChildren
-        child.childCount = preferredMeta.childCount
-        child.shouldDisplay = preferredMeta.shouldDisplay
+        if (preferredMeta.hasBodyContent !== undefined) {
+          child.hasBodyContent = preferredMeta.hasBodyContent
+        }
+        if (preferredMeta.hasLinkedContent !== undefined) {
+          child.hasLinkedContent = preferredMeta.hasLinkedContent
+        }
+        if (preferredMeta.hasChildren !== undefined) {
+          child.hasChildrenMeta = preferredMeta.hasChildren
+        }
+        if (preferredMeta.childCount !== undefined) {
+          child.childCount = preferredMeta.childCount
+        }
+        if (preferredMeta.shouldDisplay !== undefined) {
+          child.shouldDisplay = preferredMeta.shouldDisplay
+        }
       }
       current = child
     }

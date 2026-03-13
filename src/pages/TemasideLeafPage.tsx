@@ -157,8 +157,6 @@ export function TemasideLeafPage({ categorySlug }: TemasideLeafPageProps) {
     <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12 lg:pb-10">
       <Breadcrumb items={breadcrumbItems} />
 
-      {isLeafLoading && <TemasideLoadingSkeleton />}
-
       {leafError && !isHub && (
         <Alert data-color="danger">
           <Paragraph>

@@ -31,10 +31,5 @@ export async function getThemePages(
     category: trimmedCategory || undefined,
   })
 
-  const response = await httpRequest<ThemePagesResponse>(url, { signal })
-
-  return {
-    ...response,
-    results: response.results,
-  }
+  return httpRequest<ThemePagesResponse>(url, { signal })
 }

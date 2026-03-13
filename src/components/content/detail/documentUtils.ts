@@ -33,7 +33,8 @@ interface AttachmentLike {
   fileName?: string
   type?: string
   contentType?: string
-  fileType?: string
+  file_type?: string | null
+  fileType?: string | null
 }
 
 interface DocumentSource {
@@ -201,7 +202,7 @@ function extractFromAttachments(attachments: AttachmentLike[] | null | undefined
         attachment.href || attachment.url || attachment.fil || attachment.fileUri,
         attachment.tittel || attachment.title || attachment.fileName,
         'vedlegg',
-        attachment.type || attachment.contentType || attachment.fileType,
+        attachment.type || attachment.contentType || attachment.file_type || attachment.fileType || undefined,
       ),
     )
     .filter((item): item is DocumentLink => Boolean(item))

@@ -262,14 +262,14 @@ export function DetailContentDisplay({
   const childContentItems = useMemo(
     () =>
       getUniqueChildLinks(content.links).map((link) => ({
-        id: link.id || getContentIdFromHref(link.href) || link.href || '',
+        id: link.id || link.href || getContentIdFromHref(link.href) || '',
         path: link.path || undefined,
         tittel: link.title || '',
         type: link.type,
         children: link.children
           ?.filter((child) => Boolean(child.id || child.href))
           .map((child) => ({
-            id: child.id || getContentIdFromHref(child.href) || child.href || '',
+            id: child.id || child.href || getContentIdFromHref(child.href) || '',
             path: child.path || undefined,
             tittel: child.title || '',
             type: child.type,

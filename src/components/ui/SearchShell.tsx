@@ -22,7 +22,7 @@ function SearchShellContent({ focusRequest }: SearchShellContentProps) {
   useEffect(() => {
     if (!hasMountedRef.current) {
       hasMountedRef.current = true
-      if (focusRequest === 0) return
+      if (focusRequest === 0 && !isSearchPage) return
     }
 
     const timer = window.setTimeout(() => {
@@ -30,7 +30,7 @@ function SearchShellContent({ focusRequest }: SearchShellContentProps) {
     }, 100)
 
     return () => window.clearTimeout(timer)
-  }, [focusRequest])
+  }, [focusRequest, isSearchPage])
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

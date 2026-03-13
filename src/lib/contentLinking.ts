@@ -23,7 +23,7 @@ export function getApiContentInternalPath(href?: string | null) {
       return undefined
     }
 
-    const contentId = getContentIdFromHref(parsed.toString())
+    const contentId = getContentIdFromHref(parsed.pathname)
     if (!contentId) return undefined
 
     return `/content/${contentId}`

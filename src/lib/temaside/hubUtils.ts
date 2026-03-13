@@ -143,7 +143,7 @@ export function buildHubSections(
       if (!section.hasPage) {
         return {
           id: section.path,
-          title: 'Alle undertemaer',
+          title: section.title,
           links: collectDisplayableNodes(section)
             .map((item) => ({ path: item.path, title: item.title }))
             .sort(sortByTitle),
@@ -151,7 +151,7 @@ export function buildHubSections(
       }
 
       const sectionItems = section.children.length > 0
-        ? section.children.flatMap((item) => collectDisplayableNodes(item))
+        ? [section, ...section.children.flatMap((item) => collectDisplayableNodes(item))]
         : [section]
       return {
         id: section.path,
