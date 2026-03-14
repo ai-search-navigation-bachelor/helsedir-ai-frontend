@@ -12,6 +12,7 @@ import {
 } from '../../../constants/content'
 import { formatDateLabel } from '../../../lib/content/date'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
+import type { ContentChildGroup, ContentLink, ContentRelationItem } from '../../../types'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
@@ -109,6 +110,74 @@ function ReferenceDropdown({
         </ul>
       </div>
     </details>
+  )
+}
+
+interface DetailChildItem {
+  id: string
+  path?: string
+  tittel: string
+  type?: string
+  children?: Array<{
+    id: string
+    path?: string
+    tittel: string
+    type?: string
+  }>
+}
+
+function toDetailChildItem(
+  source: ContentRelationItem | ContentLink,
+  fallbackType?: string,
+): DetailChildItem | null {
+  if ('rel' in source) {
+    const id = source.id || source.href || getContentIdFromHref(source.href) || ''
+    if (!id) return null
+
+    return {
+      id,
+      path: source.path || undefined,
+      tittel: source.title || '',
+      type: source.type || fallbackType,
+      children: source.children
+        ?.map((child) => toDetailChildItem(child))
+        .filter((child): child is NonNullable<DetailChildItem['children']>[number] => Boolean(child)),
+    }
+  }
+
+  if (source.is_pdf_only && source.document_url) {
+    return null
+  }
+
+  if (!source.id) return null
+
+  return {
+    id: source.id,
+    path: source.path || undefined,
+    tittel: source.title || '',
+    type: source.content_type || source.info_type || fallbackType,
+  }
+}
+
+function dedupeDetailChildItems(items: Array<DetailChildItem | null>) {
+  const seen = new Set<string>()
+
+  return items.filter((item): item is DetailChildItem => {
+    if (!item) return false
+    if (seen.has(item.id)) return false
+    seen.add(item.id)
+    return true
+  })
+}
+
+function getChildItemsFromGroups(
+  groups: ContentChildGroup[] | null | undefined,
+  predicate: (group: ContentChildGroup) => boolean,
+) {
+  return dedupeDetailChildItems(
+    (groups ?? [])
+      .filter(predicate)
+      .flatMap((group) => group.items.map((item) => toDetailChildItem(item, group.info_type))),
   )
 }
 
@@ -252,38 +321,84 @@ export function DetailContentDisplay({
   }, [sections])
 
   const supportingLinks = useMemo(
-    () => content.links?.filter((link) => Boolean(link.href)) || [],
-    [content.links],
+    () => {
+      const rootPublication = content.root_publication ? [content.root_publication] : []
+      const rootLinks = content.links?.filter((link) => link.rel === 'root' && Boolean(link.href)) || []
+      return [...rootPublication, ...rootLinks]
+    },
+    [content.links, content.root_publication],
   )
   const contextualNavigationLinks = useMemo(
     () => buildContextualNavigationLinks(content.id, supportingLinks),
     [content.id, supportingLinks],
   )
   const childContentItems = useMemo(
-    () =>
-      getUniqueChildLinks(content.links).map((link) => ({
-        id: link.id || link.href || getContentIdFromHref(link.href) || '',
-        path: link.path || undefined,
-        tittel: link.title || '',
-        type: link.type,
-        children: link.children
-          ?.filter((child) => Boolean(child.id || child.href))
-          .map((child) => ({
-            id: child.id || child.href || getContentIdFromHref(child.href) || '',
-            path: child.path || undefined,
-            tittel: child.title || '',
-            type: child.type,
-          })),
-      })),
-    [content.links],
+    () => {
+      const fallbackLinkItems = dedupeDetailChildItems(
+        getUniqueChildLinks(content.links).map((link) => toDetailChildItem(link)),
+      )
+
+      const normalizedReferenceItems = dedupeDetailChildItems(
+        (content.references ?? []).map((item) => toDetailChildItem(item, item.content_type || item.info_type)),
+      )
+      const normalizedRelatedItems = dedupeDetailChildItems(
+        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
+          toDetailChildItem(item, item.content_type || item.info_type),
+        ),
+      )
+
+      const groupedItems = getChildItemsFromGroups(content.child_groups, () => true)
+
+      if (normalizedReferenceItems.length > 0 || normalizedRelatedItems.length > 0) {
+        return dedupeDetailChildItems([
+          ...normalizedReferenceItems,
+          ...normalizedRelatedItems,
+        ])
+      }
+
+      if (groupedItems.length > 0) {
+        return groupedItems
+      }
+
+      return fallbackLinkItems
+    },
+    [content.child_groups, content.chapters, content.links, content.references, content.related_content],
   )
   const referenceItems = useMemo(
-    () => childContentItems.filter((item) => isReferenceContentType(item.type)),
-    [childContentItems],
+    () => {
+      const normalizedReferenceItems = dedupeDetailChildItems(
+        (content.references ?? []).map((item) => toDetailChildItem(item, item.content_type || item.info_type)),
+      )
+      if (normalizedReferenceItems.length > 0) return normalizedReferenceItems
+
+      const groupedReferenceItems = getChildItemsFromGroups(
+        content.child_groups,
+        (group) => isReferenceContentType(group.info_type),
+      )
+      if (groupedReferenceItems.length > 0) return groupedReferenceItems
+
+      return childContentItems.filter((item) => isReferenceContentType(item.type))
+    },
+    [childContentItems, content.child_groups, content.references],
   )
   const relatedChildItems = useMemo(
-    () => childContentItems.filter((item) => !isReferenceContentType(item.type)),
-    [childContentItems],
+    () => {
+      const normalizedRelatedItems = dedupeDetailChildItems(
+        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
+          toDetailChildItem(item, item.content_type || item.info_type),
+        ),
+      )
+      if (normalizedRelatedItems.length > 0) return normalizedRelatedItems
+
+      const groupedRelatedItems = getChildItemsFromGroups(
+        content.child_groups,
+        (group) => !isReferenceContentType(group.info_type),
+      )
+      if (groupedRelatedItems.length > 0) return groupedRelatedItems
+
+      return childContentItems.filter((item) => !isReferenceContentType(item.type))
+    },
+    [childContentItems, content.child_groups, content.chapters, content.related_content],
   )
 
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)

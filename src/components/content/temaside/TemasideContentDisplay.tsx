@@ -4,6 +4,7 @@ import { SEARCH_MAIN_CATEGORIES } from '../../../constants/categories'
 import { TemasideHeader } from './TemasideHeader'
 import { ContentSection } from './TemasideContentSection'
 import { ChildTemasideSection } from './TemasideChildSection'
+import { buildContentUrl } from '../../../lib/contentUrl'
 
 interface TemasideContentDisplayProps {
   content: ContentDetail
@@ -30,10 +31,44 @@ function sortGroupsByPriority(groups: readonly LinkedContentGroup[]): LinkedCont
 }
 
 function getParentLink(content: ContentDetail) {
+  if (content.parent?.id) {
+    return {
+      rel: 'forelder',
+      type: content.parent.content_type || content.parent.info_type || '',
+      title: content.parent.title,
+      href: content.parent.path
+        ? buildContentUrl({ path: content.parent.path, id: content.parent.id })
+        : `/content/${content.parent.id}`,
+      id: content.parent.id,
+      path: content.parent.path || null,
+    } satisfies ContentLink
+  }
+
   return content.links?.find((l) => l.rel === 'forelder') ?? null
 }
 
 function getChildTemasideLinks(content: ContentDetail): ContentLink[] {
+  const groupedTemasideItems = content.child_groups
+    ?.filter((group) => group.info_type === 'temaside')
+    .flatMap((group) =>
+      group.items
+        .filter((item) => item.path || item.id)
+        .map((item) => ({
+          rel: 'barn',
+          type: item.content_type || item.info_type || 'temaside',
+          title: item.title,
+          href: item.path
+            ? buildContentUrl({ path: item.path, id: item.id })
+            : `/content/${item.id}`,
+          id: item.id,
+          path: item.path || null,
+        })),
+    )
+
+  if (groupedTemasideItems && groupedTemasideItems.length > 0) {
+    return groupedTemasideItems
+  }
+
   return (content.links ?? []).filter(
     (l) => l.rel === 'barn' && l.type === 'temaside' && l.href,
   )

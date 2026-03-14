@@ -1,4 +1,5 @@
 import type { ContentDetail, ContentLink, NestedContent, RelatedContentLink } from '../../types'
+import { normalizeContentType } from '../../constants/content'
 
 export function toContentLinks(source: NestedContent): ContentLink[] {
   const rawLinks = [...(source.links ?? []), ...(source.lenker ?? [])]
@@ -53,10 +54,11 @@ function toRelatedLinks(source: NestedContent): RelatedContentLink[] | null {
 }
 
 export function mapHelsedirContentToDetail(source: NestedContent): ContentDetail {
-  const contentType =
+  const contentType = normalizeContentType(
     source.type?.trim().toLowerCase() ||
     source.tekniskeData?.infoType?.trim().toLowerCase() ||
-    'innhold'
+    'innhold',
+  )
   const normalizedDocumentUrl = source.document_url?.trim()
 
   return {
@@ -64,22 +66,25 @@ export function mapHelsedirContentToDetail(source: NestedContent): ContentDetail
     title: source.tittel || source.title || source.id,
     body: source.tekst || source.body || '',
     content_type: contentType,
+    path: source.path,
     has_text_content: source.has_text_content,
     document_url:
       normalizedDocumentUrl ||
       (typeof source.data?.fil === 'string' ? source.data.fil : null),
     is_pdf_only: source.is_pdf_only,
     related_links: toRelatedLinks(source),
+    status: source.status,
     first_published: source.forstPublisert,
     last_reviewed_date: source.sistFagligOppdatert || source.sistOppdatert,
+    url: source.url,
     links: toContentLinks(source),
   }
 }
 
 export function getNormalizedHelsedirType(source: NestedContent) {
-  return (
+  return normalizeContentType(
     source.type?.trim().toLowerCase() ||
     source.tekniskeData?.infoType?.trim().toLowerCase() ||
-    ''
+    '',
   )
 }

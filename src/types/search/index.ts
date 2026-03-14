@@ -10,7 +10,7 @@ export interface SearchResult {
   id: string;
   title: string;
   info_type: string;
-  path?: string;
+  path?: string | null;
   should_display?: boolean;
   has_body_content?: boolean;
   has_linked_content?: boolean;
@@ -25,7 +25,22 @@ export interface SearchResult {
   rrf_score?: number;
   role_boost?: number | null;
   explanation?: string;
+  pipeline?: SearchPipeline | null;
   children?: SearchResultChildGroup[] | null;
+}
+
+export interface SearchRerankPipeline {
+  score?: number;
+  rank_change?: number;
+  contributions?: Record<string, number>;
+}
+
+export interface SearchPipeline {
+  bm25?: number;
+  semantic?: number;
+  rrf?: number;
+  role_boost?: number | null;
+  rerank?: SearchRerankPipeline | null;
 }
 
 export interface SearchResultChildGroup {

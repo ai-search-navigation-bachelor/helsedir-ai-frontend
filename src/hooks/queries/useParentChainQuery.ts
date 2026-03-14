@@ -5,7 +5,7 @@ import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
 import { buildContentUrl } from '../../lib/contentUrl'
 import { extractTemasideInfo } from '../../lib/content/breadcrumbUtils'
 import type { TemasideInfo } from '../../lib/content/breadcrumbUtils'
-import type { ContentDetail } from '../../types'
+import type { ContentDetail, ContentRelationItem } from '../../types'
 
 export type { TemasideInfo }
 
@@ -28,8 +28,12 @@ function stripLastPathSegment(path: string): string {
   return path.replace(/\/[^/]+$/, '')
 }
 
+function getParentReference(content?: ContentDetail): ContentRelationItem | null {
+  return content?.parent ?? null
+}
+
 function hasForelderLink(content?: ContentDetail): boolean {
-  return Boolean(content?.links?.some((link) => link.rel === 'forelder'))
+  return Boolean(getParentReference(content)?.id || content?.links?.some((link) => link.rel === 'forelder'))
 }
 
 /** Convert a HelselinkContent (Helsedir API) response into a minimal ContentDetail. */
@@ -64,10 +68,11 @@ async function fetchParentChain(
   let temaside: TemasideInfo | null = extractTemasideInfo(content.links)
 
   for (let depth = 0; depth < MAX_DEPTH; depth++) {
+    const parentReference = getParentReference(current)
     const forelderLink = current.links?.find((link) => link.rel === 'forelder')
-    if (!forelderLink) break
+    if (!parentReference && !forelderLink) break
 
-    const parentId = forelderLink.id || getContentIdFromHref(forelderLink.href)
+    const parentId = parentReference?.id || forelderLink?.id || getContentIdFromHref(forelderLink?.href)
     if (!parentId || visited.has(parentId)) break
 
     visited.add(parentId)
@@ -79,7 +84,7 @@ async function fetchParentChain(
       // Rethrow abort errors so React Query handles cancellation
       if (error instanceof DOMException && error.name === 'AbortError') throw error
       // Backend failed — try Helsedir API directly as fallback
-      if (forelderLink.href) {
+      if (forelderLink?.href) {
         try {
           parent = helsedirToContentDetail(await fetchHelsedirContent(forelderLink.href, signal))
         } catch (fallbackError) {
@@ -90,7 +95,21 @@ async function fetchParentChain(
       }
     }
 
-    if (!parent) break
+    if (!parent) {
+      if (!parentReference) break
+
+      const fallbackHref = parentReference.path
+        ? buildContentUrl({ path: parentReference.path, id: parentReference.id })
+        : `/content/${parentReference.id}`
+
+      chain.unshift({
+        id: parentReference.id,
+        tittel: parentReference.title,
+        href: fallbackHref,
+        contentType: parentReference.content_type || parentReference.info_type,
+      })
+      break
+    }
 
     // Derive href: prefer parent's own path, then derive from child's path
     let href: string

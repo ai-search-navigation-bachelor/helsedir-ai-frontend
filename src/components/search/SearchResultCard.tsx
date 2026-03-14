@@ -17,6 +17,10 @@ interface SearchResultCardProps {
   shouldClearPin?: boolean;
 }
 
+function isPdfHref(href: string) {
+  return /\.pdf(?:$|[?#])/i.test(href);
+}
+
 export function SearchResultCard({
   result,
   searchQuery,
@@ -40,6 +44,7 @@ export function SearchResultCard({
     : buildContentUrl(result);
   const documentUrl = result.document_url?.trim() || "";
   const isPdfOnly = Boolean(result.is_pdf_only && documentUrl);
+  const isPdfDocument = isPdfHref(documentUrl);
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     setIsAnyGroupOpen(isOpen);
@@ -60,7 +65,7 @@ export function SearchResultCard({
           href={documentUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Åpne PDF for ${result.title} i ny fane`}
+          aria-label={`Åpne dokument for ${result.title} i ny fane`}
           className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#025169]"
         />
       ) : (
@@ -89,7 +94,7 @@ export function SearchResultCard({
           </span>
           {isPdfOnly && (
             <span className="inline-block rounded-full bg-[#fff7ed] px-2.5 py-0.5 text-xs font-medium text-[#7c2d12]">
-              PDF
+              {isPdfDocument ? "PDF" : "Dokument"}
             </span>
           )}
         </div>

@@ -1,11 +1,13 @@
 import type {
   ContentLink,
   ContentDetail,
+  ContentRelationItem,
   NestedContent,
   NestedContentLink,
   RelatedContentLink,
 } from '../../../types'
 import { getApiContentInternalPath } from '../../../lib/contentLinking'
+import { buildContentUrl } from '../../../lib/contentUrl'
 
 interface DocumentLink {
   href: string
@@ -41,6 +43,7 @@ interface DocumentSource {
   data?: NestedContent['data']
   document_url?: string | null
   url?: string
+  parent?: ContentRelationItem | null
   links?: ContentLink[] | NestedContentLink[]
   lenker?: NestedContentLink[]
   attachments?: AttachmentLike[] | null
@@ -95,6 +98,20 @@ function getInternalContentPath(href: string, isDocument: boolean) {
   if (isDocument) return undefined
 
   return getApiContentInternalPath(href)
+}
+
+function getInternalContentPathFromRelation(
+  link: Pick<RelatedContentLink, 'path' | 'content_id'>,
+  isDocument: boolean,
+) {
+  if (isDocument) return undefined
+  if (link.path) {
+    return buildContentUrl({ path: link.path, id: link.content_id || link.path })
+  }
+  if (link.content_id) {
+    return buildContentUrl({ id: link.content_id })
+  }
+  return undefined
 }
 
 function getFilenameFromHref(href?: string) {
@@ -169,7 +186,9 @@ export function getRelatedLinks(source?: { related_links?: RelatedContentLink[] 
 
     const isPdf = isLikelyPdfUrl(href) || isLikelyPdfType(link.file_type || '')
     const isDocument = hasRelatedDocumentMetadata(link) || isPdf
-    const internalPath = getInternalContentPath(href, isDocument)
+    const internalPath =
+      getInternalContentPathFromRelation(link, isDocument) ||
+      getInternalContentPath(href, isDocument)
 
     result.push({
       href,

@@ -18,6 +18,15 @@ export const EHELSESTANDARD_CONTENT_TYPES = new Set([
   'ehelsestandard',
 ])
 
+const CANONICAL_CONTENT_TYPE_MAP: Record<string, string> = {
+  'e-helsestandard': 'ehelsestandard',
+  'faglig-rad': 'rad',
+  kapitler: 'kapittel',
+  'pakkeforlop-anbefaling': 'anbefaling',
+  retningslinjer: 'retningslinje',
+  'tema-side': 'temaside',
+}
+
 const DETAIL_TYPE_LABEL_BY_CONTENT_TYPE: Record<string, string> = {
   anbefaling: 'Anbefaling',
   rad: 'Råd',
@@ -35,7 +44,8 @@ const TYPE_LABEL_BY_CONTENT_TYPE: Record<string, string> = {
 }
 
 export function normalizeContentType(contentType?: string) {
-  return contentType?.trim().toLowerCase() || ''
+  const normalized = contentType?.trim().toLowerCase() || ''
+  return CANONICAL_CONTENT_TYPE_MAP[normalized] || normalized
 }
 
 export function isRetningslinjeContentType(contentType: string) {

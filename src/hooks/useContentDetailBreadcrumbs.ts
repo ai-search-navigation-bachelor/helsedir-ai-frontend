@@ -20,17 +20,21 @@ export function useContentDetailBreadcrumbs({
     searchId,
   )
 
-  const hasLinks = Boolean(content?.links && content.links.length > 0)
+  const hasBreadcrumbData = Boolean(
+    content?.parent ||
+    content?.root_publication ||
+    (content?.links && content.links.length > 0),
+  )
 
   // Use temaside from parent chain when available, otherwise extract from current content
   const temaside = parentChainResult?.temaside ?? extractTemasideInfo(content?.links) ?? null
 
   const activeBreadcrumbItems =
-    content && hasLinks
+    content && hasBreadcrumbData
       ? buildContentBreadcrumbItems(content, parentChainResult?.chain ?? [], temaside)
       : buildFallbackBreadcrumbItems(content)
 
-  const collapsible = Boolean(content?.links?.some((link) => link.rel === 'forelder'))
+  const collapsible = Boolean(content?.parent?.id || content?.links?.some((link) => link.rel === 'forelder'))
 
   return {
     activeBreadcrumbItems,

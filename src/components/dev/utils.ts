@@ -15,7 +15,7 @@ export function computeStats(response: SearchResponse): ResultStats {
   let rolePenalized = 0
   let roleNeutral = 0
   for (const r of results) {
-    const rb = r.role_boost
+    const rb = r.pipeline?.role_boost ?? r.role_boost
     if (rb != null && rb > 1.0) roleBoosted++
     else if (rb != null && rb < 1.0) rolePenalized++
     else roleNeutral++
@@ -62,6 +62,20 @@ export function parseExplanation(explanation?: string): {
   return {
     bm25: bm25Match ? parseFloat(bm25Match[1]) : undefined,
     semantic: semanticMatch ? parseFloat(semanticMatch[1]) : undefined,
+  }
+}
+
+export function getPipelineScores(result: SearchResult) {
+  const parsed = parseExplanation(result.explanation)
+
+  return {
+    bm25: result.pipeline?.bm25 ?? result.bm25_score ?? parsed.bm25,
+    semantic: result.pipeline?.semantic ?? result.semantic_score ?? parsed.semantic,
+    rrf: result.pipeline?.rrf ?? result.rrf_score,
+    roleBoost: result.pipeline?.role_boost ?? result.role_boost,
+    rerankScore: result.pipeline?.rerank?.score,
+    rerankRankChange: result.pipeline?.rerank?.rank_change,
+    rerankContributions: result.pipeline?.rerank?.contributions,
   }
 }
 
