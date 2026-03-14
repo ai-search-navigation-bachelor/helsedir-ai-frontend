@@ -17,20 +17,16 @@ function SearchShellContent({ focusRequest }: SearchShellContentProps) {
   const [query, setQuery] = useState(isSearchPage ? searchQueryFromUrl : '')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const temasidePathById = useTemasidePathMap()
-  const hasMountedRef = useRef(false)
 
   useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true
-      if (focusRequest === 0 && !isSearchPage) return
-    }
+    if (focusRequest === 0) return
 
     const timer = window.setTimeout(() => {
       searchInputRef.current?.focus()
     }, 100)
 
     return () => window.clearTimeout(timer)
-  }, [focusRequest, isSearchPage])
+  }, [focusRequest])
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
