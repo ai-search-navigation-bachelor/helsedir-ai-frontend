@@ -4,7 +4,10 @@ import {
   SearchEmptyState,
   SearchResultsList,
 } from '../components/search'
-import { SearchPageLoadingSkeleton } from '../components/search/SearchSkeletons'
+import {
+  SearchPageLoadingSkeleton,
+  SearchResultsLoadingSkeleton,
+} from '../components/search/SearchSkeletons'
 import { useSearchPageModel } from '../hooks/useSearchPageModel'
 
 /**
@@ -32,17 +35,20 @@ export function SearchPage() {
     return <SearchEmptyState />
   }
 
+  const hasStableCategoryCounts = Object.keys(mainCategoryCounts).length > 0
+  const shouldShowFullPageSkeleton = isLoading && !hasStableCategoryCounts
+
   return (
     <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-6 sm:px-6 lg:px-12">
-      {isLoading && <SearchPageLoadingSkeleton />}
+      {shouldShowFullPageSkeleton && <SearchPageLoadingSkeleton />}
 
       {error && (
         <Alert>
-          <Paragraph>Det oppstod en feil ved søket. Vennligst prøv igjen.</Paragraph>
+          <Paragraph>Det oppstod en feil ved sÃ¸ket. Vennligst prÃ¸v igjen.</Paragraph>
         </Alert>
       )}
 
-      {!isLoading && !error && allResults && (
+      {!shouldShowFullPageSkeleton && !error && (
         <>
           <SearchCategoryTabs
             activeTab={activeTab}
@@ -51,16 +57,20 @@ export function SearchPage() {
             onTabChange={handleTabChange}
           />
 
-          <SearchResultsList
-            results={allResults}
-            searchQuery={searchQuery}
-            activeTab={activeTab}
-            activeTabLabel={activeTabLabel}
-            total={total}
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            onLoadMore={fetchNextPage}
-          />
+          {isLoading ? (
+            <SearchResultsLoadingSkeleton />
+          ) : (
+            <SearchResultsList
+              results={allResults}
+              searchQuery={searchQuery}
+              activeTab={activeTab}
+              activeTabLabel={activeTabLabel}
+              total={total}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onLoadMore={fetchNextPage}
+            />
+          )}
         </>
       )}
     </div>
