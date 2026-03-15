@@ -36,6 +36,7 @@ export function buildSearchInfiniteQueryKey(
     query,
     options?.category,
     options?.role,
+    options?.search_id,
     options?.method,
     options?.rerank,
     options?.explain,
@@ -112,7 +113,7 @@ export function prefetchCategorySearch(
     readonly unknown[],
     SearchPageParam
   >({
-    queryKey: buildSearchInfiniteQueryKey(query, { category, role }),
+    queryKey: buildSearchInfiniteQueryKey(query, { category, role, search_id: searchId }),
     queryFn: async ({ signal }) => {
       return search(query, {
         signal,
