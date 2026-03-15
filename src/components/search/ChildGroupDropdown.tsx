@@ -13,10 +13,6 @@ import type { SearchResultChildGroup } from "../../types";
 const MOBILE_MAX_WIDTH_PX = 767;
 const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_MAX_WIDTH_PX}px)`;
 
-function isPdfHref(href: string) {
-  return /\.pdf(?:$|[?#])/i.test(href);
-}
-
 interface ChildGroupDropdownProps {
   resultId: string;
   resultTitle: string;
@@ -261,7 +257,6 @@ export function ChildGroupDropdown({
                     {items.map((item) => {
                       const documentUrl = item.document_url?.trim() || "";
                       const isPdfOnly = Boolean(item.is_pdf_only && documentUrl);
-                      const isPdfDocument = isPdfHref(documentUrl);
                       const childHref = isPdfOnly ? documentUrl : buildContentUrl(item);
 
                       return isPdfOnly ? (
@@ -274,9 +269,9 @@ export function ChildGroupDropdown({
                         >
                           <span className="min-w-0 break-words group-hover/item:underline">
                             {item.title}
-                            {!isPdfDocument && (
+                            {(
                               <span className="ml-2 rounded-full bg-[#fff7ed] px-2 py-0.5 text-[0.65rem] font-medium text-[#7c2d12]">
-                                Dokument
+                                PDF
                               </span>
                             )}
                           </span>

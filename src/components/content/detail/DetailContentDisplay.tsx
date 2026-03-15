@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { buildContentUrl } from '../../../lib/contentUrl'
+import { useNavigate } from 'react-router-dom'
 import {
   getDetailContentTypeLabel,
   isEhelsestandardContentType,
@@ -23,8 +22,6 @@ import { getContentIdFromHref, getUniqueChildLinks } from '../shared/linkUtils'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import {
   buildContentSections,
-  buildContextualNavigationLinks,
-  LINK_LABEL_BY_REL,
   type ContentSection,
   type VurderingSection,
 } from './detailContentModel'
@@ -187,7 +184,6 @@ export function DetailContentDisplay({
   primarySectionTitle = 'Hovedanbefaling',
 }: DetailContentDisplayProps) {
   const navigate = useNavigate()
-  const location = useLocation()
   const mobileSectionsNavRef = useRef<HTMLDetailsElement>(null)
   const normalizedType = normalizeContentType(content.content_type)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
@@ -320,18 +316,6 @@ export function DetailContentDisplay({
     return () => observer.disconnect()
   }, [sections])
 
-  const supportingLinks = useMemo(
-    () => {
-      const rootPublication = content.root_publication ? [content.root_publication] : []
-      const rootLinks = content.links?.filter((link) => link.rel === 'root' && Boolean(link.href)) || []
-      return [...rootPublication, ...rootLinks]
-    },
-    [content.links, content.root_publication],
-  )
-  const contextualNavigationLinks = useMemo(
-    () => buildContextualNavigationLinks(content.id, supportingLinks),
-    [content.id, supportingLinks],
-  )
   const childContentItems = useMemo(
     () => {
       const fallbackLinkItems = dedupeDetailChildItems(
@@ -458,9 +442,7 @@ export function DetailContentDisplay({
     navigate(internalPath)
   }
 
-  const hasSidebarContent =
-    sections.length > 1 ||
-    contextualNavigationLinks.length > 0
+  const hasSidebarContent = sections.length > 1
   // Reserve sidebar space while enrichment is loading to prevent grid layout shift
   const showSidebarLayout = hasSidebarContent || isEnrichedLoading
 
@@ -498,45 +480,6 @@ export function DetailContentDisplay({
 
           {isEnrichedLoading && (
             <DetailAsideLoadingSkeleton />
-          )}
-
-          {contextualNavigationLinks.length > 0 && (
-            <section className="border-t border-slate-100 pl-7 pt-4">
-              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Gå til publikasjon
-              </p>
-              <ul className="m-0 list-none space-y-1.5 p-0">
-                {contextualNavigationLinks.map((link) => {
-                  const label =
-                    link.title ||
-                    LINK_LABEL_BY_REL[link.rel] ||
-                    `${link.rel.charAt(0).toUpperCase()}${link.rel.slice(1)}`
-                  return (
-                    <li key={`contextual-${link.rel}-${link.href}`}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const normalizedContentType = link.type?.trim()
-                          navigate(buildContentUrl({ id: link.contentId, path: link.path ?? undefined }), {
-                            state: {
-                              ...(location.state as Record<string, unknown> | null),
-                              sourceContentId: content.id,
-                              sourceContentTitle: content.title,
-                              ...(normalizedContentType
-                                ? { contentType: normalizedContentType }
-                                : {}),
-                            },
-                          })
-                        }}
-                        className="w-full py-0.5 px-0 text-left text-xs text-slate-500 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#025169] hover:underline"
-                      >
-                        {label}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
           )}
 
           {sections.length > 0 && visibleDocumentLinks.length > 0 && (
