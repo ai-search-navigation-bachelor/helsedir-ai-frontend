@@ -27,6 +27,14 @@ export interface ContextualNavigationLink extends ContentLink {
   contentId: string
 }
 
+function getRelationKind(link: ContentLink | ContentRelationItem) {
+  if ('rel' in link) {
+    return link.rel || 'root'
+  }
+
+  return link.relation_kind || link.relation || link.kind || 'root'
+}
+
 function toContextualNavigationLink(link: ContentLink | ContentRelationItem) {
   if ('rel' in link) {
     return {
@@ -36,7 +44,7 @@ function toContextualNavigationLink(link: ContentLink | ContentRelationItem) {
   }
 
   return {
-    rel: 'root',
+    rel: getRelationKind(link),
     type: link.content_type || link.info_type || '',
     title: link.title,
     href: link.path
@@ -125,7 +133,7 @@ export function buildContextualNavigationLinks(
   const seenContentIds = new Set<string>()
 
   return supportingLinks
-    .filter((link) => ('rel' in link ? link.rel === 'root' : true))
+    .filter((link) => getRelationKind(link) === 'root')
     .map(toContextualNavigationLink)
     .filter((link): link is ContentLink & { contentId: string } => Boolean(link.contentId))
     .filter((link) => link.contentId !== contentId)

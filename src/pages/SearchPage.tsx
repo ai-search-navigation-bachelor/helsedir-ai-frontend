@@ -44,7 +44,7 @@ export function SearchPage() {
 
       {error && (
         <Alert>
-          <Paragraph>Det oppstod en feil ved sÃ¸ket. Vennligst prÃ¸v igjen.</Paragraph>
+          <Paragraph>Det oppstod en feil ved søket. Vennligst prøv igjen.</Paragraph>
         </Alert>
       )}
 

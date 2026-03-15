@@ -23,10 +23,14 @@ export interface ContentRelationItem {
   title: string
   content_type?: string
   info_type?: string
+  relation_kind?: string
+  relation?: string
+  kind?: string
   path?: string | null
   has_text_content?: boolean
   document_url?: string | null
   is_pdf_only?: boolean
+  children?: NestedContent[] | null
 }
 
 export interface ContentChildGroup {
@@ -99,7 +103,7 @@ export interface ContentDetail {
   links?: ContentLink[]
   parent?: ContentRelationItem | null
   root_publication?: ContentRelationItem | null
-  chapters?: ContentRelationItem[]
+  chapters?: NestedContent[]
   references?: ContentRelationItem[]
   related_content?: ContentRelationItem[]
   child_groups?: ContentChildGroup[]

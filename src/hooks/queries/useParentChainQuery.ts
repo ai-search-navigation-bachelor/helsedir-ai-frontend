@@ -144,9 +144,23 @@ async function fetchParentChain(
 
 export function useParentChainQuery(content?: ContentDetail, searchId?: string) {
   const enabled = hasForelderLink(content)
+  const parentReference = getParentReference(content)
+  const forelderLink = content?.links?.find((link) => link.rel === 'forelder')
 
   return useQuery<ParentChainResult>({
-    queryKey: ['parentChain', content?.id, searchId],
+    queryKey: [
+      'parentChain',
+      content?.id,
+      searchId,
+      parentReference?.id,
+      parentReference?.path,
+      parentReference?.title,
+      parentReference?.content_type,
+      parentReference?.info_type,
+      forelderLink?.id,
+      forelderLink?.href,
+      content?.path,
+    ],
     queryFn: ({ signal }) => fetchParentChain(signal, content!, searchId),
     enabled: enabled && Boolean(content),
     staleTime: 5 * 60 * 1000,

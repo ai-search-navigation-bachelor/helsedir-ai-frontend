@@ -60,7 +60,7 @@ export function SearchResultCard({
           href={documentUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Åpne dokument for ${result.title} i ny fane`}
+          aria-label={`Åpne PDF-dokument for ${result.title} i ny fane`}
           className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#025169]"
         />
       ) : (

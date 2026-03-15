@@ -145,9 +145,11 @@ export function DevResultItem({
                   alignItems: 'center',
                   gap: '3px',
                 }}
-                title={roleBoost > 1.0
-                  ? `Rolle-boost: score multiplisert med ${roleBoost} (prioritert for valgt rolle)`
-                  : `Rolle-demping: score multiplisert med ${roleBoost} (nedprioritert for valgt rolle)`}
+                title={
+                  roleBoost > 1.0
+                    ? `Rolle-boost: score multiplisert med ${roleBoost} (prioritert for valgt rolle)`
+                    : `Rolle-demping: score multiplisert med ${roleBoost} (nedprioritert for valgt rolle)`
+                }
               >
                 <span style={{ fontSize: '0.64rem', fontWeight: 700 }}>Rolle</span>
                 {`\u00D7${roleBoost}`}
@@ -170,7 +172,9 @@ export function DevResultItem({
                 title="ML-rerank er brukt på dette treffet"
               >
                 <span style={{ fontSize: '0.64rem', fontWeight: 700 }}>Rerank</span>
-                {rerankRankChange ? `${rerankRankChange > 0 ? '+' : ''}${rerankRankChange}` : 'på'}
+                {typeof rerankRankChange === 'number'
+                  ? `${rerankRankChange > 0 ? '+' : ''}${rerankRankChange}`
+                  : 'på'}
               </span>
             )}
 
@@ -187,9 +191,11 @@ export function DevResultItem({
                   alignItems: 'center',
                   gap: '3px',
                 }}
-                title={rankDiff > 0
-                  ? `Rangert ${rankDiff} plasser høyere enn i Konfig A`
-                  : `Rangert ${Math.abs(rankDiff)} plasser lavere enn i Konfig A`}
+                title={
+                  rankDiff > 0
+                    ? `Rangert ${rankDiff} plasser høyere enn i Konfig A`
+                    : `Rangert ${Math.abs(rankDiff)} plasser lavere enn i Konfig A`
+                }
               >
                 <span style={{ fontSize: '0.64rem', fontWeight: 700 }}>vs A</span>
                 {rankDiff > 0 ? `+${rankDiff}` : String(rankDiff)}
@@ -315,13 +321,19 @@ export function DevResultItem({
               {bm25 !== undefined && config && (
                 <>
                   <span style={{ color: '#0284c7' }}>BM25</span>
-                  <span>{bm25.toFixed(3)} × vekt {config.bm25_weight.toFixed(2)} = {weightedBm25?.toFixed(3)}</span>
+                  <span>
+                    {bm25.toFixed(3)} × vekt {config.bm25_weight.toFixed(2)} ={' '}
+                    {weightedBm25?.toFixed(3)}
+                  </span>
                 </>
               )}
               {semantic !== undefined && config && (
                 <>
                   <span style={{ color: '#059669' }}>Semantisk</span>
-                  <span>{semantic.toFixed(3)} × vekt {config.semantic_weight.toFixed(2)} = {weightedSemantic?.toFixed(3)}</span>
+                  <span>
+                    {semantic.toFixed(3)} × vekt {config.semantic_weight.toFixed(2)} ={' '}
+                    {weightedSemantic?.toFixed(3)}
+                  </span>
                 </>
               )}
               {rrf !== undefined && (
@@ -342,7 +354,10 @@ export function DevResultItem({
                 </>
               )}
               <span style={{ color: '#047FA4' }}>Samlet</span>
-              <span>{result.score.toFixed(4)}{rerankScore !== undefined ? ' (etter rerank)' : ' (RRF-fusjonert)'}</span>
+              <span>
+                {result.score.toFixed(4)}
+                {rerankScore !== undefined ? ' (etter rerank)' : ' (RRF-fusjonert)'}
+              </span>
             </div>
           ) : null}
 
@@ -413,7 +428,13 @@ interface ResultsColumnHeaderProps {
   mode: 'hybrid' | 'keyword'
 }
 
-export function ResultsColumnHeader({ title, subtitle, extraInfo, roleInfo, mode }: ResultsColumnHeaderProps) {
+export function ResultsColumnHeader({
+  title,
+  subtitle,
+  extraInfo,
+  roleInfo,
+  mode,
+}: ResultsColumnHeaderProps) {
   return (
     <div
       style={{
@@ -422,7 +443,15 @@ export function ResultsColumnHeader({ title, subtitle, extraInfo, roleInfo, mode
         borderBottom: '1px solid #e2e8f0',
       }}
     >
-      <h3 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, marginBottom: '2px', color: '#1e293b' }}>
+      <h3
+        style={{
+          fontSize: '0.85rem',
+          fontWeight: 700,
+          margin: 0,
+          marginBottom: '2px',
+          color: '#1e293b',
+        }}
+      >
         {title}
       </h3>
       <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{subtitle}</p>
@@ -433,7 +462,14 @@ export function ResultsColumnHeader({ title, subtitle, extraInfo, roleInfo, mode
         <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{roleInfo}</p>
       )}
       <ScoreLegend mode={mode} />
-      <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: '6px 0 0', fontStyle: 'italic' }}>
+      <p
+        style={{
+          fontSize: '0.65rem',
+          color: '#94a3b8',
+          margin: '6px 0 0',
+          fontStyle: 'italic',
+        }}
+      >
         Klikk på et resultat for å se score-detaljer
       </p>
     </div>

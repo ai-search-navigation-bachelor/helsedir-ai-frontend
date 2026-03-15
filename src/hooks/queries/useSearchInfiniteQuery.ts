@@ -27,6 +27,28 @@ export interface UseSearchInfiniteQueryOptions {
   role_penalty?: number
 }
 
+export function buildSearchInfiniteQueryKey(
+  query: string,
+  options?: UseSearchInfiniteQueryOptions,
+) {
+  return [
+    'search',
+    query,
+    options?.category,
+    options?.role,
+    options?.method,
+    options?.rerank,
+    options?.explain,
+    options?.bm25_weight,
+    options?.semantic_weight,
+    options?.rrf_k,
+    options?.temaside_boost,
+    options?.retningslinje_boost,
+    options?.role_boost,
+    options?.role_penalty,
+  ] as const
+}
+
 export function useSearchInfiniteQuery(
   query: string,
   options?: UseSearchInfiniteQueryOptions,
@@ -38,22 +60,7 @@ export function useSearchInfiniteQuery(
     readonly unknown[],
     SearchPageParam
   >({
-    queryKey: [
-      'search',
-      query,
-      options?.category,
-      options?.role,
-      options?.method,
-      options?.rerank,
-      options?.explain,
-      options?.bm25_weight,
-      options?.semantic_weight,
-      options?.rrf_k,
-      options?.temaside_boost,
-      options?.retningslinje_boost,
-      options?.role_boost,
-      options?.role_penalty,
-    ],
+    queryKey: buildSearchInfiniteQueryKey(query, options),
     queryFn: async ({ signal, pageParam }) => {
       return search(query, {
         signal,
@@ -105,7 +112,7 @@ export function prefetchCategorySearch(
     readonly unknown[],
     SearchPageParam
   >({
-    queryKey: ['search', query, category, role],
+    queryKey: buildSearchInfiniteQueryKey(query, { category, role }),
     queryFn: async ({ signal }) => {
       return search(query, {
         signal,

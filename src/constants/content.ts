@@ -22,7 +22,6 @@ const CANONICAL_CONTENT_TYPE_MAP: Record<string, string> = {
   'e-helsestandard': 'ehelsestandard',
   'faglig-rad': 'rad',
   kapitler: 'kapittel',
-  'pakkeforlop-anbefaling': 'anbefaling',
   retningslinjer: 'retningslinje',
   'tema-side': 'temaside',
 }

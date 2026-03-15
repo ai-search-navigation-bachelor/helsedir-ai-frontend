@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { ContentDetail, ContentLink, LinkedContentGroup } from '../../../types/content'
 import { SEARCH_MAIN_CATEGORIES } from '../../../constants/categories'
+import { normalizeContentType } from '../../../constants/content'
 import { TemasideHeader } from './TemasideHeader'
 import { ContentSection } from './TemasideContentSection'
 import { ChildTemasideSection } from './TemasideChildSection'
@@ -47,6 +48,10 @@ function getParentLink(content: ContentDetail) {
   return content.links?.find((l) => l.rel === 'forelder') ?? null
 }
 
+function getTemasideLinkKey(link: ContentLink) {
+  return link.id || link.path || link.href || ''
+}
+
 function getChildTemasideLinks(content: ContentDetail): ContentLink[] {
   const groupedTemasideItems = content.child_groups
     ?.filter((group) => group.info_type === 'temaside')
@@ -65,13 +70,36 @@ function getChildTemasideLinks(content: ContentDetail): ContentLink[] {
         })),
     )
 
-  if (groupedTemasideItems && groupedTemasideItems.length > 0) {
-    return groupedTemasideItems
-  }
+  const directTemasideLinks = (content.links ?? [])
+    .reduce<ContentLink[]>((result, link) => {
+      if (
+        link.rel !== 'barn' ||
+        normalizeContentType(link.type) !== 'temaside' ||
+        (!link.href && !link.path && !link.id)
+      ) {
+        return result
+      }
 
-  return (content.links ?? []).filter(
-    (l) => l.rel === 'barn' && l.type === 'temaside' && l.href,
-  )
+      const href = link.id ? buildContentUrl({ path: link.path, id: link.id }) : link.href
+      if (!href) return result
+
+      result.push({
+        ...link,
+        href,
+        path: link.path || null,
+      })
+      return result
+    }, [])
+
+  const mergedLinks = [...(groupedTemasideItems ?? []), ...directTemasideLinks]
+  const seen = new Set<string>()
+
+  return mergedLinks.filter((link) => {
+    const key = getTemasideLinkKey(link)
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 function EmptyState() {

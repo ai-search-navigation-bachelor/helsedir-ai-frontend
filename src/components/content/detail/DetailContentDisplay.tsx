@@ -11,7 +11,7 @@ import {
 } from '../../../constants/content'
 import { formatDateLabel } from '../../../lib/content/date'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
-import type { ContentChildGroup, ContentLink, ContentRelationItem } from '../../../types'
+import type { ContentChildGroup, ContentLink, ContentRelationItem, NestedContent } from '../../../types'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
@@ -77,11 +77,21 @@ function isReferenceContentType(contentType?: string) {
   return normalizeContentType(contentType).includes('referanse')
 }
 
+function isNestedDetailChild(source: ContentRelationItem | NestedContent) {
+  return (
+    'type' in source ||
+    'tittel' in source ||
+    'tekst' in source ||
+    'body' in source ||
+    'data' in source
+  )
+}
+
 function ReferenceDropdown({
   items,
   className = '',
 }: {
-  items: Array<{ id: string; tittel?: string }>
+  items: NestedContent[]
   className?: string
 }) {
   if (items.length === 0) return null
@@ -110,35 +120,25 @@ function ReferenceDropdown({
   )
 }
 
-interface DetailChildItem {
-  id: string
-  path?: string
-  tittel: string
-  type?: string
-  children?: Array<{
-    id: string
-    path?: string
-    tittel: string
-    type?: string
-  }>
-}
+type DetailChildSource = ContentRelationItem | ContentLink | NestedContent
 
 function toDetailChildItem(
-  source: ContentRelationItem | ContentLink,
+  source: DetailChildSource,
   fallbackType?: string,
-): DetailChildItem | null {
+): NestedContent | null {
   if ('rel' in source) {
-    const id = source.id || source.href || getContentIdFromHref(source.href) || ''
+    const id = source.id || getContentIdFromHref(source.href) || ''
     if (!id) return null
 
     return {
       id,
       path: source.path || undefined,
       tittel: source.title || '',
+      title: source.title || '',
       type: source.type || fallbackType,
       children: source.children
         ?.map((child) => toDetailChildItem(child))
-        .filter((child): child is NonNullable<DetailChildItem['children']>[number] => Boolean(child)),
+        .filter((child): child is NestedContent => Boolean(child)),
     }
   }
 
@@ -148,18 +148,34 @@ function toDetailChildItem(
 
   if (!source.id) return null
 
+  const normalizedChildren = source.children
+    ?.map((child) => toDetailChildItem(child))
+    .filter((child): child is NestedContent => Boolean(child))
+  const title = source.title || ('tittel' in source ? source.tittel : undefined) || ''
+  const type =
+    ('content_type' in source ? source.content_type : undefined) ||
+    ('info_type' in source ? source.info_type : undefined) ||
+    ('type' in source ? source.type : undefined) ||
+    fallbackType
+
   return {
+    ...(isNestedDetailChild(source) ? source : {}),
     id: source.id,
     path: source.path || undefined,
-    tittel: source.title || '',
-    type: source.content_type || source.info_type || fallbackType,
+    tittel: ('tittel' in source ? source.tittel : undefined) || title,
+    title: source.title || title,
+    type,
+    children: normalizedChildren,
+    has_text_content: source.has_text_content,
+    document_url: source.document_url,
+    is_pdf_only: source.is_pdf_only,
   }
 }
 
-function dedupeDetailChildItems(items: Array<DetailChildItem | null>) {
+function dedupeDetailChildItems(items: Array<NestedContent | null>) {
   const seen = new Set<string>()
 
-  return items.filter((item): item is DetailChildItem => {
+  return items.filter((item): item is NestedContent => {
     if (!item) return false
     if (seen.has(item.id)) return false
     seen.add(item.id)
@@ -327,7 +343,12 @@ export function DetailContentDisplay({
       )
       const normalizedRelatedItems = dedupeDetailChildItems(
         [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
-          toDetailChildItem(item, item.content_type || item.info_type),
+          toDetailChildItem(
+            item,
+            ('content_type' in item ? item.content_type : undefined) ||
+              ('info_type' in item ? item.info_type : undefined) ||
+              ('type' in item ? item.type : undefined),
+          ),
         ),
       )
 
@@ -367,18 +388,23 @@ export function DetailContentDisplay({
   )
   const relatedChildItems = useMemo(
     () => {
-      const normalizedRelatedItems = dedupeDetailChildItems(
-        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
-          toDetailChildItem(item, item.content_type || item.info_type),
-        ),
-      )
-      if (normalizedRelatedItems.length > 0) return normalizedRelatedItems
-
       const groupedRelatedItems = getChildItemsFromGroups(
         content.child_groups,
         (group) => !isReferenceContentType(group.info_type),
       )
       if (groupedRelatedItems.length > 0) return groupedRelatedItems
+
+      const normalizedRelatedItems = dedupeDetailChildItems(
+        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
+          toDetailChildItem(
+            item,
+            ('content_type' in item ? item.content_type : undefined) ||
+              ('info_type' in item ? item.info_type : undefined) ||
+              ('type' in item ? item.type : undefined),
+          ),
+        ),
+      )
+      if (normalizedRelatedItems.length > 0) return normalizedRelatedItems
 
       return childContentItems.filter((item) => !isReferenceContentType(item.type))
     },
