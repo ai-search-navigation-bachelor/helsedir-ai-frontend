@@ -238,7 +238,6 @@ export function DetailContentDisplay({
 
   const {
     data: enrichedContent,
-    isLoading: isEnrichedLoading,
     error: enrichedError,
   } = useEnrichedContentQuery({
     contentId: content.id,
@@ -477,8 +476,7 @@ export function DetailContentDisplay({
   }
 
   const hasSidebarContent = sections.length > 1
-  // Reserve sidebar space while enrichment is loading to prevent grid layout shift
-  const showSidebarLayout = hasSidebarContent || isEnrichedLoading
+  const showSidebarLayout = hasSidebarContent
 
   return (
     <div className="flex flex-col gap-8">
