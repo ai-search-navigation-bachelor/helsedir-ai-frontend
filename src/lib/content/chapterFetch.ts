@@ -47,11 +47,7 @@ function extractBackendId(href: string): string | null {
   return last && last.includes('-') ? last : null
 }
 
-/**
- * Fetch a single child content item.
- * Prefers backend (by id or by extracting id from href), falls back to Helsedir.
- */
-async function fetchChild(
+async function fetchLinkedChild(
   link: { id?: string | null; href?: string | null; last_reviewed_date?: string | null },
   signal?: AbortSignal,
 ): Promise<NestedContent | null> {
@@ -59,27 +55,27 @@ async function fetchChild(
 
   if (backendId) {
     try {
-      const result = contentDetailToNestedContent(await getContent(backendId, undefined, { signal }))
-      // Use sist_faglig_oppdatert from parent link as fallback
-      if (!result.sistFagligOppdatert && link.last_reviewed_date) {
-        result.sistFagligOppdatert = link.last_reviewed_date
-      }
-      return result
+      return await fetchChapter(backendId, signal, link.last_reviewed_date || undefined)
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') throw err
-      // Backend didn't have it — try Helsedir below
     }
   }
 
   if (link.href) {
     try {
-      const result = (await fetchHelsedirContent(link.href, signal)) as unknown as NestedContent
-      if (!result.sistFagligOppdatert && link.last_reviewed_date) {
-        result.sistFagligOppdatert = link.last_reviewed_date
+      return await fetchChapter(link.href, signal, link.last_reviewed_date || undefined)
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') throw err
+
+      try {
+        const result = (await fetchHelsedirContent(link.href, signal)) as NestedContent
+        if (!result.sistFagligOppdatert && link.last_reviewed_date) {
+          result.sistFagligOppdatert = link.last_reviewed_date
+        }
+        return result
+      } catch (fallbackErr) {
+        if (fallbackErr instanceof Error && fallbackErr.name === 'AbortError') throw fallbackErr
       }
-      return result
-    } catch {
-      return null
     }
   }
 
@@ -101,11 +97,18 @@ async function fetchChapterFromBackend(
   const contentChildren = childLinks.filter((l) => !isKapittel(l.type) && Boolean(l.id || l.href))
   const kapittelChildren = childLinks.filter((l) => isKapittel(l.type))
 
-  const fetched = await Promise.all(contentChildren.map((link) => fetchChild({
-    id: link.id,
-    href: link.href,
-    last_reviewed_date: link.last_reviewed_date,
-  }, signal)))
+  const fetched = await Promise.all(
+    contentChildren.map((link) =>
+      fetchLinkedChild(
+        {
+          id: link.id,
+          href: link.href,
+          last_reviewed_date: link.last_reviewed_date,
+        },
+        signal,
+      ),
+    ),
+  )
 
   const kapittelStubs: NestedContent[] = kapittelChildren.map((l) => ({
     id: l.id || l.href || '',
@@ -154,7 +157,7 @@ async function fetchChapterFromHelsedir(href: string, signal?: AbortSignal): Pro
   const kapittelChildren = barnLinks.filter((l) => isKapittel(l.type))
 
   const fetched = await Promise.all(
-    contentChildren.map((l) => fetchChild({ href: l.href }, signal)),
+    contentChildren.map((l) => fetchChapter(l.href || '', signal)),
   )
 
   const kapittelStubs: NestedContent[] = kapittelChildren.map((l) => ({
@@ -194,7 +197,6 @@ export async function fetchChapter(
         return await fetchChapterFromBackend(backendId, signal, fallbackSistFagligOppdatert)
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') throw err
-        // Backend doesn't have this chapter — fetch from Helsedir
       }
     }
     return fetchChapterFromHelsedir(idOrHref, signal)

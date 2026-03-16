@@ -1,4 +1,3 @@
-import DOMPurify from 'dompurify'
 import type { MouseEvent } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
@@ -9,6 +8,7 @@ import { hasVisibleContent, getNodeTitle, formatDateLabel } from './treeUtils'
 import { ExpandableSubcontent } from './ExpandableSubcontent'
 import { ExpandableLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, getRelatedLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
+import { RichContentHtml } from '../shared/RichContentHtml'
 
 interface PageContentProps {
   activePage: PageNode
@@ -129,11 +129,9 @@ export function PageContent({
       )}
 
       {hasBody && (
-        <div
+        <RichContentHtml
           className="content-html text-base leading-7 text-slate-800"
-          dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(activePage.node.tekst || activePage.node.body || ''),
-          }}
+          html={activePage.node.tekst || activePage.node.body || ''}
         />
       )}
 

@@ -18,6 +18,7 @@ import {
   normalizeTemasidePath,
   sanitizeTemasideBreadcrumbItems,
 } from '../lib/temaside/hubUtils'
+import { shouldDisplayTemasideNode } from '../lib/temaside/visibility'
 import { useTemasideBreadcrumbStore } from '../stores'
 
 export function useTemasideHubPageModel(
@@ -47,12 +48,26 @@ export function useTemasideHubPageModel(
       return null
     }
 
-    const metaByPath: Record<string, { title?: string; contentId?: string }> = {}
-    const paths = themePagesData.results.map((result) => {
+    const visibleThemePages = themePagesData.results.filter(shouldDisplayTemasideNode)
+    const metaByPath: Record<string, {
+      title?: string
+      contentId?: string
+      hasBodyContent?: boolean
+      hasLinkedContent?: boolean
+      hasChildren?: boolean
+      childCount?: number
+      shouldDisplay?: boolean
+    }> = {}
+    const paths = visibleThemePages.map((result) => {
       const normalizedPath = normalizeTemasidePath(result.path)
       metaByPath[normalizedPath] = {
         title: result.title,
         contentId: result.id,
+        hasBodyContent: result.has_body_content,
+        hasLinkedContent: result.has_linked_content,
+        hasChildren: result.has_children,
+        childCount: result.child_count,
+        shouldDisplay: result.should_display,
       }
       return normalizedPath
     })

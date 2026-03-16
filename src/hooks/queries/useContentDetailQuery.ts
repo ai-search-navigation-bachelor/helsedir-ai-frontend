@@ -30,7 +30,13 @@ export function useContentDetailQuery({
   const queryIdentifier = contentPath || contentId
 
   return useQuery<ContentDetailData>({
-    queryKey: ['content', queryIdentifier, searchId, normalizedRouteContentType],
+    queryKey: [
+      'content',
+      queryIdentifier,
+      searchId,
+      normalizedRouteContentType,
+      skipHelsedirFallback,
+    ],
     queryFn: async ({ signal }) => {
       if (!contentId && !contentPath) throw new Error('ID eller path mangler')
 

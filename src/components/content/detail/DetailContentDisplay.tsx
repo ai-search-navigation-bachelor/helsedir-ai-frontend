@@ -1,26 +1,27 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
-import DOMPurify from 'dompurify'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { buildContentUrl } from '../../../lib/contentUrl'
+import { useNavigate } from 'react-router-dom'
 import {
   getDetailContentTypeLabel,
+  isEhelsestandardContentType,
   isRecommendationContentType,
   isTemasideContentType,
   normalizeContentType,
 } from '../../../constants/content'
 import { formatDateLabel } from '../../../lib/content/date'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
+import type { ContentChildGroup, ContentLink, ContentRelationItem, NestedContent } from '../../../types'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
-import { asDocumentLink, getDocumentLinks, getRelatedLinks, isHelsedirektoratetPdfUrl } from './documentUtils'
+import { asDocumentLink, getDocumentLinks, getRelatedLinks } from './documentUtils'
+import { ExpandableSubcontent } from '../hierarchical/ExpandableSubcontent'
 import { hasVisibleContent } from '../shared/contentTextUtils'
+import { getContentIdFromHref, getUniqueChildLinks } from '../shared/linkUtils'
+import { RichContentHtml } from '../shared/RichContentHtml'
 import {
   buildContentSections,
-  buildContextualNavigationLinks,
-  LINK_LABEL_BY_REL,
   type ContentSection,
   type VurderingSection,
 } from './detailContentModel'
@@ -45,9 +46,9 @@ function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
             <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
               Fordeler og ulemper
             </Heading>
-            <div
+            <RichContentHtml
               className="content-html text-base leading-7 text-slate-800"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vurdering.tradeoffs) }}
+              html={vurdering.tradeoffs}
             />
           </div>
         )}
@@ -56,9 +57,9 @@ function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
             <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 8 }}>
               Verdier og preferanser
             </Heading>
-            <div
+            <RichContentHtml
               className="content-html text-base leading-7 text-slate-800"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vurdering.preferences) }}
+              html={vurdering.preferences}
             />
           </div>
         )}
@@ -72,21 +73,147 @@ interface DetailContentDisplayProps extends ContentDisplayProps {
   primarySectionTitle?: string
 }
 
+function isReferenceContentType(contentType?: string) {
+  return normalizeContentType(contentType).includes('referanse')
+}
+
+function isNestedDetailChild(source: ContentRelationItem | NestedContent) {
+  return (
+    'type' in source ||
+    'tittel' in source ||
+    'tekst' in source ||
+    'body' in source ||
+    'data' in source
+  )
+}
+
+function ReferenceDropdown({
+  items,
+  className = '',
+}: {
+  items: NestedContent[]
+  className?: string
+}) {
+  if (items.length === 0) return null
+
+  return (
+    <details className={`group/dropdown rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm ${className}`.trim()}>
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open/dropdown:rounded-b-none">
+        <ChevronRightIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/dropdown:rotate-90 group-open/dropdown:text-[#025169]" />
+        <span className="text-[0.9375rem] font-medium text-slate-800 group-open/dropdown:text-[#025169]">
+          Referanser
+        </span>
+      </summary>
+      <div className="border-t border-slate-200 px-4 pb-5 pt-3">
+        <ul className="m-0 list-none space-y-2 p-0">
+          {items.map((item, index) => (
+            <li
+              key={`reference-${item.id || index}`}
+              className="rounded-md px-3 py-2 text-sm leading-6 text-slate-700"
+            >
+              {item.tittel || 'Uten tittel'}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </details>
+  )
+}
+
+type DetailChildSource = ContentRelationItem | ContentLink | NestedContent
+
+function toDetailChildItem(
+  source: DetailChildSource,
+  fallbackType?: string,
+): NestedContent | null {
+  if ('rel' in source) {
+    const id = source.id || getContentIdFromHref(source.href) || ''
+    if (!id) return null
+
+    return {
+      id,
+      path: source.path || undefined,
+      tittel: source.title || '',
+      title: source.title || '',
+      type: source.type || fallbackType,
+      children: source.children
+        ?.map((child) => toDetailChildItem(child))
+        .filter((child): child is NestedContent => Boolean(child)),
+    }
+  }
+
+  if (source.is_pdf_only && source.document_url) {
+    return null
+  }
+
+  if (!source.id) return null
+
+  const normalizedChildren = source.children
+    ?.map((child) => toDetailChildItem(child))
+    .filter((child): child is NestedContent => Boolean(child))
+  const title = source.title || ('tittel' in source ? source.tittel : undefined) || ''
+  const type =
+    ('content_type' in source ? source.content_type : undefined) ||
+    ('info_type' in source ? source.info_type : undefined) ||
+    ('type' in source ? source.type : undefined) ||
+    fallbackType
+
+  return {
+    ...(isNestedDetailChild(source) ? source : {}),
+    id: source.id,
+    path: source.path || undefined,
+    tittel: ('tittel' in source ? source.tittel : undefined) || title,
+    title: source.title || title,
+    type,
+    children: normalizedChildren,
+    has_text_content: source.has_text_content,
+    document_url: source.document_url,
+    is_pdf_only: source.is_pdf_only,
+  }
+}
+
+function dedupeDetailChildItems(items: Array<NestedContent | null>) {
+  const seen = new Set<string>()
+
+  return items.filter((item): item is NestedContent => {
+    if (!item) return false
+    if (seen.has(item.id)) return false
+    seen.add(item.id)
+    return true
+  })
+}
+
+function getChildItemsFromGroups(
+  groups: ContentChildGroup[] | null | undefined,
+  predicate: (group: ContentChildGroup) => boolean,
+) {
+  return dedupeDetailChildItems(
+    (groups ?? [])
+      .filter(predicate)
+      .flatMap((group) => group.items.map((item) => toDetailChildItem(item, group.info_type))),
+  )
+}
+
 export function DetailContentDisplay({
   content,
   typeLabelOverride,
   primarySectionTitle = 'Hovedanbefaling',
 }: DetailContentDisplayProps) {
   const navigate = useNavigate()
-  const location = useLocation()
   const mobileSectionsNavRef = useRef<HTMLDetailsElement>(null)
   const normalizedType = normalizeContentType(content.content_type)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const backendDocumentUrl = content.document_url?.trim() || ''
   const isPdfOnlyContent = Boolean(content.is_pdf_only)
   const hasBodyContent = useMemo(
-    () => !isPdfOnlyContent && hasVisibleContent(content.body),
-    [content.body, isPdfOnlyContent],
+    () => {
+      if (isPdfOnlyContent) return false
+      if (typeof content.has_text_content === 'boolean') {
+        return content.has_text_content && hasVisibleContent(content.body)
+      }
+      return hasVisibleContent(content.body)
+    },
+    [content.body, content.has_text_content, isPdfOnlyContent],
   )
   const backendPractical = content.anbefaling_fields?.praktisk || ''
   const backendRationale = content.anbefaling_fields?.rasjonale || ''
@@ -100,7 +227,8 @@ export function DetailContentDisplay({
   const hasBackendRecommendationStrength = Boolean(content.anbefaling_fields?.styrke?.trim())
   const hasSufficientBackendRecommendationData =
     hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
-  const shouldSkipHelsedirEnrichment = isTemasideContentType(normalizedType)
+  const shouldSkipHelsedirEnrichment =
+    isTemasideContentType(normalizedType) || isEhelsestandardContentType(normalizedType)
   const shouldSkipPdfOnlyEnrichment = isPdfOnlyContent && Boolean(backendDocumentUrl)
   const shouldAttemptEnrichment =
     !shouldSkipPdfOnlyEnrichment &&
@@ -138,7 +266,7 @@ export function DetailContentDisplay({
       ? backendPreferences
       : enrichedContent?.data?.nokkelInfo?.verdierogpreferanser || ''
 
-    return buildContentSections({
+    const result = buildContentSections({
       mainBody,
       practical,
       rationale,
@@ -146,6 +274,8 @@ export function DetailContentDisplay({
       preferences,
       primarySectionTitle,
     })
+
+    return result
   }, [
     backendPractical,
     backendPreferences,
@@ -202,28 +332,101 @@ export function DetailContentDisplay({
     return () => observer.disconnect()
   }, [sections])
 
-  const supportingLinks = useMemo(
-    () => content.links?.filter((link) => Boolean(link.href)) || [],
-    [content.links],
+  const childContentItems = useMemo(
+    () => {
+      const fallbackLinkItems = dedupeDetailChildItems(
+        getUniqueChildLinks(content.links).map((link) => toDetailChildItem(link)),
+      )
+
+      const normalizedReferenceItems = dedupeDetailChildItems(
+        (content.references ?? []).map((item) => toDetailChildItem(item, item.content_type || item.info_type)),
+      )
+      const normalizedRelatedItems = dedupeDetailChildItems(
+        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
+          toDetailChildItem(
+            item,
+            ('content_type' in item ? item.content_type : undefined) ||
+              ('info_type' in item ? item.info_type : undefined) ||
+              ('type' in item ? item.type : undefined),
+          ),
+        ),
+      )
+
+      const groupedItems = getChildItemsFromGroups(content.child_groups, () => true)
+
+      if (normalizedReferenceItems.length > 0 || normalizedRelatedItems.length > 0) {
+        return dedupeDetailChildItems([
+          ...normalizedReferenceItems,
+          ...normalizedRelatedItems,
+        ])
+      }
+
+      if (groupedItems.length > 0) {
+        return groupedItems
+      }
+
+      return fallbackLinkItems
+    },
+    [content.child_groups, content.chapters, content.links, content.references, content.related_content],
   )
-  const contextualNavigationLinks = useMemo(
-    () => buildContextualNavigationLinks(content.id, supportingLinks),
-    [content.id, supportingLinks],
+  const referenceItems = useMemo(
+    () => {
+      const normalizedReferenceItems = dedupeDetailChildItems(
+        (content.references ?? []).map((item) => toDetailChildItem(item, item.content_type || item.info_type)),
+      )
+      if (normalizedReferenceItems.length > 0) return normalizedReferenceItems
+
+      const groupedReferenceItems = getChildItemsFromGroups(
+        content.child_groups,
+        (group) => isReferenceContentType(group.info_type),
+      )
+      if (groupedReferenceItems.length > 0) return groupedReferenceItems
+
+      return childContentItems.filter((item) => isReferenceContentType(item.type))
+    },
+    [childContentItems, content.child_groups, content.references],
+  )
+  const relatedChildItems = useMemo(
+    () => {
+      const groupedRelatedItems = getChildItemsFromGroups(
+        content.child_groups,
+        (group) => !isReferenceContentType(group.info_type),
+      )
+      if (groupedRelatedItems.length > 0) return groupedRelatedItems
+
+      const normalizedRelatedItems = dedupeDetailChildItems(
+        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
+          toDetailChildItem(
+            item,
+            ('content_type' in item ? item.content_type : undefined) ||
+              ('info_type' in item ? item.info_type : undefined) ||
+              ('type' in item ? item.type : undefined),
+          ),
+        ),
+      )
+      if (normalizedRelatedItems.length > 0) return normalizedRelatedItems
+
+      return childContentItems.filter((item) => !isReferenceContentType(item.type))
+    },
+    [childContentItems, content.child_groups, content.chapters, content.related_content],
   )
 
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
   const documentLinks = useMemo(
     () => {
-      const links = getDocumentLinks(enrichedContent, content.links)
-      if (!backendDocumentUrl) return links
-      if (links.some((document) => document.href === backendDocumentUrl)) return links
+      const links = [...getDocumentLinks(content, content.links), ...getDocumentLinks(enrichedContent)]
+      const deduplicatedLinks = links.filter(
+        (document, index) => links.findIndex((candidate) => candidate.href === document.href) === index,
+      )
+      if (!backendDocumentUrl) return deduplicatedLinks
+      if (deduplicatedLinks.some((document) => document.href === backendDocumentUrl)) return deduplicatedLinks
 
       const backendDocumentLink = asDocumentLink(backendDocumentUrl, undefined, 'fil')
-      if (!backendDocumentLink) return links
+      if (!backendDocumentLink) return deduplicatedLinks
 
-      return [backendDocumentLink, ...links]
+      return [backendDocumentLink, ...deduplicatedLinks]
     },
-    [backendDocumentUrl, content.links, enrichedContent],
+    [backendDocumentUrl, content, enrichedContent],
   )
   const relatedLinks = useMemo(() => getRelatedLinks(content), [content])
   const publicationUrl = useMemo(() => {
@@ -231,40 +434,19 @@ export function DetailContentDisplay({
     if (!url) return null
     return documentLinks.some((document) => document.href === url) ? null : url
   }, [content.url, documentLinks, enrichedContent?.url])
-  const hasMainSections = sections.length > 0
-  const hasOnlyHelsedirPdfDocuments =
-    documentLinks.length > 0 &&
-    documentLinks.every((document) => isHelsedirektoratetPdfUrl(document.href))
-  const shouldShowPublicationLink =
+  const shouldShowPublicationFallback =
     Boolean(publicationUrl) &&
-    !hasMainSections &&
-    (hasOnlyHelsedirPdfDocuments || documentLinks.length === 0)
-  const visibleDocumentLinks = useMemo(() => {
-    if (!shouldShowPublicationLink) return documentLinks
-    return documentLinks.filter((document) => !isHelsedirektoratetPdfUrl(document.href))
-  }, [documentLinks, shouldShowPublicationLink])
-  const publicationFallbackDocument =
-    shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length === 0
-      ? { href: publicationUrl, label: 'Åpne side hos Helsedirektoratet', isPdf: false }
-      : null
-  const primaryDocument = visibleDocumentLinks[0] || publicationFallbackDocument
-  const isPrimaryPdfAction = Boolean(isPdfOnlyContent && primaryDocument?.isPdf)
-  const primaryDocumentLabel =
-    isPrimaryPdfAction ? 'Åpne PDF i ny fane' : primaryDocument?.label
-  const emptyStateMessage = isPrimaryPdfAction
-    ? 'Denne siden har ikke egen tekst. PDF-en åpnes i ny fane.'
-    : 'Denne siden har ikke egen tekst. Se innholdet hos Helsedirektoratet.'
+    sections.length === 0 &&
+    relatedChildItems.length === 0 &&
+    relatedLinks.length === 0 &&
+    documentLinks.length === 0
+  const visibleDocumentLinks = documentLinks
   const hasRelatedLinks = relatedLinks.length > 0
-  const fallbackLinks = !hasRelatedLinks && !isPrimaryPdfAction && primaryDocument
-    ? [{
-        href: primaryDocument.href,
-        label: primaryDocumentLabel || primaryDocument.label,
-        isPdf: Boolean(primaryDocument.isPdf),
-        isDocument: true,
-        fileType: primaryDocument.isPdf ? 'PDF' : undefined,
-        openInNewTab: true,
-      }]
-    : []
+  const hasAnyActionLinks =
+    visibleDocumentLinks.length > 0 ||
+    shouldShowPublicationFallback ||
+    hasRelatedLinks
+  const resourceSectionTitle = visibleDocumentLinks.length > 0 ? 'Dokumenter' : 'Lenker'
 
   const handleRelatedLinkClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -286,9 +468,7 @@ export function DetailContentDisplay({
     navigate(internalPath)
   }
 
-  const hasSidebarContent =
-    sections.length > 1 ||
-    contextualNavigationLinks.length > 0
+  const hasSidebarContent = sections.length > 1
   // Reserve sidebar space while enrichment is loading to prevent grid layout shift
   const showSidebarLayout = hasSidebarContent || isEnrichedLoading
 
@@ -328,49 +508,10 @@ export function DetailContentDisplay({
             <DetailAsideLoadingSkeleton />
           )}
 
-          {contextualNavigationLinks.length > 0 && (
+          {sections.length > 0 && visibleDocumentLinks.length > 0 && (
             <section className="border-t border-slate-100 pl-7 pt-4">
               <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Gå til publikasjon
-              </p>
-              <ul className="m-0 list-none space-y-1.5 p-0">
-                {contextualNavigationLinks.map((link) => {
-                  const label =
-                    link.title ||
-                    LINK_LABEL_BY_REL[link.rel] ||
-                    `${link.rel.charAt(0).toUpperCase()}${link.rel.slice(1)}`
-                  return (
-                    <li key={`contextual-${link.rel}-${link.href}`}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const normalizedContentType = link.type?.trim()
-                          navigate(buildContentUrl({ id: link.contentId, path: link.path ?? undefined }), {
-                            state: {
-                              ...(location.state as Record<string, unknown> | null),
-                              sourceContentId: content.id,
-                              sourceContentTitle: content.title,
-                              ...(normalizedContentType
-                                ? { contentType: normalizedContentType }
-                                : {}),
-                            },
-                          })
-                        }}
-                        className="w-full py-0.5 px-0 text-left text-xs text-slate-500 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#025169] hover:underline"
-                      >
-                        {label}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-          )}
-
-          {sections.length > 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationLink) && (
-            <section className="border-t border-slate-100 pl-7 pt-4">
-              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Dokument
+                {resourceSectionTitle}
               </p>
               <ul className="m-0 list-none space-y-1.5 p-0">
                 {visibleDocumentLinks.map((document) => (
@@ -385,18 +526,6 @@ export function DetailContentDisplay({
                     </a>
                   </li>
                 ))}
-                {shouldShowPublicationLink && publicationUrl && (
-                  <li key={`document-page-${publicationUrl}`}>
-                    <a
-                      href={publicationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-slate-500 hover:text-[#025169] hover:underline"
-                    >
-                      Åpne side hos Helsedirektoratet
-                    </a>
-                  </li>
-                )}
               </ul>
             </section>
           )}
@@ -449,16 +578,16 @@ export function DetailContentDisplay({
             </Alert>
           )}
 
-          {sections.map((section) => (
+          {sections.map((section, index) => (
             <article key={section.id} id={section.id} className="scroll-mt-20">
               {sections.length > 1 && (
                 <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
                   {section.title}
                 </Heading>
               )}
-              <div
+              <RichContentHtml
                 className="content-html text-base leading-7 text-slate-800"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.html) }}
+                html={section.html}
               />
               <VurderingDetails vurdering={section.vurdering} />
               {section.appendedDropdowns && section.appendedDropdowns.length > 0 && (
@@ -472,24 +601,123 @@ export function DetailContentDisplay({
                         </span>
                       </summary>
                       <div className="border-t border-slate-200 pr-4 pl-[2.75rem] pb-5 pt-3">
-                        <div
+                        <RichContentHtml
                           className="content-html text-base leading-7 text-slate-800"
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(dropdown.html) }}
+                          html={dropdown.html}
                         />
                         <VurderingDetails vurdering={dropdown.vurdering} />
                       </div>
                     </details>
                   ))}
+                  {index === 0 && <ReferenceDropdown items={referenceItems} />}
+                </div>
+              )}
+              {index === 0 && (!section.appendedDropdowns || section.appendedDropdowns.length === 0) && (
+                <div className="mt-6">
+                  <ReferenceDropdown items={referenceItems} />
                 </div>
               )}
             </article>
           ))}
 
+          {!showSidebarLayout && sections.length > 0 && visibleDocumentLinks.length > 0 && (
+            <section className="space-y-4">
+              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
+                {resourceSectionTitle}
+              </Heading>
+              <ul className="m-0 list-none space-y-3 p-0">
+                {visibleDocumentLinks.map((document) => (
+                  <li key={`inline-document-${document.href}`}>
+                    <a
+                      href={document.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{document.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {document.isPdf ? 'PDF' : 'Dokument'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+                {shouldShowPublicationFallback && publicationUrl && (
+                  <li key={`inline-document-page-${publicationUrl}`}>
+                    <a
+                      href={publicationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">Åpne hos Helsedirektoratet</span>
+                      <span className="mt-1 block text-xs text-slate-500">Ekstern side</span>
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </section>
+          )}
+
+          {relatedChildItems.length > 0 && (
+            <section className="space-y-3">
+              <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
+                Utforsk videre
+              </Heading>
+              {relatedChildItems.map((item, index) => (
+                <ExpandableSubcontent
+                  key={`detail-child-${item.id || index}`}
+                  item={item}
+                  itemKey={`detail-child-${item.id || index}`}
+                />
+              ))}
+            </section>
+          )}
+
+          {sections.length === 0 && referenceItems.length > 0 && <ReferenceDropdown items={referenceItems} />}
+
+          {sections.length === 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationFallback) && (
+            <section className="space-y-4">
+              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
+                {resourceSectionTitle}
+              </Heading>
+              <ul className="m-0 list-none space-y-3 p-0">
+                {visibleDocumentLinks.map((document) => (
+                  <li key={`fallback-document-${document.href}`}>
+                    <a
+                      href={document.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{document.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {document.isPdf ? 'PDF' : 'Dokument'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+                {shouldShowPublicationFallback && publicationUrl && (
+                  <li key={`fallback-document-page-${publicationUrl}`}>
+                    <a
+                      href={publicationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">Åpne hos Helsedirektoratet</span>
+                      <span className="mt-1 block text-xs text-slate-500">Ekstern side</span>
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </section>
+          )}
+
           {sections.length === 0 && hasRelatedLinks && (
             <section className="space-y-4">
-              <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
-                Denne siden har ikke egen tekst. Se relaterte rapporter og dokumenter fra Helsedirektoratet.
-              </Paragraph>
+              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
+                Videre lenker
+              </Heading>
               <ul className="m-0 list-none space-y-3 p-0">
                 {relatedLinks.map((link) => (
                   <li key={link.href}>
@@ -515,73 +743,12 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length === 0 && fallbackLinks.length > 0 && (
-            <section className="space-y-4">
+          {sections.length === 0 && childContentItems.length === 0 && !hasAnyActionLinks && (
+            <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
-                {emptyStateMessage}
+                Denne siden har ikke egen tekst eller tilgjengelige lenker.
               </Paragraph>
-              <ul className="m-0 list-none space-y-3 p-0">
-                {fallbackLinks.map((link) => (
-                  <li key={link.href}>
-                    <a
-                      href={link.href}
-                      target={link.openInNewTab ? '_blank' : undefined}
-                      rel={link.openInNewTab ? 'noopener noreferrer' : undefined}
-                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
-                    >
-                      <span className="block font-semibold text-slate-900">{link.label}</span>
-                      <span className="mt-1 block text-xs text-slate-500">
-                        {link.isPdf
-                          ? 'PDF'
-                          : link.isDocument
-                            ? (link.fileType || 'Dokument')
-                            : 'Rapport eller side'}
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
             </section>
-          )}
-
-          {sections.length === 0 && isPrimaryPdfAction && primaryDocument && (
-            <section className="space-y-4">
-              <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
-                {emptyStateMessage}
-              </Paragraph>
-              <ul className="m-0 list-none space-y-2 p-0">
-                {primaryDocument && (
-                  <li>
-                    <a
-                      href={primaryDocument.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-brand/90"
-                    >
-                      {primaryDocumentLabel}
-                    </a>
-                  </li>
-                )}
-                {shouldShowPublicationLink && publicationUrl && visibleDocumentLinks.length > 0 && (
-                  <li>
-                    <a
-                      href={publicationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-700 hover:text-blue-800 hover:underline"
-                    >
-                      Åpne side hos Helsedirektoratet
-                    </a>
-                  </li>
-                )}
-              </ul>
-            </section>
-          )}
-
-          {sections.length === 0 && !primaryDocument && !shouldShowPublicationLink && (
-            <Paragraph style={{ marginTop: 0, color: '#64748b' }}>
-              Ingen innholdsseksjoner tilgjengelig for denne siden.
-            </Paragraph>
           )}
 
           {(() => {

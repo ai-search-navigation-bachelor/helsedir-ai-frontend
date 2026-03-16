@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useThemePagesQuery } from './useThemePagesQuery'
+import { shouldDisplayTemasideNode } from '../../lib/temaside/visibility'
 
 /**
  * Returns a Map from temaside content ID to its canonical path.
@@ -10,7 +11,7 @@ export function useTemasidePathMap(): Map<string, string> {
 
   return useMemo(() => {
     const map = new Map<string, string>()
-    const pages = themePagesData?.results ?? []
+    const pages = (themePagesData?.results ?? []).filter(shouldDisplayTemasideNode)
 
     pages.forEach((page) => {
       const id = page.id?.trim()

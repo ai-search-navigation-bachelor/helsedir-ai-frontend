@@ -49,7 +49,14 @@ export function ContentPageLayout({ content, children }: ContentPageLayoutProps)
 
   if (isParentChainLoading) {
     const normalizedType = normalizeContentType(content.content_type)
-    const isHierarchical = isRetningslinjeContentType(normalizedType) || countUniqueChildLinks(content.links) > 0
+    const hasNormalizedChildren =
+      (content.child_groups?.length || 0) > 0 ||
+      (content.chapters?.length || 0) > 0 ||
+      (content.related_content?.length || 0) > 0
+    const isHierarchical =
+      isRetningslinjeContentType(normalizedType) ||
+      hasNormalizedChildren ||
+      countUniqueChildLinks(content.links) > 0
 
     return (
       <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">

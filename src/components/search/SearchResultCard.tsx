@@ -2,7 +2,6 @@ import { useCallback, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { HiArrowRight } from "react-icons/hi2";
 import { buildContentUrl } from "../../lib/contentUrl";
-import { stripTemasidePrefix } from "../../lib/path";
 import { ChildGroupDropdown } from "./ChildGroupDropdown";
 import type { SearchResult } from "../../types";
 
@@ -36,11 +35,8 @@ export function SearchResultCard({
     : result.title;
   const categoryLabel = result.categoryName;
   const temasidePath = temasidePathById.get(result.id);
-  const normalizedTemasidePath = temasidePath
-    ? stripTemasidePrefix(temasidePath)
-    : undefined;
   const contentHref = isTemaside
-    ? normalizedTemasidePath || buildContentUrl(result)
+    ? temasidePath || buildContentUrl(result)
     : buildContentUrl(result);
   const documentUrl = result.document_url?.trim() || "";
   const isPdfOnly = Boolean(result.is_pdf_only && documentUrl);
@@ -64,7 +60,7 @@ export function SearchResultCard({
           href={documentUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Åpne PDF for ${result.title} i ny fane`}
+          aria-label={`Åpne PDF-dokument for ${result.title} i ny fane`}
           className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#025169]"
         />
       ) : (
@@ -93,7 +89,7 @@ export function SearchResultCard({
           </span>
           {isPdfOnly && (
             <span className="inline-block rounded-full bg-[#fff7ed] px-2.5 py-0.5 text-xs font-medium text-[#7c2d12]">
-              PDF
+              {"PDF"}
             </span>
           )}
         </div>

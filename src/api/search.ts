@@ -3,7 +3,7 @@
  * Handles search operations: general search with pagination and suggestions
  */
 
-import { httpRequest, buildUrl } from '../lib/httpClient'
+import { ApiError, httpRequest, buildUrl } from '../lib/httpClient'
 import type {
   BaseRequestOptions,
   SearchResponse,
@@ -22,6 +22,8 @@ export interface SearchOptions extends BaseRequestOptions {
   category?: string
   log?: boolean
   method?: 'hybrid' | 'keyword' | 'semantic'
+  rerank?: boolean
+  explain?: boolean
   bm25_weight?: number
   semantic_weight?: number
   rrf_k?: number
@@ -62,6 +64,8 @@ export async function search(
     category,
     log,
     method,
+    rerank,
+    explain,
     bm25_weight,
     semantic_weight,
     rrf_k,
@@ -77,7 +81,7 @@ export async function search(
     return emptySearchResponse()
   }
 
-  const url = buildUrl(`${BACKEND_BASE_URL}/search`, {
+  const params = {
     query: trimmed,
     offset,
     limit,
@@ -86,6 +90,8 @@ export async function search(
     category,
     log,
     method,
+    rerank,
+    explain,
     bm25_weight,
     semantic_weight,
     rrf_k,
@@ -93,9 +99,24 @@ export async function search(
     retningslinje_boost,
     role_boost,
     role_penalty,
-  })
+  } satisfies Record<string, string | number | boolean | undefined>
 
-  return httpRequest<SearchResponse>(url, { signal })
+  const url = buildUrl(`${BACKEND_BASE_URL}/search`, params)
+
+  try {
+    return await httpRequest<SearchResponse>(url, { signal })
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 400 || !search_id) {
+      throw error
+    }
+
+    const retryUrl = buildUrl(`${BACKEND_BASE_URL}/search`, {
+      ...params,
+      search_id: undefined,
+    })
+
+    return httpRequest<SearchResponse>(retryUrl, { signal })
+  }
 }
 
 /**
