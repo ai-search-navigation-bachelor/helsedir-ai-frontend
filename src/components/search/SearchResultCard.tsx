@@ -40,6 +40,10 @@ export function SearchResultCard({
     : buildContentUrl(result);
   const documentUrl = result.document_url?.trim() || "";
   const isPdfOnly = Boolean(result.is_pdf_only && documentUrl);
+  const sourceContent = result.root_publication ?? result.parent ?? null;
+  const sourceLabel = !isTemaside && sourceContent?.title
+    ? `Hentet fra ${sourceContent.title}`
+    : null;
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     setIsAnyGroupOpen(isOpen);
@@ -102,6 +106,13 @@ export function SearchResultCard({
       <h3 className="relative z-10 mb-1 font-title text-[1.05rem] font-semibold leading-snug text-gray-900 pointer-events-none">
         {cardTitle}
       </h3>
+
+      {sourceLabel && (
+        <p className="relative z-10 mt-3 text-xs pointer-events-none">
+          <span className="font-semibold text-slate-600">Hentet fra:</span>{" "}
+          <span className="text-slate-500">{sourceContent?.title}</span>
+        </p>
+      )}
 
       {!isTemaside &&
         result.explanation &&

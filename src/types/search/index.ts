@@ -6,6 +6,15 @@
 /**
  * Base search result item
  */
+export interface SearchResultRelationSummary {
+  detail_level?: string;
+  id: string;
+  title: string;
+  content_type?: string | null;
+  path?: string | null;
+  href?: string | null;
+}
+
 export interface SearchResult {
   id: string;
   title: string;
@@ -26,6 +35,8 @@ export interface SearchResult {
   role_boost?: number | null;
   explanation?: string;
   pipeline?: SearchPipeline | null;
+  parent?: SearchResultRelationSummary | null;
+  root_publication?: SearchResultRelationSummary | null;
   children?: SearchResultChildGroup[] | null;
 }
 
