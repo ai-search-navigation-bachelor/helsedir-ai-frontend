@@ -4,7 +4,11 @@ import { SearchForm } from './SearchForm'
 import { buildContentUrl } from '../../lib/contentUrl'
 import { useTemasidePathMap } from '../../hooks/queries/useTemasidePathMap'
 
-function SearchShellContent() {
+interface SearchShellContentProps {
+  focusRequest: number
+}
+
+function SearchShellContent({ focusRequest }: SearchShellContentProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const isSearchPage = location.pathname === '/search'
@@ -15,23 +19,14 @@ function SearchShellContent() {
   const temasidePathById = useTemasidePathMap()
 
   useEffect(() => {
-    if (!searchInputRef.current) return
+    if (focusRequest === 0) return
+
     const timer = window.setTimeout(() => {
       searchInputRef.current?.focus()
     }, 100)
+
     return () => window.clearTimeout(timer)
-  }, [isSearchPage])
-
-  useEffect(() => {
-    const handleSearchFocus = () => {
-      window.setTimeout(() => {
-        searchInputRef.current?.focus()
-      }, 100)
-    }
-
-    window.addEventListener('toggleSearch', handleSearchFocus)
-    return () => window.removeEventListener('toggleSearch', handleSearchFocus)
-  }, [])
+  }, [focusRequest])
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -68,12 +63,16 @@ function SearchShellContent() {
   )
 }
 
-export function SearchShell() {
+interface SearchShellProps {
+  focusRequest?: number
+}
+
+export function SearchShell({ focusRequest = 0 }: SearchShellProps) {
   const location = useLocation()
   const isSearchPage = location.pathname === '/search'
   const [searchParams] = useSearchParams()
   const searchQueryFromUrl = searchParams.get('query') || ''
   const querySyncKey = isSearchPage ? `search:${searchQueryFromUrl}` : 'local'
 
-  return <SearchShellContent key={querySyncKey} />
+  return <SearchShellContent key={querySyncKey} focusRequest={focusRequest} />
 }

@@ -15,7 +15,7 @@ export function computeStats(response: SearchResponse): ResultStats {
   let rolePenalized = 0
   let roleNeutral = 0
   for (const r of results) {
-    const rb = r.role_boost
+    const rb = r.pipeline?.role_boost ?? r.role_boost
     if (rb != null && rb > 1.0) roleBoosted++
     else if (rb != null && rb < 1.0) rolePenalized++
     else roleNeutral++
@@ -65,6 +65,20 @@ export function parseExplanation(explanation?: string): {
   }
 }
 
+export function getPipelineScores(result: SearchResult) {
+  const parsed = parseExplanation(result.explanation)
+
+  return {
+    bm25: result.pipeline?.bm25 ?? result.bm25_score ?? parsed.bm25,
+    semantic: result.pipeline?.semantic ?? result.semantic_score ?? parsed.semantic,
+    rrf: result.pipeline?.rrf ?? result.rrf_score,
+    roleBoost: result.pipeline?.role_boost ?? result.role_boost,
+    rerankScore: result.pipeline?.rerank?.score,
+    rerankRankChange: result.pipeline?.rerank?.rank_change,
+    rerankContributions: result.pipeline?.rerank?.contributions,
+  }
+}
+
 export function formatInfoTypeLabel(infoType: string): string {
   const normalized = infoType.toLowerCase()
   const map: Record<string, string> = {
@@ -72,6 +86,7 @@ export function formatInfoTypeLabel(infoType: string): string {
     'regelverk-lov-eller-forskrift': 'Regelverk',
     'nasjonal-faglig-retningslinje': 'Retningslinje',
     'nasjonalt-forlop': 'Nasjonalt forløp',
+    rad: 'Råd',
   }
   if (map[normalized]) return map[normalized]
   return infoType

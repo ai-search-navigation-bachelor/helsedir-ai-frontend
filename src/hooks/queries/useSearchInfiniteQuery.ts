@@ -1,5 +1,6 @@
 import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query'
 import { search } from '../../api'
+import type { SearchOptions } from '../../api'
 import type { SearchResponse } from '../../types'
 
 export const PAGE_SIZE = 15
@@ -14,6 +15,39 @@ export interface UseSearchInfiniteQueryOptions {
   role?: string
   category?: string
   search_id?: string
+  method?: SearchOptions['method']
+  rerank?: boolean
+  explain?: boolean
+  bm25_weight?: number
+  semantic_weight?: number
+  rrf_k?: number
+  temaside_boost?: number
+  retningslinje_boost?: number
+  role_boost?: number
+  role_penalty?: number
+}
+
+export function buildSearchInfiniteQueryKey(
+  query: string,
+  options?: UseSearchInfiniteQueryOptions,
+) {
+  return [
+    'search',
+    query,
+    options?.category,
+    options?.role,
+    options?.search_id,
+    options?.method,
+    options?.rerank,
+    options?.explain,
+    options?.bm25_weight,
+    options?.semantic_weight,
+    options?.rrf_k,
+    options?.temaside_boost,
+    options?.retningslinje_boost,
+    options?.role_boost,
+    options?.role_penalty,
+  ] as const
 }
 
 export function useSearchInfiniteQuery(
@@ -27,12 +61,7 @@ export function useSearchInfiniteQuery(
     readonly unknown[],
     SearchPageParam
   >({
-    queryKey: [
-      'search',
-      query,
-      options?.category,
-      options?.role,
-    ],
+    queryKey: buildSearchInfiniteQueryKey(query, options),
     queryFn: async ({ signal, pageParam }) => {
       return search(query, {
         signal,
@@ -41,6 +70,16 @@ export function useSearchInfiniteQuery(
         role: options?.role,
         category: options?.category,
         search_id: pageParam.searchId || options?.search_id,
+        method: options?.method,
+        rerank: options?.rerank,
+        explain: options?.explain,
+        bm25_weight: options?.bm25_weight,
+        semantic_weight: options?.semantic_weight,
+        rrf_k: options?.rrf_k,
+        temaside_boost: options?.temaside_boost,
+        retningslinje_boost: options?.retningslinje_boost,
+        role_boost: options?.role_boost,
+        role_penalty: options?.role_penalty,
       })
     },
     initialPageParam: { offset: 0, searchId: options?.search_id },
@@ -74,7 +113,7 @@ export function prefetchCategorySearch(
     readonly unknown[],
     SearchPageParam
   >({
-    queryKey: ['search', query, category, role],
+    queryKey: buildSearchInfiniteQueryKey(query, { category, role, search_id: searchId }),
     queryFn: async ({ signal }) => {
       return search(query, {
         signal,

@@ -27,6 +27,17 @@ function getCategoryFromTemasidePath(temasidePath: string): { label: string; hre
  * Extract the direct parent entry from content.links (synchronous, no fetch needed).
  */
 function extractDirectParent(content: ContentDetail): ParentChainEntry | null {
+  if (content.parent?.id && content.parent.title) {
+    return {
+      id: content.parent.id,
+      tittel: content.parent.title,
+      href: content.parent.path
+        ? buildContentUrl({ path: content.parent.path, id: content.parent.id })
+        : `/content/${content.parent.id}`,
+      contentType: content.parent.content_type || content.parent.info_type,
+    }
+  }
+
   const forelderLink = content.links?.find((link) => link.rel === 'forelder')
   if (!forelderLink?.title) return null
   if (forelderLink.type?.trim().toLowerCase() === 'kapittel') return null

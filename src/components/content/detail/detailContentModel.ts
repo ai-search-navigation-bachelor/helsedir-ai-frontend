@@ -1,6 +1,7 @@
-import type { ContentLink } from '../../../types'
+import type { ContentLink, ContentRelationItem } from '../../../types'
 import { hasVisibleContent } from '../shared/contentTextUtils'
 import { getContentIdFromHref } from '../shared/linkUtils'
+import { buildContentUrl } from '../../../lib/contentUrl'
 
 export interface VurderingSection {
   tradeoffs: string
@@ -24,6 +25,35 @@ export interface ContentSection {
 
 export interface ContextualNavigationLink extends ContentLink {
   contentId: string
+}
+
+function getRelationKind(link: ContentLink | ContentRelationItem) {
+  if ('rel' in link) {
+    return link.rel || 'root'
+  }
+
+  return link.relation_kind || link.relation || link.kind || 'root'
+}
+
+function toContextualNavigationLink(link: ContentLink | ContentRelationItem) {
+  if ('rel' in link) {
+    return {
+      ...link,
+      contentId: getContentIdFromHref(link.href),
+    }
+  }
+
+  return {
+    rel: getRelationKind(link),
+    type: link.content_type || link.info_type || '',
+    title: link.title,
+    href: link.path
+      ? buildContentUrl({ path: link.path, id: link.id })
+      : `/content/${link.id}`,
+    id: link.id,
+    path: link.path || null,
+    contentId: link.id,
+  }
 }
 
 export const LINK_LABEL_BY_REL: Record<string, string> = {
@@ -98,16 +128,13 @@ export function buildContentSections({
 
 export function buildContextualNavigationLinks(
   contentId: string,
-  supportingLinks: ContentLink[],
+  supportingLinks: Array<ContentLink | ContentRelationItem>,
 ): ContextualNavigationLink[] {
   const seenContentIds = new Set<string>()
 
   return supportingLinks
-    .filter((link) => link.rel === 'root')
-    .map((link) => ({
-      ...link,
-      contentId: getContentIdFromHref(link.href),
-    }))
+    .filter((link) => getRelationKind(link) === 'root')
+    .map(toContextualNavigationLink)
     .filter((link): link is ContentLink & { contentId: string } => Boolean(link.contentId))
     .filter((link) => link.contentId !== contentId)
     .filter((link) => {

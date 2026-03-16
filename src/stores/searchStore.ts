@@ -9,10 +9,11 @@ export interface SearchFilters {
 interface SearchState {
   searchId: string | null
   searchQuery: string | null
+  searchRole: string | null
   filters: SearchFilters
   setSearchId: (searchId: string | null) => void
   setSearchQuery: (query: string) => void
-  setSearchData: (searchId: string, query: string) => void
+  setSearchData: (searchId: string, query: string, role?: string | null) => void
   setFilters: (filters: SearchFilters) => void
   clearFilters: () => void
   clearSearch: () => void
@@ -27,20 +28,22 @@ export const useSearchStore = create<SearchState>()(
     (set) => ({
       searchId: null,
       searchQuery: null,
+      searchRole: null,
       filters: {},
 
       setSearchId: (searchId: string | null) => set({ searchId }),
 
       setSearchQuery: (query: string) => set({ searchQuery: query }),
 
-      setSearchData: (searchId: string, query: string) =>
-        set({ searchId, searchQuery: query }),
+      setSearchData: (searchId: string, query: string, role?: string | null) =>
+        set({ searchId, searchQuery: query, searchRole: role ?? null }),
 
       setFilters: (filters: SearchFilters) => set({ filters }),
 
       clearFilters: () => set({ filters: {} }),
 
-      clearSearch: () => set({ searchId: null, searchQuery: null, filters: {} }),
+      clearSearch: () =>
+        set({ searchId: null, searchQuery: null, searchRole: null, filters: {} }),
     }),
     {
       name: 'search-storage',

@@ -18,6 +18,27 @@ export interface ContentLink {
   children?: ContentLink[] | null
 }
 
+export interface ContentRelationItem {
+  id: string
+  title: string
+  content_type?: string
+  info_type?: string
+  relation_kind?: string
+  relation?: string
+  kind?: string
+  path?: string | null
+  has_text_content?: boolean
+  document_url?: string | null
+  is_pdf_only?: boolean
+  children?: NestedContent[] | null
+}
+
+export interface ContentChildGroup {
+  info_type: string
+  display_name: string
+  items: ContentRelationItem[]
+}
+
 /**
  * Linked content item within a temaside group
  */
@@ -26,6 +47,9 @@ export interface LinkedContentItem {
   title: string
   info_type: string
   path?: string
+  has_text_content?: boolean
+  document_url?: string | null
+  is_pdf_only?: boolean
 }
 
 /**
@@ -44,6 +68,22 @@ export interface RelatedContentLink {
   file_type?: string | null
   url_type?: string | null
   target?: string | null
+  path?: string | null
+  content_id?: string | null
+}
+
+export interface EhelsestandardAttachment {
+  title: string
+  url: string
+  file_type?: string | null
+}
+
+export interface EhelsestandardFields {
+  standard_id?: string
+  standard_type?: string
+  purpose_html?: string
+  applies_to_html?: string
+  attachments?: EhelsestandardAttachment[] | null
 }
 
 /**
@@ -61,11 +101,18 @@ export interface ContentDetail {
   related_links?: RelatedContentLink[] | null
   role_tags?: string[]
   links?: ContentLink[]
-  linked_content?: LinkedContentGroup[]
+  parent?: ContentRelationItem | null
+  root_publication?: ContentRelationItem | null
+  chapters?: NestedContent[]
+  references?: ContentRelationItem[]
+  related_content?: ContentRelationItem[]
+  child_groups?: ContentChildGroup[]
+  linked_content?: LinkedContentGroup[] | null
   status?: string
   first_published?: string
   last_reviewed_date?: string
   url?: string
+  ehelsestandard_fields?: EhelsestandardFields | null
   anbefaling_fields?: {
     praktisk?: string
     rasjonale?: string
