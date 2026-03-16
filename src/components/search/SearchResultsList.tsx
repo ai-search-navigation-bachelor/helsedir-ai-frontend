@@ -85,7 +85,6 @@ export function SearchResultsList({
 
     return map;
   }, [visibleResults]);
-
   // Infinite scroll: observe sentinel element
   useEffect(() => {
     if (!onLoadMore || !hasNextPage || isFetchingNextPage) return;
