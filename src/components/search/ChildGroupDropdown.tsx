@@ -13,10 +13,9 @@ import type { SearchResultChildGroup } from "../../types";
 const MOBILE_MAX_WIDTH_PX = 767;
 const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_MAX_WIDTH_PX}px)`;
 
-// Approximate dropdown dimensions for pre-calculation
-
-const DROPDOWN_MAX_HEIGHT_PX = 512; // matches md:max-h-[min(70vh,32rem)]
 const DROPDOWN_MARGIN_PX = 4; // gap between chip and dropdown
+const DROPDOWN_MIN_WIDTH_PX = 240; // floor so list is never too narrow
+const DROPDOWN_MAX_HEIGHT_PX = 512; // matches md:max-h-[min(70vh,32rem)]
 
 interface ChildGroupDropdownProps {
   resultId: string;
@@ -45,7 +44,7 @@ export function ChildGroupDropdown({
   const [pinnedChildGroupKey, setInternalPinnedKey] = useState<string | null>(null);
   const [hoveredChildGroupKey, setHoveredChildGroupKey] = useState<string | null>(null);
   const [flippedVerticalGroups, setFlippedVerticalGroups] = useState<Set<string>>(new Set());
-  const [flippedHorizontalGroups, setFlippedHorizontalGroups] = useState<Set<string>>(new Set());
+  const [dropdownMaxWidths, setDropdownMaxWidths] = useState<Map<string, number>>(new Map());
 
   const effectivePinnedChildGroupKey = shouldClearPin ? null : pinnedChildGroupKey;
   const isAnyGroupOpen = effectivePinnedChildGroupKey !== null || hoveredChildGroupKey !== null;
@@ -72,9 +71,8 @@ export function ChildGroupDropdown({
   }, [shouldClearPin]);
 
   /**
-   * Pre-calculate flip direction based on the chip wrapper's viewport position.
-   * This runs synchronously before the dropdown is shown, eliminating the race
-   * condition that caused alternating above/below and left/right behavior.
+   * Pre-calculate placement based on chip wrapper's viewport position.
+   * Always positions the dropdown to the RIGHT; constrains maxWidth to fit screen.
    */
   const calculateDropdownPlacement = (groupKey: string) => {
     if (window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
@@ -84,22 +82,22 @@ export function ChildGroupDropdown({
 
     const rect = wrapperEl.getBoundingClientRect();
 
-    // Flip LEFT if there is more available space on the left side than the right side
-    const spaceOnRight = window.innerWidth - rect.right - DROPDOWN_MARGIN_PX;
-    const spaceOnLeft = rect.left - DROPDOWN_MARGIN_PX;
-    const shouldFlipHorizontal = spaceOnLeft > spaceOnRight;
+    // Available space to the right of the chip button
+    const availableRight = window.innerWidth - rect.right - DROPDOWN_MARGIN_PX - 8;
+    const maxWidth = Math.max(availableRight, DROPDOWN_MIN_WIDTH_PX);
 
-    // Dropdown extends DOWN from button top by default; flip UP if it would overflow bottom
-    const shouldFlipVertical =
-      rect.top + DROPDOWN_MAX_HEIGHT_PX > window.innerHeight - 8;
-
-    setFlippedHorizontalGroups((prev) => {
-      if (shouldFlipHorizontal === prev.has(groupKey)) return prev;
-      const next = new Set(prev);
-      if (shouldFlipHorizontal) next.add(groupKey);
-      else next.delete(groupKey);
+    setDropdownMaxWidths((prev) => {
+      if (prev.get(groupKey) === maxWidth) return prev;
+      const next = new Map(prev);
+      next.set(groupKey, maxWidth);
       return next;
     });
+
+    // Flip UP only when dropdown doesn't fit below AND there is more space above
+    const cappedHeight = Math.min(DROPDOWN_MAX_HEIGHT_PX, window.innerHeight * 0.7);
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    const shouldFlipVertical = spaceBelow < cappedHeight && spaceAbove > spaceBelow;
 
     setFlippedVerticalGroups((prev) => {
       if (shouldFlipVertical === prev.has(groupKey)) return prev;
@@ -180,7 +178,6 @@ export function ChildGroupDropdown({
     if (effectivePinnedChildGroupKey && effectivePinnedChildGroupKey !== groupKey) {
       setInternalPinnedKey(null);
     }
-    // Always recalculate from button position — no reset needed, no rAF race condition
     calculateDropdownPlacement(groupKey);
     setHoveredChildGroupKey(groupKey);
   };
@@ -204,7 +201,7 @@ export function ChildGroupDropdown({
           effectivePinnedChildGroupKey === null && hoveredChildGroupKey === groupKey;
         const isOpen = isPinnedOpen || isHoverOpen;
         const isFlippedVertical = flippedVerticalGroups.has(groupKey);
-        const isFlippedHorizontal = flippedHorizontalGroups.has(groupKey);
+        const maxWidth = dropdownMaxWidths.get(groupKey);
 
         return (
           <div
@@ -234,13 +231,10 @@ export function ChildGroupDropdown({
             {items.length > 0 && (
               <div
                 inert={!isOpen}
-                className={`absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md transition-opacity duration-100 md:mt-0 md:min-w-[20rem] md:w-max md:max-w-[min(42rem,92vw)] md:shadow-lg ${
+                style={maxWidth !== undefined ? { maxWidth } : undefined}
+                className={`absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md transition-opacity duration-100 md:mt-0 md:min-w-60 md:w-max md:shadow-lg ${
                   isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                } ${
-                  isFlippedHorizontal
-                    ? "md:left-auto md:right-full md:mr-1 md:ml-0"
-                    : "md:left-full md:right-auto md:ml-1 md:mr-0"
-                } ${
+                } md:left-full md:right-auto md:ml-1 ${
                   isFlippedVertical
                     ? "md:top-auto md:bottom-0"
                     : "md:top-0 md:bottom-auto"
