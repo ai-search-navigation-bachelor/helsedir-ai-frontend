@@ -226,16 +226,6 @@ export function DetailContentDisplay({
   const hasBackendRecommendationStrength = Boolean(content.anbefaling_fields?.styrke?.trim())
   const hasSufficientBackendRecommendationData =
     hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
-  const hasIntrinsicDocumentLinks = getDocumentLinks(content, content.links).length > 0
-  const hasIntrinsicRelatedLinks = getRelatedLinks(content).length > 0
-  const hasIntrinsicChildContent =
-    (content.references?.length ?? 0) > 0 ||
-    (content.chapters?.length ?? 0) > 0 ||
-    (content.related_content?.length ?? 0) > 0 ||
-    (content.child_groups?.some((group) => group.items.length > 0) ?? false) ||
-    getUniqueChildLinks(content.links).length > 0
-  const hasIntrinsicFallbackContent =
-    hasIntrinsicDocumentLinks || hasIntrinsicRelatedLinks || hasIntrinsicChildContent
   const shouldSkipHelsedirEnrichment =
     isTemasideContentType(normalizedType) || isEhelsestandardContentType(normalizedType)
   const shouldSkipPdfOnlyEnrichment = isPdfOnlyContent && Boolean(backendDocumentUrl)
@@ -244,7 +234,7 @@ export function DetailContentDisplay({
     !shouldSkipHelsedirEnrichment &&
     (isRecommendationContentType(normalizedType)
       ? !hasSufficientBackendRecommendationData
-      : !hasBodyContent && !hasIntrinsicFallbackContent)
+      : !hasBodyContent)
 
   const {
     data: enrichedContent,
@@ -442,6 +432,12 @@ export function DetailContentDisplay({
     [backendDocumentUrl, content, enrichedContent],
   )
   const relatedLinks = useMemo(() => getRelatedLinks(content), [content])
+  const visibleDocumentLinks = documentLinks
+  const hasIntrinsicFallbackContent =
+    visibleDocumentLinks.length > 0 ||
+    relatedLinks.length > 0 ||
+    referenceItems.length > 0 ||
+    visibleRelatedChildItems.length > 0
   const publicationUrl = useMemo(() => {
     const url = content.url?.trim() || enrichedContent?.url?.trim()
     if (!url) return null
@@ -453,7 +449,6 @@ export function DetailContentDisplay({
     visibleRelatedChildItems.length === 0 &&
     relatedLinks.length === 0 &&
     documentLinks.length === 0
-  const visibleDocumentLinks = documentLinks
   const hasRelatedLinks = relatedLinks.length > 0
   const hasAnyActionLinks =
     visibleDocumentLinks.length > 0 ||
@@ -579,7 +574,7 @@ export function DetailContentDisplay({
             </details>
           )}
 
-          {enrichedError && !isPdfOnlyContent && (
+          {enrichedError && !isPdfOnlyContent && !hasIntrinsicFallbackContent && (
             <Alert data-color="warning">
               <Paragraph style={{ marginTop: 0, marginBottom: 0 }}>
                 Kunne ikke hente utvidede innholdsdetaljer fra Helsedirektoratet API akkurat nå.
@@ -752,7 +747,7 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length === 0 && childContentItems.length === 0 && !hasAnyActionLinks && (
+          {sections.length === 0 && referenceItems.length === 0 && visibleRelatedChildItems.length === 0 && !hasAnyActionLinks && (
             <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
                 Denne siden har ikke egen tekst eller tilgjengelige lenker.
