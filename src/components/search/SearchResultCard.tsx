@@ -41,9 +41,7 @@ export function SearchResultCard({
   const documentUrl = result.document_url?.trim() || "";
   const isPdfOnly = Boolean(result.is_pdf_only && documentUrl);
   const sourceContent = result.root_publication ?? result.parent ?? null;
-  const sourceLabel = !isTemaside && sourceContent?.title
-    ? `Hentet fra ${sourceContent.title}`
-    : null;
+  const hasSource = !isTemaside && Boolean(sourceContent?.title);
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     setIsAnyGroupOpen(isOpen);
@@ -107,7 +105,7 @@ export function SearchResultCard({
         {cardTitle}
       </h3>
 
-      {sourceLabel && (
+      {hasSource && (
         <p className="relative z-10 mt-3 text-xs pointer-events-none">
           <span className="font-semibold text-slate-600">Hentet fra:</span>{" "}
           <span className="text-slate-500">{sourceContent?.title}</span>
