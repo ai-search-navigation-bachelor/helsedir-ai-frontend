@@ -227,6 +227,16 @@ export function DetailContentDisplay({
   const hasBackendRecommendationStrength = Boolean(content.anbefaling_fields?.styrke?.trim())
   const hasSufficientBackendRecommendationData =
     hasBodyContent || hasBackendRecommendationSupplementaryContent || hasBackendRecommendationStrength
+  const hasIntrinsicDocumentLinks = getDocumentLinks(content, content.links).length > 0
+  const hasIntrinsicRelatedLinks = getRelatedLinks(content).length > 0
+  const hasIntrinsicChildContent =
+    (content.references?.length ?? 0) > 0 ||
+    (content.chapters?.length ?? 0) > 0 ||
+    (content.related_content?.length ?? 0) > 0 ||
+    (content.child_groups?.some((group) => group.items.length > 0) ?? false) ||
+    getUniqueChildLinks(content.links).length > 0
+  const hasIntrinsicFallbackContent =
+    hasIntrinsicDocumentLinks || hasIntrinsicRelatedLinks || hasIntrinsicChildContent
   const shouldSkipHelsedirEnrichment =
     isTemasideContentType(normalizedType) || isEhelsestandardContentType(normalizedType)
   const shouldSkipPdfOnlyEnrichment = isPdfOnlyContent && Boolean(backendDocumentUrl)
@@ -235,7 +245,7 @@ export function DetailContentDisplay({
     !shouldSkipHelsedirEnrichment &&
     (isRecommendationContentType(normalizedType)
       ? !hasSufficientBackendRecommendationData
-      : !hasBodyContent)
+      : !hasBodyContent && !hasIntrinsicFallbackContent)
 
   const {
     data: enrichedContent,
@@ -410,6 +420,10 @@ export function DetailContentDisplay({
     },
     [childContentItems, content.child_groups, content.chapters, content.related_content],
   )
+  const visibleRelatedChildItems = useMemo(
+    () => relatedChildItems.filter((item) => !isTemasideContentType(item.type || '')),
+    [relatedChildItems],
+  )
 
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
   const documentLinks = useMemo(
@@ -437,7 +451,7 @@ export function DetailContentDisplay({
   const shouldShowPublicationFallback =
     Boolean(publicationUrl) &&
     sections.length === 0 &&
-    relatedChildItems.length === 0 &&
+    visibleRelatedChildItems.length === 0 &&
     relatedLinks.length === 0 &&
     documentLinks.length === 0
   const visibleDocumentLinks = documentLinks
@@ -658,12 +672,42 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {relatedChildItems.length > 0 && (
+          {hasRelatedLinks && (
+            <section className="space-y-4">
+              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
+                Videre lenker
+              </Heading>
+              <ul className="m-0 list-none space-y-3 p-0">
+                {relatedLinks.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.internalPath || link.href}
+                      target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
+                      rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
+                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{link.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {link.isPdf
+                          ? 'PDF'
+                          : link.isDocument
+                            ? (link.fileType || 'Dokument')
+                            : 'Rapport eller side'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {visibleRelatedChildItems.length > 0 && (
             <section className="space-y-3">
               <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
                 Utforsk videre
               </Heading>
-              {relatedChildItems.map((item, index) => (
+              {visibleRelatedChildItems.map((item, index) => (
                 <ExpandableSubcontent
                   key={`detail-child-${item.id || index}`}
                   item={item}
@@ -709,36 +753,6 @@ export function DetailContentDisplay({
                     </a>
                   </li>
                 )}
-              </ul>
-            </section>
-          )}
-
-          {sections.length === 0 && hasRelatedLinks && (
-            <section className="space-y-4">
-              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
-                Videre lenker
-              </Heading>
-              <ul className="m-0 list-none space-y-3 p-0">
-                {relatedLinks.map((link) => (
-                  <li key={link.href}>
-                    <a
-                      href={link.internalPath || link.href}
-                      target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
-                      rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
-                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
-                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
-                    >
-                      <span className="block font-semibold text-slate-900">{link.label}</span>
-                      <span className="mt-1 block text-xs text-slate-500">
-                        {link.isPdf
-                          ? 'PDF'
-                          : link.isDocument
-                            ? (link.fileType || 'Dokument')
-                            : 'Rapport eller side'}
-                      </span>
-                    </a>
-                  </li>
-                ))}
               </ul>
             </section>
           )}
