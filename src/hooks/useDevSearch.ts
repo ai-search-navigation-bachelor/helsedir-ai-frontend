@@ -58,6 +58,8 @@ export function useDevSearch(): DevSearchReturn {
         queryKey: ['dev-search', 'a'],
         enabled: false,
         retry: false,
+        staleTime: 0,
+        gcTime: 0,
         queryFn: ({ signal }) => {
           const run = pendingRunRef.current
           if (!run) throw new Error('Mangler aktivt søk for Konfig A')
@@ -75,6 +77,8 @@ export function useDevSearch(): DevSearchReturn {
         queryKey: ['dev-search', 'b'],
         enabled: false,
         retry: false,
+        staleTime: 0,
+        gcTime: 0,
         queryFn: ({ signal }) => {
           const run = pendingRunRef.current
           if (!run) throw new Error('Mangler aktivt søk for Konfig B')
@@ -92,6 +96,8 @@ export function useDevSearch(): DevSearchReturn {
         queryKey: ['dev-search', 'keyword'],
         enabled: false,
         retry: false,
+        staleTime: 0,
+        gcTime: 0,
         queryFn: ({ signal }) => {
           const run = pendingRunRef.current
           if (!run) throw new Error('Mangler aktivt søk for Helsedir')
