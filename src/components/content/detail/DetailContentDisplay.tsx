@@ -14,7 +14,6 @@ import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedConte
 import type { ContentChildGroup, ContentLink, ContentRelationItem, NestedContent } from '../../../types'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
-import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
 import { asDocumentLink, getDocumentLinks, getRelatedLinks } from './documentUtils'
 import { ExpandableSubcontent } from '../hierarchical/ExpandableSubcontent'
 import { hasVisibleContent } from '../shared/contentTextUtils'
@@ -516,10 +515,6 @@ export function DetailContentDisplay({
                 })}
               </ul>
             </nav>
-          )}
-
-          {isEnrichedLoading && (
-            <DetailAsideLoadingSkeleton />
           )}
 
           {sections.length > 0 && visibleDocumentLinks.length > 0 && (
