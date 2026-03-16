@@ -46,6 +46,17 @@ export function ChildGroupDropdown({
   const [flippedVerticalGroups, setFlippedVerticalGroups] = useState<Set<string>>(new Set());
   const [dropdownMaxWidths, setDropdownMaxWidths] = useState<Map<string, number>>(new Map());
 
+  // Reset internal pin state during render when shouldClearPin becomes true.
+  // This is the React-recommended "derived state from props" pattern — calling
+  // setState during render (not in an effect) avoids cascading effect renders.
+  const prevShouldClearPinRef = useRef(shouldClearPin);
+  if (prevShouldClearPinRef.current !== shouldClearPin) {
+    prevShouldClearPinRef.current = shouldClearPin;
+    if (shouldClearPin && pinnedChildGroupKey !== null) {
+      setInternalPinnedKey(null);
+    }
+  }
+
   const effectivePinnedChildGroupKey = shouldClearPin ? null : pinnedChildGroupKey;
   const isAnyGroupOpen = effectivePinnedChildGroupKey !== null || hoveredChildGroupKey !== null;
 
@@ -61,14 +72,6 @@ export function ChildGroupDropdown({
     }
     onPinChange?.(isAnyGroupOpen);
   }, [isAnyGroupOpen, onPinChange]);
-
-  // Actually clear internal pin state when another card takes focus,
-  // so the pin doesn't reappear when that card's hover ends.
-  useEffect(() => {
-    if (shouldClearPin) {
-      setInternalPinnedKey(null);
-    }
-  }, [shouldClearPin]);
 
   /**
    * Pre-calculate placement based on chip wrapper's viewport position.
