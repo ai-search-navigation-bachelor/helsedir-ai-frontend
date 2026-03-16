@@ -15,6 +15,13 @@ export function RolePicker() {
   const selected = roles?.find((r) => r.slug === role)
   const selectedLabel = selected?.display_name ?? 'Velg rolle'
 
+  // Clear stored role if it's no longer valid (e.g. backend updated its allowed roles)
+  useEffect(() => {
+    if (roles && role && !roles.some((r) => r.slug === role)) {
+      setRole(null)
+    }
+  }, [roles, role, setRole])
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {

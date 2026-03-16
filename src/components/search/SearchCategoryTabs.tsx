@@ -70,7 +70,7 @@ export function SearchCategoryTabs({
             }}
             type="button"
             onClick={() => onTabChange(tab.id)}
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.9rem] font-medium transition-colors font-title md:rounded-none md:border-0 md:bg-transparent md:px-1.5 md:pt-2 md:pb-3 md:text-[0.95rem] ${
+            className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.9rem] font-medium font-title transition-colors md:rounded-none md:border-0 md:bg-transparent md:px-1.5 md:pt-2 md:pb-3 md:text-[0.95rem] ${
               activeTab === tab.id
                 ? "border-[#047FA4] bg-[#047FA4] text-white md:text-[#047FA4]"
                 : "border-transparent bg-transparent text-slate-700 hover:bg-slate-100 hover:text-slate-900 md:hover:bg-transparent"
