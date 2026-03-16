@@ -46,12 +46,12 @@ export function ChildGroupDropdown({
   const [flippedVerticalGroups, setFlippedVerticalGroups] = useState<Set<string>>(new Set());
   const [dropdownMaxWidths, setDropdownMaxWidths] = useState<Map<string, number>>(new Map());
 
-  // Reset internal pin state during render when shouldClearPin becomes true.
-  // This is the React-recommended "derived state from props" pattern — calling
-  // setState during render (not in an effect) avoids cascading effect renders.
-  const prevShouldClearPinRef = useRef(shouldClearPin);
-  if (prevShouldClearPinRef.current !== shouldClearPin) {
-    prevShouldClearPinRef.current = shouldClearPin;
+  // Reset internal pin state when shouldClearPin becomes true.
+  // Uses useState to track previous prop value — the React-recommended pattern
+  // for "storing information from previous renders" (react.dev/reference/react/useState).
+  const [prevShouldClearPin, setPrevShouldClearPin] = useState(shouldClearPin);
+  if (prevShouldClearPin !== shouldClearPin) {
+    setPrevShouldClearPin(shouldClearPin);
     if (shouldClearPin && pinnedChildGroupKey !== null) {
       setInternalPinnedKey(null);
     }
