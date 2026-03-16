@@ -16,6 +16,7 @@ const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_MAX_WIDTH_PX}px)`;
 const DROPDOWN_MARGIN_PX = 4; // gap between chip and dropdown
 const DROPDOWN_MIN_WIDTH_PX = 240; // floor so list is never too narrow
 const DROPDOWN_MAX_HEIGHT_PX = 512; // matches md:max-h-[min(70vh,32rem)]
+const DROPDOWN_VIEWPORT_BUFFER_PX = 8; // minimum clearance from viewport edges
 
 interface ChildGroupDropdownProps {
   resultId: string;
@@ -86,7 +87,7 @@ export function ChildGroupDropdown({
     const rect = wrapperEl.getBoundingClientRect();
 
     // Available space to the right of the chip button
-    const availableRight = window.innerWidth - rect.right - DROPDOWN_MARGIN_PX - 8;
+    const availableRight = window.innerWidth - rect.right - DROPDOWN_MARGIN_PX - DROPDOWN_VIEWPORT_BUFFER_PX;
     const maxWidth = Math.max(availableRight, DROPDOWN_MIN_WIDTH_PX);
 
     setDropdownMaxWidths((prev) => {
@@ -98,8 +99,8 @@ export function ChildGroupDropdown({
 
     // Flip UP only when dropdown doesn't fit below AND there is more space above
     const cappedHeight = Math.min(DROPDOWN_MAX_HEIGHT_PX, window.innerHeight * 0.7);
-    const spaceBelow = window.innerHeight - rect.bottom - 8;
-    const spaceAbove = rect.top - 8;
+    const spaceBelow = window.innerHeight - rect.bottom - DROPDOWN_VIEWPORT_BUFFER_PX;
+    const spaceAbove = rect.top - DROPDOWN_VIEWPORT_BUFFER_PX;
     const shouldFlipVertical = spaceBelow < cappedHeight && spaceAbove > spaceBelow;
 
     setFlippedVerticalGroups((prev) => {
