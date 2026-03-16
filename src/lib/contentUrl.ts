@@ -5,7 +5,7 @@
  * (e.g. "/retningslinjer/adhd" or "/tilskudd-og-finansiering/finansiering").
  * Falls back to `/content/:id` when no path is present.
  */
-export function buildContentUrl(result: { path?: string; id: string }): string {
+export function buildContentUrl(result: { path?: string | null; id: string }): string {
   if (result.path) {
     return result.path
   }

@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
 import type { ContentDetail, ContentLink, LinkedContentGroup } from '../../../types/content'
 import { SEARCH_MAIN_CATEGORIES } from '../../../constants/categories'
+import { normalizeContentType } from '../../../constants/content'
 import { TemasideHeader } from './TemasideHeader'
 import { ContentSection } from './TemasideContentSection'
 import { ChildTemasideSection } from './TemasideChildSection'
+import { buildContentUrl } from '../../../lib/contentUrl'
 
 interface TemasideContentDisplayProps {
   content: ContentDetail
@@ -30,13 +32,74 @@ function sortGroupsByPriority(groups: readonly LinkedContentGroup[]): LinkedCont
 }
 
 function getParentLink(content: ContentDetail) {
+  if (content.parent?.id) {
+    return {
+      rel: 'forelder',
+      type: content.parent.content_type || content.parent.info_type || '',
+      title: content.parent.title,
+      href: content.parent.path
+        ? buildContentUrl({ path: content.parent.path, id: content.parent.id })
+        : `/content/${content.parent.id}`,
+      id: content.parent.id,
+      path: content.parent.path || null,
+    } satisfies ContentLink
+  }
+
   return content.links?.find((l) => l.rel === 'forelder') ?? null
 }
 
+function getTemasideLinkKey(link: ContentLink) {
+  return link.id || link.path || link.href || ''
+}
+
 function getChildTemasideLinks(content: ContentDetail): ContentLink[] {
-  return (content.links ?? []).filter(
-    (l) => l.rel === 'barn' && l.type === 'temaside' && l.href,
-  )
+  const groupedTemasideItems = content.child_groups
+    ?.filter((group) => group.info_type === 'temaside')
+    .flatMap((group) =>
+      group.items
+        .filter((item) => item.path || item.id)
+        .map((item) => ({
+          rel: 'barn',
+          type: item.content_type || item.info_type || 'temaside',
+          title: item.title,
+          href: item.path
+            ? buildContentUrl({ path: item.path, id: item.id })
+            : `/content/${item.id}`,
+          id: item.id,
+          path: item.path || null,
+        })),
+    )
+
+  const directTemasideLinks = (content.links ?? [])
+    .reduce<ContentLink[]>((result, link) => {
+      if (
+        link.rel !== 'barn' ||
+        normalizeContentType(link.type) !== 'temaside' ||
+        (!link.href && !link.path && !link.id)
+      ) {
+        return result
+      }
+
+      const href = link.id ? buildContentUrl({ path: link.path, id: link.id }) : link.href
+      if (!href) return result
+
+      result.push({
+        ...link,
+        href,
+        path: link.path || null,
+      })
+      return result
+    }, [])
+
+  const mergedLinks = [...(groupedTemasideItems ?? []), ...directTemasideLinks]
+  const seen = new Set<string>()
+
+  return mergedLinks.filter((link) => {
+    const key = getTemasideLinkKey(link)
+    if (!key || seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 function EmptyState() {

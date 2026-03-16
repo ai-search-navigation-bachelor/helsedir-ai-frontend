@@ -11,7 +11,6 @@ import { buildTabs } from '../lib/search/searchPageModel'
 import { useSearchInfiniteQuery, prefetchCategorySearch } from './queries/useSearchInfiniteQuery'
 import { useSearchStore } from '../stores/searchStore'
 import { useRoleStore } from '../stores/roleStore'
-import { search } from '../api'
 
 type ActiveTab = SearchMainCategoryId | 'all'
 
@@ -172,7 +171,7 @@ export function useSearchPageModel() {
         role ?? undefined,
       )
     })
-  }, [pages, queryClient, searchQuery, role])
+  }, [pages, queryClient, role, roleKey, searchQuery])
 
   // Flatten all pages into a single results array with category metadata
   const allResults = useMemo(() => {
@@ -244,20 +243,6 @@ export function useSearchPageModel() {
       query: searchQuery,
       category: value,
     })
-
-    // Fire-and-forget: log that the user is viewing this category
-    if (value !== 'all') {
-      const categoryForApi = toApiCategory(toActiveTab(value))
-      if (categoryForApi && effectiveSearchId) {
-        search(searchQuery, {
-          category: categoryForApi,
-          search_id: effectiveSearchId,
-          log: true,
-          limit: 1,
-          role: role ?? undefined,
-        }).catch(() => {})
-      }
-    }
   }
 
   return {

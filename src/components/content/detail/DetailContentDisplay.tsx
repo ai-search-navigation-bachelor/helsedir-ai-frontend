@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { buildContentUrl } from '../../../lib/contentUrl'
+import { useNavigate } from 'react-router-dom'
 import {
   getDetailContentTypeLabel,
   isEhelsestandardContentType,
@@ -12,6 +11,7 @@ import {
 } from '../../../constants/content'
 import { formatDateLabel } from '../../../lib/content/date'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
+import type { ContentChildGroup, ContentLink, ContentRelationItem, NestedContent } from '../../../types'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { DetailAsideLoadingSkeleton } from '../ContentSkeletons'
@@ -22,8 +22,6 @@ import { getContentIdFromHref, getUniqueChildLinks } from '../shared/linkUtils'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import {
   buildContentSections,
-  buildContextualNavigationLinks,
-  LINK_LABEL_BY_REL,
   type ContentSection,
   type VurderingSection,
 } from './detailContentModel'
@@ -79,11 +77,21 @@ function isReferenceContentType(contentType?: string) {
   return normalizeContentType(contentType).includes('referanse')
 }
 
+function isNestedDetailChild(source: ContentRelationItem | NestedContent) {
+  return (
+    'type' in source ||
+    'tittel' in source ||
+    'tekst' in source ||
+    'body' in source ||
+    'data' in source
+  )
+}
+
 function ReferenceDropdown({
   items,
   className = '',
 }: {
-  items: Array<{ id: string; tittel?: string }>
+  items: NestedContent[]
   className?: string
 }) {
   if (items.length === 0) return null
@@ -112,13 +120,86 @@ function ReferenceDropdown({
   )
 }
 
+type DetailChildSource = ContentRelationItem | ContentLink | NestedContent
+
+function toDetailChildItem(
+  source: DetailChildSource,
+  fallbackType?: string,
+): NestedContent | null {
+  if ('rel' in source) {
+    const id = source.id || getContentIdFromHref(source.href) || ''
+    if (!id) return null
+
+    return {
+      id,
+      path: source.path || undefined,
+      tittel: source.title || '',
+      title: source.title || '',
+      type: source.type || fallbackType,
+      children: source.children
+        ?.map((child) => toDetailChildItem(child))
+        .filter((child): child is NestedContent => Boolean(child)),
+    }
+  }
+
+  if (source.is_pdf_only && source.document_url) {
+    return null
+  }
+
+  if (!source.id) return null
+
+  const normalizedChildren = source.children
+    ?.map((child) => toDetailChildItem(child))
+    .filter((child): child is NestedContent => Boolean(child))
+  const title = source.title || ('tittel' in source ? source.tittel : undefined) || ''
+  const type =
+    ('content_type' in source ? source.content_type : undefined) ||
+    ('info_type' in source ? source.info_type : undefined) ||
+    ('type' in source ? source.type : undefined) ||
+    fallbackType
+
+  return {
+    ...(isNestedDetailChild(source) ? source : {}),
+    id: source.id,
+    path: source.path || undefined,
+    tittel: ('tittel' in source ? source.tittel : undefined) || title,
+    title: source.title || title,
+    type,
+    children: normalizedChildren,
+    has_text_content: source.has_text_content,
+    document_url: source.document_url,
+    is_pdf_only: source.is_pdf_only,
+  }
+}
+
+function dedupeDetailChildItems(items: Array<NestedContent | null>) {
+  const seen = new Set<string>()
+
+  return items.filter((item): item is NestedContent => {
+    if (!item) return false
+    if (seen.has(item.id)) return false
+    seen.add(item.id)
+    return true
+  })
+}
+
+function getChildItemsFromGroups(
+  groups: ContentChildGroup[] | null | undefined,
+  predicate: (group: ContentChildGroup) => boolean,
+) {
+  return dedupeDetailChildItems(
+    (groups ?? [])
+      .filter(predicate)
+      .flatMap((group) => group.items.map((item) => toDetailChildItem(item, group.info_type))),
+  )
+}
+
 export function DetailContentDisplay({
   content,
   typeLabelOverride,
   primarySectionTitle = 'Hovedanbefaling',
 }: DetailContentDisplayProps) {
   const navigate = useNavigate()
-  const location = useLocation()
   const mobileSectionsNavRef = useRef<HTMLDetailsElement>(null)
   const normalizedType = normalizeContentType(content.content_type)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
@@ -251,39 +332,83 @@ export function DetailContentDisplay({
     return () => observer.disconnect()
   }, [sections])
 
-  const supportingLinks = useMemo(
-    () => content.links?.filter((link) => Boolean(link.href)) || [],
-    [content.links],
-  )
-  const contextualNavigationLinks = useMemo(
-    () => buildContextualNavigationLinks(content.id, supportingLinks),
-    [content.id, supportingLinks],
-  )
   const childContentItems = useMemo(
-    () =>
-      getUniqueChildLinks(content.links).map((link) => ({
-        id: link.id || link.href || getContentIdFromHref(link.href) || '',
-        path: link.path || undefined,
-        tittel: link.title || '',
-        type: link.type,
-        children: link.children
-          ?.filter((child) => Boolean(child.id || child.href))
-          .map((child) => ({
-            id: child.id || child.href || getContentIdFromHref(child.href) || '',
-            path: child.path || undefined,
-            tittel: child.title || '',
-            type: child.type,
-          })),
-      })),
-    [content.links],
+    () => {
+      const fallbackLinkItems = dedupeDetailChildItems(
+        getUniqueChildLinks(content.links).map((link) => toDetailChildItem(link)),
+      )
+
+      const normalizedReferenceItems = dedupeDetailChildItems(
+        (content.references ?? []).map((item) => toDetailChildItem(item, item.content_type || item.info_type)),
+      )
+      const normalizedRelatedItems = dedupeDetailChildItems(
+        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
+          toDetailChildItem(
+            item,
+            ('content_type' in item ? item.content_type : undefined) ||
+              ('info_type' in item ? item.info_type : undefined) ||
+              ('type' in item ? item.type : undefined),
+          ),
+        ),
+      )
+
+      const groupedItems = getChildItemsFromGroups(content.child_groups, () => true)
+
+      if (normalizedReferenceItems.length > 0 || normalizedRelatedItems.length > 0) {
+        return dedupeDetailChildItems([
+          ...normalizedReferenceItems,
+          ...normalizedRelatedItems,
+        ])
+      }
+
+      if (groupedItems.length > 0) {
+        return groupedItems
+      }
+
+      return fallbackLinkItems
+    },
+    [content.child_groups, content.chapters, content.links, content.references, content.related_content],
   )
   const referenceItems = useMemo(
-    () => childContentItems.filter((item) => isReferenceContentType(item.type)),
-    [childContentItems],
+    () => {
+      const normalizedReferenceItems = dedupeDetailChildItems(
+        (content.references ?? []).map((item) => toDetailChildItem(item, item.content_type || item.info_type)),
+      )
+      if (normalizedReferenceItems.length > 0) return normalizedReferenceItems
+
+      const groupedReferenceItems = getChildItemsFromGroups(
+        content.child_groups,
+        (group) => isReferenceContentType(group.info_type),
+      )
+      if (groupedReferenceItems.length > 0) return groupedReferenceItems
+
+      return childContentItems.filter((item) => isReferenceContentType(item.type))
+    },
+    [childContentItems, content.child_groups, content.references],
   )
   const relatedChildItems = useMemo(
-    () => childContentItems.filter((item) => !isReferenceContentType(item.type)),
-    [childContentItems],
+    () => {
+      const groupedRelatedItems = getChildItemsFromGroups(
+        content.child_groups,
+        (group) => !isReferenceContentType(group.info_type),
+      )
+      if (groupedRelatedItems.length > 0) return groupedRelatedItems
+
+      const normalizedRelatedItems = dedupeDetailChildItems(
+        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
+          toDetailChildItem(
+            item,
+            ('content_type' in item ? item.content_type : undefined) ||
+              ('info_type' in item ? item.info_type : undefined) ||
+              ('type' in item ? item.type : undefined),
+          ),
+        ),
+      )
+      if (normalizedRelatedItems.length > 0) return normalizedRelatedItems
+
+      return childContentItems.filter((item) => !isReferenceContentType(item.type))
+    },
+    [childContentItems, content.child_groups, content.chapters, content.related_content],
   )
 
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
@@ -343,9 +468,7 @@ export function DetailContentDisplay({
     navigate(internalPath)
   }
 
-  const hasSidebarContent =
-    sections.length > 1 ||
-    contextualNavigationLinks.length > 0
+  const hasSidebarContent = sections.length > 1
   // Reserve sidebar space while enrichment is loading to prevent grid layout shift
   const showSidebarLayout = hasSidebarContent || isEnrichedLoading
 
@@ -383,45 +506,6 @@ export function DetailContentDisplay({
 
           {isEnrichedLoading && (
             <DetailAsideLoadingSkeleton />
-          )}
-
-          {contextualNavigationLinks.length > 0 && (
-            <section className="border-t border-slate-100 pl-7 pt-4">
-              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                Gå til publikasjon
-              </p>
-              <ul className="m-0 list-none space-y-1.5 p-0">
-                {contextualNavigationLinks.map((link) => {
-                  const label =
-                    link.title ||
-                    LINK_LABEL_BY_REL[link.rel] ||
-                    `${link.rel.charAt(0).toUpperCase()}${link.rel.slice(1)}`
-                  return (
-                    <li key={`contextual-${link.rel}-${link.href}`}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const normalizedContentType = link.type?.trim()
-                          navigate(buildContentUrl({ id: link.contentId, path: link.path ?? undefined }), {
-                            state: {
-                              ...(location.state as Record<string, unknown> | null),
-                              sourceContentId: content.id,
-                              sourceContentTitle: content.title,
-                              ...(normalizedContentType
-                                ? { contentType: normalizedContentType }
-                                : {}),
-                            },
-                          })
-                        }}
-                        className="w-full py-0.5 px-0 text-left text-xs text-slate-500 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#025169] hover:underline"
-                      >
-                        {label}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
           )}
 
           {sections.length > 0 && visibleDocumentLinks.length > 0 && (

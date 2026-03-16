@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type MouseEvent,
@@ -36,6 +35,7 @@ export function ChildGroupDropdown({
   shouldClearPin = false,
 }: ChildGroupDropdownProps) {
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const measureFrameRef = useRef<number | null>(null);
   const dropdownEls = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const [pinnedChildGroupKey, setInternalPinnedKey] = useState<string | null>(null);
@@ -43,18 +43,13 @@ export function ChildGroupDropdown({
   const [flippedVerticalGroups, setFlippedVerticalGroups] = useState<Set<string>>(new Set());
   const [flippedHorizontalGroups, setFlippedHorizontalGroups] = useState<Set<string>>(new Set());
 
-  // Derive effective pinned key — treat as unpinned when the parent signals another card is active
   const effectivePinnedChildGroupKey = shouldClearPin ? null : pinnedChildGroupKey;
-
   const isAnyGroupOpen = effectivePinnedChildGroupKey !== null || hoveredChildGroupKey !== null;
 
-  // Notify parent whenever open state changes
   useEffect(() => {
     onOpenChange(isAnyGroupOpen);
   }, [isAnyGroupOpen, onOpenChange]);
 
-  // Notify parent when this card becomes active (any hover or pin) so other cards can clear their pins.
-  // Skip the initial mount so we don't fire with isAnyGroupOpen=false on first render.
   const didMount = useRef(false);
   useEffect(() => {
     if (!didMount.current) {
@@ -64,42 +59,51 @@ export function ChildGroupDropdown({
     onPinChange?.(isAnyGroupOpen);
   }, [isAnyGroupOpen, onPinChange]);
 
-  // On desktop, correct dropdown placement if it overflows viewport bounds.
-  // Runs in useLayoutEffect so the correction happens before browser paint.
-  useLayoutEffect(() => {
-    const activeKey = effectivePinnedChildGroupKey ?? hoveredChildGroupKey;
-    if (!activeKey) return;
-    if (window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
-
-    const el = dropdownEls.current.get(activeKey);
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-
-    if (rect.bottom > window.innerHeight - 8) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional layout correction before paint
-      setFlippedVerticalGroups((prev) =>
-        prev.has(activeKey) ? prev : new Set([...prev, activeKey]),
-      );
+  const measureDropdownPlacement = (groupKey: string) => {
+    if (measureFrameRef.current) {
+      cancelAnimationFrame(measureFrameRef.current);
     }
 
-    if (rect.right > window.innerWidth - 8) {
-      setFlippedHorizontalGroups((prev) =>
-        prev.has(activeKey) ? prev : new Set([...prev, activeKey]),
-      );
-    }
-  }, [
-    effectivePinnedChildGroupKey,
-    hoveredChildGroupKey,
-  ]);
+    measureFrameRef.current = requestAnimationFrame(() => {
+      measureFrameRef.current = null;
 
-  // Clean up leave timer on unmount
+      if (window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
+
+      const el = dropdownEls.current.get(groupKey);
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+
+      setFlippedVerticalGroups((prev) => {
+        const shouldFlip = rect.bottom > window.innerHeight - 8;
+        const hasFlip = prev.has(groupKey);
+        if (shouldFlip === hasFlip) return prev;
+
+        const next = new Set(prev);
+        if (shouldFlip) next.add(groupKey);
+        else next.delete(groupKey);
+        return next;
+      });
+
+      setFlippedHorizontalGroups((prev) => {
+        const shouldFlip = rect.right > window.innerWidth - 8;
+        const hasFlip = prev.has(groupKey);
+        if (shouldFlip === hasFlip) return prev;
+
+        const next = new Set(prev);
+        if (shouldFlip) next.add(groupKey);
+        else next.delete(groupKey);
+        return next;
+      });
+    });
+  };
+
   useEffect(() => {
     return () => {
       if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+      if (measureFrameRef.current) cancelAnimationFrame(measureFrameRef.current);
     };
   }, []);
 
-  // Close pinned dropdown when clicking outside the card
   useEffect(() => {
     if (!effectivePinnedChildGroupKey) return;
 
@@ -116,7 +120,6 @@ export function ChildGroupDropdown({
     };
   }, [effectivePinnedChildGroupKey, cardRef]);
 
-  // On mobile, close floating overlays when the user scrolls the page/content.
   useEffect(() => {
     if (!isAnyGroupOpen) return;
     if (!window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
@@ -164,8 +167,13 @@ export function ChildGroupDropdown({
     event: MouseEvent<HTMLButtonElement>,
   ) => {
     event.stopPropagation();
-    setInternalPinnedKey((prev) => (prev === groupKey ? null : groupKey));
-    resetFlipForGroup(groupKey);
+    const nextPinnedKey = pinnedChildGroupKey === groupKey ? null : groupKey;
+    setInternalPinnedKey(nextPinnedKey);
+
+    if (nextPinnedKey) {
+      resetFlipForGroup(groupKey);
+      measureDropdownPlacement(groupKey);
+    }
   };
 
   const handleChildGroupHover = (groupKey: string) => {
@@ -176,11 +184,9 @@ export function ChildGroupDropdown({
     if (effectivePinnedChildGroupKey && effectivePinnedChildGroupKey !== groupKey) {
       setInternalPinnedKey(null);
     }
-    // Only reset placement flags when first opening the dropdown, not when the mouse
-    // re-enters the wrapper while moving from the trigger button into the dropdown panel.
-    // Resetting on re-entry would clear the flipped state and cause the panel to jump.
     if (hoveredChildGroupKey !== groupKey && effectivePinnedChildGroupKey !== groupKey) {
       resetFlipForGroup(groupKey);
+      measureDropdownPlacement(groupKey);
     }
     setHoveredChildGroupKey(groupKey);
   };
@@ -263,6 +269,11 @@ export function ChildGroupDropdown({
                         >
                           <span className="min-w-0 break-words group-hover/item:underline">
                             {item.title}
+                            {(
+                              <span className="ml-2 rounded-full bg-[#fff7ed] px-2 py-0.5 text-[0.65rem] font-medium text-[#7c2d12]">
+                                PDF
+                              </span>
+                            )}
                           </span>
                           <IoArrowForward className="h-3.5 w-3.5 shrink-0 opacity-60" />
                         </a>
