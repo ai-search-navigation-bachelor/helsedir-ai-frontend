@@ -13,6 +13,11 @@ import type { SearchResultChildGroup } from "../../types";
 const MOBILE_MAX_WIDTH_PX = 767;
 const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_MAX_WIDTH_PX}px)`;
 
+const DROPDOWN_MARGIN_PX = 4; // gap between chip and dropdown
+const DROPDOWN_MIN_WIDTH_PX = 240; // floor so list is never too narrow
+const DROPDOWN_MAX_HEIGHT_PX = 512; // matches md:max-h-[min(70vh,32rem)]
+const DROPDOWN_VIEWPORT_BUFFER_PX = 8; // minimum clearance from viewport edges
+
 interface ChildGroupDropdownProps {
   resultId: string;
   resultTitle: string;
@@ -35,13 +40,23 @@ export function ChildGroupDropdown({
   shouldClearPin = false,
 }: ChildGroupDropdownProps) {
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const measureFrameRef = useRef<number | null>(null);
-  const dropdownEls = useRef<Map<string, HTMLDivElement>>(new Map());
+  const chipWrapperEls = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const [pinnedChildGroupKey, setInternalPinnedKey] = useState<string | null>(null);
   const [hoveredChildGroupKey, setHoveredChildGroupKey] = useState<string | null>(null);
   const [flippedVerticalGroups, setFlippedVerticalGroups] = useState<Set<string>>(new Set());
-  const [flippedHorizontalGroups, setFlippedHorizontalGroups] = useState<Set<string>>(new Set());
+  const [dropdownMaxWidths, setDropdownMaxWidths] = useState<Map<string, number>>(new Map());
+
+  // Reset internal pin state when shouldClearPin becomes true.
+  // Uses useState to track previous prop value — the React-recommended pattern
+  // for "storing information from previous renders" (react.dev/reference/react/useState).
+  const [prevShouldClearPin, setPrevShouldClearPin] = useState(shouldClearPin);
+  if (prevShouldClearPin !== shouldClearPin) {
+    setPrevShouldClearPin(shouldClearPin);
+    if (shouldClearPin && pinnedChildGroupKey !== null) {
+      setInternalPinnedKey(null);
+    }
+  }
 
   const effectivePinnedChildGroupKey = shouldClearPin ? null : pinnedChildGroupKey;
   const isAnyGroupOpen = effectivePinnedChildGroupKey !== null || hoveredChildGroupKey !== null;
@@ -59,48 +74,47 @@ export function ChildGroupDropdown({
     onPinChange?.(isAnyGroupOpen);
   }, [isAnyGroupOpen, onPinChange]);
 
-  const measureDropdownPlacement = (groupKey: string) => {
-    if (measureFrameRef.current) {
-      cancelAnimationFrame(measureFrameRef.current);
-    }
+  /**
+   * Pre-calculate placement based on chip wrapper's viewport position.
+   * Always positions the dropdown to the RIGHT; constrains maxWidth to fit screen.
+   */
+  const calculateDropdownPlacement = (groupKey: string) => {
+    if (window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
 
-    measureFrameRef.current = requestAnimationFrame(() => {
-      measureFrameRef.current = null;
+    const wrapperEl = chipWrapperEls.current.get(groupKey);
+    if (!wrapperEl) return;
 
-      if (window.matchMedia(MOBILE_MEDIA_QUERY).matches) return;
+    const rect = wrapperEl.getBoundingClientRect();
 
-      const el = dropdownEls.current.get(groupKey);
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
+    // Available space to the right of the chip button
+    const availableRight = window.innerWidth - rect.right - DROPDOWN_MARGIN_PX - DROPDOWN_VIEWPORT_BUFFER_PX;
+    const maxWidth = Math.max(availableRight, DROPDOWN_MIN_WIDTH_PX);
 
-      setFlippedVerticalGroups((prev) => {
-        const shouldFlip = rect.bottom > window.innerHeight - 8;
-        const hasFlip = prev.has(groupKey);
-        if (shouldFlip === hasFlip) return prev;
+    setDropdownMaxWidths((prev) => {
+      if (prev.get(groupKey) === maxWidth) return prev;
+      const next = new Map(prev);
+      next.set(groupKey, maxWidth);
+      return next;
+    });
 
-        const next = new Set(prev);
-        if (shouldFlip) next.add(groupKey);
-        else next.delete(groupKey);
-        return next;
-      });
+    // Flip UP only when dropdown doesn't fit below AND there is more space above
+    const cappedHeight = Math.min(DROPDOWN_MAX_HEIGHT_PX, window.innerHeight * 0.7);
+    const spaceBelow = window.innerHeight - rect.bottom - DROPDOWN_VIEWPORT_BUFFER_PX;
+    const spaceAbove = rect.top - DROPDOWN_VIEWPORT_BUFFER_PX;
+    const shouldFlipVertical = spaceBelow < cappedHeight && spaceAbove > spaceBelow;
 
-      setFlippedHorizontalGroups((prev) => {
-        const shouldFlip = rect.right > window.innerWidth - 8;
-        const hasFlip = prev.has(groupKey);
-        if (shouldFlip === hasFlip) return prev;
-
-        const next = new Set(prev);
-        if (shouldFlip) next.add(groupKey);
-        else next.delete(groupKey);
-        return next;
-      });
+    setFlippedVerticalGroups((prev) => {
+      if (shouldFlipVertical === prev.has(groupKey)) return prev;
+      const next = new Set(prev);
+      if (shouldFlipVertical) next.add(groupKey);
+      else next.delete(groupKey);
+      return next;
     });
   };
 
   useEffect(() => {
     return () => {
       if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
-      if (measureFrameRef.current) cancelAnimationFrame(measureFrameRef.current);
     };
   }, []);
 
@@ -126,13 +140,13 @@ export function ChildGroupDropdown({
 
     const handleScroll = (event: Event) => {
       const activeKey = effectivePinnedChildGroupKey ?? hoveredChildGroupKey;
-      const activeDropdownEl = activeKey ? dropdownEls.current.get(activeKey) : null;
+      const activeWrapperEl = activeKey ? chipWrapperEls.current.get(activeKey) : null;
       const target = event.target;
 
       if (
-        activeDropdownEl &&
+        activeWrapperEl &&
         target instanceof Node &&
-        activeDropdownEl.contains(target)
+        activeWrapperEl.contains(target)
       ) {
         return;
       }
@@ -147,21 +161,6 @@ export function ChildGroupDropdown({
     };
   }, [isAnyGroupOpen, effectivePinnedChildGroupKey, hoveredChildGroupKey]);
 
-  const resetFlipForGroup = (groupKey: string) => {
-    setFlippedVerticalGroups((prev) => {
-      if (!prev.has(groupKey)) return prev;
-      const next = new Set(prev);
-      next.delete(groupKey);
-      return next;
-    });
-    setFlippedHorizontalGroups((prev) => {
-      if (!prev.has(groupKey)) return prev;
-      const next = new Set(prev);
-      next.delete(groupKey);
-      return next;
-    });
-  };
-
   const handleChildGroupToggle = (
     groupKey: string,
     event: MouseEvent<HTMLButtonElement>,
@@ -171,8 +170,7 @@ export function ChildGroupDropdown({
     setInternalPinnedKey(nextPinnedKey);
 
     if (nextPinnedKey) {
-      resetFlipForGroup(groupKey);
-      measureDropdownPlacement(groupKey);
+      calculateDropdownPlacement(groupKey);
     }
   };
 
@@ -184,10 +182,7 @@ export function ChildGroupDropdown({
     if (effectivePinnedChildGroupKey && effectivePinnedChildGroupKey !== groupKey) {
       setInternalPinnedKey(null);
     }
-    if (hoveredChildGroupKey !== groupKey && effectivePinnedChildGroupKey !== groupKey) {
-      resetFlipForGroup(groupKey);
-      measureDropdownPlacement(groupKey);
-    }
+    calculateDropdownPlacement(groupKey);
     setHoveredChildGroupKey(groupKey);
   };
 
@@ -210,11 +205,15 @@ export function ChildGroupDropdown({
           effectivePinnedChildGroupKey === null && hoveredChildGroupKey === groupKey;
         const isOpen = isPinnedOpen || isHoverOpen;
         const isFlippedVertical = flippedVerticalGroups.has(groupKey);
-        const isFlippedHorizontal = flippedHorizontalGroups.has(groupKey);
+        const maxWidth = dropdownMaxWidths.get(groupKey);
 
         return (
           <div
             key={groupKey}
+            ref={(el) => {
+              if (el) chipWrapperEls.current.set(groupKey, el);
+              else chipWrapperEls.current.delete(groupKey);
+            }}
             data-child-group-key={groupKey}
             className="inline-block md:relative"
             onMouseEnter={() => handleChildGroupHover(groupKey)}
@@ -235,18 +234,11 @@ export function ChildGroupDropdown({
 
             {items.length > 0 && (
               <div
-                ref={(el) => {
-                  if (el) dropdownEls.current.set(groupKey, el);
-                  else dropdownEls.current.delete(groupKey);
-                }}
                 inert={!isOpen}
-                className={`absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md transition-opacity duration-100 md:mt-0 md:min-w-[20rem] md:w-max md:max-w-[min(42rem,92vw)] md:shadow-lg ${
+                style={maxWidth !== undefined ? { maxWidth } : undefined}
+                className={`absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md transition-opacity duration-100 md:mt-0 md:min-w-60 md:w-max md:shadow-lg ${
                   isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-                } ${
-                  isFlippedHorizontal
-                    ? "md:left-auto md:right-full md:mr-2 md:ml-0"
-                    : "md:left-full md:right-auto md:ml-2 md:mr-0"
-                } ${
+                } md:left-full md:right-auto md:ml-1 ${
                   isFlippedVertical
                     ? "md:top-auto md:bottom-0"
                     : "md:top-0 md:bottom-auto"
