@@ -33,7 +33,7 @@ export function buildTemasideBreadcrumbItems(
   nodeByPath: Map<string, ThemeNode>,
   categoryTitle?: string,
 ): BreadcrumbItem[] {
-  const items: BreadcrumbItem[] = [{ label: 'Forside', href: '/' }]
+  const items: BreadcrumbItem[] = [{ label: 'Forside', href: '/', group: 'home' }]
   const segments = temaPath.split('/').filter(Boolean)
 
   // Hub page (0–1 segments) — only show "Forside", don't link to self
@@ -46,6 +46,8 @@ export function buildTemasideBreadcrumbItems(
   items.push({
     label: categoryTitle || categoryNodeTitle || titleizeSegment(segments[0]) || categoryPath,
     href: categoryPath,
+    group: 'tema',
+    metaLabel: 'Temaområde',
   })
 
   const currentNodeTitle = nodeByPath.get(temaPath)?.title
@@ -53,6 +55,8 @@ export function buildTemasideBreadcrumbItems(
   items.push({
     label: currentNodeTitle || titleizeSegment(currentSegment) || temaPath,
     href: '#',
+    group: 'current',
+    metaLabel: 'Temaside',
   })
 
   return items

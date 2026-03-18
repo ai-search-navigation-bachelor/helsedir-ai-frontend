@@ -40,6 +40,23 @@ const TYPE_SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
 
 const TYPE_LABEL_BY_CONTENT_TYPE: Record<string, string> = {
   ehelsestandard: 'Nasjonal e-helsestandard',
+  anbefaling: 'Anbefaling',
+  kapittel: 'Kapittel',
+  'nasjonalt-forlop': 'Nasjonalt forløp',
+  'nasjonal-veileder': 'Nasjonal veileder',
+  'pakkeforlop-anbefaling': 'Pakkeforløp-anbefaling',
+  rad: 'Råd',
+  rapport: 'Rapport',
+  retningslinje: 'Retningslinje',
+  rundskriv: 'Rundskriv',
+  temaside: 'Temaside',
+  tilskudd: 'Tilskudd',
+  veileder: 'Veileder',
+  veiledning: 'Veiledning',
+  'veileder-lov-forskrift': 'Veileder',
+  'regelverk-lov-eller-forskrift': 'Regelverk',
+  'faglig-rad': 'Faglig råd',
+  prioriteringsveileder: 'Prioriteringsveileder',
 }
 
 export function normalizeContentType(contentType?: string) {

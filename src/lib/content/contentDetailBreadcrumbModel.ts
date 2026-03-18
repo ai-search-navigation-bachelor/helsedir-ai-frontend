@@ -3,6 +3,7 @@ import { TEMASIDE_CATEGORIES } from '../../constants/temasider'
 import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
 import { buildContentUrl } from '../contentUrl'
 import { getDisplayTitle } from '../displayTitle'
+import { normalizeContentType, toContentTypeLabel } from '../../constants/content'
 import type { ContentDetail } from '../../types'
 import type { BreadcrumbItem } from '../../components/ui/Breadcrumb'
 import type { TemasideInfo } from './breadcrumbUtils'
@@ -22,6 +23,19 @@ function getCategoryFromTemasidePath(temasidePath: string): { label: string; hre
   if (!category) return null
 
   return { label: category.title, href: category.path }
+}
+
+function getBreadcrumbMetaLabel(contentType?: string, group?: BreadcrumbItem['group']) {
+  if (group === 'tema') {
+    return contentType ? toContentTypeLabel(contentType) : 'Temaside'
+  }
+  if (group === 'parent' && contentType) {
+    return toContentTypeLabel(contentType)
+  }
+  if (group === 'current' && contentType) {
+    return toContentTypeLabel(contentType)
+  }
+  return undefined
 }
 
 /**
@@ -66,13 +80,18 @@ export function buildContentBreadcrumbItems(
   if (temaside?.path) {
     const category = getCategoryFromTemasidePath(temaside.path)
     if (category) {
-      items.push({ label: category.label, href: category.href, group: 'tema' })
+      items.push({ label: category.label, href: category.href, group: 'tema', metaLabel: 'Temaområde' })
     }
   }
 
   // Add temaside segment
   if (temaside) {
-    items.push({ label: temaside.title, href: temaside.href, group: 'tema' })
+    items.push({
+      label: temaside.title,
+      href: temaside.href,
+      group: 'tema',
+      metaLabel: getBreadcrumbMetaLabel('temaside', 'tema'),
+    })
   }
 
   // Add parent chain entries (skip temaside duplicate, current content, and kapittel types)
@@ -81,17 +100,32 @@ export function buildContentBreadcrumbItems(
       if (temaside && entry.id === temaside.id) continue
       if (entry.id === content.id) continue
       if (entry.contentType?.trim().toLowerCase() === 'kapittel') continue
-      items.push({ label: entry.tittel, href: entry.href, group: 'parent' })
+      items.push({
+        label: entry.tittel,
+        href: entry.href,
+        group: 'parent',
+        metaLabel: getBreadcrumbMetaLabel(normalizeContentType(entry.contentType), 'parent'),
+      })
     }
   } else {
     // Fallback: use the direct forelder from content.links (instant, no fetch)
     const directParent = extractDirectParent(content)
     if (directParent && directParent.id !== content.id && directParent.id !== temaside?.id) {
-      items.push({ label: directParent.tittel, href: directParent.href, group: 'parent' })
+      items.push({
+        label: directParent.tittel,
+        href: directParent.href,
+        group: 'parent',
+        metaLabel: getBreadcrumbMetaLabel(normalizeContentType(directParent.contentType), 'parent'),
+      })
     }
   }
 
-  items.push({ label: getDisplayTitle(content, content.title), href: '#', group: 'current' })
+  items.push({
+    label: getDisplayTitle(content, content.title),
+    href: '#',
+    group: 'current',
+    metaLabel: getBreadcrumbMetaLabel(normalizeContentType(content.content_type), 'current'),
+  })
 
   return items
 }
@@ -101,6 +135,11 @@ export function buildFallbackBreadcrumbItems(content?: ContentDetail): Breadcrum
 
   return [
     { label: 'Forside', href: '/', group: 'home' },
-    { label: getDisplayTitle(content, content.title), href: '#', group: 'current' },
+    {
+      label: getDisplayTitle(content, content.title),
+      href: '#',
+      group: 'current',
+      metaLabel: getBreadcrumbMetaLabel(normalizeContentType(content.content_type), 'current'),
+    },
   ]
 }

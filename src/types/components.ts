@@ -9,6 +9,7 @@ export interface BreadcrumbItem {
   label: string
   href: string
   icon?: React.ReactNode
+  metaLabel?: string
   /** Semantic group for visual separation: home, tema, parent, current */
   group?: 'home' | 'tema' | 'parent' | 'current'
 }
