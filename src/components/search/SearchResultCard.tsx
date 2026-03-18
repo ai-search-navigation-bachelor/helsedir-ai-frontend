@@ -41,7 +41,12 @@ export function SearchResultCard({
   const documentUrl = result.document_url?.trim() || "";
   const isPdfOnly = Boolean(result.is_pdf_only && documentUrl);
   const sourceContent = result.root_publication ?? result.parent ?? null;
-  const hasSource = !isTemaside && Boolean(sourceContent?.title);
+  const normalizedResultTitle = result.title.trim().toLocaleLowerCase("nb-NO");
+  const normalizedSourceTitle = sourceContent?.title?.trim().toLocaleLowerCase("nb-NO");
+  const isSelfSource =
+    sourceContent?.id === result.id ||
+    (Boolean(normalizedSourceTitle) && normalizedSourceTitle === normalizedResultTitle);
+  const hasSource = !isTemaside && Boolean(sourceContent?.title) && !isSelfSource;
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     setIsAnyGroupOpen(isOpen);
