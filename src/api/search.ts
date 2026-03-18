@@ -31,6 +31,7 @@ export interface SearchOptions extends BaseRequestOptions {
   retningslinje_boost?: number
   role_boost?: number
   role_penalty?: number
+  noCache?: boolean
 }
 
 /**
@@ -73,6 +74,7 @@ export async function search(
     retningslinje_boost,
     role_boost,
     role_penalty,
+    noCache,
   }: SearchOptions = {},
 ): Promise<SearchResponse> {
   const trimmed = query.trim()
@@ -103,8 +105,10 @@ export async function search(
 
   const url = buildUrl(`${BACKEND_BASE_URL}/search`, params)
 
+  const fetchOptions = { signal, ...(noCache && { cache: 'no-store' as RequestCache }) }
+
   try {
-    return await httpRequest<SearchResponse>(url, { signal })
+    return await httpRequest<SearchResponse>(url, fetchOptions)
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 400 || !search_id) {
       throw error
@@ -115,7 +119,7 @@ export async function search(
       search_id: undefined,
     })
 
-    return httpRequest<SearchResponse>(retryUrl, { signal })
+    return httpRequest<SearchResponse>(retryUrl, fetchOptions)
   }
 }
 
@@ -125,9 +129,9 @@ export async function search(
  */
 export async function searchKeyword(
   query: string,
-  { signal, limit = 20, role }: BaseRequestOptions & { limit?: number } = {},
+  { signal, limit = 20, role, noCache }: BaseRequestOptions & { limit?: number; noCache?: boolean } = {},
 ): Promise<SearchResponse> {
-  return search(query, { signal, limit, role, method: 'keyword' })
+  return search(query, { signal, limit, role, method: 'keyword', noCache })
 }
 
 /**
