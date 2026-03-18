@@ -9,7 +9,7 @@ type DisplayTitleSource = {
 function firstNonEmpty(values: Array<string | null | undefined>) {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) {
-      return value
+      return value.trim()
     }
   }
 
@@ -22,8 +22,8 @@ export function getDisplayTitle(source?: DisplayTitleSource | null, fallback = '
       source?.display_title,
       source?.short_title,
       source?.kortTittel,
-      source?.title,
       source?.tittel,
+      source?.title,
     ]) ?? fallback
   )
 }

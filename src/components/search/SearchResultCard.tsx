@@ -43,9 +43,11 @@ export function SearchResultCard({
   const documentUrl = result.document_url?.trim() || "";
   const isPdfOnly = Boolean(result.is_pdf_only && documentUrl);
   const sourceContent = result.root_publication ?? result.parent ?? null;
-  const sourceTitle = sourceContent?.title?.trim() || "";
+  const sourceTitle = sourceContent
+    ? getDisplayTitle(sourceContent, sourceContent?.title ?? "").trim()
+    : "";
   const normalizedResultTitle = resultTitle.trim().toLocaleLowerCase("nb-NO");
-  const normalizedSourceTitle = sourceTitle.trim().toLocaleLowerCase("nb-NO");
+  const normalizedSourceTitle = sourceTitle.toLocaleLowerCase("nb-NO");
   const isSelfSource =
     sourceContent?.id === result.id ||
     (Boolean(normalizedSourceTitle) && normalizedSourceTitle === normalizedResultTitle);
@@ -81,7 +83,7 @@ export function SearchResultCard({
             searchQuery,
             sourceTemasideId,
             sourceContentId: sourceTemasideId,
-            sourceContentTitle: sourceTemasideId ? undefined : result.title,
+            sourceContentTitle: sourceTemasideId ? undefined : resultTitle,
             searchCategoryId: result.categoryId,
             searchCategoryName: result.categoryName,
             contentType: result.info_type,
@@ -133,7 +135,7 @@ export function SearchResultCard({
       {isTemaside && childGroups.length > 0 && (
         <ChildGroupDropdown
           resultId={result.id}
-          resultTitle={result.title}
+          resultTitle={resultTitle}
           childGroups={childGroups}
           searchQuery={searchQuery}
           cardRef={cardRef}
