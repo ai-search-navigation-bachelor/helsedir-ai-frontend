@@ -99,6 +99,7 @@ export interface SearchSuggestion {
   title: string;
   short_title?: string | null;
   display_title?: string | null;
+  info_type?: string | null;
 }
 
 /**

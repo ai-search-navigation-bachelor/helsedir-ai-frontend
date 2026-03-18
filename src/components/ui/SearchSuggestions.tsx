@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { ds } from '../../styles/dsTokens'
 
 export interface SearchSuggestionsProps {
-  suggestions: Array<{ id: string; title: string }>
+  suggestions: Array<{ id: string; title: string; info_type?: string | null }>
   query: string
   activeIndex: number
   listboxId: string
@@ -93,7 +93,7 @@ export function SearchSuggestions({
                 marginLeft: '12px',
               }}
             >
-              Temaside
+              {suggestion.info_type ?? ''}
             </span>
           </li>
         )
