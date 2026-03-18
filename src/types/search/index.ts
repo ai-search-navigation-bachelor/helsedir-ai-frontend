@@ -10,6 +10,8 @@ export interface SearchResultRelationSummary {
   detail_level?: string;
   id: string;
   title: string;
+  short_title?: string | null;
+  display_title?: string;
   content_type?: string | null;
   path?: string | null;
   href?: string | null;
@@ -18,6 +20,8 @@ export interface SearchResultRelationSummary {
 export interface SearchResult {
   id: string;
   title: string;
+  short_title?: string | null;
+  display_title?: string;
   info_type: string;
   path?: string | null;
   should_display?: boolean;
@@ -93,6 +97,8 @@ export interface SearchResponse {
 export interface SearchSuggestion {
   id: string;
   title: string;
+  short_title?: string | null;
+  display_title?: string;
 }
 
 /**

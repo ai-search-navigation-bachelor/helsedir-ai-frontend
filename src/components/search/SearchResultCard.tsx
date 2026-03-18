@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { HiArrowRight } from "react-icons/hi2";
 import { buildContentUrl } from "../../lib/contentUrl";
+import { getDisplayTitle } from "../../lib/displayTitle";
 import { ChildGroupDropdown } from "./ChildGroupDropdown";
 import type { SearchResult } from "../../types";
 
@@ -30,9 +31,10 @@ export function SearchResultCard({
 
   const isTemaside = result.info_type === "temaside";
   const childGroups = Array.isArray(result.children) ? result.children : [];
+  const resultTitle = getDisplayTitle(result, result.title);
   const cardTitle = isTemaside
-    ? result.title.toLocaleUpperCase("nb-NO")
-    : result.title;
+    ? resultTitle.toLocaleUpperCase("nb-NO")
+    : resultTitle;
   const categoryLabel = result.categoryName;
   const temasidePath = temasidePathById.get(result.id);
   const contentHref = isTemaside
@@ -41,12 +43,13 @@ export function SearchResultCard({
   const documentUrl = result.document_url?.trim() || "";
   const isPdfOnly = Boolean(result.is_pdf_only && documentUrl);
   const sourceContent = result.root_publication ?? result.parent ?? null;
-  const normalizedResultTitle = result.title.trim().toLocaleLowerCase("nb-NO");
-  const normalizedSourceTitle = sourceContent?.title?.trim().toLocaleLowerCase("nb-NO");
+  const sourceTitle = sourceContent?.title?.trim() || "";
+  const normalizedResultTitle = resultTitle.trim().toLocaleLowerCase("nb-NO");
+  const normalizedSourceTitle = sourceTitle.trim().toLocaleLowerCase("nb-NO");
   const isSelfSource =
     sourceContent?.id === result.id ||
     (Boolean(normalizedSourceTitle) && normalizedSourceTitle === normalizedResultTitle);
-  const hasSource = !isTemaside && Boolean(sourceContent?.title) && !isSelfSource;
+  const hasSource = !isTemaside && Boolean(sourceTitle) && !isSelfSource;
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     setIsAnyGroupOpen(isOpen);
@@ -67,7 +70,7 @@ export function SearchResultCard({
           href={documentUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`Åpne PDF-dokument for ${result.title} i ny fane`}
+          aria-label={`Åpne PDF-dokument for ${resultTitle} i ny fane`}
           className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#025169]"
         />
       ) : (
@@ -84,7 +87,7 @@ export function SearchResultCard({
             contentType: result.info_type,
             skipHelsedirFallback: Boolean(result.is_pdf_only && documentUrl),
           }}
-          aria-label={`Åpne ${result.title}`}
+          aria-label={`Åpne ${resultTitle}`}
           className="absolute inset-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#025169]"
         />
       )}
@@ -113,7 +116,7 @@ export function SearchResultCard({
       {hasSource && (
         <p className="relative z-10 mt-3 text-xs pointer-events-none">
           <span className="font-semibold text-slate-600">Hentet fra:</span>{" "}
-          <span className="text-slate-500">{sourceContent?.title}</span>
+          <span className="text-slate-500">{sourceTitle}</span>
         </p>
       )}
 

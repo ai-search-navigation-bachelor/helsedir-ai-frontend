@@ -4,6 +4,7 @@ import type { HelselinkContent } from '../../api'
 import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
 import { buildContentUrl } from '../../lib/contentUrl'
 import { extractTemasideInfo } from '../../lib/content/breadcrumbUtils'
+import { getDisplayTitle } from '../../lib/displayTitle'
 import type { TemasideInfo } from '../../lib/content/breadcrumbUtils'
 import type { ContentDetail, ContentRelationItem } from '../../types'
 
@@ -41,6 +42,8 @@ function helsedirToContentDetail(hc: HelselinkContent): ContentDetail {
   return {
     id: hc.id,
     title: hc.tittel,
+    display_title: getDisplayTitle(hc, hc.tittel),
+    short_title: hc.kortTittel || null,
     body: '',
     content_type: hc.type ?? '',
     links: hc.lenker?.map((l) => ({
@@ -104,7 +107,7 @@ async function fetchParentChain(
 
       chain.unshift({
         id: parentReference.id,
-        tittel: parentReference.title,
+        tittel: getDisplayTitle(parentReference, parentReference.title),
         href: fallbackHref,
         contentType: parentReference.content_type || parentReference.info_type,
       })
@@ -123,7 +126,7 @@ async function fetchParentChain(
 
     chain.unshift({
       id: parent.id,
-      tittel: parent.title,
+      tittel: getDisplayTitle(parent, parent.title),
       href,
       contentType: parent.content_type,
     })

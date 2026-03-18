@@ -73,6 +73,7 @@ function buildHelsedirContentByIdUrl(id: string) {
 export interface HelselinkContent {
   id: string
   tittel: string
+  kortTittel?: string
   intro?: string
   tekst?: string
   forstPublisert?: string

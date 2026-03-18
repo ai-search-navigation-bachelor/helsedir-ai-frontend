@@ -8,6 +8,7 @@ import {
 import { Link } from "react-router-dom";
 import { IoArrowForward } from "react-icons/io5";
 import { buildContentUrl } from "../../lib/contentUrl";
+import { getDisplayTitle } from "../../lib/displayTitle";
 import type { SearchResultChildGroup } from "../../types";
 
 const MOBILE_MAX_WIDTH_PX = 767;
@@ -250,6 +251,7 @@ export function ChildGroupDropdown({
                       const documentUrl = item.document_url?.trim() || "";
                       const isPdfOnly = Boolean(item.is_pdf_only && documentUrl);
                       const childHref = isPdfOnly ? documentUrl : buildContentUrl(item);
+                      const itemTitle = getDisplayTitle(item, item.title);
 
                       return isPdfOnly ? (
                         <a
@@ -260,7 +262,7 @@ export function ChildGroupDropdown({
                           className="group/item flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] last:border-b-0"
                         >
                           <span className="min-w-0 break-words group-hover/item:underline">
-                            {item.title}
+                            {itemTitle}
                             {(
                               <span className="ml-2 rounded-full bg-[#fff7ed] px-2 py-0.5 text-[0.65rem] font-medium text-[#7c2d12]">
                                 PDF
@@ -287,7 +289,7 @@ export function ChildGroupDropdown({
                           className="group/item flex w-full items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5 text-sm text-[#025169] hover:bg-[#e8f4f8] last:border-b-0"
                         >
                           <span className="min-w-0 break-words group-hover/item:underline">
-                            {item.title}
+                            {itemTitle}
                           </span>
                           <IoArrowForward className="h-3.5 w-3.5 shrink-0 opacity-60" />
                         </Link>
