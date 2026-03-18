@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppLayout } from './components/layout'
-import { Home, ContentDetail, SearchPage, TemasideHubPage, TemasideLeafPage, NotFound, DevPage } from './pages'
+import { Home, ContentDetail, SearchPage, TemasideHubPage, TemasideLeafPage, NotFound, DevPage, TrainingPage } from './pages'
 import { TEMASIDE_CATEGORIES } from './constants/temasider'
 import { CONTENT_CATEGORY_GROUPS, CONTENT_ONLY_PREFIXES } from './constants/contentRoutes'
 
@@ -11,6 +11,7 @@ function App() {
         <Route index element={<Home />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="dev" element={<DevPage />} />
+        <Route path="dev/training" element={<TrainingPage />} />
 
         {/* Path-based content routes (e.g. /retningslinjer/adhd) */}
         {CONTENT_CATEGORY_GROUPS.map((group) => (

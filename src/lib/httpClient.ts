@@ -38,6 +38,7 @@ export interface HttpRequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   suppressErrorStatuses?: number[]
   cache?: RequestCache
+  body?: string
 }
 
 /**
