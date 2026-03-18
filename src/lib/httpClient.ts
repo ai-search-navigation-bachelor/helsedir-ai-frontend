@@ -37,6 +37,7 @@ export interface HttpRequestOptions {
   headers?: Record<string, string>
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   suppressErrorStatuses?: number[]
+  cache?: RequestCache
 }
 
 /**
@@ -92,7 +93,7 @@ export async function httpRequest<T>(
   url: string | URL,
   options: HttpRequestOptions = {},
 ): Promise<T> {
-  const { signal, headers = {}, method = 'GET', suppressErrorStatuses = [] } = options
+  const { signal, headers = {}, method = 'GET', suppressErrorStatuses = [], cache } = options
 
   // Debug logging
   if (import.meta.env.DEV) {
@@ -107,6 +108,7 @@ export async function httpRequest<T>(
         ...headers,
       },
       signal,
+      ...(cache !== undefined && { cache }),
     })
 
     if (!response.ok) {

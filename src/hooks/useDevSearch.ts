@@ -70,6 +70,7 @@ export function useDevSearch(): DevSearchReturn {
             limit: 100,
             log: false,
             method: 'hybrid',
+            noCache: true,
             ...run.configA,
             role: run.configA.role ?? undefined,
           })
@@ -91,6 +92,7 @@ export function useDevSearch(): DevSearchReturn {
             limit: 100,
             log: false,
             method: 'hybrid',
+            noCache: true,
             ...run.configB,
             role: run.configB.role ?? undefined,
           })
@@ -107,7 +109,7 @@ export function useDevSearch(): DevSearchReturn {
         queryFn: ({ signal }) => {
           const run = pendingRunRef.current
           if (!run) throw new Error('Mangler aktivt søk for Helsedir')
-          return searchKeyword(run.query, { signal, limit: 100 })
+          return searchKeyword(run.query, { signal, limit: 100, noCache: true })
         },
       },
     ],
