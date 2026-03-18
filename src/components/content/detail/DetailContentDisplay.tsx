@@ -10,6 +10,7 @@ import {
   normalizeContentType,
 } from '../../../constants/content'
 import { formatDateLabel } from '../../../lib/content/date'
+import { getDisplayTitle } from '../../../lib/displayTitle'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
 import type { ContentChildGroup, ContentLink, ContentRelationItem, NestedContent } from '../../../types'
 import type { ContentDisplayProps } from '../../../types/pages'
@@ -129,11 +130,13 @@ function toDetailChildItem(
     const id = source.id || getContentIdFromHref(source.href) || ''
     if (!id) return null
 
+    const title = getDisplayTitle(source, source.title || '')
+
     return {
       id,
       path: source.path || undefined,
-      tittel: source.title || '',
-      title: source.title || '',
+      tittel: title,
+      title,
       type: source.type || fallbackType,
       children: source.children
         ?.map((child) => toDetailChildItem(child))
@@ -150,7 +153,10 @@ function toDetailChildItem(
   const normalizedChildren = source.children
     ?.map((child) => toDetailChildItem(child))
     .filter((child): child is NestedContent => Boolean(child))
-  const title = source.title || ('tittel' in source ? source.tittel : undefined) || ''
+  const title = getDisplayTitle(
+    source,
+    source.title || ('tittel' in source ? source.tittel : undefined) || '',
+  )
   const type =
     ('content_type' in source ? source.content_type : undefined) ||
     ('info_type' in source ? source.info_type : undefined) ||
@@ -161,8 +167,10 @@ function toDetailChildItem(
     ...(isNestedDetailChild(source) ? source : {}),
     id: source.id,
     path: source.path || undefined,
-    tittel: ('tittel' in source ? source.tittel : undefined) || title,
-    title: source.title || title,
+    tittel: title,
+    title,
+    short_title: 'short_title' in source ? source.short_title : undefined,
+    display_title: 'display_title' in source ? source.display_title : undefined,
     type,
     children: normalizedChildren,
     has_text_content: source.has_text_content,

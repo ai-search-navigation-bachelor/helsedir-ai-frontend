@@ -1,10 +1,11 @@
 import type { NestedContent } from '../../../types'
 export { formatDateLabel } from '../../../lib/content/date'
+import { getDisplayTitle } from '../../../lib/displayTitle'
 import type { ChapterEntry, PageNode, TreeResult } from './types'
 export { hasVisibleContent } from '../shared/contentTextUtils'
 
 export function getNodeTitle(node: NestedContent, fallback = 'Uten tittel') {
-  return node.tittel || node.title || fallback
+  return getDisplayTitle(node, fallback)
 }
 
 export function getNodeType(node: NestedContent) {

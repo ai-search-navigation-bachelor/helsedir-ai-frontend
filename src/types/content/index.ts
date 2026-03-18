@@ -21,6 +21,8 @@ export interface ContentLink {
 export interface ContentRelationItem {
   id: string
   title: string
+  short_title?: string | null
+  display_title?: string | null
   content_type?: string
   info_type?: string
   relation_kind?: string
@@ -45,6 +47,8 @@ export interface ContentChildGroup {
 export interface LinkedContentItem {
   id: string
   title: string
+  short_title?: string | null
+  display_title?: string | null
   info_type: string
   path?: string
   has_text_content?: boolean
@@ -92,6 +96,8 @@ export interface EhelsestandardFields {
 export interface ContentDetail {
   id: string
   title: string
+  short_title?: string | null
+  display_title?: string | null
   body: string
   content_type: string
   path?: string
@@ -146,6 +152,8 @@ export interface NestedContent {
   tittel?: string
   kortTittel?: string
   title?: string
+  short_title?: string | null
+  display_title?: string | null
   tekst?: string
   body?: string
   intro?: string
