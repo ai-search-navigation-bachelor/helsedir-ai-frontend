@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
 import {
   getPresets,
   generateTrainingData,
@@ -8,7 +7,7 @@ import {
 } from '../api/training'
 import type { Preset, GenerateResponse, TrainResponse, ModelInfo } from '../api/training'
 
-export function TrainingPage() {
+export function TrainingContent() {
   const [presets, setPresets] = useState<Preset[]>([])
   const [presetsLoading, setPresetsLoading] = useState(true)
   const [presetsError, setPresetsError] = useState<string | null>(null)
@@ -34,6 +33,7 @@ export function TrainingPage() {
   useEffect(() => {
     const controller = new AbortController()
     setPresetsLoading(true)
+    setPresetsError(null)
     getPresets(controller.signal)
       .then((data) => {
         setPresets(data)
@@ -119,37 +119,7 @@ export function TrainingPage() {
     generateResult !== null && generateResult.training_groups_available < 20
 
   return (
-    <div className="mx-auto w-full max-w-screen-xl px-4 pt-6 pb-8 sm:px-6 lg:px-12">
-      {/* Dev nav tabs */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '24px' }}>
-        <Link
-          to="/dev"
-          style={{
-            padding: '6px 16px',
-            borderRadius: '6px',
-            backgroundColor: '#f1f5f9',
-            color: '#475569',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            textDecoration: 'none',
-          }}
-        >
-          Søkevekting
-        </Link>
-        <span
-          style={{
-            padding: '6px 16px',
-            borderRadius: '6px',
-            backgroundColor: '#025169',
-            color: '#fff',
-            fontSize: '0.82rem',
-            fontWeight: 700,
-          }}
-        >
-          XGBoost reranker
-        </span>
-      </div>
-
+    <>
       {/* Header */}
       <header style={{ marginBottom: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
@@ -258,21 +228,30 @@ export function TrainingPage() {
                     lineHeight: 1.7,
                   }}
                 >
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+                    {selectedPreset.name} — {selectedPreset.description}
+                  </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2px 14px' }}>
-                    <span style={{ color: '#64748b' }}>Datasett</span>
-                    <strong>{selectedPreset.dataset_name}</strong>
-                    <span style={{ color: '#64748b' }}>Fil</span>
-                    <span>{selectedPreset.dataset_filename}</span>
-                    <span style={{ color: '#64748b' }}>Top-N sider</span>
-                    <span>{selectedPreset.top_n}</span>
-                    <span style={{ color: '#64748b' }}>Søkeresultater (k)</span>
-                    <span>{selectedPreset.k}</span>
-                    <span style={{ color: '#64748b' }}>Klikkvekt temaside</span>
-                    <span>{selectedPreset.temaside_click_weight}</span>
-                    <span style={{ color: '#64748b' }}>Klikkvekt retningslinje</span>
-                    <span>{selectedPreset.retningslinje_click_weight}</span>
-                    <span style={{ color: '#64748b' }}>Klikkvekt andre</span>
-                    <span>{selectedPreset.other_click_weight}</span>
+                    <span style={{ color: '#64748b' }}>Antall sider</span>
+                    <strong>{selectedPreset.top_n}</strong>
+                    <span style={{ color: '#64748b' }}>Resultater per s{'\u00F8'}k</span>
+                    <strong>{selectedPreset.k}</strong>
+                    <span style={{ color: '#64748b' }}>Klikkrate m{'\u00E5'}lside</span>
+                    <strong>{Math.round(selectedPreset.target_click_min * 100)}{'\u2013'}{Math.round(selectedPreset.target_click_max * 100)}%</strong>
+                  </div>
+
+                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #bae6fd' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '6px', fontWeight: 600 }}>
+                      Treningsprioritet
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2px 14px' }}>
+                      <span style={{ color: '#64748b' }}>Temasider</span>
+                      <strong>{Math.round(selectedPreset.temaside_click_weight * 100)}%</strong>
+                      <span style={{ color: '#64748b' }}>Retningslinjer</span>
+                      <strong>{Math.round(selectedPreset.retningslinje_click_weight * 100)}%</strong>
+                      <span style={{ color: '#64748b' }}>Annet innhold</span>
+                      <strong>{Math.round(selectedPreset.other_click_weight * 100)}%</strong>
+                    </div>
                   </div>
                 </div>
               )}
@@ -615,7 +594,7 @@ export function TrainingPage() {
       )}
 
       <style>{`@keyframes training-spin { to { transform: rotate(360deg) } }`}</style>
-    </div>
+    </>
   )
 }
 

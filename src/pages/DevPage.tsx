@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { HELSEDIR_STYLE_CONFIG } from '../constants/dev'
 import { useDevSearch } from '../hooks/useDevSearch'
 import { useRolesQuery } from '../hooks/queries/useRolesQuery'
@@ -11,8 +10,12 @@ import {
   ResultsColumnHeader,
   CategoryBreakdownTable,
 } from '../components/dev'
+import { TrainingContent } from './TrainingPage'
+
+type DevTab = 'search' | 'training'
 
 export function DevPage() {
+  const [activeTab, setActiveTab] = useState<DevTab>('search')
   const [configOpen, setConfigOpen] = useState(true)
   const [guideOpen, setGuideOpen] = useState(false)
   const { data: roles } = useRolesQuery()
@@ -39,34 +42,38 @@ export function DevPage() {
     <div className="mx-auto w-full max-w-screen-xl px-4 pt-6 pb-8 sm:px-6 lg:px-12">
       {/* Dev nav tabs */}
       <div style={{ display: 'flex', gap: '4px', marginBottom: '24px' }}>
-        <span
-          style={{
-            padding: '6px 16px',
-            borderRadius: '6px',
-            backgroundColor: '#025169',
-            color: '#fff',
-            fontSize: '0.82rem',
-            fontWeight: 700,
-          }}
-        >
-          Søkevekting
-        </span>
-        <Link
-          to="/dev/training"
-          style={{
-            padding: '6px 16px',
-            borderRadius: '6px',
-            backgroundColor: '#f1f5f9',
-            color: '#475569',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            textDecoration: 'none',
-          }}
-        >
-          XGBoost reranker
-        </Link>
+        {(['search', 'training'] as const).map((tab) => {
+          const isActive = activeTab === tab
+          const label = tab === 'search' ? 'Søkevekting' : 'XGBoost reranker'
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              style={{
+                padding: '6px 16px',
+                borderRadius: '6px',
+                backgroundColor: isActive ? '#025169' : '#f1f5f9',
+                color: isActive ? '#fff' : '#475569',
+                fontSize: '0.82rem',
+                fontWeight: isActive ? 700 : 600,
+                border: 'none',
+                cursor: isActive ? 'default' : 'pointer',
+              }}
+            >
+              {label}
+            </button>
+          )
+        })}
       </div>
 
+      {/* Training tab — kept mounted, hidden via CSS to preserve state */}
+      <div style={{ display: activeTab === 'training' ? undefined : 'none' }}>
+        <TrainingContent />
+      </div>
+
+      {/* Search weighting tab */}
+      <div style={{ display: activeTab === 'search' ? undefined : 'none' }}>
       {/* Header */}
       <header style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
@@ -389,6 +396,7 @@ export function DevPage() {
           </p>
         </div>
       )}
+    </div>
     </div>
   )
 }
