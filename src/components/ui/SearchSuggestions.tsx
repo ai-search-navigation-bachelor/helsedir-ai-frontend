@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react'
 import { ds } from '../../styles/dsTokens'
+import { SEARCH_SUBCATEGORY_LABELS } from '../../constants/categories'
 
 export interface SearchSuggestionsProps {
-  suggestions: Array<{ id: string; title: string; info_type?: string | null }>
+  suggestions: Array<{ id: string; title: string; info_type?: string | null; path?: string | null }>
   query: string
   activeIndex: number
   listboxId: string
-  onSelect: (id: string) => void
+  onSelect: (id: string, path?: string | null) => void
   onActiveIndexChange: (index: number) => void
 }
 
@@ -63,7 +64,7 @@ export function SearchSuggestions({
             aria-selected={isActive}
             onMouseDown={(e) => {
               e.preventDefault()
-              onSelect(suggestion.id)
+              onSelect(suggestion.id, suggestion.path)
             }}
             onMouseEnter={() => onActiveIndexChange(index)}
             onMouseLeave={() => onActiveIndexChange(-1)}
@@ -93,7 +94,7 @@ export function SearchSuggestions({
                 marginLeft: '12px',
               }}
             >
-              {suggestion.info_type ?? ''}
+              {(SEARCH_SUBCATEGORY_LABELS as Record<string, string>)[suggestion.info_type ?? ''] ?? suggestion.info_type ?? ''}
             </span>
           </li>
         )

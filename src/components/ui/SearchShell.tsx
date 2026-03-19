@@ -47,8 +47,8 @@ function SearchShellContent({ focusRequest }: SearchShellContentProps) {
     // Only clear the input text, don't touch URL params or search results
   }
 
-  function onSuggestionSelect(id: string) {
-    navigate(temasidePathById.get(id) || buildContentUrl({ id }))
+  function onSuggestionSelect(id: string, path?: string | null) {
+    navigate(temasidePathById.get(id) || buildContentUrl({ id, path }))
   }
 
   return (
