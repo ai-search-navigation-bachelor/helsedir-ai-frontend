@@ -11,7 +11,7 @@ export interface SearchFormProps {
   onQueryChange: (query: string) => void
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
   onClear?: () => void
-  onSuggestionSelect?: (id: string) => void
+  onSuggestionSelect?: (id: string, path?: string | null) => void
 }
 
 export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
@@ -65,9 +65,9 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
       onSubmit(e)
     }
 
-    function handleSelectSuggestion(id: string) {
+    function handleSelectSuggestion(id: string, path?: string | null) {
       setShowSuggestions(false)
-      onSuggestionSelect?.(id)
+      onSuggestionSelect?.(id, path)
     }
 
     function handleKeyDown(e: React.KeyboardEvent) {
@@ -92,7 +92,7 @@ export const SearchForm = forwardRef<HTMLInputElement, SearchFormProps>(
 
       if (e.key === 'Enter' && activeIndex >= 0) {
         e.preventDefault()
-        handleSelectSuggestion(suggestions[activeIndex].id)
+        handleSelectSuggestion(suggestions[activeIndex].id, suggestions[activeIndex].path)
       }
     }
 

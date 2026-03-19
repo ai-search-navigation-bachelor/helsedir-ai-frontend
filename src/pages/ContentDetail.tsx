@@ -48,6 +48,13 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
 
   useTemasideCanonicalRedirect(content)
 
+  // When accessed via /content/:id and the content has a canonical path, redirect there
+  useEffect(() => {
+    if (!pathPrefix && !wildcard && content?.path) {
+      navigate(content.path, { replace: true, state: location.state })
+    }
+  }, [content?.path, pathPrefix, wildcard, navigate, location.state])
+
   const { data: parentChainResult, isLoading: isParentChainLoading } = useParentChainQuery(
     content,
     effectiveSearchId,
