@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   getPresets,
-  generateTrainingData,
+  startGenerate,
+  getGenerateStatus,
   trainModel,
   getModelInfo,
 } from '../api/training'
-import type { Preset, GenerateResponse, TrainResponse, ModelInfo } from '../api/training'
+import type { Preset, GenerateStatus, GenerateResponse, TrainResponse, ModelInfo } from '../api/training'
 
 export function TrainingContent() {
   const [presets, setPresets] = useState<Preset[]>([])
@@ -16,6 +17,7 @@ export function TrainingContent() {
   const selectedPreset = presets.find((p) => p.id === selectedPresetId) ?? null
 
   const [generateLoading, setGenerateLoading] = useState(false)
+  const [generateProgress, setGenerateProgress] = useState<GenerateStatus | null>(null)
   const [generateResult, setGenerateResult] = useState<GenerateResponse | null>(null)
   const [generateError, setGenerateError] = useState<string | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
@@ -28,7 +30,18 @@ export function TrainingContent() {
   const [modelLoading, setModelLoading] = useState(false)
 
   const generateAbortRef = useRef<AbortController | null>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const trainAbortRef = useRef<AbortController | null>(null)
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current)
+      pollRef.current = null
+    }
+  }, [])
+
+  // Clean up polling on unmount
+  useEffect(() => stopPolling, [stopPolling])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -56,24 +69,54 @@ export function TrainingContent() {
     setShowClearConfirm(false)
     setGenerateLoading(true)
     setGenerateResult(null)
+    setGenerateProgress(null)
     setGenerateError(null)
     setTrainResult(null)
     setTrainError(null)
     setModel(null)
+    stopPolling()
 
     const controller = new AbortController()
     generateAbortRef.current = controller
 
     try {
-      const result = await generateTrainingData(
+      const { job_id } = await startGenerate(
         { preset_id: selectedPresetId ?? undefined, clear },
         controller.signal,
       )
-      setGenerateResult(result)
+
+      // Poll for progress
+      pollRef.current = setInterval(async () => {
+        try {
+          const status = await getGenerateStatus(job_id, controller.signal)
+          setGenerateProgress(status)
+
+          if (status.status === 'completed') {
+            stopPolling()
+            setGenerateResult({
+              success: true,
+              searches_created: status.searches_created,
+              results_shown: status.results_shown,
+              clicks_created: status.clicks_created,
+              skipped: status.skipped,
+              training_groups_available: status.training_groups_available,
+            })
+            setGenerateLoading(false)
+          } else if (status.status === 'failed') {
+            stopPolling()
+            setGenerateError(status.error || 'Generering feilet')
+            setGenerateLoading(false)
+          }
+        } catch (err: unknown) {
+          if ((err as { name?: string }).name === 'AbortError') return
+          stopPolling()
+          setGenerateError('Mistet kontakt med backend under generering')
+          setGenerateLoading(false)
+        }
+      }, 1500)
     } catch (err: unknown) {
       if ((err as { name?: string }).name === 'AbortError') return
-      setGenerateError('Feil under generering av treningsdata')
-    } finally {
+      setGenerateError('Feil under oppstart av generering')
       setGenerateLoading(false)
     }
   }
@@ -288,6 +331,43 @@ export function TrainingContent() {
             {generateLoading && <Spinner />}
             {generateLoading ? 'Genererer…' : 'Generer treningsdata'}
           </button>
+
+          {/* Progress bar */}
+          {generateLoading && generateProgress && (
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155' }}>
+                  {generateProgress.current} / {generateProgress.total} sider
+                </span>
+                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#047FA4' }}>
+                  {Math.round(generateProgress.progress * 100)}%
+                </span>
+              </div>
+              <div
+                style={{
+                  height: '8px',
+                  borderRadius: '4px',
+                  backgroundColor: '#e2e8f0',
+                  overflow: 'hidden',
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${Math.round(generateProgress.progress * 100)}%`,
+                    borderRadius: '4px',
+                    backgroundColor: '#047FA4',
+                    transition: 'width 0.4s ease',
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '0.75rem', color: '#64748b' }}>
+                <span>S{'\u00F8'}k: {generateProgress.searches_created}</span>
+                <span>Resultater: {generateProgress.results_shown}</span>
+                <span>Klikk: {generateProgress.clicks_created}</span>
+              </div>
+            </div>
+          )}
 
           {generateError && (
             <div style={{ marginTop: '12px' }}>

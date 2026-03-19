@@ -34,6 +34,24 @@ export interface GenerateRequest {
   k?: number
 }
 
+export interface GenerateStartResponse {
+  job_id: string
+}
+
+export interface GenerateStatus {
+  job_id: string
+  status: 'running' | 'completed' | 'failed'
+  current: number
+  total: number
+  progress: number
+  searches_created: number
+  results_shown: number
+  clicks_created: number
+  skipped: number
+  training_groups_available: number
+  error: string | null
+}
+
 export interface GenerateResponse {
   success: boolean
   searches_created: number
@@ -90,11 +108,18 @@ export async function getPresets(signal?: AbortSignal): Promise<Preset[]> {
   return httpRequest<Preset[]>(`${BACKEND_BASE_URL}/dev/presets`, { signal })
 }
 
-export async function generateTrainingData(
+export async function startGenerate(
   params: GenerateRequest,
   signal?: AbortSignal,
-): Promise<GenerateResponse> {
-  return postJson<GenerateResponse>('/dev/generate', params, signal)
+): Promise<GenerateStartResponse> {
+  return postJson<GenerateStartResponse>('/dev/generate', params, signal)
+}
+
+export async function getGenerateStatus(
+  jobId: string,
+  signal?: AbortSignal,
+): Promise<GenerateStatus> {
+  return httpRequest<GenerateStatus>(`${BACKEND_BASE_URL}/dev/generate/status/${encodeURIComponent(jobId)}`, { signal })
 }
 
 export async function trainModel(
