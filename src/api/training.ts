@@ -132,3 +132,29 @@ export async function trainModel(
 export async function getModelInfo(signal?: AbortSignal): Promise<ModelInfo> {
   return httpRequest<ModelInfo>(`${BACKEND_BASE_URL}/dev/model`, { signal })
 }
+
+/* ── New model-selection endpoints ── */
+
+export interface DevModel {
+  preset_id: number
+  name: string
+  description: string
+  active: boolean
+}
+
+export interface SelectModelResponse {
+  available: boolean
+  active_preset_id: number
+  feature_importances: Record<string, number>
+}
+
+export async function getDevModels(signal?: AbortSignal): Promise<DevModel[]> {
+  return httpRequest<DevModel[]>(`${BACKEND_BASE_URL}/dev/models`, { signal })
+}
+
+export async function selectDevModel(
+  presetId: number,
+  signal?: AbortSignal,
+): Promise<SelectModelResponse> {
+  return postJson<SelectModelResponse>('/dev/model/select', { preset_id: presetId }, signal)
+}

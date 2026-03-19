@@ -1,4 +1,5 @@
 export { SliderRow } from './SliderRow'
+export { SearchPipeline } from './pipeline'
 export { ScoreBar } from './ScoreBar'
 export { ScoreLegend } from './ScoreLegend'
 export { ReadOnlyConfigPanel } from './ReadOnlyConfigPanel'

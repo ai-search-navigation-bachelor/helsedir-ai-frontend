@@ -1,23 +1,18 @@
 import { useState } from 'react'
-import { HELSEDIR_STYLE_CONFIG } from '../constants/dev'
 import { useDevSearch } from '../hooks/useDevSearch'
 import { useRolesQuery } from '../hooks/queries/useRolesQuery'
 import {
-  WeightConfigPanel,
-  ReadOnlyConfigPanel,
+  SearchPipeline,
   StatsBar,
   DevResultItem,
   ResultsColumnHeader,
   CategoryBreakdownTable,
 } from '../components/dev'
-import { TrainingContent } from './TrainingPage'
-
-type DevTab = 'search' | 'training'
+import type { PipelineStageId } from '../types/dev'
 
 export function DevPage() {
-  const [activeTab, setActiveTab] = useState<DevTab>('search')
-  const [configOpen, setConfigOpen] = useState(true)
-  const [guideOpen, setGuideOpen] = useState(false)
+  const [activeStage, setActiveStage] = useState<PipelineStageId | null>(null)
+  const [activeConfig, setActiveConfig] = useState<'a' | 'b'>('a')
   const { data: roles } = useRolesQuery()
   const {
     query,
@@ -40,40 +35,7 @@ export function DevPage() {
 
   return (
     <div className="mx-auto w-full max-w-screen-xl px-4 pt-6 pb-8 sm:px-6 lg:px-12">
-      {/* Dev nav tabs */}
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '24px' }}>
-        {(['search', 'training'] as const).map((tab) => {
-          const isActive = activeTab === tab
-          const label = tab === 'search' ? 'Søkevekting' : 'XGBoost reranker'
-          return (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              style={{
-                padding: '6px 16px',
-                borderRadius: '6px',
-                backgroundColor: isActive ? '#025169' : '#f1f5f9',
-                color: isActive ? '#fff' : '#475569',
-                fontSize: '0.82rem',
-                fontWeight: isActive ? 700 : 600,
-                border: 'none',
-                cursor: isActive ? 'default' : 'pointer',
-              }}
-            >
-              {label}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Training tab — kept mounted, hidden via CSS to preserve state */}
-      <div style={{ display: activeTab === 'training' ? undefined : 'none' }}>
-        <TrainingContent />
-      </div>
-
-      {/* Search weighting tab */}
-      <div style={{ display: activeTab === 'search' ? undefined : 'none' }}>
+      <div>
       {/* Header */}
       <header style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
@@ -161,127 +123,20 @@ export function DevPage() {
         </button>
       </div>
 
-      {/* Collapsible parameter guide */}
-      <div style={{ marginBottom: '16px' }}>
-        <button
-          type="button"
-          onClick={() => setGuideOpen(!guideOpen)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'none',
-            border: 'none',
-            color: '#64748b',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            padding: '4px 0',
-          }}
-        >
-          <span
-            style={{
-              display: 'inline-block',
-              transition: 'transform 0.2s ease',
-              transform: guideOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-              fontSize: '0.65rem',
-            }}
-          >
-            {'\u25B6'}
-          </span>
-          Hva betyr parameterne?
-        </button>
-
-        {guideOpen && (
-          <div
-            style={{
-              marginTop: '8px',
-              padding: '14px 16px',
-              borderRadius: '8px',
-              backgroundColor: '#f0f9ff',
-              border: '1px solid #bae6fd',
-              fontSize: '0.8rem',
-              color: '#334155',
-              lineHeight: 1.7,
-              display: 'grid',
-              gridTemplateColumns: 'auto 1fr',
-              gap: '4px 14px',
-            }}
-          >
-            <strong style={{ color: '#0284c7' }}>BM25</strong>
-            <span>{`Ordbasert s\u00F8k \u2013 sjeldne ord som finnes i f\u00E5 dokumenter f\u00E5r h\u00F8yere vekt (IDF).`}</span>
-
-            <strong style={{ color: '#059669' }}>Semantisk</strong>
-            <span>{`Forst\u00E5r betydningen av sp\u00F8rsm\u00E5let via vektorrepresentasjoner, finner relatert innhold uten ordlikhet.`}</span>
-
-            <strong style={{ color: '#047FA4' }}>RRF-k</strong>
-            <span>{`Reciprocal Rank Fusion \u2013 sl\u00E5r sammen BM25- og semantisk-listene. H\u00F8yere verdi = jevnere vekting, lavere = topp-treff l\u00F8ftes.`}</span>
-
-            <strong style={{ color: '#1e293b' }}>Boost</strong>
-            <span>{`Multipliserer scoren til utvalgte innholdstyper. 1.0 = n\u00F8ytral, over 1.0 = prioritering.`}</span>
-
-            <strong style={{ color: '#1e293b' }}>Rolle</strong>
-            <span>{`Tilpasser rangering for en spesifikk brukerrolle. Resultater med role_boost > 1.0 l\u00F8ftes, < 1.0 senkes.`}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Collapsible config section */}
-      <div style={{ marginBottom: '24px' }}>
-        <button
-          type="button"
-          onClick={() => setConfigOpen(!configOpen)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'none',
-            border: 'none',
-            color: '#475569',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            padding: '4px 0',
-            letterSpacing: '0.03em',
-            textTransform: 'uppercase',
-          }}
-        >
-          <span
-            style={{
-              display: 'inline-block',
-              transition: 'transform 0.2s ease',
-              transform: configOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-              fontSize: '0.65rem',
-            }}
-          >
-            {'\u25B6'}
-          </span>
-          Konfigurasjon
-        </button>
-
-        {configOpen && (
-          <div style={{ display: 'flex', gap: '16px', marginTop: '12px', flexWrap: 'wrap' }}>
-            <WeightConfigPanel
-              label="Konfig A"
-              config={slotA.config}
-              onChange={(cfg) => setSlotA((s) => ({ ...s, config: cfg }))}
-              roles={roles}
-            />
-            <WeightConfigPanel
-              label="Konfig B"
-              config={slotB.config}
-              onChange={(cfg) => setSlotB((s) => ({ ...s, config: cfg }))}
-              roles={roles}
-            />
-            <ReadOnlyConfigPanel
-              label="Keyword-referanse"
-              sublabel={'Ren keyword-s\u00F8k fra backend. Titteltreff vektes dobbelt, med stoppord-filtrering, stemming og synonymer. Faste booster: retningslinje \u00D71.3, veileder \u00D71.2, temaside \u00D71.15.'}
-              config={HELSEDIR_STYLE_CONFIG}
-              rowLabels={{ bm25: 'Keyword-vekt', rrf: 'RRF-k (ikke brukt)' }}
-            />
-          </div>
-        )}
-      </div>
+      {/* Pipeline visualization — both configs visible */}
+      <SearchPipeline
+        configA={slotA.config}
+        configB={slotB.config}
+        onChangeA={(cfg) => setSlotA((s) => ({ ...s, config: cfg }))}
+        onChangeB={(cfg) => setSlotB((s) => ({ ...s, config: cfg }))}
+        activeStage={activeStage}
+        activeConfig={activeConfig}
+        onStageSelect={(stage, cfg) => {
+          setActiveStage(stage)
+          setActiveConfig(cfg)
+        }}
+        roles={roles}
+      />
 
       {/* Errors */}
       {slotA.error && <ErrorBanner message={slotA.error} />}
