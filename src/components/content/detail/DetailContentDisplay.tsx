@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
-import { useNavigate } from 'react-router-dom'
 import {
   getDetailContentTypeLabel,
   isEhelsestandardContentType,
@@ -10,15 +9,12 @@ import {
   normalizeContentType,
 } from '../../../constants/content'
 import { formatDateLabel } from '../../../lib/content/date'
-import { getDisplayTitle } from '../../../lib/displayTitle'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
-import type { ContentChildGroup, ContentLink, ContentRelationItem, NestedContent } from '../../../types'
+import type { ContentChildGroup, ContentRelationItem, NestedContent } from '../../../types'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
-import { asDocumentLink, getDocumentLinks, getRelatedLinks } from './documentUtils'
-import { ExpandableSubcontent } from '../hierarchical/ExpandableSubcontent'
+import { asDocumentLink, getDocumentLinks } from './documentUtils'
 import { hasVisibleContent } from '../shared/contentTextUtils'
-import { getContentIdFromHref, getUniqueChildLinks } from '../shared/linkUtils'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import {
   buildContentSections,
@@ -120,30 +116,12 @@ function ReferenceDropdown({
   )
 }
 
-type DetailChildSource = ContentRelationItem | ContentLink | NestedContent
+type DetailChildSource = ContentRelationItem | NestedContent
 
 function toDetailChildItem(
   source: DetailChildSource,
   fallbackType?: string,
 ): NestedContent | null {
-  if ('rel' in source) {
-    const id = source.id || getContentIdFromHref(source.href) || ''
-    if (!id) return null
-
-    const title = getDisplayTitle(source, source.title || '')
-
-    return {
-      id,
-      path: source.path || undefined,
-      tittel: title,
-      title,
-      type: source.type || fallbackType,
-      children: source.children
-        ?.map((child) => toDetailChildItem(child))
-        .filter((child): child is NestedContent => Boolean(child)),
-    }
-  }
-
   if (source.is_pdf_only && source.document_url) {
     return null
   }
@@ -153,10 +131,7 @@ function toDetailChildItem(
   const normalizedChildren = source.children
     ?.map((child) => toDetailChildItem(child))
     .filter((child): child is NestedContent => Boolean(child))
-  const title = getDisplayTitle(
-    source,
-    source.title || ('tittel' in source ? source.tittel : undefined) || '',
-  )
+  const title = source.title || ('tittel' in source ? source.tittel : undefined) || ''
   const type =
     ('content_type' in source ? source.content_type : undefined) ||
     ('info_type' in source ? source.info_type : undefined) ||
@@ -206,7 +181,6 @@ export function DetailContentDisplay({
   typeLabelOverride,
   primarySectionTitle = 'Hovedanbefaling',
 }: DetailContentDisplayProps) {
-  const navigate = useNavigate()
   const mobileSectionsNavRef = useRef<HTMLDetailsElement>(null)
   const normalizedType = normalizeContentType(content.content_type)
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
@@ -340,10 +314,6 @@ export function DetailContentDisplay({
 
   const childContentItems = useMemo(
     () => {
-      const fallbackLinkItems = dedupeDetailChildItems(
-        getUniqueChildLinks(content.links).map((link) => toDetailChildItem(link)),
-      )
-
       const normalizedReferenceItems = dedupeDetailChildItems(
         (content.references ?? []).map((item) => toDetailChildItem(item, item.content_type || item.info_type)),
       )
@@ -371,9 +341,9 @@ export function DetailContentDisplay({
         return groupedItems
       }
 
-      return fallbackLinkItems
+      return []
     },
-    [content.child_groups, content.chapters, content.links, content.references, content.related_content],
+    [content.child_groups, content.chapters, content.references, content.related_content],
   )
   const referenceItems = useMemo(
     () => {
@@ -391,34 +361,6 @@ export function DetailContentDisplay({
       return childContentItems.filter((item) => isReferenceContentType(item.type))
     },
     [childContentItems, content.child_groups, content.references],
-  )
-  const relatedChildItems = useMemo(
-    () => {
-      const groupedRelatedItems = getChildItemsFromGroups(
-        content.child_groups,
-        (group) => !isReferenceContentType(group.info_type),
-      )
-      if (groupedRelatedItems.length > 0) return groupedRelatedItems
-
-      const normalizedRelatedItems = dedupeDetailChildItems(
-        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
-          toDetailChildItem(
-            item,
-            ('content_type' in item ? item.content_type : undefined) ||
-              ('info_type' in item ? item.info_type : undefined) ||
-              ('type' in item ? item.type : undefined),
-          ),
-        ),
-      )
-      if (normalizedRelatedItems.length > 0) return normalizedRelatedItems
-
-      return childContentItems.filter((item) => !isReferenceContentType(item.type))
-    },
-    [childContentItems, content.child_groups, content.chapters, content.related_content],
-  )
-  const visibleRelatedChildItems = useMemo(
-    () => relatedChildItems.filter((item) => !isTemasideContentType(item.type || '')),
-    [relatedChildItems],
   )
 
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
@@ -438,13 +380,10 @@ export function DetailContentDisplay({
     },
     [backendDocumentUrl, content, enrichedContent],
   )
-  const relatedLinks = useMemo(() => getRelatedLinks(content), [content])
   const visibleDocumentLinks = documentLinks
   const hasIntrinsicFallbackContent =
     visibleDocumentLinks.length > 0 ||
-    relatedLinks.length > 0 ||
-    referenceItems.length > 0 ||
-    visibleRelatedChildItems.length > 0
+    referenceItems.length > 0
   const publicationUrl = useMemo(() => {
     const url = content.url?.trim() || enrichedContent?.url?.trim()
     if (!url) return null
@@ -453,35 +392,12 @@ export function DetailContentDisplay({
   const shouldShowPublicationFallback =
     Boolean(publicationUrl) &&
     sections.length === 0 &&
-    visibleRelatedChildItems.length === 0 &&
-    relatedLinks.length === 0 &&
+    referenceItems.length === 0 &&
     documentLinks.length === 0
-  const hasRelatedLinks = relatedLinks.length > 0
   const hasAnyActionLinks =
     visibleDocumentLinks.length > 0 ||
-    shouldShowPublicationFallback ||
-    hasRelatedLinks
+    shouldShowPublicationFallback
   const resourceSectionTitle = visibleDocumentLinks.length > 0 ? 'Dokumenter' : 'Lenker'
-
-  const handleRelatedLinkClick = (
-    event: MouseEvent<HTMLAnchorElement>,
-    internalPath?: string,
-  ) => {
-    if (!internalPath) return
-    if (
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.altKey ||
-      event.shiftKey ||
-      event.defaultPrevented
-    ) {
-      return
-    }
-
-    event.preventDefault()
-    navigate(internalPath)
-  }
 
   const hasSidebarContent = sections.length > 1
   const showSidebarLayout = hasSidebarContent
@@ -668,51 +584,6 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {hasRelatedLinks && (
-            <section className="space-y-4">
-              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
-                Videre lenker
-              </Heading>
-              <ul className="m-0 list-none space-y-3 p-0">
-                {relatedLinks.map((link) => (
-                  <li key={link.href}>
-                    <a
-                      href={link.internalPath || link.href}
-                      target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
-                      rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
-                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
-                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
-                    >
-                      <span className="block font-semibold text-slate-900">{link.label}</span>
-                      <span className="mt-1 block text-xs text-slate-500">
-                        {link.isPdf
-                          ? 'PDF'
-                          : link.isDocument
-                            ? (link.fileType || 'Dokument')
-                            : 'Rapport eller side'}
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {visibleRelatedChildItems.length > 0 && (
-            <section className="space-y-3">
-              <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
-                Utforsk videre
-              </Heading>
-              {visibleRelatedChildItems.map((item, index) => (
-                <ExpandableSubcontent
-                  key={`detail-child-${item.id || index}`}
-                  item={item}
-                  itemKey={`detail-child-${item.id || index}`}
-                />
-              ))}
-            </section>
-          )}
-
           {sections.length === 0 && referenceItems.length > 0 && <ReferenceDropdown items={referenceItems} />}
 
           {sections.length === 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationFallback) && (
@@ -753,7 +624,7 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length === 0 && referenceItems.length === 0 && visibleRelatedChildItems.length === 0 && !hasAnyActionLinks && (
+          {sections.length === 0 && referenceItems.length === 0 && !hasAnyActionLinks && (
             <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
                 Denne siden har ikke egen tekst eller tilgjengelige lenker.
