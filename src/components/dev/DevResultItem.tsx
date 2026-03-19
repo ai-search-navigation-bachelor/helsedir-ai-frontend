@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { SearchResult } from '../../types'
 import type { WeightConfig } from '../../types/dev'
 import { formatInfoTypeLabel, getPipelineScores } from './utils'
@@ -9,9 +9,22 @@ interface DevResultItemProps {
   rankDiff: number | null
   config?: WeightConfig
   maxScore?: number
+  allResults?: SearchResult[]
 }
 
 const mono = "'JetBrains Mono', 'Fira Code', monospace"
+
+function computeRetRanks(result: SearchResult, allResults: SearchResult[]) {
+  const scores = allResults.map((r) => {
+    const p = getPipelineScores(r)
+    return { id: r.id, bm25: p.bm25 ?? 0, semantic: p.semantic ?? 0 }
+  })
+  const bm25Sorted = [...scores].sort((a, b) => b.bm25 - a.bm25)
+  const semSorted = [...scores].sort((a, b) => b.semantic - a.semantic)
+  const bm25Rank = bm25Sorted.findIndex((s) => s.id === result.id) + 1
+  const semRank = semSorted.findIndex((s) => s.id === result.id) + 1
+  return { bm25Rank, semRank }
+}
 
 export function DevResultItem({
   rank,
@@ -19,6 +32,7 @@ export function DevResultItem({
   rankDiff,
   config,
   maxScore,
+  allResults,
 }: DevResultItemProps) {
   const [expanded, setExpanded] = useState(false)
 
@@ -42,6 +56,11 @@ export function DevResultItem({
         ? config.retningslinje_boost
         : null
     : null
+
+  const retRanks = useMemo(() => {
+    if (!allResults || allResults.length === 0) return null
+    return computeRetRanks(result, allResults)
+  }, [result, allResults])
 
   return (
     <div
@@ -111,13 +130,12 @@ export function DevResultItem({
               <Badge
                 color={rankDiff > 0 ? '#059669' : '#dc2626'}
                 bg={rankDiff > 0 ? '#d1fae5' : '#fee2e2'}
-                title={rankDiff > 0 ? `${rankDiff} plasser høyere enn Konfig A` : `${Math.abs(rankDiff)} plasser lavere enn Konfig A`}
+                title={rankDiff > 0 ? `${rankDiff} plasser h\u00F8yere enn Konfig A` : `${Math.abs(rankDiff)} plasser lavere enn Konfig A`}
               >
                 vs A {rankDiff > 0 ? `+${rankDiff}` : String(rankDiff)}
               </Badge>
             )}
 
-            {/* Expand hint */}
             <span style={{ fontSize: '0.6rem', color: '#94a3b8', marginLeft: '2px' }}>
               {expanded ? '\u25B2' : '\u25BC'}
             </span>
@@ -173,6 +191,8 @@ export function DevResultItem({
             roleBoost={roleBoost}
             finalScore={result.score}
             config={config}
+            bm25Rank={retRanks?.bm25Rank}
+            semRank={retRanks?.semRank}
           />
         </div>
       )}
@@ -213,33 +233,68 @@ interface SpreadsheetProps {
   roleBoost?: number | null
   finalScore: number
   config?: WeightConfig
+  bm25Rank?: number
+  semRank?: number
 }
 
-function Row({ label, color, value, formula, indent, highlight, separator }: {
-  label: string; color: string; value: string; formula?: string; indent?: boolean; highlight?: boolean; separator?: boolean
+function CalcRow({ step, label, color, formula, result, sub, separator }: {
+  step?: string
+  label: string
+  color: string
+  formula: string
+  result: string
+  sub?: boolean
+  separator?: boolean
 }) {
   return (
     <div style={{
       display: 'flex',
-      alignItems: 'baseline',
-      gap: '6px',
-      padding: `4px ${indent ? '10px 4px 20px' : '10px'}`,
-      borderTop: separator ? '2px solid #e2e8f0' : undefined,
-      backgroundColor: highlight ? '#f0f9ff' : indent ? '#faf5ff' : undefined,
-      fontSize: '0.72rem',
-      lineHeight: 1.6,
+      alignItems: 'center',
+      gap: '0',
+      borderTop: separator ? '1px solid #e2e8f0' : undefined,
+      backgroundColor: sub ? '#faf5ff' : undefined,
+      fontSize: sub ? '0.66rem' : '0.72rem',
+      lineHeight: 1.4,
     }}>
-      <span style={{ fontWeight: 600, color, minWidth: indent ? undefined : '110px', flexShrink: 0 }}>
+      {/* Label */}
+      <div style={{
+        padding: sub ? '3px 8px 3px 20px' : '5px 8px',
+        fontWeight: 600,
+        color,
+        minWidth: sub ? undefined : '90px',
+        flexShrink: 0,
+        borderRight: '1px solid #f1f5f9',
+        backgroundColor: sub ? undefined : '#fafbfc',
+      }}>
+        {step && <span style={{ color: '#94a3b8', marginRight: '4px' }}>{step}</span>}
         {label}
-      </span>
-      {formula && (
-        <span style={{ color: '#94a3b8', fontFamily: mono, fontSize: '0.68rem', flexShrink: 1, minWidth: 0 }}>
-          {formula}
-        </span>
-      )}
-      <span style={{ marginLeft: 'auto', fontWeight: 700, fontFamily: mono, color: highlight ? '#047FA4' : color, fontSize: highlight ? '0.82rem' : '0.72rem', flexShrink: 0 }}>
-        {value}
-      </span>
+      </div>
+      {/* Formula */}
+      <div style={{
+        flex: 1,
+        padding: '3px 8px',
+        fontFamily: mono,
+        fontSize: sub ? '0.64rem' : '0.68rem',
+        color: '#64748b',
+        minWidth: 0,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}>
+        {formula}
+      </div>
+      {/* Result */}
+      <div style={{
+        padding: '3px 8px',
+        fontFamily: mono,
+        fontWeight: 700,
+        color,
+        flexShrink: 0,
+        textAlign: 'right',
+        fontSize: sub ? '0.66rem' : '0.72rem',
+      }}>
+        {result}
+      </div>
     </div>
   )
 }
@@ -255,11 +310,16 @@ function ScoreSpreadsheet({
   roleBoost,
   finalScore,
   config,
+  bm25Rank,
+  semRank,
 }: SpreadsheetProps) {
   const hasRerank = rerankScore !== undefined
   const hasBoosts = (configBoost != null && configBoost !== 1.0) || (roleBoost != null && roleBoost !== 1.0)
-  const stepNum = { current: 1 }
-  const step = () => `${stepNum.current++}.`
+  let n = 1
+
+  const k = config?.rrf_k ?? 60
+  const bw = config?.bm25_weight ?? 0.3
+  const sw = config?.semantic_weight ?? 0.7
 
   return (
     <div style={{
@@ -268,100 +328,158 @@ function ScoreSpreadsheet({
       overflow: 'hidden',
       backgroundColor: '#fff',
     }}>
+      {/* Header */}
       <div style={{
-        padding: '6px 10px',
+        padding: '5px 8px',
         backgroundColor: '#f1f5f9',
         borderBottom: '1px solid #e2e8f0',
-        fontSize: '0.68rem',
+        fontSize: '0.66rem',
         fontWeight: 700,
-        color: '#475569',
+        color: '#64748b',
         textTransform: 'uppercase',
         letterSpacing: '0.05em',
       }}>
         Score-regnestykke
       </div>
 
-      {/* Step: Retrieval */}
       {bm25 !== undefined && config && (
         <>
-          <Row
-            label={`${step()} BM25`}
+          {/* BM25 rank */}
+          <CalcRow
+            step={`${n++}.`}
+            label="BM25"
             color="#0284c7"
-            formula={`${bm25.toFixed(4)} \u00D7 ${config.bm25_weight.toFixed(2)}`}
-            value={(bm25 * config.bm25_weight).toFixed(4)}
+            formula={`score ${bm25.toFixed(4)} \u2192 rang #${bm25Rank ?? '?'}`}
+            result={`#${bm25Rank ?? '?'}`}
           />
+
+          {/* Semantic rank */}
           {semantic !== undefined && (
-            <Row
-              label={`${step()} Semantisk`}
+            <CalcRow
+              step={`${n++}.`}
+              label="Semantisk"
               color="#059669"
-              formula={`${semantic.toFixed(4)} \u00D7 ${config.semantic_weight.toFixed(2)}`}
-              value={(semantic * config.semantic_weight).toFixed(4)}
+              formula={`score ${semantic.toFixed(4)} \u2192 rang #${semRank ?? '?'}`}
+              result={`#${semRank ?? '?'}`}
             />
           )}
+
+          {/* RRF with multi-line breakdown */}
+          {rrf !== undefined && (() => {
+            const br = bm25Rank ?? '?'
+            const sr = semRank ?? '?'
+            const bm25Part = typeof br === 'number' ? bw / (k + br) : undefined
+            const semPart = typeof sr === 'number' ? sw / (k + sr) : undefined
+            const stepN = n++
+            return (
+              <>
+                <CalcRow
+                  step={`${stepN}.`}
+                  label="RRF"
+                  color="#047FA4"
+                  formula="w₁/(k+rang₁) + w₂/(k+rang₂)"
+                  result=""
+                  separator
+                />
+                <CalcRow
+                  label=""
+                  color="#0284c7"
+                  formula={`bm25: ${bw} / (${k} + ${br})`}
+                  result={bm25Part?.toFixed(6) ?? '?'}
+                  sub
+                />
+                <CalcRow
+                  label=""
+                  color="#059669"
+                  formula={`sem:  ${sw} / (${k} + ${sr})`}
+                  result={semPart?.toFixed(6) ?? '?'}
+                  sub
+                />
+                <CalcRow
+                  label=""
+                  color="#047FA4"
+                  formula={`     ${bm25Part?.toFixed(6) ?? '?'} + ${semPart?.toFixed(6) ?? '?'}`}
+                  result={rrf.toFixed(6)}
+                  sub
+                />
+              </>
+            )
+          })()}
         </>
       )}
 
-      {/* Step: RRF */}
-      {rrf !== undefined && (
-        <Row
-          label={`${step()} RRF`}
-          color="#047FA4"
-          formula={`${config?.bm25_weight ?? 0.3}/(${config?.rrf_k ?? 60}+bm25_rank) + ${config?.semantic_weight ?? 0.7}/(${config?.rrf_k ?? 60}+sem_rank)`}
-          value={rrf.toFixed(6)}
-          separator
-        />
-      )}
-
-      {/* Step: Rerank */}
+      {/* Rerank */}
       {hasRerank && (
         <>
-          <Row
-            label={`${step()} Rerank${typeof rerankRankChange === 'number' ? ` (${rerankRankChange > 0 ? '\u2191' : rerankRankChange < 0 ? '\u2193' : ''}${Math.abs(rerankRankChange)})` : ''}`}
+          <CalcRow
+            step={`${n++}.`}
+            label="Rerank"
             color="#7c3aed"
-            formula="XGBoost LambdaMART"
-            value={rerankScore!.toFixed(4)}
+            formula={`LTR-modell \u2192 ${rerankScore!.toFixed(4)}${typeof rerankRankChange === 'number' ? ` (${rerankRankChange > 0 ? '\u2191' : '\u2193'}${Math.abs(rerankRankChange)})` : ''}`}
+            result={rerankScore!.toFixed(4)}
             separator
           />
           {rerankContributions && Object.keys(rerankContributions).length > 0 &&
             Object.entries(rerankContributions)
               .sort(([, a], [, b]) => Math.abs(b) - Math.abs(a))
               .map(([feature, val]) => (
-                <Row
+                <CalcRow
                   key={feature}
                   label={feature}
                   color={val >= 0 ? '#7c3aed' : '#dc2626'}
-                  value={`${val >= 0 ? '+' : ''}${val.toFixed(3)}`}
-                  indent
+                  formula="SHAP-bidrag"
+                  result={`${val >= 0 ? '+' : ''}${val.toFixed(3)}`}
+                  sub
                 />
               ))
           }
         </>
       )}
 
-      {/* Step: Post-processing */}
+      {/* Boost + normalisering */}
       {hasBoosts && (() => {
+        const base = hasRerank ? rerankScore! : rrf ?? finalScore
         const factors: string[] = []
-        if (configBoost != null && configBoost !== 1.0) factors.push(`${configBoost} (type)`)
-        if (roleBoost != null && roleBoost !== 1.0) factors.push(`${roleBoost} (rolle)`)
+        const multipliers: number[] = []
+        if (configBoost != null && configBoost !== 1.0) { factors.push(`×${configBoost}`); multipliers.push(configBoost) }
+        if (roleBoost != null && roleBoost !== 1.0) { factors.push(`×${roleBoost}`); multipliers.push(roleBoost) }
+        const boostedRaw = multipliers.reduce((acc, m) => acc * m, base)
         return (
-          <Row
-            label={`${step()} Boost`}
-            color="#d97706"
-            formula={`multiplikator: ${factors.join(', ')}`}
-            value=""
-            separator
-          />
+          <>
+            <CalcRow
+              step={`${n++}.`}
+              label="Boost"
+              color="#d97706"
+              formula={`${base.toFixed(4)} ${factors.join(' ')} = ${boostedRaw.toFixed(4)}`}
+              result={boostedRaw.toFixed(4)}
+              separator
+            />
+            <CalcRow
+              step={`${n++}.`}
+              label="Norm."
+              color="#94a3b8"
+              formula={`${boostedRaw.toFixed(4)} \u2192 normalisert`}
+              result={finalScore.toFixed(4)}
+            />
+          </>
         )
       })()}
 
       {/* Final */}
-      <Row
-        label="Endelig"
-        color="#047FA4"
-        value={finalScore.toFixed(4)}
-        highlight
-        separator
-      />
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        borderTop: '2px solid #047FA4',
+        backgroundColor: '#f0f9ff',
+        padding: '5px 8px',
+        fontSize: '0.76rem',
+      }}>
+        <span style={{ fontWeight: 700, color: '#047FA4', minWidth: '90px' }}>Endelig</span>
+        <span style={{ flex: 1 }} />
+        <span style={{ fontWeight: 800, fontFamily: mono, color: '#047FA4', fontSize: '0.82rem' }}>
+          {finalScore.toFixed(4)}
+        </span>
+      </div>
     </div>
   )
 }
