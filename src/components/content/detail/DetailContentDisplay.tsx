@@ -16,7 +16,6 @@ import type { ContentChildGroup, ContentLink, ContentRelationItem, NestedContent
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { asDocumentLink, getDocumentLinks, getRelatedLinks } from './documentUtils'
-import { ExpandableSubcontent } from '../hierarchical/ExpandableSubcontent'
 import { hasVisibleContent } from '../shared/contentTextUtils'
 import { getContentIdFromHref, getUniqueChildLinks } from '../shared/linkUtils'
 import { RichContentHtml } from '../shared/RichContentHtml'
@@ -359,16 +358,14 @@ export function DetailContentDisplay({
       )
 
       const groupedItems = getChildItemsFromGroups(content.child_groups, () => true)
+      const combinedItems = dedupeDetailChildItems([
+        ...normalizedReferenceItems,
+        ...normalizedRelatedItems,
+        ...groupedItems,
+      ])
 
-      if (normalizedReferenceItems.length > 0 || normalizedRelatedItems.length > 0) {
-        return dedupeDetailChildItems([
-          ...normalizedReferenceItems,
-          ...normalizedRelatedItems,
-        ])
-      }
-
-      if (groupedItems.length > 0) {
-        return groupedItems
+      if (combinedItems.length > 0) {
+        return combinedItems
       }
 
       return fallbackLinkItems
@@ -392,34 +389,6 @@ export function DetailContentDisplay({
     },
     [childContentItems, content.child_groups, content.references],
   )
-  const relatedChildItems = useMemo(
-    () => {
-      const groupedRelatedItems = getChildItemsFromGroups(
-        content.child_groups,
-        (group) => !isReferenceContentType(group.info_type),
-      )
-      if (groupedRelatedItems.length > 0) return groupedRelatedItems
-
-      const normalizedRelatedItems = dedupeDetailChildItems(
-        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
-          toDetailChildItem(
-            item,
-            ('content_type' in item ? item.content_type : undefined) ||
-              ('info_type' in item ? item.info_type : undefined) ||
-              ('type' in item ? item.type : undefined),
-          ),
-        ),
-      )
-      if (normalizedRelatedItems.length > 0) return normalizedRelatedItems
-
-      return childContentItems.filter((item) => !isReferenceContentType(item.type))
-    },
-    [childContentItems, content.child_groups, content.chapters, content.related_content],
-  )
-  const visibleRelatedChildItems = useMemo(
-    () => relatedChildItems.filter((item) => !isTemasideContentType(item.type || '')),
-    [relatedChildItems],
-  )
 
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
   const documentLinks = useMemo(
@@ -440,11 +409,11 @@ export function DetailContentDisplay({
   )
   const relatedLinks = useMemo(() => getRelatedLinks(content), [content])
   const visibleDocumentLinks = documentLinks
+  const visibleRelatedLinks = relatedLinks
   const hasIntrinsicFallbackContent =
     visibleDocumentLinks.length > 0 ||
-    relatedLinks.length > 0 ||
-    referenceItems.length > 0 ||
-    visibleRelatedChildItems.length > 0
+    visibleRelatedLinks.length > 0 ||
+    referenceItems.length > 0
   const publicationUrl = useMemo(() => {
     const url = content.url?.trim() || enrichedContent?.url?.trim()
     if (!url) return null
@@ -453,15 +422,15 @@ export function DetailContentDisplay({
   const shouldShowPublicationFallback =
     Boolean(publicationUrl) &&
     sections.length === 0 &&
-    visibleRelatedChildItems.length === 0 &&
-    relatedLinks.length === 0 &&
+    referenceItems.length === 0 &&
+    visibleRelatedLinks.length === 0 &&
     documentLinks.length === 0
-  const hasRelatedLinks = relatedLinks.length > 0
   const hasAnyActionLinks =
     visibleDocumentLinks.length > 0 ||
-    shouldShowPublicationFallback ||
-    hasRelatedLinks
-  const resourceSectionTitle = visibleDocumentLinks.length > 0 ? 'Dokumenter' : 'Lenker'
+    visibleRelatedLinks.length > 0 ||
+    shouldShowPublicationFallback
+  const resourceSectionTitle =
+    visibleDocumentLinks.length > 0 && visibleRelatedLinks.length === 0 ? 'Dokumenter' : 'Lenker'
 
   const handleRelatedLinkClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -630,7 +599,7 @@ export function DetailContentDisplay({
             </article>
           ))}
 
-          {!showSidebarLayout && sections.length > 0 && visibleDocumentLinks.length > 0 && (
+          {!showSidebarLayout && sections.length > 0 && (visibleDocumentLinks.length > 0 || visibleRelatedLinks.length > 0) && (
             <section className="space-y-4">
               <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
                 {resourceSectionTitle}
@@ -647,6 +616,26 @@ export function DetailContentDisplay({
                       <span className="block font-semibold text-slate-900">{document.label}</span>
                       <span className="mt-1 block text-xs text-slate-500">
                         {document.isPdf ? 'PDF' : 'Dokument'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+                {visibleRelatedLinks.map((link) => (
+                  <li key={`inline-related-${link.href}`}>
+                    <a
+                      href={link.internalPath || link.href}
+                      target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
+                      rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
+                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{link.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {link.isPdf
+                          ? 'PDF'
+                          : link.isDocument
+                            ? (link.fileType || 'Dokument')
+                            : 'Rapport eller side'}
                       </span>
                     </a>
                   </li>
@@ -668,54 +657,9 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {hasRelatedLinks && (
-            <section className="space-y-4">
-              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
-                Videre lenker
-              </Heading>
-              <ul className="m-0 list-none space-y-3 p-0">
-                {relatedLinks.map((link) => (
-                  <li key={link.href}>
-                    <a
-                      href={link.internalPath || link.href}
-                      target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
-                      rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
-                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
-                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
-                    >
-                      <span className="block font-semibold text-slate-900">{link.label}</span>
-                      <span className="mt-1 block text-xs text-slate-500">
-                        {link.isPdf
-                          ? 'PDF'
-                          : link.isDocument
-                            ? (link.fileType || 'Dokument')
-                            : 'Rapport eller side'}
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {visibleRelatedChildItems.length > 0 && (
-            <section className="space-y-3">
-              <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
-                Utforsk videre
-              </Heading>
-              {visibleRelatedChildItems.map((item, index) => (
-                <ExpandableSubcontent
-                  key={`detail-child-${item.id || index}`}
-                  item={item}
-                  itemKey={`detail-child-${item.id || index}`}
-                />
-              ))}
-            </section>
-          )}
-
           {sections.length === 0 && referenceItems.length > 0 && <ReferenceDropdown items={referenceItems} />}
 
-          {sections.length === 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationFallback) && (
+          {sections.length === 0 && (visibleDocumentLinks.length > 0 || visibleRelatedLinks.length > 0 || shouldShowPublicationFallback) && (
             <section className="space-y-4">
               <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
                 {resourceSectionTitle}
@@ -732,6 +676,26 @@ export function DetailContentDisplay({
                       <span className="block font-semibold text-slate-900">{document.label}</span>
                       <span className="mt-1 block text-xs text-slate-500">
                         {document.isPdf ? 'PDF' : 'Dokument'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+                {visibleRelatedLinks.map((link) => (
+                  <li key={`fallback-related-${link.href}`}>
+                    <a
+                      href={link.internalPath || link.href}
+                      target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
+                      rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
+                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{link.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {link.isPdf
+                          ? 'PDF'
+                          : link.isDocument
+                            ? (link.fileType || 'Dokument')
+                            : 'Rapport eller side'}
                       </span>
                     </a>
                   </li>
@@ -753,7 +717,7 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length === 0 && referenceItems.length === 0 && visibleRelatedChildItems.length === 0 && !hasAnyActionLinks && (
+          {sections.length === 0 && referenceItems.length === 0 && !hasAnyActionLinks && (
             <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
                 Denne siden har ikke egen tekst eller tilgjengelige lenker.
