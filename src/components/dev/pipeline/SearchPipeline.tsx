@@ -5,6 +5,20 @@ import { PipelineConnector } from './PipelineConnector'
 import { PipelineDetailPanel } from './PipelineDetailPanel'
 import { useDevModelsQuery } from '../../../hooks/queries/useDevModelsQuery'
 
+function configMatchesPreset(config: WeightConfig, preset: WeightConfig): boolean {
+  return (
+    config.bm25_weight === preset.bm25_weight &&
+    config.semantic_weight === preset.semantic_weight &&
+    config.rrf_k === preset.rrf_k &&
+    config.temaside_boost === preset.temaside_boost &&
+    config.retningslinje_boost === preset.retningslinje_boost &&
+    (config.role ?? null) === (preset.role ?? null) &&
+    config.role_boost === preset.role_boost &&
+    config.role_penalty === preset.role_penalty &&
+    !!config.rerank === !!preset.rerank
+  )
+}
+
 interface RoleOption {
   slug: string
   display_name: string
@@ -197,39 +211,46 @@ function PipelineRow({
           {label}
         </div>
         <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', maxWidth: '110px' }}>
-          {PRESETS.map(({ label: pLabel, config: pConfig }) => (
-            <button
-              key={pLabel}
-              type="button"
-              onClick={() => onPreset(pConfig)}
-              style={{
-                padding: '2px 6px',
-                fontSize: '0.6rem',
-                fontWeight: 600,
-                borderRadius: '8px',
-                border: '1px solid #d1d5db',
-                backgroundColor: '#f8fafc',
-                color: '#64748b',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                whiteSpace: 'pre-line',
-                textAlign: 'center',
-                lineHeight: 1.3,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#e0f2fe'
-                e.currentTarget.style.borderColor = '#7dd3fc'
-                e.currentTarget.style.color = '#0284c7'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f8fafc'
-                e.currentTarget.style.borderColor = '#d1d5db'
-                e.currentTarget.style.color = '#64748b'
-              }}
-            >
-              {pLabel}
-            </button>
-          ))}
+          {PRESETS.map(({ label: pLabel, config: pConfig }) => {
+            const isMatch = configMatchesPreset(config, pConfig)
+            return (
+              <button
+                key={pLabel}
+                type="button"
+                onClick={() => onPreset(pConfig)}
+                style={{
+                  padding: '2px 6px',
+                  fontSize: '0.6rem',
+                  fontWeight: 600,
+                  borderRadius: '8px',
+                  border: isMatch ? `1px solid ${labelColor}` : '1px solid #d1d5db',
+                  backgroundColor: isMatch ? `${labelColor}18` : '#f8fafc',
+                  color: isMatch ? labelColor : '#64748b',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'pre-line',
+                  textAlign: 'center',
+                  lineHeight: 1.3,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isMatch) {
+                    e.currentTarget.style.backgroundColor = '#e0f2fe'
+                    e.currentTarget.style.borderColor = '#7dd3fc'
+                    e.currentTarget.style.color = '#0284c7'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isMatch) {
+                    e.currentTarget.style.backgroundColor = '#f8fafc'
+                    e.currentTarget.style.borderColor = '#d1d5db'
+                    e.currentTarget.style.color = '#64748b'
+                  }
+                }}
+              >
+                {pLabel}
+              </button>
+            )
+          })}
         </div>
       </div>
 
