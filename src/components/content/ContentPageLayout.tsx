@@ -4,9 +4,7 @@ import { Button } from '@digdir/designsystemet-react'
 import { useSearchStore } from '../../stores/searchStore'
 import { useContentDetailBreadcrumbs } from '../../hooks/useContentDetailBreadcrumbs'
 import { Breadcrumb } from '../ui/Breadcrumb'
-import { isRetningslinjeContentType, normalizeContentType } from '../../constants/content'
-import { countUniqueChildLinks } from './shared/linkUtils'
-import { ContentPageLoadingSkeleton, DetailPageLoadingSkeleton } from './ContentSkeletons'
+import { BreadcrumbLoadingSkeleton } from './ContentSkeletons'
 import type { ContentDetail } from '../../types'
 
 interface ContentPageLayoutProps {
@@ -47,27 +45,11 @@ export function ContentPageLayout({ content, children }: ContentPageLayoutProps)
     searchId,
   })
 
-  if (isParentChainLoading) {
-    const normalizedType = normalizeContentType(content.content_type)
-    const hasNormalizedChildren =
-      (content.child_groups?.length || 0) > 0 ||
-      (content.chapters?.length || 0) > 0 ||
-      (content.related_content?.length || 0) > 0
-    const isHierarchical =
-      isRetningslinjeContentType(normalizedType) ||
-      hasNormalizedChildren ||
-      countUniqueChildLinks(content.links) > 0
-
-    return (
-      <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">
-        {isHierarchical ? <ContentPageLoadingSkeleton /> : <DetailPageLoadingSkeleton />}
-      </div>
-    )
-  }
-
   return (
     <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">
-      {activeBreadcrumbItems.length > 0 ? (
+      {isParentChainLoading ? (
+        <BreadcrumbLoadingSkeleton />
+      ) : activeBreadcrumbItems.length > 0 ? (
         <Breadcrumb items={activeBreadcrumbItems} collapsible={collapsible} />
       ) : (
         <Button variant="tertiary" onClick={() => navigate(-1)} style={{ marginBottom: '24px' }}>

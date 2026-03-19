@@ -1,34 +1,21 @@
 import type { ContentDisplayProps } from '../../types/pages'
 import {
-  isRecommendationContentType,
-  isRetningslinjeContentType,
-  isTemasideContentType,
-  normalizeContentType,
   toContentTypeLabel,
 } from '../../constants/content'
 import { DetailContentDisplay } from './detail/DetailContentDisplay'
 import { HierarchicalContentDisplay } from './hierarchical/HierarchicalContentDisplay'
 import { TemasideContentDisplay } from './temaside/TemasideContentDisplay'
-import { countUniqueChildLinks } from './shared/linkUtils'
+import { resolveContentPresentation } from './contentPresentation'
 
 export function ContentDisplay({ content }: ContentDisplayProps) {
-  const normalizedType = normalizeContentType(content.content_type)
-  const childrenCount = countUniqueChildLinks(content.links)
   const typeLabel = toContentTypeLabel(content.content_type)
+  const presentation = resolveContentPresentation(content)
 
-  if (isTemasideContentType(normalizedType)) {
+  if (presentation === 'temaside') {
     return <TemasideContentDisplay key={content.id} content={content} />
   }
 
-  if (isRetningslinjeContentType(normalizedType)) {
-    return <HierarchicalContentDisplay key={content.id} content={content} typeLabel={typeLabel} />
-  }
-
-  if (isRecommendationContentType(normalizedType)) {
-    return <DetailContentDisplay key={content.id} content={content} />
-  }
-
-  if (childrenCount > 0) {
+  if (presentation === 'hierarchical') {
     return <HierarchicalContentDisplay key={content.id} content={content} typeLabel={typeLabel} />
   }
 

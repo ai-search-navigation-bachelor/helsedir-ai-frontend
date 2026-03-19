@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import {
-  isRetningslinjeContentType,
   isTemasideContentType,
   normalizeContentType,
 } from '../constants/content'
@@ -14,6 +13,7 @@ import {
   ContentPageLoadingSkeleton,
   DetailPageLoadingSkeleton,
 } from '../components/content/ContentSkeletons'
+import { resolveContentPresentationFromHint } from '../components/content/contentPresentation'
 import { ContentPageLayout } from '../components/content/ContentPageLayout'
 import { ContentDisplay } from '../components/content/ContentDisplay'
 
@@ -96,13 +96,13 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
   }, [chapterRootEntry, content, isChapterContent, navigate, redirectState])
 
   if (isLoading) {
-    const useHierarchicalSkeleton = routeContentType
-      ? isRetningslinjeContentType(routeContentType)
-      : pathPrefix === 'retningslinjer'
+    const presentation = resolveContentPresentationFromHint({
+      routeContentType,
+    })
 
     return (
       <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">
-        {useHierarchicalSkeleton ? <ContentPageLoadingSkeleton /> : <DetailPageLoadingSkeleton />}
+        {presentation === 'hierarchical' ? <ContentPageLoadingSkeleton /> : <DetailPageLoadingSkeleton />}
       </div>
     )
   }
