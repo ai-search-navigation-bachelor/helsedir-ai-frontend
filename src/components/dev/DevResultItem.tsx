@@ -368,6 +368,12 @@ export function DevResultItem({
             {semantic !== undefined && (
               <ScoreBar label="Sem." value={weightedSemantic ?? semantic} color="semantic" />
             )}
+            {rrf !== undefined && (
+              <ScoreBar label="RRF" value={rrf} color="rrf" />
+            )}
+            {rerankScore !== undefined && (
+              <ScoreBar label="Rerank" value={Math.min(rerankScore / 3, 1)} color="rerank" />
+            )}
             {normalizedScore !== null && (
               <ScoreBar label="Samlet" value={normalizedScore} color="rrf" />
             )}
