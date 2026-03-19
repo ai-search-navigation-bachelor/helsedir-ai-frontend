@@ -1,14 +1,12 @@
-import { Alert, Paragraph } from '@digdir/designsystemet-react'
+import { Alert, Paragraph } from "@digdir/designsystemet-react";
 import {
   SearchCategoryTabs,
   SearchEmptyState,
   SearchResultsList,
-} from '../components/search'
-import {
-  SearchPageLoadingSkeleton,
-  SearchResultsLoadingSkeleton,
-} from '../components/search/SearchSkeletons'
-import { useSearchPageModel } from '../hooks/useSearchPageModel'
+} from "../components/search";
+import { SearchResultsLoadingSkeleton } from "../components/search/SearchSkeletons";
+import { useSearchPageModel } from "../hooks/useSearchPageModel";
+import { Skeleton } from "@digdir/designsystemet-react";
 
 /**
  * Search page with tab-based navigation and infinite scroll.
@@ -29,33 +27,40 @@ export function SearchPage() {
     searchQuery,
     tabs,
     total,
-  } = useSearchPageModel()
+  } = useSearchPageModel();
 
   if (!hasQuery) {
-    return <SearchEmptyState />
+    return <SearchEmptyState />;
   }
 
-  const hasStableCategoryCounts = Object.keys(mainCategoryCounts).length > 0
-  const shouldShowFullPageSkeleton = isLoading && !hasStableCategoryCounts
+  const hasStableCategoryCounts = Object.keys(mainCategoryCounts).length > 0;
+  const isLoadingCounts = isLoading && !hasStableCategoryCounts;
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-6 sm:px-6 lg:px-12">
-      {shouldShowFullPageSkeleton && <SearchPageLoadingSkeleton />}
-
       {error && (
         <Alert>
-          <Paragraph>Det oppstod en feil ved søket. Vennligst prøv igjen.</Paragraph>
+          <Paragraph>
+            Det oppstod en feil ved sÃ¸ket. Vennligst prÃ¸v igjen.
+          </Paragraph>
         </Alert>
       )}
 
-      {!shouldShowFullPageSkeleton && !error && (
+      {!error && (
         <>
           <SearchCategoryTabs
             activeTab={activeTab}
             tabs={tabs}
             categoryCounts={mainCategoryCounts}
+            isLoadingCounts={isLoadingCounts}
             onTabChange={handleTabChange}
           />
+
+          {isLoading && (
+            <div className="mb-3" aria-hidden="true">
+              <Skeleton width={150} height={19} className="rounded" />
+            </div>
+          )}
 
           {isLoading ? (
             <SearchResultsLoadingSkeleton />
@@ -74,5 +79,5 @@ export function SearchPage() {
         </>
       )}
     </div>
-  )
+  );
 }

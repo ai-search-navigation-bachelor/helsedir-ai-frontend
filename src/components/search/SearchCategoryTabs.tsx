@@ -4,6 +4,7 @@ interface SearchCategoryTabsProps {
   activeTab: string;
   tabs: ReadonlyArray<{ id: string; label: string }>;
   categoryCounts: Record<string, number>;
+  isLoadingCounts?: boolean;
   onTabChange: (value: string) => void;
 }
 
@@ -11,6 +12,7 @@ export function SearchCategoryTabs({
   activeTab,
   tabs,
   categoryCounts,
+  isLoadingCounts = false,
   onTabChange,
 }: SearchCategoryTabsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,13 +80,14 @@ export function SearchCategoryTabs({
           >
             {tab.label}
             <span
-              className={
+              aria-hidden={isLoadingCounts}
+              className={`${
                 activeTab === tab.id
                   ? "text-white md:text-[#047FA4]"
                   : "text-slate-600"
-              }
+              } inline-flex min-w-[2ch] justify-end tabular-nums`}
             >
-              {categoryCounts[tab.id] || 0}
+              {isLoadingCounts ? "" : (categoryCounts[tab.id] || 0)}
             </span>
           </button>
         ))}
