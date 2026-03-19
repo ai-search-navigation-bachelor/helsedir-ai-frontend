@@ -262,21 +262,100 @@ function PipelineRow({
       {/* Arrow → RRF */}
       <PipelineConnector type="straight" />
 
-      {/* Linear stages: RRF → LTR → Boosts */}
-      {linear.map((stage, i) => (
-        <div key={stage.id} style={{ display: 'contents' }}>
-          <PipelineStage
-            id={stage.id}
-            label={stage.label}
-            description={stage.description}
-            accentHex={stage.accentHex}
-            isActive={activeStage === stage.id}
-            onClick={() => onStageClick(stage.id)}
-            summary={getStageSummary(stage.id, config, activeModelName)}
-          />
-          {i < linear.length - 1 && <PipelineConnector type="straight" />}
-        </div>
-      ))}
+      {/* RRF */}
+      {(() => {
+        const rrfStage = linear[0] // rrf
+        const ltrStage = linear[1] // ltr
+        const boostsStage = linear[2] // boosts
+        return (
+          <>
+            <PipelineStage
+              id={rrfStage.id}
+              label={rrfStage.label}
+              description={rrfStage.description}
+              accentHex={rrfStage.accentHex}
+              isActive={activeStage === rrfStage.id}
+              onClick={() => onStageClick(rrfStage.id)}
+              summary={getStageSummary(rrfStage.id, config, activeModelName)}
+            />
+
+            {/* LTR section: connector + LTR + connector, with bypass when off */}
+            <div style={{ display: 'flex', alignItems: 'center', position: 'relative', flexShrink: 0 }}>
+              {/* Bypass: U-shaped dashed arrow: up from top of RRF, across above, down into top of Boosts */}
+              {!config.rerank && (
+                <>
+                  {/* Left vertical: from top of boxes up */}
+                  <div style={{
+                    position: 'absolute',
+                    left: '-20px',
+                    top: '-22px',
+                    height: '22px',
+                    width: '0px',
+                    borderLeft: '2px dashed #475569',
+                    zIndex: 1,
+                  }} />
+                  {/* Horizontal across above the boxes */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '-22px',
+                    left: '-20px',
+                    right: '-20px',
+                    height: '0px',
+                    borderTop: '2px dashed #475569',
+                    zIndex: 1,
+                  }} />
+                  {/* Right vertical: from above down to top of boxes + arrow */}
+                  <div style={{
+                    position: 'absolute',
+                    right: '-20px',
+                    top: '-22px',
+                    height: '22px',
+                    width: '0px',
+                    borderLeft: '2px dashed #475569',
+                    zIndex: 1,
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '-1px',
+                      left: '-6px',
+                      width: 0,
+                      height: 0,
+                      borderLeft: '5px solid transparent',
+                      borderRight: '5px solid transparent',
+                      borderTop: '7px solid #475569',
+                    }} />
+                  </div>
+                </>
+              )}
+
+              <PipelineConnector type="straight" dimmed={!config.rerank} />
+
+              <PipelineStage
+                id={ltrStage.id}
+                label={ltrStage.label}
+                description={ltrStage.description}
+                accentHex={ltrStage.accentHex}
+                isActive={activeStage === ltrStage.id}
+                onClick={() => onStageClick(ltrStage.id)}
+                summary={getStageSummary(ltrStage.id, config, activeModelName)}
+                disabled={!config.rerank}
+              />
+
+              <PipelineConnector type="straight" dimmed={!config.rerank} />
+            </div>
+
+            <PipelineStage
+              id={boostsStage.id}
+              label={boostsStage.label}
+              description={boostsStage.description}
+              accentHex={boostsStage.accentHex}
+              isActive={activeStage === boostsStage.id}
+              onClick={() => onStageClick(boostsStage.id)}
+              summary={getStageSummary(boostsStage.id, config, activeModelName)}
+            />
+          </>
+        )
+      })()}
 
       {/* Output */}
       <PipelineConnector type="straight" />

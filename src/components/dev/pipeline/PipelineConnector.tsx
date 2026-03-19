@@ -1,18 +1,24 @@
 interface PipelineConnectorProps {
   type: 'straight' | 'fork' | 'merge'
+  dimmed?: boolean
 }
 
-const ARROW = {
-  width: 0,
-  height: 0,
-  borderTop: '5px solid transparent',
-  borderBottom: '5px solid transparent',
-  borderLeft: '7px solid #94a3b8',
-} as const
-
 const LINE_COLOR = '#94a3b8'
+const DIMMED_COLOR = '#e2e8f0'
 
-export function PipelineConnector({ type }: PipelineConnectorProps) {
+function arrowStyle(color: string) {
+  return {
+    width: 0,
+    height: 0,
+    borderTop: '5px solid transparent',
+    borderBottom: '5px solid transparent',
+    borderLeft: `7px solid ${color}`,
+  } as const
+}
+
+export function PipelineConnector({ type, dimmed }: PipelineConnectorProps) {
+  const color = dimmed ? DIMMED_COLOR : LINE_COLOR
+
   if (type === 'straight') {
     return (
       <div style={{ display: 'flex', alignItems: 'center', width: '48px', flexShrink: 0, padding: '0 4px' }}>
@@ -20,7 +26,7 @@ export function PipelineConnector({ type }: PipelineConnectorProps) {
           style={{
             flex: 1,
             height: '2px',
-            backgroundColor: LINE_COLOR,
+            backgroundColor: color,
             position: 'relative',
           }}
         >
@@ -29,7 +35,7 @@ export function PipelineConnector({ type }: PipelineConnectorProps) {
               position: 'absolute',
               right: '-1px',
               top: '-4px',
-              ...ARROW,
+              ...arrowStyle(color),
             }}
           />
         </div>
@@ -85,7 +91,7 @@ export function PipelineConnector({ type }: PipelineConnectorProps) {
             transform: 'translateY(-1px)',
           }}
         >
-          <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...ARROW }} />
+          <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...arrowStyle(LINE_COLOR) }} />
         </div>
         {/* Bottom horizontal arrow */}
         <div
@@ -99,7 +105,7 @@ export function PipelineConnector({ type }: PipelineConnectorProps) {
             transform: 'translateY(1px)',
           }}
         >
-          <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...ARROW }} />
+          <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...arrowStyle(LINE_COLOR) }} />
         </div>
       </div>
     )
@@ -164,7 +170,7 @@ export function PipelineConnector({ type }: PipelineConnectorProps) {
           transform: 'translateY(-1px)',
         }}
       >
-        <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...ARROW }} />
+        <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...arrowStyle(LINE_COLOR) }} />
       </div>
     </div>
   )

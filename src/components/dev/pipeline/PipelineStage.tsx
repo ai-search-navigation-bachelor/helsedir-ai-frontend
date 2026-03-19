@@ -8,6 +8,7 @@ interface PipelineStageProps {
   isActive: boolean
   onClick: () => void
   summary: string
+  disabled?: boolean
 }
 
 export function PipelineStage({
@@ -17,7 +18,10 @@ export function PipelineStage({
   isActive,
   onClick,
   summary,
+  disabled,
 }: PipelineStageProps) {
+  const effectiveColor = disabled ? '#94a3b8' : accentHex
+
   return (
     <button
       type="button"
@@ -29,25 +33,32 @@ export function PipelineStage({
         padding: '10px 14px',
         minWidth: '130px',
         borderRadius: '8px',
-        border: `2px solid ${isActive ? accentHex : '#e2e8f0'}`,
-        backgroundColor: isActive ? `${accentHex}0d` : '#fff',
-        boxShadow: isActive
-          ? `inset 4px 0 0 ${accentHex}, 0 2px 8px ${accentHex}22`
-          : `inset 4px 0 0 ${accentHex}, 0 1px 3px rgba(0,0,0,0.06)`,
+        border: disabled
+          ? '2px dashed #cbd5e1'
+          : `2px solid ${isActive ? accentHex : '#e2e8f0'}`,
+        backgroundColor: disabled
+          ? '#f8fafc'
+          : isActive ? `${accentHex}0d` : '#fff',
+        boxShadow: disabled
+          ? 'none'
+          : isActive
+            ? `inset 4px 0 0 ${accentHex}, 0 2px 8px ${accentHex}22`
+            : `inset 4px 0 0 ${accentHex}, 0 1px 3px rgba(0,0,0,0.06)`,
         cursor: 'pointer',
         textAlign: 'left',
         transition: 'all 0.2s ease',
         outline: 'none',
         position: 'relative',
+        opacity: disabled ? 0.6 : 1,
       }}
       onMouseEnter={(e) => {
-        if (!isActive) {
+        if (!isActive && !disabled) {
           e.currentTarget.style.borderColor = `${accentHex}88`
           e.currentTarget.style.boxShadow = `inset 4px 0 0 ${accentHex}, 0 2px 6px ${accentHex}18`
         }
       }}
       onMouseLeave={(e) => {
-        if (!isActive) {
+        if (!isActive && !disabled) {
           e.currentTarget.style.borderColor = '#e2e8f0'
           e.currentTarget.style.boxShadow = `inset 4px 0 0 ${accentHex}, 0 1px 3px rgba(0,0,0,0.06)`
         }
@@ -57,7 +68,7 @@ export function PipelineStage({
         style={{
           fontSize: '0.78rem',
           fontWeight: 700,
-          color: isActive ? accentHex : '#1e293b',
+          color: disabled ? '#94a3b8' : isActive ? accentHex : '#1e293b',
           letterSpacing: '-0.01em',
           lineHeight: 1.2,
         }}
@@ -67,7 +78,7 @@ export function PipelineStage({
       <span
         style={{
           fontSize: '0.68rem',
-          color: '#64748b',
+          color: disabled ? '#b0b8c4' : '#64748b',
           lineHeight: 1.3,
         }}
       >
@@ -78,7 +89,7 @@ export function PipelineStage({
           fontSize: '0.72rem',
           fontWeight: 600,
           fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-          color: accentHex,
+          color: effectiveColor,
           marginTop: '2px',
         }}
       >

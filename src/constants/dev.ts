@@ -50,6 +50,10 @@ export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
     config: { ...DEFAULT_CONFIG },
   },
   {
+    label: 'Vår løsning (uten rerank)',
+    config: { ...DEFAULT_CONFIG, rerank: false },
+  },
+  {
     label: 'Balansert',
     config: { ...DEFAULT_CONFIG, bm25_weight: 0.5, semantic_weight: 0.5 },
   },
