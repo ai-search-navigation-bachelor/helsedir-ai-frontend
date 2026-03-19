@@ -171,7 +171,6 @@ export function DevPage() {
               subtitle={`BM25: ${slotA.usedConfig?.bm25_weight.toFixed(2)} \u00B7 Sem: ${slotA.usedConfig?.semantic_weight.toFixed(2)} \u00B7 RRF-k: ${slotA.usedConfig?.rrf_k}`}
               extraInfo={`Boost: temaside ${slotA.usedConfig?.temaside_boost.toFixed(2)} \u00B7 retningslinje ${slotA.usedConfig?.retningslinje_boost.toFixed(2)}`}
               roleInfo={slotA.usedConfig?.role ? `Rolle: ${slotA.usedConfig.role} \u00B7 boost ${slotA.usedConfig.role_boost.toFixed(2)} \u00B7 straff ${slotA.usedConfig.role_penalty.toFixed(2)}` : undefined}
-              mode="hybrid"
               loading={slotA.loading}
             >
               {(slotA.response?.results ?? []).map((r, i) => (
@@ -191,7 +190,6 @@ export function DevPage() {
               subtitle={`BM25: ${slotB.usedConfig?.bm25_weight.toFixed(2)} \u00B7 Sem: ${slotB.usedConfig?.semantic_weight.toFixed(2)} \u00B7 RRF-k: ${slotB.usedConfig?.rrf_k}`}
               extraInfo={`Boost: temaside ${slotB.usedConfig?.temaside_boost.toFixed(2)} \u00B7 retningslinje ${slotB.usedConfig?.retningslinje_boost.toFixed(2)}`}
               roleInfo={slotB.usedConfig?.role ? `Rolle: ${slotB.usedConfig.role} \u00B7 boost ${slotB.usedConfig.role_boost.toFixed(2)} \u00B7 straff ${slotB.usedConfig.role_penalty.toFixed(2)}` : undefined}
-              mode="hybrid"
               loading={slotB.loading}
             >
               {(slotB.response?.results ?? []).map((r, i) => (
@@ -209,7 +207,6 @@ export function DevPage() {
             <ResultsColumn
               title={`Keyword \u2014 ${slotHelsedir.response?.total ?? 0} treff`}
               subtitle={'Kun ordbasert s\u00F8k, ingen semantisk matching'}
-              mode="keyword"
               loading={slotHelsedir.loading}
             >
               {(slotHelsedir.response?.results ?? []).map((r, i) => (
@@ -282,12 +279,11 @@ interface ResultsColumnProps {
   subtitle: string
   extraInfo?: string
   roleInfo?: string
-  mode: 'hybrid' | 'keyword'
   loading: boolean
   children: React.ReactNode
 }
 
-function ResultsColumn({ title, subtitle, extraInfo, roleInfo, mode, loading, children }: ResultsColumnProps) {
+function ResultsColumn({ title, subtitle, extraInfo, roleInfo, loading, children }: ResultsColumnProps) {
   return (
     <div
       style={{
@@ -299,7 +295,7 @@ function ResultsColumn({ title, subtitle, extraInfo, roleInfo, mode, loading, ch
         border: '1px solid #e2e8f0',
       }}
     >
-      <ResultsColumnHeader title={title} subtitle={subtitle} extraInfo={extraInfo} roleInfo={roleInfo} mode={mode} />
+      <ResultsColumnHeader title={title} subtitle={subtitle} extraInfo={extraInfo} roleInfo={roleInfo} />
       {loading ? (
         <div style={{ padding: '40px', display: 'flex', justifyContent: 'center' }}>
           <div
