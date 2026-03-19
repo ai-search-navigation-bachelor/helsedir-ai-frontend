@@ -286,34 +286,34 @@ function PipelineRow({
               {/* Bypass: U-shaped dashed arrow: up from top of RRF, across above, down into top of Boosts */}
               {!config.rerank && (
                 <>
-                  {/* Left vertical: from top of boxes up */}
+                  {/* Left vertical: from top-center of RRF up */}
                   <div style={{
                     position: 'absolute',
-                    left: '-20px',
+                    left: '-80px',
                     top: '-22px',
                     height: '22px',
                     width: '0px',
-                    borderLeft: '2px dashed #475569',
+                    borderLeft: '2px solid #94a3b8',
                     zIndex: 1,
                   }} />
                   {/* Horizontal across above the boxes */}
                   <div style={{
                     position: 'absolute',
                     top: '-22px',
-                    left: '-20px',
-                    right: '-20px',
+                    left: '-80px',
+                    right: '-80px',
                     height: '0px',
-                    borderTop: '2px dashed #475569',
+                    borderTop: '2px solid #94a3b8',
                     zIndex: 1,
                   }} />
-                  {/* Right vertical: from above down to top of boxes + arrow */}
+                  {/* Right vertical: from above down to top-center of Post Processing + arrow */}
                   <div style={{
                     position: 'absolute',
-                    right: '-20px',
+                    right: '-80px',
                     top: '-22px',
                     height: '22px',
                     width: '0px',
-                    borderLeft: '2px dashed #475569',
+                    borderLeft: '2px solid #94a3b8',
                     zIndex: 1,
                   }}>
                     <div style={{
@@ -324,7 +324,7 @@ function PipelineRow({
                       height: 0,
                       borderLeft: '5px solid transparent',
                       borderRight: '5px solid transparent',
-                      borderTop: '7px solid #475569',
+                      borderTop: '7px solid #94a3b8',
                     }} />
                   </div>
                 </>
