@@ -14,6 +14,16 @@ interface DevResultItemProps {
 
 const mono = "'JetBrains Mono', 'Fira Code', monospace"
 
+const FEATURE_LABELS: Record<string, string> = {
+  semantic_score: 'Semantisk likhet',
+  bm25_score: 'BM25 ordmatch',
+  smoothed_ctr: 'Klikk-rate (CTR)',
+  role_match: 'Rollematch',
+  query_length: 'Lengde på søk',
+  title_query_overlap: 'Tittel-overlap',
+  content_freshness: 'Innholdsferskhet',
+}
+
 function computeRetRanks(result: SearchResult, allResults: SearchResult[]) {
   const scores = allResults.map((r) => {
     const p = getPipelineScores(r)
@@ -409,32 +419,47 @@ function ScoreSpreadsheet({
       )}
 
       {/* Rerank */}
-      {hasRerank && (
-        <>
-          <CalcRow
-            step={`${n++}.`}
-            label="Rerank"
-            color="#7c3aed"
-            formula={`LTR-modell \u2192 ${rerankScore!.toFixed(4)}${typeof rerankRankChange === 'number' ? ` (${rerankRankChange > 0 ? '\u2191' : '\u2193'}${Math.abs(rerankRankChange)})` : ''}`}
-            result={rerankScore!.toFixed(4)}
-            separator
-          />
-          {rerankContributions && Object.keys(rerankContributions).length > 0 &&
-            Object.entries(rerankContributions)
-              .sort(([, a], [, b]) => Math.abs(b) - Math.abs(a))
-              .map(([feature, val]) => (
-                <CalcRow
-                  key={feature}
-                  label={feature}
-                  color={val >= 0 ? '#7c3aed' : '#dc2626'}
-                  formula="SHAP-bidrag"
-                  result={`${val >= 0 ? '+' : ''}${val.toFixed(3)}`}
-                  sub
-                />
-              ))
-          }
-        </>
-      )}
+      {hasRerank && (() => {
+        const stepN = n++
+        const rankChangeStr = typeof rerankRankChange === 'number'
+          ? rerankRankChange > 0 ? `${rerankRankChange} plasser opp` : rerankRankChange < 0 ? `${Math.abs(rerankRankChange)} plasser ned` : 'uendret'
+          : null
+        return (
+          <>
+            <CalcRow
+              step={`${stepN}.`}
+              label="Rerank"
+              color="#7c3aed"
+              formula="XGBoost LambdaMART"
+              result={rerankScore!.toFixed(4)}
+              separator
+            />
+            {rankChangeStr && (
+              <CalcRow
+                label=""
+                color="#7c3aed"
+                formula={`rangendring: ${rankChangeStr}`}
+                result=""
+                sub
+              />
+            )}
+            {rerankContributions && Object.keys(rerankContributions).length > 0 &&
+              Object.entries(rerankContributions)
+                .sort(([, a], [, b]) => Math.abs(b) - Math.abs(a))
+                .map(([feature, val]) => (
+                  <CalcRow
+                    key={feature}
+                    label=""
+                    color={val >= 0 ? '#7c3aed' : '#dc2626'}
+                    formula={`${FEATURE_LABELS[feature] ?? feature}`}
+                    result={`${val >= 0 ? '+' : ''}${val.toFixed(3)}`}
+                    sub
+                  />
+                ))
+            }
+          </>
+        )
+      })()}
 
       {/* Boost + normalisering */}
       {hasBoosts && (() => {
