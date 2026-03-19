@@ -212,7 +212,9 @@ function PipelineRow({
                 color: '#64748b',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'pre-line',
+                textAlign: 'center',
+                lineHeight: 1.3,
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = '#e0f2fe'

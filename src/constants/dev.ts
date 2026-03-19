@@ -50,7 +50,7 @@ export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
     config: { ...DEFAULT_CONFIG },
   },
   {
-    label: 'Vår løsning (uten rerank)',
+    label: 'Vår løsning\n(uten rerank)',
     config: { ...DEFAULT_CONFIG, rerank: false },
   },
   {
