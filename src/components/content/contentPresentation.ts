@@ -12,7 +12,7 @@ export type ContentPresentationMode = 'temaside' | 'hierarchical' | 'detail'
 
 type ContentPresentationInput = Pick<
   ContentDetail,
-  'content_type' | 'links' | 'chapters'
+  'content_type' | 'links'
 >
 
 const HIERARCHICAL_SKELETON_HINT_TYPES = new Set([
@@ -23,10 +23,7 @@ const HIERARCHICAL_SKELETON_HINT_TYPES = new Set([
 ])
 
 function hasNavigableChildren(content: ContentPresentationInput) {
-  return (
-    (content.chapters?.length || 0) > 0 ||
-    countUniqueChildLinks(content.links) > 0
-  )
+  return countUniqueChildLinks(content.links) > 0
 }
 
 export function resolveContentPresentation(content: ContentPresentationInput): ContentPresentationMode {
@@ -49,7 +46,6 @@ export function resolveContentPresentation(content: ContentPresentationInput): C
 
 export function resolveContentPresentationFromHint(options: {
   routeContentType?: string
-  pathPrefix?: string
 }): Exclude<ContentPresentationMode, 'temaside'> {
   const normalizedRouteContentType = normalizeContentType(options.routeContentType)
 

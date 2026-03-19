@@ -98,7 +98,6 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
   if (isLoading) {
     const presentation = resolveContentPresentationFromHint({
       routeContentType,
-      pathPrefix,
     })
 
     return (

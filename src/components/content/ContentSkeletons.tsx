@@ -25,12 +25,7 @@ function HeaderSkeleton() {
   return (
     <header className="pb-1">
       <div className="mb-2 flex items-center">
-        <Skeleton
-        
-          width={96}
-          height={16}
-          className="rounded-sm"
-        />
+        <Skeleton variant="text" style={{ width: 96 }} height={16} className="rounded-sm" />
       </div>
       <div className="space-y-1.5">
         <Skeleton
