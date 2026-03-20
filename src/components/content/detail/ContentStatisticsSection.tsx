@@ -688,6 +688,7 @@ export function ContentStatisticsSection({
   const [selectedParentLocation, setSelectedParentLocation] = useState(ALL_FILTER_VALUE)
   const [viewMode, setViewMode] = useState<ViewMode>('chart')
   const [showAverage, setShowAverage] = useState(false)
+  const [isRawDataOpen, setIsRawDataOpen] = useState(false)
   const [isChartRendering, setIsChartRendering] = useState(false)
   const [chartRenderError, setChartRenderError] = useState<string | null>(null)
 
@@ -1207,13 +1208,38 @@ export function ContentStatisticsSection({
                 </div>
               )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <Paragraph data-size="sm" style={{ margin: 0, color: '#475569', fontWeight: 600 }}>
-                  Rådata
-                </Paragraph>
-                <RawDataTable
-                  rows={rawTableData.rows}
-                  dimensionKeys={rawTableData.dimensionKeys}
-                />
+                <button
+                  type="button"
+                  onClick={() => setIsRawDataOpen((current) => !current)}
+                  aria-expanded={isRawDataOpen}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    border: '1px solid #e2e8f0',
+                    background: '#f8fafc',
+                    color: '#475569',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    textAlign: 'left',
+                  }}
+                >
+                  <span>Rådata</span>
+                  <span style={{ color: '#64748b', fontSize: '0.8125rem' }}>
+                    {isRawDataOpen ? 'Skjul' : 'Vis'}
+                  </span>
+                </button>
+                {isRawDataOpen && (
+                  <RawDataTable
+                    rows={rawTableData.rows}
+                    dimensionKeys={rawTableData.dimensionKeys}
+                  />
+                )}
               </div>
             </div>
           ) : (

@@ -18,6 +18,30 @@ interface SearchResultCardProps {
   shouldClearPin?: boolean;
 }
 
+function getFullSourceTitle(source?: {
+  title?: string | null;
+  tittel?: string | null;
+  display_title?: string | null;
+  short_title?: string | null;
+  kortTittel?: string | null;
+} | null) {
+  const candidates = [
+    source?.title,
+    source?.tittel,
+    source?.display_title,
+    source?.short_title,
+    source?.kortTittel,
+  ];
+
+  for (const value of candidates) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
 export function SearchResultCard({
   result,
   searchQuery,
@@ -43,9 +67,7 @@ export function SearchResultCard({
   const documentUrl = result.document_url?.trim() || "";
   const isPdfOnly = Boolean(result.is_pdf_only && documentUrl);
   const sourceContent = result.root_publication ?? result.parent ?? null;
-  const sourceTitle = sourceContent
-    ? getDisplayTitle(sourceContent, sourceContent?.title ?? "").trim()
-    : "";
+  const sourceTitle = getFullSourceTitle(sourceContent);
   const normalizedResultTitle = resultTitle.trim().toLocaleLowerCase("nb-NO");
   const normalizedSourceTitle = sourceTitle.toLocaleLowerCase("nb-NO");
   const isSelfSource =
