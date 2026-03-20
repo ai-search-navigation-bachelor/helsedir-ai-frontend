@@ -8,7 +8,7 @@ import type {
 } from '../../../types'
 import { getApiContentInternalPath } from '../../../lib/contentLinking'
 import { buildContentUrl } from '../../../lib/contentUrl'
-import { toAbsoluteHelsedirUrl } from '../../../lib/helsedirUrl'
+import { isInternalAppPath, toAbsoluteHelsedirUrl } from '../../../lib/helsedirUrl'
 
 interface DocumentLink {
   href: string
@@ -82,6 +82,10 @@ function hasRelatedDocumentMetadata(link: RelatedContentLink) {
 function getSafeRelatedHref(rawHref: string) {
   const href = rawHref.trim()
   if (!href || href.startsWith('//')) return null
+
+  if (isInternalAppPath(href)) {
+    return href
+  }
 
   const helsedirUrl = toAbsoluteHelsedirUrl(href)
   if (helsedirUrl) {

@@ -9,7 +9,7 @@ import { ExpandableSubcontent } from './ExpandableSubcontent'
 import { ExpandableLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, getRelatedLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
 import { RichContentHtml } from '../shared/RichContentHtml'
-import { toAbsoluteHelsedirUrl } from '../../../lib/helsedirUrl'
+import { normalizeLinkForComparison, toAbsoluteHelsedirUrl } from '../../../lib/helsedirUrl'
 
 interface PageContentProps {
   activePage: PageNode
@@ -41,7 +41,7 @@ export function PageContent({
   const publicationUrl = (() => {
     const url = toAbsoluteHelsedirUrl(activePage.node.url)
     if (!url) return null
-    return documentLinks.some((document) => document.href === url) ? null : url
+    return documentLinks.some((document) => normalizeLinkForComparison(document.href) === url) ? null : url
   })()
   const hasMainContent = hasIntro || hasBody
   const hasOnlyHelsedirPdfDocuments =
