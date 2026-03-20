@@ -6,12 +6,14 @@ import {
   getDetailContentTypeLabel,
   isEhelsestandardContentType,
   isRecommendationContentType,
+  isStatisticsContentType,
   isTemasideContentType,
   normalizeContentType,
 } from '../../../constants/content'
 import { formatDateLabel } from '../../../lib/content/date'
 import { getDisplayTitle } from '../../../lib/displayTitle'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
+import { useContentStatisticsQuery } from '../../../hooks/queries/useContentStatisticsQuery'
 import type { ContentChildGroup, ContentLink, ContentRelationItem, NestedContent } from '../../../types'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
@@ -25,6 +27,7 @@ import {
   type ContentSection,
   type VurderingSection,
 } from './detailContentModel'
+import { ContentStatisticsSection } from './ContentStatisticsSection'
 
 function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
   if (!vurdering) return null
@@ -237,6 +240,7 @@ export function DetailContentDisplay({
   const shouldSkipHelsedirEnrichment =
     isTemasideContentType(normalizedType) || isEhelsestandardContentType(normalizedType)
   const shouldSkipPdfOnlyEnrichment = isPdfOnlyContent && Boolean(backendDocumentUrl)
+  const shouldQueryStatistics = isStatisticsContentType(normalizedType)
   const shouldAttemptEnrichment =
     !shouldSkipPdfOnlyEnrichment &&
     !shouldSkipHelsedirEnrichment &&
@@ -251,6 +255,14 @@ export function DetailContentDisplay({
     contentId: content.id,
     contentType: normalizedType,
     enabled: shouldAttemptEnrichment,
+  })
+  const {
+    data: statistics,
+    error: statisticsError,
+    isLoading: isStatisticsLoading,
+  } = useContentStatisticsQuery({
+    contentId: content.id,
+    enabled: shouldQueryStatistics,
   })
 
   const sections = useMemo<ContentSection[]>(() => {
@@ -430,6 +442,17 @@ export function DetailContentDisplay({
     visibleDocumentLinks.length > 0 ||
     visibleRelatedLinks.length > 0 ||
     shouldShowPublicationFallback
+  const statisticsStatus = statistics?.statistics_status
+  const shouldRenderStatisticsSection =
+    Boolean(statistics?.has_statistics) ||
+    statisticsStatus === 'unavailable'
+  const showStatisticsSection =
+    shouldQueryStatistics &&
+    (
+      isStatisticsLoading ||
+      Boolean(statisticsError) ||
+      shouldRenderStatisticsSection
+    )
   const resourceSectionTitle =
     visibleDocumentLinks.length > 0 && visibleRelatedLinks.length === 0 ? 'Dokumenter' : 'Lenker'
 
@@ -556,6 +579,14 @@ export function DetailContentDisplay({
                 Kunne ikke hente utvidede innholdsdetaljer fra Helsedirektoratet API akkurat nå.
               </Paragraph>
             </Alert>
+          )}
+
+          {showStatisticsSection && (
+            <ContentStatisticsSection
+              statistics={statistics}
+              isLoading={isStatisticsLoading}
+              error={statisticsError instanceof Error ? statisticsError : null}
+            />
           )}
 
           {sections.map((section, index) => (
@@ -718,7 +749,7 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length === 0 && referenceItems.length === 0 && !hasAnyActionLinks && (
+          {sections.length === 0 && referenceItems.length === 0 && !hasAnyActionLinks && !showStatisticsSection && (
             <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
                 Denne siden har ikke egen tekst eller tilgjengelige lenker.

@@ -16,6 +16,9 @@ export type {
 export { getContent, getContentByPath } from './content'
 export type { ContentOptions } from './content'
 
+// Statistics operations
+export { getContentStatistics } from './statistics'
+
 // External Helsedirektoratet API
 export {
   fetchHelsedirContent,
