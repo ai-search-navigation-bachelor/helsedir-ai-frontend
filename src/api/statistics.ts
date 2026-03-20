@@ -21,6 +21,20 @@ function asNullableString(value: unknown) {
   return typeof value === 'string' ? value : null
 }
 
+function asDimensionString(value: unknown) {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed || null
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value)
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false'
+  }
+  return null
+}
+
 function asNumber(value: unknown) {
   if (typeof value === 'number' && Number.isFinite(value)) return value
   if (typeof value !== 'string') return null
@@ -36,10 +50,22 @@ function toUniqueStringList(values: unknown) {
   if (!Array.isArray(values)) return undefined
 
   const normalized = values
-    .map((value) => asString(value)?.trim())
+    .map((value) => asDimensionString(value))
     .filter((value): value is string => Boolean(value))
 
   return normalized.length > 0 ? Array.from(new Set(normalized)) : undefined
+}
+
+function extractDimensionEntries(rawValue: unknown) {
+  if (!rawValue || typeof rawValue !== 'object') return {} as Record<string, string | null>
+
+  return Object.entries(rawValue as Record<string, unknown>).reduce<Record<string, string | null>>((acc, [key, value]) => {
+    const normalizedValue = asDimensionString(value)
+    if (normalizedValue) {
+      acc[key] = normalizedValue
+    }
+    return acc
+  }, {})
 }
 
 function normalizeStatisticPoint(rawPoint: unknown): StatisticPoint | null {
@@ -50,6 +76,18 @@ function normalizeStatisticPoint(rawPoint: unknown): StatisticPoint | null {
   const y = asNumber(point.y)
   const location = asNullableString(point.location)
 
+  const nestedDimensions = extractDimensionEntries(point.dimensions)
+  const dimensions = Object.entries(point).reduce<Record<string, string | null>>((acc, [key, value]) => {
+    if (key === 'y' || key === 'dimensions') return acc
+
+    const normalizedValue = asDimensionString(value)
+    if (normalizedValue) {
+      acc[key] = normalizedValue
+    }
+
+    return acc
+  }, { ...nestedDimensions })
+
   return {
     x,
     y,
@@ -58,6 +96,7 @@ function normalizeStatisticPoint(rawPoint: unknown): StatisticPoint | null {
     time_from: asNullableString(point.time_from),
     time_to: asNullableString(point.time_to),
     period_type: asNullableString(point.period_type),
+    dimensions,
   }
 }
 
@@ -93,12 +132,24 @@ function normalizeStatisticsResponse(
     : []
   const dimensions =
     record.dimensions && typeof record.dimensions === 'object'
-      ? {
-          measures: toUniqueStringList((record.dimensions as Record<string, unknown>).measures),
-          locations: toUniqueStringList((record.dimensions as Record<string, unknown>).locations),
-          parent_locations: toUniqueStringList((record.dimensions as Record<string, unknown>).parent_locations),
-          period_types: toUniqueStringList((record.dimensions as Record<string, unknown>).period_types),
-        }
+      ? (() => {
+          const rawDimensions = record.dimensions as Record<string, unknown>
+          const fields = Object.entries(rawDimensions).reduce<Record<string, string[]>>((acc, [key, value]) => {
+            const normalized = toUniqueStringList(value)
+            if (normalized && normalized.length > 0) {
+              acc[key] = normalized
+            }
+            return acc
+          }, {})
+
+          return {
+            measures: fields.measures,
+            locations: fields.locations,
+            parent_locations: fields.parent_locations,
+            period_types: fields.period_types,
+            fields,
+          }
+        })()
       : undefined
   const hasStatistics = record.has_statistics === true
   const status = asString(record.statistics_status)

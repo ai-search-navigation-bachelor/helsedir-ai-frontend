@@ -1,3 +1,7 @@
+export interface StatisticPointDimensions {
+  [key: string]: string | null | undefined
+}
+
 export interface StatisticPoint {
   x?: string | null
   y?: number | null
@@ -6,6 +10,7 @@ export interface StatisticPoint {
   time_from?: string | null
   time_to?: string | null
   period_type?: string | null
+  dimensions?: StatisticPointDimensions
 }
 
 export interface StatisticSeries {
@@ -18,6 +23,7 @@ export interface StatisticsDimensions {
   locations?: string[]
   parent_locations?: string[]
   period_types?: string[]
+  fields?: Record<string, string[]>
 }
 
 export interface ContentStatisticsResponse {

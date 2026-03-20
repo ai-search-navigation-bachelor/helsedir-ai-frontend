@@ -579,6 +579,14 @@ export function DetailContentDisplay({
             </Alert>
           )}
 
+          {showStatisticsSection && (
+            <ContentStatisticsSection
+              statistics={statistics}
+              isLoading={isStatisticsLoading}
+              error={statisticsError instanceof Error ? statisticsError : null}
+            />
+          )}
+
           {sections.map((section, index) => (
             <article key={section.id} id={section.id} className="scroll-mt-20">
               {sections.length > 1 && (
@@ -620,14 +628,6 @@ export function DetailContentDisplay({
               )}
             </article>
           ))}
-
-          {showStatisticsSection && (
-            <ContentStatisticsSection
-              statistics={statistics}
-              isLoading={isStatisticsLoading}
-              error={statisticsError instanceof Error ? statisticsError : null}
-            />
-          )}
 
           {!showSidebarLayout && sections.length > 0 && (visibleDocumentLinks.length > 0 || visibleRelatedLinks.length > 0) && (
             <section className="space-y-4">

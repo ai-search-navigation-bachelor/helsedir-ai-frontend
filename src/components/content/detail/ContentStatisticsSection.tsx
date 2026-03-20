@@ -27,6 +27,7 @@ interface PreparedStatisticPoint {
   location: string | null
   parent_location: string | null
   period_type: string | null
+  dimensions: Record<string, string | null>
 }
 
 interface PreparedMeasure {
@@ -36,6 +37,7 @@ interface PreparedMeasure {
   locations: string[]
   parentLocations: string[]
   periodTypes: string[]
+  dimensionKeys: string[]
 }
 
 interface PreparedStatisticsModel {
@@ -106,6 +108,25 @@ function getPointTimestamp(point: StatisticPoint) {
   return parseTimestamp(point.x) ?? parseTimestamp(point.time_from) ?? parseTimestamp(point.time_to)
 }
 
+function getPointDimensions(point: StatisticPoint, fallbackLabel: string) {
+  const baseDimensions = Object.entries(point.dimensions ?? {}).reduce<Record<string, string | null>>((acc, [key, value]) => {
+    const normalizedKey = key.trim()
+    if (!normalizedKey) return acc
+    acc[normalizedKey] = getNormalizedText(value)
+    return acc
+  }, {})
+
+  return {
+    ...baseDimensions,
+    x: getNormalizedText(point.x) ?? fallbackLabel,
+    location: getPointLocation(point),
+    parent_location: getPointParentLocation(point),
+    period_type: getPointPeriodType(point),
+    time_from: getNormalizedText(point.time_from),
+    time_to: getNormalizedText(point.time_to),
+  }
+}
+
 function normalizeSeriesPoints(series: StatisticSeries) {
   const points: PreparedStatisticPoint[] = []
   series.points.forEach((point, index) => {
@@ -120,6 +141,7 @@ function normalizeSeriesPoints(series: StatisticSeries) {
       location: getPointLocation(point),
       parent_location: getPointParentLocation(point),
       period_type: getPointPeriodType(point),
+      dimensions: getPointDimensions(point, x),
     })
   })
   return points
@@ -141,6 +163,13 @@ function buildPreparedStatisticsModel(statistics?: ContentStatisticsResponse): P
       locations: toUniqueStrings(points.map((point) => point.location)),
       parentLocations: toUniqueStrings(points.map((point) => point.parent_location)),
       periodTypes: toUniqueStrings(points.map((point) => point.period_type)),
+      dimensionKeys: toUniqueStrings(
+        points.flatMap((point) =>
+          Object.entries(point.dimensions)
+            .filter(([, value]) => Boolean(value))
+            .map(([key]) => key),
+        ),
+      ),
     })
   })
 
@@ -179,6 +208,13 @@ function getFallbackMessage(statistics?: ContentStatisticsResponse) {
   }
 }
 
+function getVisibleStatisticsDescription(description?: string | null) {
+  const normalized = getNormalizedText(description)
+  if (!normalized) return null
+  if (/^se indikator url:/i.test(normalized)) return null
+  return normalized
+}
+
 function getLocationOptions(measure?: PreparedMeasure, statistics?: ContentStatisticsResponse) {
   if (measure && measure.locations.length > 0) return measure.locations
   return statistics?.dimensions?.locations ?? []
@@ -187,11 +223,6 @@ function getLocationOptions(measure?: PreparedMeasure, statistics?: ContentStati
 function getParentLocationOptions(measure?: PreparedMeasure, statistics?: ContentStatisticsResponse) {
   if (measure && measure.parentLocations.length > 0) return measure.parentLocations
   return statistics?.dimensions?.parent_locations ?? []
-}
-
-function getPeriodTypeOptions(measure?: PreparedMeasure, statistics?: ContentStatisticsResponse) {
-  if (measure && measure.periodTypes.length > 0) return measure.periodTypes
-  return statistics?.dimensions?.period_types ?? []
 }
 
 function sortPointsByMode(points: PreparedStatisticPoint[], xMode: PreparedMeasure['xMode'] | undefined) {
@@ -204,12 +235,10 @@ function filterPoints(
   points: PreparedStatisticPoint[],
   selectedLocation: string,
   selectedParentLocation: string,
-  selectedPeriodType: string,
 ) {
   return points.filter((point) => {
     if (selectedLocation !== ALL_FILTER_VALUE && point.location !== selectedLocation) return false
     if (selectedParentLocation !== ALL_FILTER_VALUE && point.parent_location !== selectedParentLocation) return false
-    if (selectedPeriodType !== ALL_FILTER_VALUE && point.period_type !== selectedPeriodType) return false
     return true
   })
 }
@@ -238,7 +267,9 @@ function buildSeriesData(
       .map((point) => [point.parsedX, point.y] as [number, number])
   }
   const valueByCategory = new Map<string, number>()
-  points.forEach((point) => { valueByCategory.set(point.x, point.y) })
+  points.forEach((point) => {
+    valueByCategory.set(point.x, (valueByCategory.get(point.x) ?? 0) + point.y)
+  })
   return categories.map((category) => valueByCategory.get(category) ?? null)
 }
 
@@ -258,6 +289,7 @@ function buildSumPoints(points: PreparedStatisticPoint[], xMode: PreparedMeasure
     location: null,
     parent_location: null,
     period_type: null,
+    dimensions: { x: group.x },
   }))
   return sortPointsByMode(summedPoints, xMode)
 }
@@ -278,6 +310,7 @@ function buildAveragePoints(points: PreparedStatisticPoint[], xMode: PreparedMea
     location: null,
     parent_location: null,
     period_type: null,
+    dimensions: { x: group.x },
   }))
   return sortPointsByMode(averagedPoints, xMode)
 }
@@ -469,6 +502,14 @@ function LocationSelector({
 
 type ViewMode = 'chart' | 'table'
 
+interface RawStatisticRow {
+  key: string
+  seriesName: string
+  label: string
+  value: number
+  dimensions: Record<string, string | null>
+}
+
 function DataTable({
   seriesList,
   allRows,
@@ -489,7 +530,7 @@ function DataTable({
           <thead>
             <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
               <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap', position: 'sticky', top: 0, background: '#f8fafc' }}>
-                Periode
+                Kategori
               </th>
               {seriesList.map((series, i) => (
                 <th
@@ -530,6 +571,100 @@ function DataTable({
   )
 }
 
+function formatDimensionLabel(key: string) {
+  switch (key) {
+    case 'x': return 'Kategori'
+    case 'location': return 'Lokasjon'
+    case 'parent_location': return 'Overordnet geografi'
+    case 'period_type': return 'Periode'
+    case 'time_from': return 'Fra'
+    case 'time_to': return 'Til'
+    default:
+      return key
+        .split(/[_-]/)
+        .filter(Boolean)
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(' ')
+  }
+}
+
+function sortDimensionKeys(keys: string[]) {
+  const priority = ['x', 'time_from', 'time_to', 'location', 'parent_location', 'period_type']
+  return [...keys].sort((left, right) => {
+    const leftIndex = priority.indexOf(left)
+    const rightIndex = priority.indexOf(right)
+
+    if (leftIndex !== -1 || rightIndex !== -1) {
+      if (leftIndex === -1) return 1
+      if (rightIndex === -1) return -1
+      return leftIndex - rightIndex
+    }
+
+    return left.localeCompare(right, 'nb')
+  })
+}
+
+function RawDataTable({
+  rows,
+  dimensionKeys,
+}: {
+  rows: RawStatisticRow[]
+  dimensionKeys: string[]
+}) {
+  const MAX_ROWS = 200
+  const displayRows = rows.slice(0, MAX_ROWS)
+  const truncated = rows.length > MAX_ROWS
+
+  return (
+    <div>
+      <div style={{ overflowX: 'auto', maxHeight: '32rem', overflowY: 'auto', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+          <thead>
+            <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+              <th style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap', position: 'sticky', top: 0, background: '#f8fafc' }}>
+                Måling
+              </th>
+              <th style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap', position: 'sticky', top: 0, background: '#f8fafc' }}>
+                Verdi
+              </th>
+              {dimensionKeys.map((key) => (
+                <th
+                  key={key}
+                  style={{ padding: '10px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', whiteSpace: 'nowrap', position: 'sticky', top: 0, background: '#f8fafc' }}
+                >
+                  {formatDimensionLabel(key)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {displayRows.map((row, i) => (
+              <tr key={row.key} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? 'white' : '#fafafa' }}>
+                <td style={{ padding: '8px 16px', color: '#1e293b', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                  {row.seriesName}
+                </td>
+                <td style={{ padding: '8px 16px', textAlign: 'right', color: '#1e293b', whiteSpace: 'nowrap', fontWeight: 500 }}>
+                  {numberFormatter.format(row.value)}
+                </td>
+                {dimensionKeys.map((dimensionKey) => (
+                  <td key={dimensionKey} style={{ padding: '8px 16px', color: '#475569', whiteSpace: 'nowrap' }}>
+                    {row.dimensions[dimensionKey] || (dimensionKey === 'x' ? row.label : '–')}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {truncated && (
+        <p style={{ margin: '8px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+          Viser de første {MAX_ROWS} av {rows.length} rader.
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ContentStatisticsSection({
@@ -542,12 +677,15 @@ export function ContentStatisticsSection({
 
   const preparedStatistics = useMemo(() => buildPreparedStatisticsModel(statistics), [statistics])
   const measureOptions = preparedStatistics.measureNames
+  const visibleDescription = useMemo(
+    () => getVisibleStatisticsDescription(statistics?.description),
+    [statistics?.description],
+  )
 
   const [selectedMeasure, setSelectedMeasure] = useState('')
   const [locationMode, setLocationMode] = useState<LocationMode>('average')
   const [customLocations, setCustomLocations] = useState<Set<string>>(new Set())
   const [selectedParentLocation, setSelectedParentLocation] = useState(ALL_FILTER_VALUE)
-  const [selectedPeriodType, setSelectedPeriodType] = useState(ALL_FILTER_VALUE)
   const [viewMode, setViewMode] = useState<ViewMode>('chart')
   const [showAverage, setShowAverage] = useState(false)
   const [isChartRendering, setIsChartRendering] = useState(false)
@@ -557,7 +695,6 @@ export function ContentStatisticsSection({
   const deferredLocationMode = useDeferredValue(locationMode)
   const deferredCustomLocations = useDeferredValue(customLocations)
   const deferredParentLocation = useDeferredValue(selectedParentLocation)
-  const deferredPeriodType = useDeferredValue(selectedPeriodType)
   const deferredShowAverage = useDeferredValue(showAverage)
 
   const isFilterPending =
@@ -565,7 +702,6 @@ export function ContentStatisticsSection({
     locationMode !== deferredLocationMode ||
     customLocations !== deferredCustomLocations ||
     selectedParentLocation !== deferredParentLocation ||
-    selectedPeriodType !== deferredPeriodType ||
     showAverage !== deferredShowAverage
 
   useEffect(() => {
@@ -594,10 +730,6 @@ export function ContentStatisticsSection({
     () => getParentLocationOptions(selectedMeasureModel ?? undefined, statistics),
     [selectedMeasureModel, statistics],
   )
-  const periodTypeOptions = useMemo(
-    () => getPeriodTypeOptions(selectedMeasureModel ?? undefined, statistics),
-    [selectedMeasureModel, statistics],
-  )
 
   useEffect(() => {
     setCustomLocations((current) => {
@@ -613,7 +745,7 @@ export function ContentStatisticsSection({
     const xMode = selectedMeasureModel.xMode
     const hasMultipleLocations = locationOptions.length > 1
     const allFiltered = sortPointsByMode(
-      filterPoints(selectedMeasureModel.points, ALL_FILTER_VALUE, deferredParentLocation, deferredPeriodType),
+      filterPoints(selectedMeasureModel.points, ALL_FILTER_VALUE, deferredParentLocation),
       xMode,
     )
 
@@ -633,7 +765,7 @@ export function ContentStatisticsSection({
     const customSeries = Array.from(deferredCustomLocations).map((loc) => ({
       name: loc,
       points: sortPointsByMode(
-        filterPoints(selectedMeasureModel.points, loc, deferredParentLocation, deferredPeriodType),
+        filterPoints(selectedMeasureModel.points, loc, deferredParentLocation),
         xMode,
       ),
     }))
@@ -644,7 +776,7 @@ export function ContentStatisticsSection({
     }
 
     return customSeries
-  }, [selectedMeasureModel, deferredLocationMode, deferredCustomLocations, deferredParentLocation, deferredPeriodType, deferredShowAverage, locationOptions.length])
+  }, [selectedMeasureModel, deferredLocationMode, deferredCustomLocations, deferredParentLocation, deferredShowAverage, locationOptions.length])
 
   const categoryAxisValues = useMemo(() => {
     if (selectedMeasureModel?.xMode !== 'category') return []
@@ -657,7 +789,7 @@ export function ContentStatisticsSection({
     const nonBaseline = resolvedSeries.filter((s) => !s.isBaseline)
     const single = nonBaseline.length === 1 && resolvedSeries.length === 1
     return resolvedSeries.map((series, i) => ({
-      type: 'line',
+      type: xMode === 'datetime' ? 'line' : 'column',
       name: series.name,
       data: buildSeriesData(series.points, xMode, categoryAxisValues),
       color: series.isBaseline ? '#94a3b8' : CHART_COLORS[i % CHART_COLORS.length],
@@ -683,20 +815,64 @@ export function ContentStatisticsSection({
     })
     const seriesList = resolvedSeries.map(({ name, points }) => ({
       name,
-      map: new Map(points.map((p) => {
+      map: points.reduce((acc, p) => {
         const key = xMode === 'datetime' && p.parsedX !== null ? String(p.parsedX) : p.x
-        return [key, p.y]
-      })),
+        acc.set(key, (acc.get(key) ?? 0) + p.y)
+        return acc
+      }, new Map<string, number>()),
     }))
     return { seriesList, allRows }
   }, [selectedMeasureModel, resolvedSeries])
 
+  const rawTableData = useMemo(() => {
+    if (!selectedMeasureModel) return null
+
+    const filteredBySharedFilters = filterPoints(
+      selectedMeasureModel.points,
+      ALL_FILTER_VALUE,
+      deferredParentLocation,
+    )
+
+    const visibleRawPoints =
+      deferredLocationMode === 'custom' && deferredCustomLocations.size > 0
+        ? filteredBySharedFilters.filter((point) => point.location && deferredCustomLocations.has(point.location))
+        : filteredBySharedFilters
+
+    if (visibleRawPoints.length === 0) return null
+
+    const rows = sortPointsByMode(visibleRawPoints, selectedMeasureModel.xMode).map((point) => ({
+      key: `${selectedMeasureModel.name}-${point.index}-${point.x}-${point.y}`,
+      seriesName: selectedMeasureModel.name,
+      label: formatPointLabel(point, selectedMeasureModel.xMode),
+      value: point.y,
+      dimensions: point.dimensions,
+    }))
+
+    const dimensionKeys = sortDimensionKeys(
+      toUniqueStrings(
+        rows.flatMap((row) =>
+          Object.entries(row.dimensions)
+            .filter(([, value]) => Boolean(value))
+            .map(([key]) => key),
+        ),
+      ),
+    )
+
+    return { rows, dimensionKeys }
+  }, [
+    deferredCustomLocations,
+    deferredLocationMode,
+    deferredParentLocation,
+    selectedMeasureModel,
+  ])
+
 
   const hasChartData = chartSeries.length > 0
+  const chartType = selectedMeasureModel?.xMode === 'datetime' ? 'line' : 'column'
 
   const chartOptions = useMemo<Highcharts.Options>(() => ({
     chart: {
-      type: 'line',
+      type: chartType,
       backgroundColor: 'transparent',
       spacingTop: 20,
       spacingRight: 20,
@@ -754,9 +930,16 @@ export function ContentStatisticsSection({
     plotOptions: {
       series: { animation: false, turboThreshold: 0, stickyTracking: false },
       line: { marker: { enabled: true, radius: 3 } },
+      column: { borderRadius: 4, pointPadding: 0.08, groupPadding: 0.12 },
     },
     series: chartSeries,
-  }), [categoryAxisValues, chartSeries, selectedMeasureModel?.xMode])
+  }), [categoryAxisValues, chartSeries, chartType, selectedMeasureModel?.xMode])
+
+  useEffect(() => {
+    if (viewMode === 'chart' && !hasChartData && rawTableData) {
+      setViewMode('table')
+    }
+  }, [hasChartData, rawTableData, viewMode])
 
   useEffect(() => {
     if (!chartContainerRef.current || !hasChartData) {
@@ -855,9 +1038,9 @@ export function ContentStatisticsSection({
               {statistics.title}
             </Paragraph>
           )}
-          {statistics.description && (
+          {visibleDescription && (
             <Paragraph data-size="sm" style={{ marginTop: 4, marginBottom: 0, color: '#64748b' }}>
-              {statistics.description}
+              {visibleDescription}
             </Paragraph>
           )}
         </div>
@@ -867,18 +1050,28 @@ export function ContentStatisticsSection({
             <button
               key={mode}
               type="button"
-              onClick={() => setViewMode(mode)}
+              onClick={() => {
+                if (mode === 'chart' && !hasChartData) return
+                setViewMode(mode)
+              }}
+              disabled={mode === 'chart' && !hasChartData}
               style={{
                 padding: '5px 14px',
                 borderRadius: 6,
                 border: 'none',
-                cursor: 'pointer',
+                cursor: mode === 'chart' && !hasChartData ? 'not-allowed' : 'pointer',
                 fontSize: '0.8125rem',
                 fontWeight: 500,
                 transition: 'all 0.15s',
                 background: viewMode === mode ? 'white' : 'transparent',
-                color: viewMode === mode ? '#025169' : '#64748b',
+                color:
+                  mode === 'chart' && !hasChartData
+                    ? '#94a3b8'
+                    : viewMode === mode
+                      ? '#025169'
+                      : '#64748b',
                 boxShadow: viewMode === mode ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+                opacity: mode === 'chart' && !hasChartData ? 0.7 : 1,
               }}
             >
               {label}
@@ -898,23 +1091,16 @@ export function ContentStatisticsSection({
             defaultOptionLabel="Velg måling"
           />
           <FilterSelect
-            label="Periode"
-            value={selectedPeriodType}
-            options={periodTypeOptions}
-            onChange={(value) => startTransition(() => setSelectedPeriodType(value))}
-          />
-          <FilterSelect
             label="Overordnet geografi"
             value={selectedParentLocation}
             options={parentLocationOptions}
             onChange={(value) => startTransition(() => setSelectedParentLocation(value))}
           />
-          {(selectedParentLocation !== ALL_FILTER_VALUE || selectedPeriodType !== ALL_FILTER_VALUE) && (
+          {selectedParentLocation !== ALL_FILTER_VALUE && (
             <button
               type="button"
               onClick={() => startTransition(() => {
                 setSelectedParentLocation(ALL_FILTER_VALUE)
-                setSelectedPeriodType(ALL_FILTER_VALUE)
               })}
               style={{
                 padding: '7px 14px',
@@ -1000,13 +1186,36 @@ export function ContentStatisticsSection({
         </div>
 
         {/* Table — only mounted when table view */}
+        {!hasChartData && rawTableData && (
+          <Paragraph data-size="sm" style={{ margin: 0, color: '#64748b' }}>
+            Diagram er ikke tilgjengelig for dette utsnittet, så dataene vises som tabell.
+          </Paragraph>
+        )}
         {viewMode === 'table' && (
-          tableData ? (
-            <DataTable
-              seriesList={tableData.seriesList}
-              allRows={tableData.allRows}
-              seriesColors={CHART_COLORS}
-            />
+          rawTableData ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {tableData && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <Paragraph data-size="sm" style={{ margin: 0, color: '#475569', fontWeight: 600 }}>
+                    Sammendrag
+                  </Paragraph>
+                  <DataTable
+                    seriesList={tableData.seriesList}
+                    allRows={tableData.allRows}
+                    seriesColors={CHART_COLORS}
+                  />
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Paragraph data-size="sm" style={{ margin: 0, color: '#475569', fontWeight: 600 }}>
+                  Rådata
+                </Paragraph>
+                <RawDataTable
+                  rows={rawTableData.rows}
+                  dimensionKeys={rawTableData.dimensionKeys}
+                />
+              </div>
+            </div>
           ) : (
             <div style={{ borderRadius: 12, border: '1px solid #e2e8f0', background: '#f8fafc', padding: 24 }}>
               <Paragraph style={{ margin: 0, color: '#475569' }}>
