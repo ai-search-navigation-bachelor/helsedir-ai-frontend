@@ -94,7 +94,7 @@ export async function httpRequest<T>(
   url: string | URL,
   options: HttpRequestOptions = {},
 ): Promise<T> {
-  const { signal, headers = {}, method = 'GET', suppressErrorStatuses = [], cache } = options
+  const { signal, headers = {}, method = 'GET', suppressErrorStatuses = [], cache, body } = options
 
   // Debug logging
   if (import.meta.env.DEV) {
@@ -110,6 +110,7 @@ export async function httpRequest<T>(
       },
       signal,
       ...(cache !== undefined && { cache }),
+      ...(body !== undefined && method !== 'GET' && { body }),
     })
 
     if (!response.ok) {

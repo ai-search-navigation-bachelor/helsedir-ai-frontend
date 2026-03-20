@@ -31,8 +31,10 @@ function computeRetRanks(result: SearchResult, allResults: SearchResult[]) {
   })
   const bm25Sorted = [...scores].sort((a, b) => b.bm25 - a.bm25)
   const semSorted = [...scores].sort((a, b) => b.semantic - a.semantic)
-  const bm25Rank = bm25Sorted.findIndex((s) => s.id === result.id) + 1
-  const semRank = semSorted.findIndex((s) => s.id === result.id) + 1
+  const bm25Idx = bm25Sorted.findIndex((s) => s.id === result.id)
+  const semIdx = semSorted.findIndex((s) => s.id === result.id)
+  const bm25Rank = bm25Idx === -1 ? null : bm25Idx + 1
+  const semRank = semIdx === -1 ? null : semIdx + 1
   return { bm25Rank, semRank }
 }
 
@@ -243,8 +245,8 @@ interface SpreadsheetProps {
   roleBoost?: number | null
   finalScore: number
   config?: WeightConfig
-  bm25Rank?: number
-  semRank?: number
+  bm25Rank?: number | null
+  semRank?: number | null
 }
 
 function CalcRow({ step, label, color, formula, result, sub, separator }: {

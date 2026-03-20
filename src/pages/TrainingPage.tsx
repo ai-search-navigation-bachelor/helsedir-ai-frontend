@@ -30,12 +30,12 @@ export function TrainingContent() {
   const [modelLoading, setModelLoading] = useState(false)
 
   const generateAbortRef = useRef<AbortController | null>(null)
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const trainAbortRef = useRef<AbortController | null>(null)
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
-      clearInterval(pollRef.current)
+      clearTimeout(pollRef.current)
       pollRef.current = null
     }
   }, [])
@@ -85,8 +85,8 @@ export function TrainingContent() {
         controller.signal,
       )
 
-      // Poll for progress
-      pollRef.current = setInterval(async () => {
+      // Poll for progress using setTimeout chain to avoid overlapping requests
+      async function poll() {
         try {
           const status = await getGenerateStatus(job_id, controller.signal)
           setGenerateProgress(status)
@@ -106,6 +106,8 @@ export function TrainingContent() {
             stopPolling()
             setGenerateError(status.error || 'Generering feilet')
             setGenerateLoading(false)
+          } else {
+            pollRef.current = setTimeout(() => void poll(), 1500)
           }
         } catch (err: unknown) {
           if ((err as { name?: string }).name === 'AbortError') return
@@ -113,7 +115,8 @@ export function TrainingContent() {
           setGenerateError('Mistet kontakt med backend under generering')
           setGenerateLoading(false)
         }
-      }, 1500)
+      }
+      pollRef.current = setTimeout(() => void poll(), 1500)
     } catch (err: unknown) {
       if ((err as { name?: string }).name === 'AbortError') return
       setGenerateError('Feil under oppstart av generering')
@@ -137,7 +140,7 @@ export function TrainingContent() {
       // Automatically fetch model info after training
       setModelLoading(true)
       try {
-        const modelData = await getModelInfo()
+        const modelData = await getModelInfo(controller.signal)
         setModel(modelData)
       } catch {
         // non-fatal

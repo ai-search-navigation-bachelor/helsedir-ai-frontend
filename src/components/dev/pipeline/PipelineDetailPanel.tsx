@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { WeightConfig, PipelineStageId } from '../../../types/dev'
 import { SliderRow } from '../SliderRow'
 import { useDevModelsQuery, useSelectDevModel } from '../../../hooks/queries/useDevModelsQuery'
@@ -375,10 +375,20 @@ function LtrPanel({ config, onChange }: { config: WeightConfig; onChange: (c: We
     })
   }
 
+  useEffect(() => {
+    if (activeModel && !featureImportances) {
+      selectMutation.mutate(activeModel.preset_id, {
+        onSuccess: (res) => setFeatureImportances(res.feature_importances),
+      })
+    }
+  }, [activeModel]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const sortedImportances = featureImportances
     ? Object.entries(featureImportances).sort(([, a], [, b]) => b - a)
     : null
-  const maxImportance = sortedImportances ? Math.max(...sortedImportances.map(([, v]) => v)) : 1
+  const maxImportance = sortedImportances && sortedImportances.length > 0
+    ? Math.max(...sortedImportances.map(([, v]) => v))
+    : 1
 
   return (
     <div>

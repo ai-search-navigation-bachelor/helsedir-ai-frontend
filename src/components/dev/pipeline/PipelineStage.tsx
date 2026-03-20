@@ -25,6 +25,7 @@ export function PipelineStage({
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
       style={{
         display: 'flex',
@@ -45,7 +46,7 @@ export function PipelineStage({
           : isActive
             ? `inset 4px 0 0 ${accentHex}, 0 2px 8px ${accentHex}22`
             : `inset 4px 0 0 ${accentHex}, 0 1px 3px rgba(0,0,0,0.06)`,
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         textAlign: 'left',
         transition: 'all 0.2s ease',
         outline: 'none',

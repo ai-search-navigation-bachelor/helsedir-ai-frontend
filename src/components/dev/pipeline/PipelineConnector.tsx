@@ -63,7 +63,7 @@ export function PipelineConnector({ type, dimmed }: PipelineConnectorProps) {
             left: '4px',
             width: '50%',
             height: '2px',
-            backgroundColor: LINE_COLOR,
+            backgroundColor: color,
             transform: 'translateY(-1px)',
           }}
         />
@@ -75,7 +75,7 @@ export function PipelineConnector({ type, dimmed }: PipelineConnectorProps) {
             top: '20%',
             bottom: '20%',
             width: '2px',
-            backgroundColor: LINE_COLOR,
+            backgroundColor: color,
             transform: 'translateX(-1px)',
           }}
         />
@@ -87,11 +87,11 @@ export function PipelineConnector({ type, dimmed }: PipelineConnectorProps) {
             left: 'calc(50% + 4px)',
             right: '4px',
             height: '2px',
-            backgroundColor: LINE_COLOR,
+            backgroundColor: color,
             transform: 'translateY(-1px)',
           }}
         >
-          <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...arrowStyle(LINE_COLOR) }} />
+          <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...arrowStyle(color) }} />
         </div>
         {/* Bottom horizontal arrow */}
         <div
@@ -101,11 +101,11 @@ export function PipelineConnector({ type, dimmed }: PipelineConnectorProps) {
             left: 'calc(50% + 4px)',
             right: '4px',
             height: '2px',
-            backgroundColor: LINE_COLOR,
+            backgroundColor: color,
             transform: 'translateY(1px)',
           }}
         >
-          <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...arrowStyle(LINE_COLOR) }} />
+          <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...arrowStyle(color) }} />
         </div>
       </div>
     )
@@ -130,7 +130,7 @@ export function PipelineConnector({ type, dimmed }: PipelineConnectorProps) {
           left: '4px',
           width: '50%',
           height: '2px',
-          backgroundColor: LINE_COLOR,
+          backgroundColor: color,
           transform: 'translateY(-1px)',
         }}
       />
@@ -142,7 +142,7 @@ export function PipelineConnector({ type, dimmed }: PipelineConnectorProps) {
           left: '4px',
           width: '50%',
           height: '2px',
-          backgroundColor: LINE_COLOR,
+          backgroundColor: color,
           transform: 'translateY(1px)',
         }}
       />
@@ -154,7 +154,7 @@ export function PipelineConnector({ type, dimmed }: PipelineConnectorProps) {
           top: '20%',
           bottom: '20%',
           width: '2px',
-          backgroundColor: LINE_COLOR,
+          backgroundColor: color,
           transform: 'translateX(-1px)',
         }}
       />
@@ -166,11 +166,11 @@ export function PipelineConnector({ type, dimmed }: PipelineConnectorProps) {
           left: 'calc(50% + 4px)',
           right: '4px',
           height: '2px',
-          backgroundColor: LINE_COLOR,
+          backgroundColor: color,
           transform: 'translateY(-1px)',
         }}
       >
-        <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...arrowStyle(LINE_COLOR) }} />
+        <div style={{ position: 'absolute', right: '-1px', top: '-4px', ...arrowStyle(color) }} />
       </div>
     </div>
   )
