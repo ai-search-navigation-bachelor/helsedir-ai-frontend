@@ -18,6 +18,11 @@ export const EHELSESTANDARD_CONTENT_TYPES = new Set([
   'ehelsestandard',
 ])
 
+export const STATISTICS_CONTENT_TYPES = new Set([
+  'statistikk',
+  'statistikkelement',
+])
+
 const CANONICAL_CONTENT_TYPE_MAP: Record<string, string> = {
   'e-helsestandard': 'ehelsestandard',
   'faglig-rad': 'rad',
@@ -61,6 +66,10 @@ export function isTemasideContentType(contentType: string) {
 
 export function isEhelsestandardContentType(contentType: string) {
   return EHELSESTANDARD_CONTENT_TYPES.has(normalizeContentType(contentType))
+}
+
+export function isStatisticsContentType(contentType: string) {
+  return STATISTICS_CONTENT_TYPES.has(normalizeContentType(contentType))
 }
 
 export function getDetailContentTypeLabel(contentType: string) {
