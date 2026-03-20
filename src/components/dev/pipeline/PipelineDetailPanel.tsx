@@ -388,7 +388,7 @@ function LtrPanel({ config, onChange }: { config: WeightConfig; onChange: (c: We
         </p>
         <p style={{ fontSize: '0.8rem', color: '#475569', margin: '0 0 8px', lineHeight: 1.6 }}>
           Etter at RRF har sl&aring;tt sammen resultatene, bruker LTR en maskinl&aelig;ringsmodell (XGBoost LambdaMART)
-          til &aring; <strong>omrangere</strong> topp-kandidatene. Modellen ser p&aring; 7 ulike features for hvert dokument
+          til &aring; <strong>omrangere</strong> topp-kandidatene. Modellen ser p&aring; 8 ulike features for hvert dokument
           og l&aelig;rer hvilke kombinasjoner som gir mest relevante resultater.
         </p>
 
@@ -406,13 +406,14 @@ function LtrPanel({ config, onChange }: { config: WeightConfig; onChange: (c: We
             Features modellen bruker:
           </span>
           {[
-            ['BM25 score', 'Ordbasert relevans'],
-            ['Semantisk score', 'Betydningsbasert relevans'],
-            ['Tittel-match', 'Hvor godt s\u00F8ket treffer tittelen'],
-            ['Dokumentlengde', 'Lengden p\u00E5 innholdet'],
-            ['Innholdstype', 'Type dokument (temaside, retningslinje, osv.)'],
-            ['Rolle-match', 'Om dokumentet passer brukerens rolle'],
-            ['Publiseringsdato', 'Hvor nytt dokumentet er'],
+            ['Klikk-rate (CTR)', 'Historisk klikkfrekvens p\u00E5 dokumentet'],
+            ['Innholdsferskhet', 'Hvor nylig dokumentet er oppdatert'],
+            ['Tittel-overlap', 'Hvor godt s\u00F8ket treffer tittelen'],
+            ['Lengde p\u00E5 s\u00F8k', 'Antall ord/tegn i s\u00F8ket'],
+            ['Semantisk likhet', 'Betydningsbasert relevans (embedding-score)'],
+            ['BM25 ordmatch', 'Ordbasert relevans fra BM25-s\u00F8ket'],
+            ['Rollematch', 'Om dokumentet passer brukerens rolle'],
+            ['Bias', 'Modellens grunnlinje-offset'],
           ].map(([feat, desc]) => (
             <div key={feat} style={{ fontSize: '0.72rem', color: '#475569', lineHeight: 1.4 }}>
               <strong style={{ color: '#6d28d9' }}>{feat}:</strong> {desc}

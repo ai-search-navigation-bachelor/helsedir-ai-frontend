@@ -187,7 +187,7 @@ export function DevResultItem({
       {/* Expanded: Spreadsheet-style calculation breakdown */}
       {expanded && (
         <div
-          style={{ marginTop: '8px', marginLeft: '34px' }}
+          style={{ marginTop: '8px', marginLeft: '14px' }}
           onClick={(e) => e.stopPropagation()}
         >
           <ScoreSpreadsheet
