@@ -31,7 +31,8 @@ export function PipelineStage({
         flexDirection: 'column',
         gap: '2px',
         padding: '10px 14px',
-        minWidth: '130px',
+        width: '150px',
+        flexShrink: 0,
         borderRadius: '8px',
         border: disabled
           ? '2px dashed #cbd5e1'
