@@ -9,7 +9,11 @@ export interface WeightConfig {
   role: string | null
   role_boost: number
   role_penalty: number
+  rerank?: boolean
+  explain?: boolean
 }
+
+export type PipelineStageId = 'hybrid' | 'rrf' | 'ltr' | 'boosts'
 
 export interface SlotState {
   config: WeightConfig

@@ -1,0 +1,1 @@
+export { SearchPipeline } from './SearchPipeline'
