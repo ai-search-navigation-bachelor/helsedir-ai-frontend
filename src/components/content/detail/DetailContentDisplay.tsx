@@ -442,8 +442,13 @@ export function DetailContentDisplay({
     visibleDocumentLinks.length > 0 ||
     visibleRelatedLinks.length > 0 ||
     shouldShowPublicationFallback
+  const statisticsStatus = statistics?.statistics_status
   const shouldRenderStatisticsSection =
-    Boolean(statistics?.has_statistics) || statistics?.statistics_status === 'unavailable'
+    Boolean(statistics?.has_statistics) ||
+    statisticsStatus === 'unavailable' ||
+    statisticsStatus === 'empty' ||
+    statisticsStatus === 'not_configured' ||
+    Boolean(statistics?.message)
   const showStatisticsSection =
     shouldQueryStatistics &&
     (

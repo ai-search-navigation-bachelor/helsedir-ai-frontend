@@ -325,12 +325,16 @@ function FilterSelect({
   options,
   onChange,
   defaultOptionLabel = 'Alle',
+  defaultOptionValue = ALL_FILTER_VALUE,
+  defaultOptionDisabled = false,
 }: {
   label: string
   value: string
   options: string[]
   onChange: (value: string) => void
   defaultOptionLabel?: string
+  defaultOptionValue?: string
+  defaultOptionDisabled?: boolean
 }) {
   if (options.length === 0) return null
   return (
@@ -352,7 +356,7 @@ function FilterSelect({
           cursor: 'pointer',
         }}
       >
-        <option value={ALL_FILTER_VALUE}>{defaultOptionLabel}</option>
+        <option value={defaultOptionValue} disabled={defaultOptionDisabled}>{defaultOptionLabel}</option>
         {options.map((option) => (
           <option key={option} value={option}>{option}</option>
         ))}
@@ -1021,7 +1025,14 @@ export function ContentStatisticsSection({
   }
 
   if (!statistics.has_statistics) {
-    return null
+    return (
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>Statistikk</Heading>
+        <Alert data-color="info">
+          <Paragraph style={{ margin: 0 }}>{getFallbackMessage(statistics)}</Paragraph>
+        </Alert>
+      </section>
+    )
   }
 
   // ─── Main render ────────────────────────────────────────────────────────────
@@ -1090,6 +1101,8 @@ export function ContentStatisticsSection({
             options={measureOptions}
             onChange={(value) => startTransition(() => setSelectedMeasure(value))}
             defaultOptionLabel="Velg måling"
+            defaultOptionValue=""
+            defaultOptionDisabled
           />
           <FilterSelect
             label="Overordnet geografi"
@@ -1114,7 +1127,7 @@ export function ContentStatisticsSection({
                 alignSelf: 'flex-end',
               }}
             >
-              Nullstill filtre
+              Nullstill overordnet geografi
             </button>
           )}
         </div>
@@ -1259,22 +1272,39 @@ export function ContentStatisticsSection({
                 <span style={{ fontWeight: 600, color: '#475569' }}>Kilde:</span> {statistics.nki_indicator_id}
               </span>
             )}
-            {(statistics.attachments ?? []).map((attachment) => (
-              <a
-                key={`${attachment.title ?? 'vedlegg'}-${attachment.url ?? ''}`}
-                href={attachment.url ?? undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: '#025169', textDecoration: 'none', fontWeight: 500 }}
-                onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline' }}
-                onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none' }}
-              >
-                {attachment.title ?? 'Vedlegg'} ↗
-              </a>
-            ))}
+            {(statistics.attachments ?? []).map((attachment, index) => {
+              const title = attachment.title ?? 'Vedlegg'
+              const url = attachment.url?.trim()
+
+              if (!url) {
+                return (
+                  <span
+                    key={`attachment-${index}-${title}`}
+                    style={{ color: '#475569', fontWeight: 500 }}
+                  >
+                    {title}
+                  </span>
+                )
+              }
+
+              return (
+                <a
+                  key={`attachment-${index}-${title}`}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: '#025169', textDecoration: 'none', fontWeight: 500 }}
+                  onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none' }}
+                >
+                  {title} (ekstern lenke)
+                </a>
+              )
+            })}
           </div>
         )}
       </div>
     </section>
   )
 }
+
