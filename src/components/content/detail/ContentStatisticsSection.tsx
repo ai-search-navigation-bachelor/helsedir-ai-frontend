@@ -1025,14 +1025,7 @@ export function ContentStatisticsSection({
   }
 
   if (!statistics.has_statistics) {
-    return (
-      <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>Statistikk</Heading>
-        <Alert data-color="info">
-          <Paragraph style={{ margin: 0 }}>{getFallbackMessage(statistics)}</Paragraph>
-        </Alert>
-      </section>
-    )
+    return null
   }
 
   // ─── Main render ────────────────────────────────────────────────────────────

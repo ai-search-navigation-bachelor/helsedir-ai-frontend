@@ -445,10 +445,7 @@ export function DetailContentDisplay({
   const statisticsStatus = statistics?.statistics_status
   const shouldRenderStatisticsSection =
     Boolean(statistics?.has_statistics) ||
-    statisticsStatus === 'unavailable' ||
-    statisticsStatus === 'empty' ||
-    statisticsStatus === 'not_configured' ||
-    Boolean(statistics?.message)
+    statisticsStatus === 'unavailable'
   const showStatisticsSection =
     shouldQueryStatistics &&
     (
