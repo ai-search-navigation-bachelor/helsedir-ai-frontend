@@ -54,15 +54,11 @@ export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
     config: { ...DEFAULT_CONFIG, rerank: false },
   },
   {
-    label: 'Balansert',
-    config: { ...DEFAULT_CONFIG, bm25_weight: 0.5, semantic_weight: 0.5 },
+    label: 'Kun BM25',
+    config: { ...DEFAULT_CONFIG, bm25_weight: 1.0, semantic_weight: 0.0, rerank: false },
   },
   {
     label: 'Kun semantisk',
     config: { ...DEFAULT_CONFIG, bm25_weight: 0.0, semantic_weight: 1.0 },
-  },
-  {
-    label: 'Kun BM25',
-    config: { ...DEFAULT_CONFIG, bm25_weight: 1.0, semantic_weight: 0.0 },
   },
 ]
