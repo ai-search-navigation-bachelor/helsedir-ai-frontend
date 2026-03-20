@@ -19,6 +19,7 @@ import { asDocumentLink, getDocumentLinks, getRelatedLinks } from './documentUti
 import { hasVisibleContent } from '../shared/contentTextUtils'
 import { getContentIdFromHref, getUniqueChildLinks } from '../shared/linkUtils'
 import { RichContentHtml } from '../shared/RichContentHtml'
+import { normalizeLinkForComparison, toAbsoluteHelsedirUrl } from '../../../lib/helsedirUrl'
 import {
   buildContentSections,
   type ContentSection,
@@ -415,9 +416,9 @@ export function DetailContentDisplay({
     visibleRelatedLinks.length > 0 ||
     referenceItems.length > 0
   const publicationUrl = useMemo(() => {
-    const url = content.url?.trim() || enrichedContent?.url?.trim()
+    const url = toAbsoluteHelsedirUrl(content.url) || toAbsoluteHelsedirUrl(enrichedContent?.url)
     if (!url) return null
-    return documentLinks.some((document) => document.href === url) ? null : url
+    return documentLinks.some((document) => normalizeLinkForComparison(document.href) === url) ? null : url
   }, [content.url, documentLinks, enrichedContent?.url])
   const shouldShowPublicationFallback =
     Boolean(publicationUrl) &&

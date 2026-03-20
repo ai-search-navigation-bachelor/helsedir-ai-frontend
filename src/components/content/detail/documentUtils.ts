@@ -8,6 +8,7 @@ import type {
 } from '../../../types'
 import { getApiContentInternalPath } from '../../../lib/contentLinking'
 import { buildContentUrl } from '../../../lib/contentUrl'
+import { isInternalAppPath, toAbsoluteHelsedirUrl } from '../../../lib/helsedirUrl'
 
 interface DocumentLink {
   href: string
@@ -82,8 +83,13 @@ function getSafeRelatedHref(rawHref: string) {
   const href = rawHref.trim()
   if (!href || href.startsWith('//')) return null
 
-  if (href.startsWith('/')) {
+  if (isInternalAppPath(href)) {
     return href
+  }
+
+  const helsedirUrl = toAbsoluteHelsedirUrl(href)
+  if (helsedirUrl) {
+    return helsedirUrl
   }
 
   try {
