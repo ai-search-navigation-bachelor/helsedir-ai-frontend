@@ -29,9 +29,15 @@ export function PipelineDetailPanel({ stage, config, onChange, accentHex, roles 
     >
       {stage === 'hybrid' && (
         <div>
-          <p style={{ fontSize: '0.82rem', color: '#475569', margin: '0 0 12px', lineHeight: 1.6 }}>
-            Hybrid s&oslash;k kombinerer BM25 (ordbasert) og semantisk s&oslash;k (E5-embeddings). Dra slideren for &aring; fordele vekten mellom de to metodene. Summen er alltid 1.0.
-          </p>
+          <div style={{ marginBottom: '14px' }}>
+            <p style={{ fontSize: '0.85rem', color: '#1e293b', margin: '0 0 6px', fontWeight: 600 }}>
+              Hva er Hybrid Search?
+            </p>
+            <p style={{ fontSize: '0.8rem', color: '#475569', margin: '0 0 12px', lineHeight: 1.6 }}>
+              Hybrid Search kombinerer to ulike s&oslash;kemetoder for &aring; finne relevante dokumenter.
+              Slideren styrer balansen mellom de to metodene &mdash; summen er alltid 1.0.
+            </p>
+          </div>
 
           {/* Linked BM25/Semantic slider */}
           <div style={{ marginBottom: '14px' }}>
@@ -99,16 +105,24 @@ export function PipelineDetailPanel({ stage, config, onChange, accentHex, roles 
 
           {/* Info boxes */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '8px' }}>
-            <div style={{ padding: '10px 12px', borderRadius: '8px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>BM25 Retrieval</span>
-              <p style={{ fontSize: '0.75rem', color: '#475569', margin: '4px 0 0', lineHeight: 1.5 }}>
-                Okapi BM25 over tittel + body. Sjeldne ord f&aring;r h&oslash;yere vekt (IDF). Tittel-tokens vektes opp.
+            <div style={{ padding: '12px 14px', borderRadius: '8px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>BM25 (ordbasert s&oslash;k)</span>
+              <p style={{ fontSize: '0.78rem', color: '#475569', margin: '6px 0 0', lineHeight: 1.6 }}>
+                Finner dokumenter basert p&aring; <strong>eksakte ord</strong> i s&oslash;ket ditt.
+                Sjeldne ord gir h&oslash;yere treff (IDF-prinsippet), og ord i tittelen vektes ekstra.
+              </p>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '6px 0 0', lineHeight: 1.4 }}>
+                Bra n&aring;r: Du s&oslash;ker etter spesifikke fagtermer, medisinnavn, eller lovhenvisninger.
               </p>
             </div>
-            <div style={{ padding: '10px 12px', borderRadius: '8px', backgroundColor: '#ecfdf5', border: '1px solid #bbf7d0' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Semantic Search</span>
-              <p style={{ fontSize: '0.75rem', color: '#475569', margin: '4px 0 0', lineHeight: 1.5 }}>
-                Dense retrieval med finjustert E5-modell. Cosine similarity mellom query- og dokument-embeddings.
+            <div style={{ padding: '12px 14px', borderRadius: '8px', backgroundColor: '#ecfdf5', border: '1px solid #bbf7d0' }}>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Semantisk s&oslash;k (E5-modell)</span>
+              <p style={{ fontSize: '0.78rem', color: '#475569', margin: '6px 0 0', lineHeight: 1.6 }}>
+                Forst&aring;r <strong>betydningen</strong> av s&oslash;ket ditt, ikke bare ordene.
+                Bruker en finjustert E5 embedding-modell for &aring; m&aring;le likhet mellom s&oslash;k og dokumenter.
+              </p>
+              <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '6px 0 0', lineHeight: 1.4 }}>
+                Bra n&aring;r: Du beskriver et problem eller symptom med egne ord, uten &aring; kjenne fagtermer.
               </p>
             </div>
           </div>
@@ -117,29 +131,68 @@ export function PipelineDetailPanel({ stage, config, onChange, accentHex, roles 
 
       {stage === 'rrf' && (
         <div>
-          <p style={{ fontSize: '0.82rem', color: '#475569', margin: '0 0 12px', lineHeight: 1.6 }}>
-            {'Reciprocal Rank Fusion. Fusjonerer de to rankede listene: score(doc) = \u03A3 w\u1D62 / (k + rank\u1D62(doc))'}
-          </p>
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '12px', fontSize: '0.8rem' }}>
+          <div style={{ marginBottom: '14px' }}>
+            <p style={{ fontSize: '0.85rem', color: '#1e293b', margin: '0 0 6px', fontWeight: 600 }}>
+              Hva er RRF (Reciprocal Rank Fusion)?
+            </p>
+            <p style={{ fontSize: '0.8rem', color: '#475569', margin: '0 0 10px', lineHeight: 1.6 }}>
+              RRF sl&aring;r sammen resultatlistene fra BM25 og semantisk s&oslash;k til &eacute;n samlet liste.
+              Dokumenter som rangeres h&oslash;yt i <em>begge</em> listene f&aring;r best samlet score.
+            </p>
+          </div>
+
+          {/* Formula box */}
+          <div style={{
+            padding: '10px 14px',
+            borderRadius: '8px',
+            backgroundColor: '#f0f9ff',
+            border: '1px solid #bae6fd',
+            marginBottom: '14px',
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            fontSize: '0.78rem',
+            color: '#0c4a6e',
+            lineHeight: 1.6,
+          }}>
+            {'score(doc) = \u03A3 w\u1D62 / (k + rank\u1D62(doc))'}
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '14px', fontSize: '0.8rem' }}>
             <span style={{ color: '#0284c7', fontWeight: 600 }}>
-              BM25-vekt: {config.bm25_weight.toFixed(2)}
+              BM25-vekt (w₁): {config.bm25_weight.toFixed(2)}
             </span>
             <span style={{ color: '#059669', fontWeight: 600 }}>
-              Semantisk vekt: {config.semantic_weight.toFixed(2)}
+              Semantisk vekt (w₂): {config.semantic_weight.toFixed(2)}
             </span>
           </div>
-          <SliderRow
-            id="pipeline-rrf-k"
-            label={`RRF-k (smoothing): ${config.rrf_k}`}
-            value={config.rrf_k}
-            min={1}
-            max={200}
-            step={1}
-            onChange={(v) => onChange({ ...config, rrf_k: v })}
-          />
-          <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '4px 0 0' }}>
-            {'H\u00F8yere k = jevnere fordeling, lavere k = mer vekt til topp-rangeringer'}
-          </p>
+
+          <div style={{
+            padding: '12px 14px',
+            borderRadius: '8px',
+            backgroundColor: '#fff',
+            border: '1px solid #e2e8f0',
+            marginBottom: '6px',
+          }}>
+            <p style={{ fontSize: '0.78rem', color: '#1e293b', margin: '0 0 8px', fontWeight: 600 }}>
+              RRF-k (smoothing-parameter)
+            </p>
+            <SliderRow
+              id="pipeline-rrf-k"
+              label={`k = ${config.rrf_k}`}
+              value={config.rrf_k}
+              min={1}
+              max={200}
+              step={1}
+              onChange={(v) => onChange({ ...config, rrf_k: v })}
+            />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
+              <div style={{ padding: '6px 10px', borderRadius: '6px', backgroundColor: '#f8fafc', fontSize: '0.74rem', color: '#475569', lineHeight: 1.5 }}>
+                <strong>Lav k (f.eks. 1&ndash;20):</strong> Dokumenter som rangeres p&aring; topp f&aring;r mye h&oslash;yere score enn resten. St&oslash;rre sprik.
+              </div>
+              <div style={{ padding: '6px 10px', borderRadius: '6px', backgroundColor: '#f8fafc', fontSize: '0.74rem', color: '#475569', lineHeight: 1.5 }}>
+                <strong>H&oslash;y k (f.eks. 60&ndash;200):</strong> Scorene blir jevnere fordelt &mdash; ogs&aring; dokumenter lenger ned f&aring;r en sjanse.
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -149,34 +202,59 @@ export function PipelineDetailPanel({ stage, config, onChange, accentHex, roles 
 
       {stage === 'boosts' && (
         <div>
-          <p style={{ fontSize: '0.82rem', color: '#475569', margin: '0 0 16px', lineHeight: 1.6 }}>
-            Multiplikative boosts p&aring; combined_score etter reranking. Verdier over 1.0 prioriterer, under 1.0 straffer.
-          </p>
+          <div style={{ marginBottom: '14px' }}>
+            <p style={{ fontSize: '0.85rem', color: '#1e293b', margin: '0 0 6px', fontWeight: 600 }}>
+              Hva er Post-processing?
+            </p>
+            <p style={{ fontSize: '0.8rem', color: '#475569', margin: '0 0 10px', lineHeight: 1.6 }}>
+              Etter at dokumentene er rangert, kan vi justere scorene med <strong>multiplikative boosts</strong>.
+              En verdi p&aring; 1.0 betyr ingen endring. Over 1.0 l&oslash;fter dokumentet opp, under 1.0 dytter det ned.
+            </p>
+          </div>
 
           {/* Innholdstype-boosts */}
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{
+            padding: '14px 16px',
+            borderRadius: '8px',
+            backgroundColor: '#fff',
+            border: '1px solid #e2e8f0',
+            marginBottom: '14px',
+          }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Innholdstype-boost
             </span>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px', marginTop: '8px' }}>
-              <SliderRow
-                id="pipeline-temaside-boost"
-                label={`Temaside boost: ${config.temaside_boost.toFixed(2)}`}
-                value={config.temaside_boost}
-                min={0.5}
-                max={2}
-                step={0.05}
-                onChange={(v) => onChange({ ...config, temaside_boost: Math.round(v * 20) / 20 })}
-              />
-              <SliderRow
-                id="pipeline-retningslinje-boost"
-                label={`Retningslinje boost: ${config.retningslinje_boost.toFixed(2)}`}
-                value={config.retningslinje_boost}
-                min={0.5}
-                max={2}
-                step={0.05}
-                onChange={(v) => onChange({ ...config, retningslinje_boost: Math.round(v * 20) / 20 })}
-              />
+            <p style={{ fontSize: '0.74rem', color: '#64748b', margin: '4px 0 10px', lineHeight: 1.5 }}>
+              Prioriter bestemte dokumenttyper. F.eks. boost p&aring; 1.15 betyr +15% score for den typen.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px' }}>
+              <div>
+                <SliderRow
+                  id="pipeline-temaside-boost"
+                  label={`Temaside: ${config.temaside_boost.toFixed(2)}x`}
+                  value={config.temaside_boost}
+                  min={0.5}
+                  max={2}
+                  step={0.05}
+                  onChange={(v) => onChange({ ...config, temaside_boost: Math.round(v * 20) / 20 })}
+                />
+                <p style={{ fontSize: '0.68rem', color: '#94a3b8', margin: '2px 0 0' }}>
+                  Oversiktssider som dekker et bredt tema
+                </p>
+              </div>
+              <div>
+                <SliderRow
+                  id="pipeline-retningslinje-boost"
+                  label={`Retningslinje: ${config.retningslinje_boost.toFixed(2)}x`}
+                  value={config.retningslinje_boost}
+                  min={0.5}
+                  max={2}
+                  step={0.05}
+                  onChange={(v) => onChange({ ...config, retningslinje_boost: Math.round(v * 20) / 20 })}
+                />
+                <p style={{ fontSize: '0.68rem', color: '#94a3b8', margin: '2px 0 0' }}>
+                  Faglige anbefalinger fra Helsedirektoratet
+                </p>
+              </div>
             </div>
           </div>
 
@@ -192,9 +270,13 @@ export function PipelineDetailPanel({ stage, config, onChange, accentHex, roles 
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Rollebasert boosting
             </span>
+            <p style={{ fontSize: '0.74rem', color: '#64748b', margin: '4px 0 10px', lineHeight: 1.5 }}>
+              Tilpass resultatene til en bestemt brukerrolle. Dokumenter tagget med den valgte rollen f&aring;r boost,
+              mens dokumenter uten match f&aring;r en straff.
+            </p>
 
             {/* Role selector */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
               <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569', minWidth: '40px' }}>Rolle</span>
               <select
                 aria-label="Velg rolle"
@@ -236,28 +318,35 @@ export function PipelineDetailPanel({ stage, config, onChange, accentHex, roles 
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px' }}>
-              <SliderRow
-                id="pipeline-role-boost"
-                label={`Rolle boost (match): ${config.role_boost.toFixed(2)}`}
-                value={config.role_boost}
-                min={0.5}
-                max={2}
-                step={0.05}
-                onChange={(v) => onChange({ ...config, role_boost: Math.round(v * 20) / 20 })}
-              />
-              <SliderRow
-                id="pipeline-role-penalty"
-                label={`Rolle straff (mismatch): ${config.role_penalty.toFixed(2)}`}
-                value={config.role_penalty}
-                min={0.5}
-                max={2}
-                step={0.05}
-                onChange={(v) => onChange({ ...config, role_penalty: Math.round(v * 20) / 20 })}
-              />
+              <div>
+                <SliderRow
+                  id="pipeline-role-boost"
+                  label={`Boost ved match: ${config.role_boost.toFixed(2)}x`}
+                  value={config.role_boost}
+                  min={0.5}
+                  max={2}
+                  step={0.05}
+                  onChange={(v) => onChange({ ...config, role_boost: Math.round(v * 20) / 20 })}
+                />
+                <p style={{ fontSize: '0.68rem', color: '#94a3b8', margin: '2px 0 0' }}>
+                  Multipliseres p&aring; dokumenter som matcher rollen
+                </p>
+              </div>
+              <div>
+                <SliderRow
+                  id="pipeline-role-penalty"
+                  label={`Straff ved mismatch: ${config.role_penalty.toFixed(2)}x`}
+                  value={config.role_penalty}
+                  min={0.5}
+                  max={2}
+                  step={0.05}
+                  onChange={(v) => onChange({ ...config, role_penalty: Math.round(v * 20) / 20 })}
+                />
+                <p style={{ fontSize: '0.68rem', color: '#94a3b8', margin: '2px 0 0' }}>
+                  Multipliseres p&aring; dokumenter som <em>ikke</em> matcher rollen
+                </p>
+              </div>
             </div>
-            <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '6px 0 0', lineHeight: 1.5 }}>
-              Rolle boost multipliseres p&aring; dokumenter som matcher valgt rolle. Rolle straff multipliseres p&aring; dokumenter som ikke matcher.
-            </p>
           </div>
         </div>
       )}
@@ -293,9 +382,44 @@ function LtrPanel({ config, onChange }: { config: WeightConfig; onChange: (c: We
 
   return (
     <div>
-      <p style={{ fontSize: '0.82rem', color: '#475569', margin: '0 0 12px', lineHeight: 1.6 }}>
-        XGBoost LambdaMART-modell som reranker topp-kandidater basert p&aring; 7 features. Velg en ferdigtrent modell nedenfor.
-      </p>
+      <div style={{ marginBottom: '14px' }}>
+        <p style={{ fontSize: '0.85rem', color: '#1e293b', margin: '0 0 6px', fontWeight: 600 }}>
+          Hva er LTR (Learning to Rank)?
+        </p>
+        <p style={{ fontSize: '0.8rem', color: '#475569', margin: '0 0 8px', lineHeight: 1.6 }}>
+          Etter at RRF har sl&aring;tt sammen resultatene, bruker LTR en maskinl&aelig;ringsmodell (XGBoost LambdaMART)
+          til &aring; <strong>omrangere</strong> topp-kandidatene. Modellen ser p&aring; 7 ulike features for hvert dokument
+          og l&aelig;rer hvilke kombinasjoner som gir mest relevante resultater.
+        </p>
+
+        {/* Feature explainer */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '6px',
+          padding: '10px 12px',
+          borderRadius: '8px',
+          backgroundColor: '#faf5ff',
+          border: '1px solid #e9d5ff',
+        }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#7c3aed', gridColumn: '1 / -1', marginBottom: '2px' }}>
+            Features modellen bruker:
+          </span>
+          {[
+            ['BM25 score', 'Ordbasert relevans'],
+            ['Semantisk score', 'Betydningsbasert relevans'],
+            ['Tittel-match', 'Hvor godt s\u00F8ket treffer tittelen'],
+            ['Dokumentlengde', 'Lengden p\u00E5 innholdet'],
+            ['Innholdstype', 'Type dokument (temaside, retningslinje, osv.)'],
+            ['Rolle-match', 'Om dokumentet passer brukerens rolle'],
+            ['Publiseringsdato', 'Hvor nytt dokumentet er'],
+          ].map(([feat, desc]) => (
+            <div key={feat} style={{ fontSize: '0.72rem', color: '#475569', lineHeight: 1.4 }}>
+              <strong style={{ color: '#6d28d9' }}>{feat}:</strong> {desc}
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Rerank toggle */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
