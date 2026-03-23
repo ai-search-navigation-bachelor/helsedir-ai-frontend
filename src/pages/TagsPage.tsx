@@ -121,7 +121,6 @@ export function TagsPage() {
     return filterDocuments(data.untagged_documents, searchQuery)
   }, [data.untagged_documents, searchQuery, isFiltering])
 
-  const rolesWithDocs = data.roles.filter((r) => r.document_count > 0)
   const totalFilteredDocs = isFiltering
     ? filteredRoles.reduce((sum, r) => sum + r.document_count, 0) + filteredUntagged.length
     : data.total_documents
@@ -162,7 +161,7 @@ export function TagsPage() {
         }}
       >
         <StatBadge label="Totalt dokumenter" value={data.total_documents} />
-        <StatBadge label="Roller med dokumenter" value={rolesWithDocs.length} />
+        <StatBadge label="Med rolle-tag" value={data.total_documents - data.untagged_count} />
         <StatBadge label="Uten rolle-tag" value={data.untagged_count} />
         {isFiltering && <StatBadge label="Treff" value={totalFilteredDocs} />}
       </div>
@@ -200,7 +199,7 @@ export function TagsPage() {
           <RoleRow
             key={role.slug}
             role={role}
-            expanded={isFiltering || expandedRoles.has(role.slug)}
+            expanded={expandedRoles.has(role.slug)}
             onToggle={() => toggleRole(role.slug)}
             isLast={i === filteredRoles.length - 1 && filteredUntagged.length === 0}
           />
@@ -262,7 +261,7 @@ export function TagsPage() {
               ▶
             </span>
           </div>
-          {(untaggedExpanded || isFiltering) && (
+          {untaggedExpanded && (
             <DocumentList documents={filteredUntagged} />
           )}
         </div>
