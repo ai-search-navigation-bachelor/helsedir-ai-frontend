@@ -40,3 +40,7 @@ export type { ThemePage, ThemePagesOptions, ThemePagesResponse } from './themePa
 // Roles
 export { fetchRoles } from './roles'
 export type { Role } from './roles'
+
+// Role tags
+export { fetchRoleTags } from './roleTags'
+export type { RoleTagDocument, RoleTagGroup, RoleTagsResponse } from './roleTags'
