@@ -70,6 +70,7 @@ export function Breadcrumb({ items, collapsible = false }: BreadcrumbProps) {
   const totalLabelLength = navigable.reduce((sum, item) => sum + item.label.trim().length, 0)
   const shouldCollapse =
     collapsible &&
+    navigable.length >= 3 &&
     !expanded &&
     (
       navigable.length >= 5 ||
