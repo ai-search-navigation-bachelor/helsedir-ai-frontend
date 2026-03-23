@@ -5,6 +5,7 @@ import { useRoleTagsQuery } from '../hooks/queries/useRoleTagsQuery'
 import { useInfoTypesQuery } from '../hooks/queries/useInfoTypesQuery'
 import { RoleIcon } from '../utils/roleIcons'
 import { buildContentUrl } from '../lib/contentUrl'
+import { DEFAULT_CONFIG } from '../constants/dev'
 import type { RoleTagGroup, RoleTagDocument } from '../api/roleTags'
 
 const mono = "'JetBrains Mono', 'Fira Code', monospace"
@@ -288,8 +289,11 @@ export function TagsPage() {
               </div>
             )}
           </div>
-          <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '6px' }}>
-            {data.total_documents} dokumenter totalt i databasen
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', marginTop: '10px', fontSize: '0.78rem' }}>
+            <span style={{ color: '#94a3b8' }}>{data.total_documents} dokumenter totalt i databasen</span>
+            <span style={{ color: '#94a3b8' }}>|</span>
+            <span style={{ color: '#059669' }}>Rolle-match: <strong style={{ fontFamily: mono }}>&times;{DEFAULT_CONFIG.role_boost}</strong></span>
+            <span style={{ color: '#dc2626' }}>Ikke match: <strong style={{ fontFamily: mono }}>&times;{DEFAULT_CONFIG.role_penalty}</strong></span>
           </div>
         </div>
       )}
