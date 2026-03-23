@@ -7,6 +7,9 @@ export * from './search'
 // Content types
 export * from './content'
 
+// Statistics types
+export * from './statistics'
+
 // Component types
 export type { BreadcrumbItem } from './components'
 
