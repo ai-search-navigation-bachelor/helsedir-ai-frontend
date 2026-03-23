@@ -69,7 +69,7 @@ export function ChildTemasideSection({ links }: { links: ContentLink[] }) {
             <li key={link.href} className="border-b border-gray-100">
               {isInactiveTemasideNode(link) ? (
                 <div
-                  title="Denne temasiden har forelopig ikke innhold"
+                  title="Denne temasiden har foreløpig ikke innhold"
                   aria-disabled="true"
                   className="flex items-center justify-between gap-3 py-3 text-gray-400 cursor-not-allowed"
                 >

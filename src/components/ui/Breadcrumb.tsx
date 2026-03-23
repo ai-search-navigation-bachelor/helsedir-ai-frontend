@@ -21,6 +21,8 @@ interface BreadcrumbProps {
 
 const linkColor = ds.color('logobla-1', 'base-default')
 const linkHoverColor = ds.color('logobla-2', 'base-default')
+const MEDIUM_BREADCRUMB_LABEL_LENGTH = 80
+const LONG_BREADCRUMB_LABEL_LENGTH = 110
 
 function ItemLabel({ item }: { item: BreadcrumbItem }) {
   return (
@@ -67,6 +69,7 @@ export function Breadcrumb({ items, collapsible = false }: BreadcrumbProps) {
   const navigable = items.filter((item) => item.href !== '#')
   if (navigable.length === 0) return null
 
+  // Collapse only when the trail is long enough that it is likely to wrap awkwardly in narrow layouts.
   const totalLabelLength = navigable.reduce((sum, item) => sum + item.label.trim().length, 0)
   const shouldCollapse =
     collapsible &&
@@ -74,8 +77,8 @@ export function Breadcrumb({ items, collapsible = false }: BreadcrumbProps) {
     !expanded &&
     (
       navigable.length >= 5 ||
-      (navigable.length >= 4 && totalLabelLength > 80) ||
-      totalLabelLength > 110
+      (navigable.length >= 4 && totalLabelLength > MEDIUM_BREADCRUMB_LABEL_LENGTH) ||
+      totalLabelLength > LONG_BREADCRUMB_LABEL_LENGTH
     )
 
   return (

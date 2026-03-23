@@ -26,7 +26,7 @@ function SectionLinkItem({
     return (
       <li className="border-b border-gray-100 last:border-b-0">
         <div
-          title="Denne temasiden har forelopig ikke innhold"
+          title="Denne temasiden har foreløpig ikke innhold"
           aria-disabled="true"
           className="flex items-center justify-between gap-3 px-5 py-3 text-sm text-gray-400 cursor-not-allowed bg-gray-50/60"
         >

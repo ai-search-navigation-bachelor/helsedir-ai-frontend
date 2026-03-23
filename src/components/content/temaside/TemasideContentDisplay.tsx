@@ -54,6 +54,24 @@ function getTemasideLinkKey(link: ContentLink) {
   return link.id || link.path || link.href || ''
 }
 
+function getCategorySlugFromPath(path?: string | null) {
+  return path?.split('/').filter(Boolean)[0] || undefined
+}
+
+function hasChildTemasideLinksMissingTags(content: ContentDetail) {
+  const groupedMissingTags = content.child_groups
+    ?.filter((group) => group.info_type === 'temaside')
+    .some((group) => group.items.some((item) => (item.path || item.id) && !item.tags?.length))
+
+  if (groupedMissingTags) return true
+
+  return (content.links ?? []).some((link) =>
+    link.rel === 'barn' &&
+    normalizeContentType(link.type) === 'temaside' &&
+    (!link.tags || link.tags.length === 0),
+  )
+}
+
 function getChildTemasideLinks(
   content: ContentDetail,
   tagsByKey: Map<string, string[]>,
@@ -121,7 +139,11 @@ function EmptyState() {
 
 export function TemasideContentDisplay({ content }: TemasideContentDisplayProps) {
   const parentLink = useMemo(() => getParentLink(content), [content])
-  const { data: themePagesData } = useThemePagesQuery()
+  const categorySlug = useMemo(() => getCategorySlugFromPath(content.path), [content.path])
+  const shouldLookupMissingTags = useMemo(() => hasChildTemasideLinksMissingTags(content), [content])
+  const { data: themePagesData } = useThemePagesQuery(categorySlug, {
+    enabled: shouldLookupMissingTags && Boolean(categorySlug),
+  })
   const tagsByKey = useMemo(() => {
     const map = new Map<string, string[]>()
     for (const page of themePagesData?.results ?? []) {
