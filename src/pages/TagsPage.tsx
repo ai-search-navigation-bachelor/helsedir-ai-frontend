@@ -120,11 +120,6 @@ export function TagsPage() {
       .filter((role) => role.document_count > 0)
   }, [data.roles, searchQuery, isFiltering])
 
-  const filteredUntagged = useMemo(() => {
-    if (!isFiltering) return data.untagged_documents
-    return filterDocuments(data.untagged_documents, searchQuery)
-  }, [data.untagged_documents, searchQuery, isFiltering])
-
   const searchableTypes = useMemo(() => {
     if (!infoTypes) return null
     return new Set(infoTypes.filter((t) => t.searchable).map((t) => t.slug))
@@ -151,6 +146,17 @@ export function TagsPage() {
     }
     return { total: seenTagged.size + untagged, tagged: seenTagged.size, untagged }
   }, [data, searchableTypes])
+
+  const filteredUntagged = useMemo(() => {
+    let docs = data.untagged_documents
+    if (searchableTypes) {
+      docs = docs.filter((d) => searchableTypes.has(d.info_type))
+    }
+    if (isFiltering) {
+      docs = filterDocuments(docs, searchQuery)
+    }
+    return docs
+  }, [data.untagged_documents, searchableTypes, searchQuery, isFiltering])
 
   const totalFilteredDocs = isFiltering
     ? filteredRoles.reduce((sum, r) => sum + r.document_count, 0) + filteredUntagged.length
