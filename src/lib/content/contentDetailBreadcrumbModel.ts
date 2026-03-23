@@ -2,6 +2,7 @@ import { stripTemasidePrefix } from '../path'
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider'
 import { getContentIdFromHref } from '../../components/content/shared/linkUtils'
 import { buildContentUrl } from '../contentUrl'
+import { getDisplayTitle } from '../displayTitle'
 import type { ContentDetail } from '../../types'
 import type { BreadcrumbItem } from '../../components/ui/Breadcrumb'
 import type { TemasideInfo } from './breadcrumbUtils'
@@ -27,10 +28,12 @@ function getCategoryFromTemasidePath(temasidePath: string): { label: string; hre
  * Extract the direct parent entry from content.links (synchronous, no fetch needed).
  */
 function extractDirectParent(content: ContentDetail): ParentChainEntry | null {
-  if (content.parent?.id && content.parent.title) {
+  const parentTitle = getDisplayTitle(content.parent, content.parent?.title ?? '')
+
+  if (content.parent?.id && parentTitle) {
     return {
       id: content.parent.id,
-      tittel: content.parent.title,
+      tittel: parentTitle,
       href: content.parent.path
         ? buildContentUrl({ path: content.parent.path, id: content.parent.id })
         : `/content/${content.parent.id}`,
@@ -88,7 +91,7 @@ export function buildContentBreadcrumbItems(
     }
   }
 
-  items.push({ label: content.title, href: '#', group: 'current' })
+  items.push({ label: getDisplayTitle(content, content.title), href: '#', group: 'current' })
 
   return items
 }
@@ -98,6 +101,6 @@ export function buildFallbackBreadcrumbItems(content?: ContentDetail): Breadcrum
 
   return [
     { label: 'Forside', href: '/', group: 'home' },
-    { label: content.title, href: '#', group: 'current' },
+    { label: getDisplayTitle(content, content.title), href: '#', group: 'current' },
   ]
 }

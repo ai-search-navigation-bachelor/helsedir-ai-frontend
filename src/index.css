@@ -102,6 +102,16 @@ body {
 }
 
 /* Styling for HTML content from API */
+.content-html > :first-child {
+  margin-top: 0;
+}
+
+.content-html > h2:first-child,
+.content-html > h3:first-child,
+.content-html > h4:first-child {
+  padding-top: 0;
+}
+
 .content-html h2 {
   font-size: 1.5rem;
   font-weight: 600;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+import { useMemo, type MouseEvent } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useNavigate } from 'react-router-dom'
@@ -6,24 +6,28 @@ import {
   getDetailContentTypeLabel,
   isEhelsestandardContentType,
   isRecommendationContentType,
+  isStatisticsContentType,
   isTemasideContentType,
   normalizeContentType,
 } from '../../../constants/content'
 import { formatDateLabel } from '../../../lib/content/date'
+import { getDisplayTitle } from '../../../lib/displayTitle'
 import { useEnrichedContentQuery } from '../../../hooks/queries/useEnrichedContentQuery'
+import { useContentStatisticsQuery } from '../../../hooks/queries/useContentStatisticsQuery'
 import type { ContentChildGroup, ContentLink, ContentRelationItem, NestedContent } from '../../../types'
 import type { ContentDisplayProps } from '../../../types/pages'
 import { ContentPageHeader } from '../ContentPageHeader'
 import { asDocumentLink, getDocumentLinks, getRelatedLinks } from './documentUtils'
-import { ExpandableSubcontent } from '../hierarchical/ExpandableSubcontent'
 import { hasVisibleContent } from '../shared/contentTextUtils'
 import { getContentIdFromHref, getUniqueChildLinks } from '../shared/linkUtils'
 import { RichContentHtml } from '../shared/RichContentHtml'
+import { normalizeLinkForComparison, toAbsoluteHelsedirUrl } from '../../../lib/helsedirUrl'
 import {
   buildContentSections,
   type ContentSection,
   type VurderingSection,
 } from './detailContentModel'
+import { ContentStatisticsSection } from './ContentStatisticsSection'
 
 function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
   if (!vurdering) return null
@@ -129,11 +133,13 @@ function toDetailChildItem(
     const id = source.id || getContentIdFromHref(source.href) || ''
     if (!id) return null
 
+    const title = getDisplayTitle(source, source.title || '')
+
     return {
       id,
       path: source.path || undefined,
-      tittel: source.title || '',
-      title: source.title || '',
+      tittel: title,
+      title,
       type: source.type || fallbackType,
       children: source.children
         ?.map((child) => toDetailChildItem(child))
@@ -150,7 +156,10 @@ function toDetailChildItem(
   const normalizedChildren = source.children
     ?.map((child) => toDetailChildItem(child))
     .filter((child): child is NestedContent => Boolean(child))
-  const title = source.title || ('tittel' in source ? source.tittel : undefined) || ''
+  const title = getDisplayTitle(
+    source,
+    source.title || ('tittel' in source ? source.tittel : undefined) || '',
+  )
   const type =
     ('content_type' in source ? source.content_type : undefined) ||
     ('info_type' in source ? source.info_type : undefined) ||
@@ -161,8 +170,10 @@ function toDetailChildItem(
     ...(isNestedDetailChild(source) ? source : {}),
     id: source.id,
     path: source.path || undefined,
-    tittel: ('tittel' in source ? source.tittel : undefined) || title,
-    title: source.title || title,
+    tittel: title,
+    title,
+    short_title: 'short_title' in source ? source.short_title : undefined,
+    display_title: 'display_title' in source ? source.display_title : undefined,
     type,
     children: normalizedChildren,
     has_text_content: source.has_text_content,
@@ -199,9 +210,7 @@ export function DetailContentDisplay({
   primarySectionTitle = 'Hovedanbefaling',
 }: DetailContentDisplayProps) {
   const navigate = useNavigate()
-  const mobileSectionsNavRef = useRef<HTMLDetailsElement>(null)
   const normalizedType = normalizeContentType(content.content_type)
-  const [activeSectionId, setActiveSectionId] = useState<string | null>(null)
   const backendDocumentUrl = content.document_url?.trim() || ''
   const isPdfOnlyContent = Boolean(content.is_pdf_only)
   const hasBodyContent = useMemo(
@@ -229,6 +238,7 @@ export function DetailContentDisplay({
   const shouldSkipHelsedirEnrichment =
     isTemasideContentType(normalizedType) || isEhelsestandardContentType(normalizedType)
   const shouldSkipPdfOnlyEnrichment = isPdfOnlyContent && Boolean(backendDocumentUrl)
+  const shouldQueryStatistics = isStatisticsContentType(normalizedType)
   const shouldAttemptEnrichment =
     !shouldSkipPdfOnlyEnrichment &&
     !shouldSkipHelsedirEnrichment &&
@@ -243,6 +253,14 @@ export function DetailContentDisplay({
     contentId: content.id,
     contentType: normalizedType,
     enabled: shouldAttemptEnrichment,
+  })
+  const {
+    data: statistics,
+    error: statisticsError,
+    isLoading: isStatisticsLoading,
+  } = useContentStatisticsQuery({
+    contentId: content.id,
+    enabled: shouldQueryStatistics,
   })
 
   const sections = useMemo<ContentSection[]>(() => {
@@ -286,50 +304,6 @@ export function DetailContentDisplay({
     primarySectionTitle,
   ])
 
-  const highlightedSectionId =
-    activeSectionId && sections.some((section) => section.id === activeSectionId)
-      ? activeSectionId
-      : sections[0]?.id || null
-
-  const handleSectionNavigation = (sectionId: string, closeMobileNav = false) => {
-    const target = document.getElementById(sectionId)
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-    setActiveSectionId(sectionId)
-    if (closeMobileNav) {
-      mobileSectionsNavRef.current?.removeAttribute('open')
-    }
-  }
-
-  useEffect(() => {
-    if (sections.length === 0) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)
-
-        const mostVisible = visible[0]
-        if (mostVisible?.target?.id) {
-          setActiveSectionId(mostVisible.target.id)
-        }
-      },
-      {
-        rootMargin: '-20% 0px -55% 0px',
-        threshold: [0.2, 0.4, 0.6, 0.8],
-      },
-    )
-
-    sections.forEach((section) => {
-      const element = document.getElementById(section.id)
-      if (element) observer.observe(element)
-    })
-
-    return () => observer.disconnect()
-  }, [sections])
-
   const childContentItems = useMemo(
     () => {
       const fallbackLinkItems = dedupeDetailChildItems(
@@ -351,16 +325,14 @@ export function DetailContentDisplay({
       )
 
       const groupedItems = getChildItemsFromGroups(content.child_groups, () => true)
+      const combinedItems = dedupeDetailChildItems([
+        ...normalizedReferenceItems,
+        ...normalizedRelatedItems,
+        ...groupedItems,
+      ])
 
-      if (normalizedReferenceItems.length > 0 || normalizedRelatedItems.length > 0) {
-        return dedupeDetailChildItems([
-          ...normalizedReferenceItems,
-          ...normalizedRelatedItems,
-        ])
-      }
-
-      if (groupedItems.length > 0) {
-        return groupedItems
+      if (combinedItems.length > 0) {
+        return combinedItems
       }
 
       return fallbackLinkItems
@@ -384,34 +356,6 @@ export function DetailContentDisplay({
     },
     [childContentItems, content.child_groups, content.references],
   )
-  const relatedChildItems = useMemo(
-    () => {
-      const groupedRelatedItems = getChildItemsFromGroups(
-        content.child_groups,
-        (group) => !isReferenceContentType(group.info_type),
-      )
-      if (groupedRelatedItems.length > 0) return groupedRelatedItems
-
-      const normalizedRelatedItems = dedupeDetailChildItems(
-        [...(content.chapters ?? []), ...(content.related_content ?? [])].map((item) =>
-          toDetailChildItem(
-            item,
-            ('content_type' in item ? item.content_type : undefined) ||
-              ('info_type' in item ? item.info_type : undefined) ||
-              ('type' in item ? item.type : undefined),
-          ),
-        ),
-      )
-      if (normalizedRelatedItems.length > 0) return normalizedRelatedItems
-
-      return childContentItems.filter((item) => !isReferenceContentType(item.type))
-    },
-    [childContentItems, content.child_groups, content.chapters, content.related_content],
-  )
-  const visibleRelatedChildItems = useMemo(
-    () => relatedChildItems.filter((item) => !isTemasideContentType(item.type || '')),
-    [relatedChildItems],
-  )
 
   const typeLabel = typeLabelOverride || getDetailContentTypeLabel(normalizedType)
   const documentLinks = useMemo(
@@ -432,28 +376,39 @@ export function DetailContentDisplay({
   )
   const relatedLinks = useMemo(() => getRelatedLinks(content), [content])
   const visibleDocumentLinks = documentLinks
+  const visibleRelatedLinks = relatedLinks
   const hasIntrinsicFallbackContent =
     visibleDocumentLinks.length > 0 ||
-    relatedLinks.length > 0 ||
-    referenceItems.length > 0 ||
-    visibleRelatedChildItems.length > 0
+    visibleRelatedLinks.length > 0 ||
+    referenceItems.length > 0
   const publicationUrl = useMemo(() => {
-    const url = content.url?.trim() || enrichedContent?.url?.trim()
+    const url = toAbsoluteHelsedirUrl(content.url) || toAbsoluteHelsedirUrl(enrichedContent?.url)
     if (!url) return null
-    return documentLinks.some((document) => document.href === url) ? null : url
+    return documentLinks.some((document) => normalizeLinkForComparison(document.href) === url) ? null : url
   }, [content.url, documentLinks, enrichedContent?.url])
   const shouldShowPublicationFallback =
     Boolean(publicationUrl) &&
     sections.length === 0 &&
-    visibleRelatedChildItems.length === 0 &&
-    relatedLinks.length === 0 &&
+    referenceItems.length === 0 &&
+    visibleRelatedLinks.length === 0 &&
     documentLinks.length === 0
-  const hasRelatedLinks = relatedLinks.length > 0
   const hasAnyActionLinks =
     visibleDocumentLinks.length > 0 ||
-    shouldShowPublicationFallback ||
-    hasRelatedLinks
-  const resourceSectionTitle = visibleDocumentLinks.length > 0 ? 'Dokumenter' : 'Lenker'
+    visibleRelatedLinks.length > 0 ||
+    shouldShowPublicationFallback
+  const statisticsStatus = statistics?.statistics_status
+  const shouldRenderStatisticsSection =
+    Boolean(statistics?.has_statistics) ||
+    statisticsStatus === 'unavailable'
+  const showStatisticsSection =
+    shouldQueryStatistics &&
+    (
+      isStatisticsLoading ||
+      Boolean(statisticsError) ||
+      shouldRenderStatisticsSection
+    )
+  const resourceSectionTitle =
+    visibleDocumentLinks.length > 0 && visibleRelatedLinks.length === 0 ? 'Dokumenter' : 'Lenker'
 
   const handleRelatedLinkClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -475,102 +430,11 @@ export function DetailContentDisplay({
     navigate(internalPath)
   }
 
-  const hasSidebarContent = sections.length > 1
-  const showSidebarLayout = hasSidebarContent
-
   return (
     <div className="flex flex-col gap-8">
       <ContentPageHeader typeLabel={typeLabel} title={content.title} />
 
-      <div className={showSidebarLayout ? 'grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]' : ''}>
-        {showSidebarLayout && (
-        <aside className="space-y-6 border-slate-200 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:border-r lg:pr-6">
-          {sections.length > 1 && (
-            <nav aria-label="Innholdsnavigasjon" className="hidden lg:block">
-              <ul className="m-0 list-none border-t border-slate-200 p-0">
-                {sections.map((section) => {
-                  const isActive = highlightedSectionId === section.id
-                  return (
-                    <li key={section.id} className="border-b border-slate-200">
-                      <button
-                        type="button"
-                        onClick={() => handleSectionNavigation(section.id)}
-                        className={`w-full px-0 py-3 text-left text-sm leading-6 border-0 bg-transparent cursor-pointer transition-colors hover:text-[#025169] hover:underline ${
-                          isActive
-                            ? 'font-semibold text-[#025169] underline [text-underline-offset:0.15rem]'
-                            : 'text-slate-500'
-                        }`}
-                      >
-                        {section.title}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </nav>
-          )}
-
-          {sections.length > 0 && visibleDocumentLinks.length > 0 && (
-            <section className="border-t border-slate-100 pl-7 pt-4">
-              <p className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                {resourceSectionTitle}
-              </p>
-              <ul className="m-0 list-none space-y-1.5 p-0">
-                {visibleDocumentLinks.map((document) => (
-                  <li key={`document-${document.href}`}>
-                    <a
-                      href={document.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-slate-500 hover:text-[#025169] hover:underline"
-                    >
-                      {document.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </aside>
-        )}
-
-        <section className="min-w-0 space-y-8">
-          {sections.length > 1 && (
-            <details
-              ref={mobileSectionsNavRef}
-              className="group/sections rounded-lg border border-slate-200 bg-white lg:hidden"
-            >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 group-open/sections:rounded-b-none">
-                <span>Innhold på siden</span>
-                <ChevronRightIcon
-                  aria-hidden="true"
-                  className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sections:rotate-90 group-open/sections:text-[#025169]"
-                />
-              </summary>
-              <div className="border-t border-slate-200 p-2">
-                <ul className="m-0 list-none space-y-1 p-0">
-                  {sections.map((section) => {
-                    const isActive = highlightedSectionId === section.id
-                    return (
-                      <li key={`mobile-section-${section.id}`}>
-                        <button
-                          type="button"
-                          onClick={() => handleSectionNavigation(section.id, true)}
-                          className={`w-full rounded-md border px-3 py-2.5 text-left text-sm leading-5 transition-colors ${
-                            isActive
-                              ? 'border-[#025169]/25 bg-[#e8f4f8] text-[#025169]'
-                              : 'border-transparent bg-transparent text-slate-700 hover:bg-slate-50'
-                          }`}
-                        >
-                          {section.title}
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            </details>
-          )}
+      <section className="min-w-0 space-y-8">
 
           {enrichedError && !isPdfOnlyContent && !hasIntrinsicFallbackContent && (
             <Alert data-color="warning">
@@ -578,6 +442,14 @@ export function DetailContentDisplay({
                 Kunne ikke hente utvidede innholdsdetaljer fra Helsedirektoratet API akkurat nå.
               </Paragraph>
             </Alert>
+          )}
+
+          {showStatisticsSection && (
+            <ContentStatisticsSection
+              statistics={statistics}
+              isLoading={isStatisticsLoading}
+              error={statisticsError instanceof Error ? statisticsError : null}
+            />
           )}
 
           {sections.map((section, index) => (
@@ -622,7 +494,7 @@ export function DetailContentDisplay({
             </article>
           ))}
 
-          {!showSidebarLayout && sections.length > 0 && visibleDocumentLinks.length > 0 && (
+          {sections.length > 0 && (visibleDocumentLinks.length > 0 || visibleRelatedLinks.length > 0) && (
             <section className="space-y-4">
               <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
                 {resourceSectionTitle}
@@ -639,6 +511,26 @@ export function DetailContentDisplay({
                       <span className="block font-semibold text-slate-900">{document.label}</span>
                       <span className="mt-1 block text-xs text-slate-500">
                         {document.isPdf ? 'PDF' : 'Dokument'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+                {visibleRelatedLinks.map((link) => (
+                  <li key={`inline-related-${link.href}`}>
+                    <a
+                      href={link.internalPath || link.href}
+                      target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
+                      rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
+                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{link.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {link.isPdf
+                          ? 'PDF'
+                          : link.isDocument
+                            ? (link.fileType || 'Dokument')
+                            : 'Rapport eller side'}
                       </span>
                     </a>
                   </li>
@@ -660,54 +552,9 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {hasRelatedLinks && (
-            <section className="space-y-4">
-              <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
-                Videre lenker
-              </Heading>
-              <ul className="m-0 list-none space-y-3 p-0">
-                {relatedLinks.map((link) => (
-                  <li key={link.href}>
-                    <a
-                      href={link.internalPath || link.href}
-                      target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
-                      rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
-                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
-                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
-                    >
-                      <span className="block font-semibold text-slate-900">{link.label}</span>
-                      <span className="mt-1 block text-xs text-slate-500">
-                        {link.isPdf
-                          ? 'PDF'
-                          : link.isDocument
-                            ? (link.fileType || 'Dokument')
-                            : 'Rapport eller side'}
-                      </span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {visibleRelatedChildItems.length > 0 && (
-            <section className="space-y-3">
-              <Heading level={2} data-size="md" className="font-title" style={{ marginTop: 0, marginBottom: 12 }}>
-                Utforsk videre
-              </Heading>
-              {visibleRelatedChildItems.map((item, index) => (
-                <ExpandableSubcontent
-                  key={`detail-child-${item.id || index}`}
-                  item={item}
-                  itemKey={`detail-child-${item.id || index}`}
-                />
-              ))}
-            </section>
-          )}
-
           {sections.length === 0 && referenceItems.length > 0 && <ReferenceDropdown items={referenceItems} />}
 
-          {sections.length === 0 && (visibleDocumentLinks.length > 0 || shouldShowPublicationFallback) && (
+          {sections.length === 0 && (visibleDocumentLinks.length > 0 || visibleRelatedLinks.length > 0 || shouldShowPublicationFallback) && (
             <section className="space-y-4">
               <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
                 {resourceSectionTitle}
@@ -724,6 +571,26 @@ export function DetailContentDisplay({
                       <span className="block font-semibold text-slate-900">{document.label}</span>
                       <span className="mt-1 block text-xs text-slate-500">
                         {document.isPdf ? 'PDF' : 'Dokument'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+                {visibleRelatedLinks.map((link) => (
+                  <li key={`fallback-related-${link.href}`}>
+                    <a
+                      href={link.internalPath || link.href}
+                      target={link.internalPath ? undefined : (link.openInNewTab ? '_blank' : undefined)}
+                      rel={link.internalPath ? undefined : (link.openInNewTab ? 'noopener noreferrer' : undefined)}
+                      onClick={(event) => handleRelatedLinkClick(event, link.internalPath)}
+                      className="block rounded-lg border border-slate-200 px-4 py-3 text-sm no-underline transition-colors hover:border-brand/30 hover:bg-slate-50"
+                    >
+                      <span className="block font-semibold text-slate-900">{link.label}</span>
+                      <span className="mt-1 block text-xs text-slate-500">
+                        {link.isPdf
+                          ? 'PDF'
+                          : link.isDocument
+                            ? (link.fileType || 'Dokument')
+                            : 'Rapport eller side'}
                       </span>
                     </a>
                   </li>
@@ -745,7 +612,7 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length === 0 && referenceItems.length === 0 && visibleRelatedChildItems.length === 0 && !hasAnyActionLinks && (
+          {sections.length === 0 && referenceItems.length === 0 && !hasAnyActionLinks && !showStatisticsSection && (
             <section className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
               <Paragraph style={{ marginTop: 0, marginBottom: 0, color: '#334155' }}>
                 Denne siden har ikke egen tekst eller tilgjengelige lenker.
@@ -765,7 +632,6 @@ export function DetailContentDisplay({
             )
           })()}
         </section>
-      </div>
     </div>
   )
 }

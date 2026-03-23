@@ -1,9 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { SearchResult } from '../../types'
 import type { WeightConfig } from '../../types/dev'
 import { formatInfoTypeLabel, getPipelineScores } from './utils'
-import { ScoreBar } from './ScoreBar'
-import { ScoreLegend } from './ScoreLegend'
 
 interface DevResultItemProps {
   rank: number
@@ -11,6 +9,33 @@ interface DevResultItemProps {
   rankDiff: number | null
   config?: WeightConfig
   maxScore?: number
+  allResults?: SearchResult[]
+}
+
+const mono = "'JetBrains Mono', 'Fira Code', monospace"
+
+const FEATURE_LABELS: Record<string, string> = {
+  semantic_score: 'Semantisk likhet',
+  bm25_score: 'BM25 ordmatch',
+  smoothed_ctr: 'Klikk-rate (CTR)',
+  role_match: 'Rollematch',
+  query_length: 'Lengde på søk',
+  title_query_overlap: 'Tittel-overlap',
+  content_freshness: 'Innholdsferskhet',
+}
+
+function computeRetRanks(result: SearchResult, allResults: SearchResult[]) {
+  const scores = allResults.map((r) => {
+    const p = getPipelineScores(r)
+    return { id: r.id, bm25: p.bm25 ?? 0, semantic: p.semantic ?? 0 }
+  })
+  const bm25Sorted = [...scores].sort((a, b) => b.bm25 - a.bm25)
+  const semSorted = [...scores].sort((a, b) => b.semantic - a.semantic)
+  const bm25Idx = bm25Sorted.findIndex((s) => s.id === result.id)
+  const semIdx = semSorted.findIndex((s) => s.id === result.id)
+  const bm25Rank = bm25Idx === -1 ? null : bm25Idx + 1
+  const semRank = semIdx === -1 ? null : semIdx + 1
+  return { bm25Rank, semRank }
 }
 
 export function DevResultItem({
@@ -19,6 +44,7 @@ export function DevResultItem({
   rankDiff,
   config,
   maxScore,
+  allResults,
 }: DevResultItemProps) {
   const [expanded, setExpanded] = useState(false)
 
@@ -32,9 +58,6 @@ export function DevResultItem({
     rerankRankChange,
     rerankContributions,
   } = getPipelineScores(result)
-  const weightedBm25 = bm25 !== undefined && config ? bm25 * config.bm25_weight : bm25
-  const weightedSemantic =
-    semantic !== undefined && config ? semantic * config.semantic_weight : semantic
 
   const normalizedScore = maxScore && maxScore > 0 ? result.score / maxScore : null
 
@@ -46,6 +69,11 @@ export function DevResultItem({
         : null
     : null
 
+  const retRanks = useMemo(() => {
+    if (!allResults || allResults.length === 0) return null
+    return computeRetRanks(result, allResults)
+  }, [result, allResults])
+
   return (
     <div
       style={{
@@ -55,13 +83,10 @@ export function DevResultItem({
         transition: 'background-color 0.12s ease',
       }}
       onClick={() => setExpanded(!expanded)}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = '#f8fafc'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = 'transparent'
-      }}
+      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc' }}
+      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}
     >
+      {/* Compact row */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
         <span
           style={{
@@ -78,354 +103,421 @@ export function DevResultItem({
         </span>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontWeight: 500,
-              color: '#1e293b',
-              lineHeight: 1.5,
-              fontSize: '0.85rem',
-            }}
-          >
+          <div style={{ fontWeight: 500, color: '#1e293b', lineHeight: 1.5, fontSize: '0.85rem' }}>
             {result.title}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              marginTop: '4px',
-              flexWrap: 'wrap',
-            }}
-          >
-            <span
-              style={{
-                padding: '1px 8px',
-                borderRadius: '4px',
-                fontSize: '0.68rem',
-                fontWeight: 600,
-                color: '#047FA4',
-                backgroundColor: '#e0f2fe',
-              }}
-              title={`Innholdstype: ${result.info_type}`}
-            >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px', flexWrap: 'wrap' }}>
+            <Badge color="#047FA4" bg="#e0f2fe" title={`Innholdstype: ${result.info_type}`}>
               {infoTypeLabel}
-            </span>
+            </Badge>
 
             {configBoost != null && configBoost !== 1.0 && (
-              <span
-                style={{
-                  padding: '1px 7px',
-                  borderRadius: '4px',
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  backgroundColor: configBoost > 1.0 ? '#dbeafe' : '#fee2e2',
-                  color: configBoost > 1.0 ? '#1d4ed8' : '#dc2626',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                }}
-                title={`Konfig-boost: innholdstype multiplisert med ${configBoost}`}
+              <Badge
+                color={configBoost > 1.0 ? '#1d4ed8' : '#dc2626'}
+                bg={configBoost > 1.0 ? '#dbeafe' : '#fee2e2'}
+                title={`Innholdstype-boost: ×${configBoost}`}
               >
-                <span style={{ fontSize: '0.64rem', fontWeight: 700 }}>Boost</span>
-                {`\u00D7${configBoost}`}
-              </span>
+                Boost ×{configBoost}
+              </Badge>
             )}
 
             {roleBoost != null && roleBoost !== 1.0 && (
-              <span
-                style={{
-                  padding: '1px 7px',
-                  borderRadius: '4px',
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  backgroundColor: roleBoost > 1.0 ? '#d1fae5' : '#fee2e2',
-                  color: roleBoost > 1.0 ? '#059669' : '#dc2626',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                }}
-                title={
-                  roleBoost > 1.0
-                    ? `Rolle-boost: score multiplisert med ${roleBoost} (prioritert for valgt rolle)`
-                    : `Rolle-demping: score multiplisert med ${roleBoost} (nedprioritert for valgt rolle)`
-                }
+              <Badge
+                color={roleBoost > 1.0 ? '#059669' : '#dc2626'}
+                bg={roleBoost > 1.0 ? '#d1fae5' : '#fee2e2'}
+                title={roleBoost > 1.0 ? `Rolle-boost: ×${roleBoost}` : `Rolle-straff: ×${roleBoost}`}
               >
-                <span style={{ fontSize: '0.64rem', fontWeight: 700 }}>Rolle</span>
-                {`\u00D7${roleBoost}`}
-              </span>
+                Rolle ×{roleBoost}
+              </Badge>
             )}
 
             {rerankScore !== undefined && (
-              <span
-                style={{
-                  padding: '1px 7px',
-                  borderRadius: '4px',
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  backgroundColor: '#f5f3ff',
-                  color: '#7c3aed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                }}
-                title="ML-rerank er brukt på dette treffet"
-              >
-                <span style={{ fontSize: '0.64rem', fontWeight: 700 }}>Rerank</span>
-                {typeof rerankRankChange === 'number'
-                  ? `${rerankRankChange > 0 ? '+' : ''}${rerankRankChange}`
-                  : 'på'}
-              </span>
+              <Badge color="#7c3aed" bg="#f5f3ff" title="ML-rerank brukt">
+                Rerank {typeof rerankRankChange === 'number' ? `${rerankRankChange > 0 ? '+' : ''}${rerankRankChange}` : ''}
+              </Badge>
             )}
 
             {rankDiff !== null && rankDiff !== 0 && (
-              <span
-                style={{
-                  padding: '1px 7px',
-                  borderRadius: '4px',
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  backgroundColor: rankDiff > 0 ? '#d1fae5' : '#fee2e2',
-                  color: rankDiff > 0 ? '#059669' : '#dc2626',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                }}
-                title={
-                  rankDiff > 0
-                    ? `Rangert ${rankDiff} plasser høyere enn i Konfig A`
-                    : `Rangert ${Math.abs(rankDiff)} plasser lavere enn i Konfig A`
-                }
+              <Badge
+                color={rankDiff > 0 ? '#059669' : '#dc2626'}
+                bg={rankDiff > 0 ? '#d1fae5' : '#fee2e2'}
+                title={rankDiff > 0 ? `${rankDiff} plasser h\u00F8yere enn Konfig A` : `${Math.abs(rankDiff)} plasser lavere enn Konfig A`}
               >
-                <span style={{ fontSize: '0.64rem', fontWeight: 700 }}>vs A</span>
-                {rankDiff > 0 ? `+${rankDiff}` : String(rankDiff)}
-              </span>
+                vs A {rankDiff > 0 ? `+${rankDiff}` : String(rankDiff)}
+              </Badge>
             )}
+
+            <span style={{ fontSize: '0.6rem', color: '#94a3b8', marginLeft: '2px' }}>
+              {expanded ? '\u25B2' : '\u25BC'}
+            </span>
           </div>
         </div>
 
-        {(() => {
-          const hasBoosted = rrf != null && rrf !== result.score
-          const boostFactors: string[] = []
-          if (configBoost != null && configBoost !== 1.0) boostFactors.push(String(configBoost))
-          if (roleBoost != null && roleBoost !== 1.0) boostFactors.push(String(roleBoost))
-
-          return (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-end',
-                gap: '1px',
-                flexShrink: 0,
-              }}
-            >
-              {hasBoosted && (
-                <span
-                  style={{
-                    fontSize: '0.6rem',
-                    color: '#94a3b8',
-                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                    fontVariantNumeric: 'tabular-nums',
-                    textDecoration: 'line-through',
-                  }}
-                  title="RRF-score før boost"
-                >
-                  {rrf!.toFixed(4)}
-                </span>
-              )}
-              {hasBoosted && boostFactors.length > 0 && (
-                <span
-                  style={{
-                    fontSize: '0.58rem',
-                    color: '#94a3b8',
-                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                    fontVariantNumeric: 'tabular-nums',
-                    whiteSpace: 'nowrap',
-                  }}
-                  title="Beregning: RRF-score × boostfaktorer"
-                >
-                  {rrf!.toFixed(4)}
-                  {boostFactors.map((factor) => ` × ${factor}`).join('')}
-                </span>
-              )}
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                  color: '#047FA4',
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-                title={hasBoosted ? 'Endelig score (etter boost/rerank)' : 'Score'}
-              >
-                {result.score.toFixed(4)}
-              </span>
+        {/* Score display */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flexShrink: 0 }}>
+          {normalizedScore !== null && (
+            <div style={{
+              width: '48px',
+              height: '4px',
+              borderRadius: '2px',
+              backgroundColor: '#e2e8f0',
+              marginBottom: '3px',
+            }}>
+              <div style={{
+                height: '100%',
+                width: `${normalizedScore * 100}%`,
+                borderRadius: '2px',
+                backgroundColor: '#047FA4',
+              }} />
             </div>
-          )
-        })()}
-      </div>
-
-      {expanded && (
-        <div
-          style={{
-            marginTop: '8px',
-            marginLeft: '34px',
-            padding: '10px 12px',
-            borderRadius: '8px',
-            backgroundColor: '#f8fafc',
-            border: '1px solid #e2e8f0',
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div
+          )}
+          <span
             style={{
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              color: '#64748b',
-              marginBottom: '6px',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              fontFamily: mono,
+              color: '#047FA4',
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
-            Score-detaljer
-          </div>
+            {result.score.toFixed(4)}
+          </span>
+        </div>
+      </div>
 
-          {result.explanation && (
-            <div
-              style={{
-                fontSize: '0.7rem',
-                color: '#64748b',
-                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                marginBottom: '8px',
-                lineHeight: 1.5,
-                wordBreak: 'break-word',
-              }}
-            >
-              {result.explanation}
-            </div>
-          )}
-
-          {(config && bm25 !== undefined) || rerankScore !== undefined ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'auto 1fr',
-                gap: '2px 10px',
-                fontSize: '0.68rem',
-                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                color: '#64748b',
-                marginBottom: '8px',
-              }}
-            >
-              {bm25 !== undefined && config && (
-                <>
-                  <span style={{ color: '#0284c7' }}>BM25</span>
-                  <span>
-                    {bm25.toFixed(3)} × vekt {config.bm25_weight.toFixed(2)} ={' '}
-                    {weightedBm25?.toFixed(3)}
-                  </span>
-                </>
-              )}
-              {semantic !== undefined && config && (
-                <>
-                  <span style={{ color: '#059669' }}>Semantisk</span>
-                  <span>
-                    {semantic.toFixed(3)} × vekt {config.semantic_weight.toFixed(2)} ={' '}
-                    {weightedSemantic?.toFixed(3)}
-                  </span>
-                </>
-              )}
-              {rrf !== undefined && (
-                <>
-                  <span style={{ color: '#047FA4' }}>RRF</span>
-                  <span>{rrf.toFixed(4)}</span>
-                </>
-              )}
-              {rerankScore !== undefined && (
-                <>
-                  <span style={{ color: '#7c3aed' }}>Rerank</span>
-                  <span>
-                    {rerankScore.toFixed(4)}
-                    {typeof rerankRankChange === 'number'
-                      ? ` (${rerankRankChange > 0 ? '+' : ''}${rerankRankChange} plasser)`
-                      : ''}
-                  </span>
-                </>
-              )}
-              <span style={{ color: '#047FA4' }}>Samlet</span>
-              <span>
-                {result.score.toFixed(4)}
-                {rerankScore !== undefined ? ' (etter rerank)' : ' (RRF-fusjonert)'}
-              </span>
-            </div>
-          ) : null}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {bm25 !== undefined && (
-              <ScoreBar label="BM25" value={weightedBm25 ?? bm25} color="bm25" />
-            )}
-            {semantic !== undefined && (
-              <ScoreBar label="Sem." value={weightedSemantic ?? semantic} color="semantic" />
-            )}
-            {normalizedScore !== null && (
-              <ScoreBar label="Samlet" value={normalizedScore} color="rrf" />
-            )}
-          </div>
-
-          {rerankContributions && Object.keys(rerankContributions).length > 0 && (
-            <div
-              style={{
-                marginTop: '8px',
-                padding: '6px 8px',
-                borderRadius: '6px',
-                backgroundColor: '#f5f3ff',
-                border: '1px solid #ddd6fe',
-                fontSize: '0.7rem',
-                color: '#475569',
-                lineHeight: 1.5,
-              }}
-            >
-              <strong style={{ color: '#7c3aed' }}>Rerank-bidrag:</strong>{' '}
-              {Object.entries(rerankContributions)
-                .map(([key, value]) => `${key}=${value.toFixed(3)}`)
-                .join(', ')}
-            </div>
-          )}
-
-          {roleBoost != null && roleBoost !== 1.0 && (
-            <div
-              style={{
-                marginTop: '8px',
-                padding: '6px 8px',
-                borderRadius: '6px',
-                backgroundColor: roleBoost > 1.0 ? '#ecfdf5' : '#fef2f2',
-                border: `1px solid ${roleBoost > 1.0 ? '#a7f3d0' : '#fecaca'}`,
-                fontSize: '0.7rem',
-                color: '#475569',
-                lineHeight: 1.5,
-              }}
-            >
-              <strong style={{ color: roleBoost > 1.0 ? '#059669' : '#dc2626' }}>
-                Rolle-boost ×{roleBoost}:
-              </strong>{' '}
-              {roleBoost > 1.0
-                ? 'Denne innholdstypen er prioritert for valgt rolle. Scoren ble multiplisert opp.'
-                : 'Denne innholdstypen er nedprioritert for valgt rolle. Scoren ble redusert.'}
-            </div>
-          )}
+      {/* Expanded: Spreadsheet-style calculation breakdown */}
+      {expanded && (
+        <div
+          style={{ marginTop: '8px', marginLeft: '14px' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ScoreSpreadsheet
+            bm25={bm25}
+            semantic={semantic}
+            rrf={rrf}
+            rerankScore={rerankScore}
+            rerankRankChange={rerankRankChange}
+            rerankContributions={rerankContributions}
+            configBoost={configBoost}
+            roleBoost={roleBoost}
+            finalScore={result.score}
+            config={config}
+            bm25Rank={retRanks?.bm25Rank}
+            semRank={retRanks?.semRank}
+          />
         </div>
       )}
     </div>
   )
 }
 
+/* ── Badge ── */
+
+function Badge({ children, color, bg, title }: { children: React.ReactNode; color: string; bg: string; title: string }) {
+  return (
+    <span
+      style={{
+        padding: '1px 7px',
+        borderRadius: '4px',
+        fontSize: '0.68rem',
+        fontWeight: 600,
+        color,
+        backgroundColor: bg,
+      }}
+      title={title}
+    >
+      {children}
+    </span>
+  )
+}
+
+/* ── Spreadsheet-style score breakdown ── */
+
+interface SpreadsheetProps {
+  bm25?: number
+  semantic?: number
+  rrf?: number
+  rerankScore?: number
+  rerankRankChange?: number
+  rerankContributions?: Record<string, number>
+  configBoost: number | null
+  roleBoost?: number | null
+  finalScore: number
+  config?: WeightConfig
+  bm25Rank?: number | null
+  semRank?: number | null
+}
+
+function CalcRow({ step, label, color, formula, result, sub, separator }: {
+  step?: string
+  label: string
+  color: string
+  formula: string
+  result: string
+  sub?: boolean
+  separator?: boolean
+}) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0',
+      borderTop: separator ? '1px solid #e2e8f0' : undefined,
+      backgroundColor: sub ? '#faf5ff' : undefined,
+      fontSize: sub ? '0.66rem' : '0.72rem',
+      lineHeight: 1.4,
+    }}>
+      {/* Label */}
+      <div style={{
+        padding: sub ? '3px 8px 3px 20px' : '5px 8px',
+        fontWeight: 600,
+        color,
+        minWidth: sub ? undefined : '90px',
+        flexShrink: 0,
+        borderRight: '1px solid #f1f5f9',
+        backgroundColor: sub ? undefined : '#fafbfc',
+      }}>
+        {step && <span style={{ color: '#94a3b8', marginRight: '4px' }}>{step}</span>}
+        {label}
+      </div>
+      {/* Formula */}
+      <div style={{
+        flex: 1,
+        padding: '3px 8px',
+        fontFamily: mono,
+        fontSize: sub ? '0.64rem' : '0.68rem',
+        color: '#64748b',
+        minWidth: 0,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}>
+        {formula}
+      </div>
+      {/* Result */}
+      <div style={{
+        padding: '3px 8px',
+        fontFamily: mono,
+        fontWeight: 700,
+        color,
+        flexShrink: 0,
+        textAlign: 'right',
+        fontSize: sub ? '0.66rem' : '0.72rem',
+      }}>
+        {result}
+      </div>
+    </div>
+  )
+}
+
+function ScoreSpreadsheet({
+  bm25,
+  semantic,
+  rrf,
+  rerankScore,
+  rerankRankChange,
+  rerankContributions,
+  configBoost,
+  roleBoost,
+  finalScore,
+  config,
+  bm25Rank,
+  semRank,
+}: SpreadsheetProps) {
+  const hasRerank = rerankScore !== undefined
+  const hasBoosts = (configBoost != null && configBoost !== 1.0) || (roleBoost != null && roleBoost !== 1.0)
+  let n = 1
+
+  const k = config?.rrf_k ?? 60
+  const bw = config?.bm25_weight ?? 0.3
+  const sw = config?.semantic_weight ?? 0.7
+
+  return (
+    <div style={{
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      overflow: 'hidden',
+      backgroundColor: '#fff',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '5px 8px',
+        backgroundColor: '#f1f5f9',
+        borderBottom: '1px solid #e2e8f0',
+        fontSize: '0.66rem',
+        fontWeight: 700,
+        color: '#64748b',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+      }}>
+        Score-regnestykke
+      </div>
+
+      {bm25 !== undefined && config && (
+        <>
+          {/* BM25 rank */}
+          <CalcRow
+            step={`${n++}.`}
+            label="BM25"
+            color="#0284c7"
+            formula={`score ${bm25.toFixed(4)} \u2192 rang #${bm25Rank ?? '?'}`}
+            result={`#${bm25Rank ?? '?'}`}
+          />
+
+          {/* Semantic rank */}
+          {semantic !== undefined && (
+            <CalcRow
+              step={`${n++}.`}
+              label="Semantisk"
+              color="#059669"
+              formula={`score ${semantic.toFixed(4)} \u2192 rang #${semRank ?? '?'}`}
+              result={`#${semRank ?? '?'}`}
+            />
+          )}
+
+          {/* RRF with multi-line breakdown */}
+          {rrf !== undefined && (() => {
+            const br = bm25Rank ?? '?'
+            const sr = semRank ?? '?'
+            const bm25Part = typeof br === 'number' ? bw / (k + br) : undefined
+            const semPart = typeof sr === 'number' ? sw / (k + sr) : undefined
+            const stepN = n++
+            return (
+              <>
+                <CalcRow
+                  step={`${stepN}.`}
+                  label="RRF"
+                  color="#047FA4"
+                  formula="w₁/(k+rang₁) + w₂/(k+rang₂)"
+                  result=""
+                  separator
+                />
+                <CalcRow
+                  label=""
+                  color="#0284c7"
+                  formula={`bm25: ${bw} / (${k} + ${br})`}
+                  result={bm25Part?.toFixed(6) ?? '?'}
+                  sub
+                />
+                <CalcRow
+                  label=""
+                  color="#059669"
+                  formula={`sem:  ${sw} / (${k} + ${sr})`}
+                  result={semPart?.toFixed(6) ?? '?'}
+                  sub
+                />
+                <CalcRow
+                  label=""
+                  color="#047FA4"
+                  formula={`     ${bm25Part?.toFixed(6) ?? '?'} + ${semPart?.toFixed(6) ?? '?'}`}
+                  result={rrf.toFixed(6)}
+                  sub
+                />
+              </>
+            )
+          })()}
+        </>
+      )}
+
+      {/* Rerank */}
+      {hasRerank && (() => {
+        const stepN = n++
+        const rankChangeStr = typeof rerankRankChange === 'number'
+          ? rerankRankChange > 0 ? `${rerankRankChange} plasser opp` : rerankRankChange < 0 ? `${Math.abs(rerankRankChange)} plasser ned` : 'uendret'
+          : null
+        return (
+          <>
+            <CalcRow
+              step={`${stepN}.`}
+              label="Rerank"
+              color="#7c3aed"
+              formula="XGBoost LambdaMART"
+              result={rerankScore!.toFixed(4)}
+              separator
+            />
+            {rankChangeStr && (
+              <CalcRow
+                label=""
+                color="#7c3aed"
+                formula={`rangendring: ${rankChangeStr}`}
+                result=""
+                sub
+              />
+            )}
+            {rerankContributions && Object.keys(rerankContributions).length > 0 &&
+              Object.entries(rerankContributions)
+                .sort(([, a], [, b]) => Math.abs(b) - Math.abs(a))
+                .map(([feature, val]) => (
+                  <CalcRow
+                    key={feature}
+                    label=""
+                    color={val >= 0 ? '#7c3aed' : '#dc2626'}
+                    formula={`${FEATURE_LABELS[feature] ?? feature}`}
+                    result={`${val >= 0 ? '+' : ''}${val.toFixed(3)}`}
+                    sub
+                  />
+                ))
+            }
+          </>
+        )
+      })()}
+
+      {/* Boost + normalisering */}
+      {hasBoosts && (() => {
+        const base = hasRerank ? rerankScore! : rrf ?? finalScore
+        const factors: string[] = []
+        const multipliers: number[] = []
+        if (configBoost != null && configBoost !== 1.0) { factors.push(`×${configBoost}`); multipliers.push(configBoost) }
+        if (roleBoost != null && roleBoost !== 1.0) { factors.push(`×${roleBoost}`); multipliers.push(roleBoost) }
+        const boostedRaw = multipliers.reduce((acc, m) => acc * m, base)
+        return (
+          <>
+            <CalcRow
+              step={`${n++}.`}
+              label="Boost"
+              color="#d97706"
+              formula={`${base.toFixed(4)} ${factors.join(' ')} = ${boostedRaw.toFixed(4)}`}
+              result={boostedRaw.toFixed(4)}
+              separator
+            />
+            <CalcRow
+              step={`${n++}.`}
+              label="Norm."
+              color="#94a3b8"
+              formula={`${boostedRaw.toFixed(4)} \u2192 normalisert`}
+              result={finalScore.toFixed(4)}
+            />
+          </>
+        )
+      })()}
+
+      {/* Final */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        borderTop: '2px solid #047FA4',
+        backgroundColor: '#f0f9ff',
+        padding: '5px 8px',
+        fontSize: '0.76rem',
+      }}>
+        <span style={{ fontWeight: 700, color: '#047FA4', minWidth: '90px' }}>Endelig</span>
+        <span style={{ flex: 1 }} />
+        <span style={{ fontWeight: 800, fontFamily: mono, color: '#047FA4', fontSize: '0.82rem' }}>
+          {finalScore.toFixed(4)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+/* ── Results column header ── */
+
 interface ResultsColumnHeaderProps {
   title: string
   subtitle: string
   extraInfo?: string
   roleInfo?: string
-  mode: 'hybrid' | 'keyword'
 }
 
 export function ResultsColumnHeader({
@@ -433,7 +525,6 @@ export function ResultsColumnHeader({
   subtitle,
   extraInfo,
   roleInfo,
-  mode,
 }: ResultsColumnHeaderProps) {
   return (
     <div
@@ -443,34 +534,14 @@ export function ResultsColumnHeader({
         borderBottom: '1px solid #e2e8f0',
       }}
     >
-      <h3
-        style={{
-          fontSize: '0.85rem',
-          fontWeight: 700,
-          margin: 0,
-          marginBottom: '2px',
-          color: '#1e293b',
-        }}
-      >
+      <h3 style={{ fontSize: '0.85rem', fontWeight: 700, margin: 0, marginBottom: '2px', color: '#1e293b' }}>
         {title}
       </h3>
       <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{subtitle}</p>
-      {extraInfo && (
-        <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{extraInfo}</p>
-      )}
-      {roleInfo && (
-        <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{roleInfo}</p>
-      )}
-      <ScoreLegend mode={mode} />
-      <p
-        style={{
-          fontSize: '0.65rem',
-          color: '#94a3b8',
-          margin: '6px 0 0',
-          fontStyle: 'italic',
-        }}
-      >
-        Klikk på et resultat for å se score-detaljer
+      {extraInfo && <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{extraInfo}</p>}
+      {roleInfo && <p style={{ fontSize: '0.72rem', color: '#64748b', margin: 0 }}>{roleInfo}</p>}
+      <p style={{ fontSize: '0.65rem', color: '#94a3b8', margin: '6px 0 0', fontStyle: 'italic' }}>
+        Klikk p&aring; et resultat for &aring; se score-regnestykket
       </p>
     </div>
   )

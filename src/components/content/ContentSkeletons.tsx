@@ -1,10 +1,21 @@
 import { Skeleton } from '@digdir/designsystemet-react'
 
 /** Placeholder for the breadcrumb row so content doesn't jump when it appears. */
-function BreadcrumbSkeleton() {
+export function BreadcrumbLoadingSkeleton() {
   return (
-    <div aria-hidden="true" style={{ marginBottom: 20 }}>
-      <Skeleton variant="text" width={28} style={{ fontSize: '0.9rem', lineHeight: 1.5 }} />
+    <div
+      aria-hidden="true"
+      style={{
+        marginBottom: 19.5,
+        minHeight: '22px',
+        display: 'flex',
+        alignItems: 'center',
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <Skeleton variant="text" width={10} style={{ fontSize: '0.9rem', lineHeight: 1.5 }} />
+        <Skeleton variant="text" width={14} style={{ fontSize: '0.9rem', lineHeight: 1.5, opacity: 0.8 }} />
+      </div>
     </div>
   )
 }
@@ -13,10 +24,20 @@ function BreadcrumbSkeleton() {
 function HeaderSkeleton() {
   return (
     <header className="pb-1">
-      <Skeleton variant="text" width={10} style={{ fontSize: '0.75rem', lineHeight: '1rem', marginBottom: 8 }} />
-      <div className="space-y-1">
-        <Skeleton variant="text" width={85} style={{ fontSize: '1.875rem', lineHeight: 1.2 }} />
-        <Skeleton variant="text" width={60} style={{ fontSize: '1.875rem', lineHeight: 1.2 }} />
+      <div className="mb-2 flex items-center">
+        <Skeleton variant="text" style={{ width: 96 }} height={16} className="rounded-sm" />
+      </div>
+      <div className="space-y-1.5">
+        <Skeleton
+          variant="text"
+          width={72}
+          style={{ fontSize: '1.875rem', lineHeight: 1.2, fontWeight: 700 }}
+        />
+        <Skeleton
+          variant="text"
+          width={48}
+          style={{ fontSize: '1.875rem', lineHeight: 1.2, fontWeight: 700 }}
+        />
       </div>
     </header>
   )
@@ -61,7 +82,7 @@ export function ContentBodyLoadingSkeleton({ blocks = 4 }: { blocks?: number }) 
 export function ContentPageLoadingSkeleton() {
   return (
     <div aria-label="Laster innhold" aria-busy="true">
-      <BreadcrumbSkeleton />
+      <BreadcrumbLoadingSkeleton />
       <HeaderSkeleton />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]">
@@ -80,7 +101,7 @@ export function ContentPageLoadingSkeleton() {
 export function DetailPageLoadingSkeleton() {
   return (
     <div aria-label="Laster innhold" aria-busy="true">
-      <BreadcrumbSkeleton />
+      <BreadcrumbLoadingSkeleton />
       <HeaderSkeleton />
 
       <section className="mt-8 min-w-0">

@@ -36,7 +36,8 @@ export function ScoreLegend({ mode }: ScoreLegendProps) {
         <>
           <LegendItem color="bm25" label="BM25 (ordbasert)" />
           <LegendItem color="semantic" label="Semantisk" />
-          <LegendItem color="rrf" label="Samlet RRF" />
+          <LegendItem color="rrf" label="RRF" />
+          <LegendItem color="rerank" label="Rerank" />
         </>
       ) : (
         <LegendItem color="rrf" label="Keyword-score" />

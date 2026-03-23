@@ -38,6 +38,7 @@ export interface HttpRequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   suppressErrorStatuses?: number[]
   cache?: RequestCache
+  body?: string
 }
 
 /**
@@ -93,7 +94,7 @@ export async function httpRequest<T>(
   url: string | URL,
   options: HttpRequestOptions = {},
 ): Promise<T> {
-  const { signal, headers = {}, method = 'GET', suppressErrorStatuses = [], cache } = options
+  const { signal, headers = {}, method = 'GET', suppressErrorStatuses = [], cache, body } = options
 
   // Debug logging
   if (import.meta.env.DEV) {
@@ -109,6 +110,7 @@ export async function httpRequest<T>(
       },
       signal,
       ...(cache !== undefined && { cache }),
+      ...(body !== undefined && method !== 'GET' && { body }),
     })
 
     if (!response.ok) {
@@ -133,10 +135,11 @@ export async function httpRequest<T>(
     }
 
     if (error instanceof Error) {
-      // Don't log abort errors (from React Strict Mode in dev)
-      if (error.name !== 'AbortError') {
-        console.error(`Request error: ${error.message}`)
+      // Let AbortErrors pass through unchanged so callers can detect them by name
+      if (error.name === 'AbortError') {
+        throw error
       }
+      console.error(`Request error: ${error.message}`)
       throw new ApiError(error.message)
     }
 

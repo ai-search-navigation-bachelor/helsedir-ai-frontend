@@ -145,7 +145,9 @@ export function useSearchPageModel() {
     }
   }, [pages, role, trimmedQuery, setSearchData])
 
-  // Prefetch first page of each category that has results
+  // Prefetch category pages lazily: wait a short while after results arrive so the
+  // active tab's own fetch completes first, then stagger the remaining categories to
+  // avoid overwhelming a single-worker backend with 5+ concurrent requests.
   const prefetchedForKey = useRef<string | null>(null)
 
   useEffect(() => {
@@ -157,21 +159,32 @@ export function useSearchPageModel() {
     prefetchedForKey.current = cacheKey
     const { search_id, category_counts } = fp
 
-    SEARCH_MAIN_CATEGORIES.forEach((mainCategory) => {
-      const hasResults = mainCategory.subcategoryIds.some(
+    const categoriesToPrefetch = SEARCH_MAIN_CATEGORIES.filter((mainCategory) => {
+      // Skip the currently active tab – it's already being fetched
+      if (mainCategory.id === activeTab) return false
+      return mainCategory.subcategoryIds.some(
         (id) => (category_counts[id] || 0) > 0,
       )
-      if (!hasResults) return
+    })
 
-      prefetchCategorySearch(
-        queryClient,
-        searchQuery,
-        mainCategory.subcategoryIds.join(','),
-        search_id,
-        role ?? undefined,
+    // Stagger prefetches so they don't all hit the backend at once
+    const timers: ReturnType<typeof setTimeout>[] = []
+    categoriesToPrefetch.forEach((mainCategory, i) => {
+      timers.push(
+        setTimeout(() => {
+          prefetchCategorySearch(
+            queryClient,
+            searchQuery,
+            mainCategory.subcategoryIds.join(','),
+            search_id,
+            role ?? undefined,
+          )
+        }, 600 + i * 400),
       )
     })
-  }, [pages, queryClient, role, roleKey, searchQuery])
+
+    return () => timers.forEach(clearTimeout)
+  }, [pages, queryClient, role, roleKey, searchQuery, activeTab])
 
   // Flatten all pages into a single results array with category metadata
   const allResults = useMemo(() => {

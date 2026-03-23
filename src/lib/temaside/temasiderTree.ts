@@ -5,6 +5,7 @@ export type ThemeNode = {
   segment: string // "forebygging-diagnose-og-behandling"
   title: string // best-effort display title
   hasPage: boolean // true when this path exists as a real temaside page
+  isInactive?: boolean
   contentId?: string // content id for this temaside path when available
   hasBodyContent?: boolean
   hasLinkedContent?: boolean
@@ -17,6 +18,7 @@ export type ThemeNode = {
 type ThemePathMeta = {
   title?: string
   contentId?: string
+  isInactive?: boolean
   hasBodyContent?: boolean
   hasLinkedContent?: boolean
   hasChildren?: boolean
@@ -57,6 +59,7 @@ export function buildThemeTree(
           segment: part,
           title: preferredTitle || titleize(part),
           hasPage: Boolean(preferredTitle || preferredContentId),
+          isInactive: preferredMeta?.isInactive,
           contentId: preferredContentId,
           hasBodyContent: preferredMeta?.hasBodyContent,
           hasLinkedContent: preferredMeta?.hasLinkedContent,
@@ -78,6 +81,9 @@ export function buildThemeTree(
       if (preferredMeta) {
         if (preferredMeta.hasBodyContent !== undefined) {
           child.hasBodyContent = preferredMeta.hasBodyContent
+        }
+        if (preferredMeta.isInactive !== undefined) {
+          child.isInactive = preferredMeta.isInactive
         }
         if (preferredMeta.hasLinkedContent !== undefined) {
           child.hasLinkedContent = preferredMeta.hasLinkedContent

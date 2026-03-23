@@ -1,13 +1,10 @@
-import { Alert, Paragraph } from '@digdir/designsystemet-react'
+import { Alert, Paragraph, Skeleton } from '@digdir/designsystemet-react'
 import {
   SearchCategoryTabs,
   SearchEmptyState,
   SearchResultsList,
 } from '../components/search'
-import {
-  SearchPageLoadingSkeleton,
-  SearchResultsLoadingSkeleton,
-} from '../components/search/SearchSkeletons'
+import { SearchResultsLoadingSkeleton } from '../components/search/SearchSkeletons'
 import { useSearchPageModel } from '../hooks/useSearchPageModel'
 
 /**
@@ -36,26 +33,37 @@ export function SearchPage() {
   }
 
   const hasStableCategoryCounts = Object.keys(mainCategoryCounts).length > 0
-  const shouldShowFullPageSkeleton = isLoading && !hasStableCategoryCounts
+  const isLoadingCounts = isLoading && !hasStableCategoryCounts
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-6 sm:px-6 lg:px-12">
-      {shouldShowFullPageSkeleton && <SearchPageLoadingSkeleton />}
-
       {error && (
         <Alert>
           <Paragraph>Det oppstod en feil ved søket. Vennligst prøv igjen.</Paragraph>
         </Alert>
       )}
 
-      {!shouldShowFullPageSkeleton && !error && (
-        <>
+      {!error && (
+        <div aria-busy={isLoading} aria-label="Laster søkeresultater">
+          {isLoading && (
+            <div className="sr-only" role="status" aria-live="polite">
+              Laster søkeresultater
+            </div>
+          )}
+
           <SearchCategoryTabs
             activeTab={activeTab}
             tabs={tabs}
             categoryCounts={mainCategoryCounts}
+            isLoadingCounts={isLoadingCounts}
             onTabChange={handleTabChange}
           />
+
+          {isLoading && (
+            <div className="mb-3" aria-hidden="true">
+              <Skeleton width={150} height={19} className="rounded" />
+            </div>
+          )}
 
           {isLoading ? (
             <SearchResultsLoadingSkeleton />
@@ -71,7 +79,7 @@ export function SearchPage() {
               onLoadMore={fetchNextPage}
             />
           )}
-        </>
+        </div>
       )}
     </div>
   )
