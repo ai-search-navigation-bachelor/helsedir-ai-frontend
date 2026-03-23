@@ -1,0 +1,393 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Spinner } from '@digdir/designsystemet-react'
+import { useRoleTagsQuery } from '../hooks/queries/useRoleTagsQuery'
+import { RoleIcon } from '../utils/roleIcons'
+import { buildContentUrl } from '../lib/contentUrl'
+import type { RoleTagGroup, RoleTagDocument } from '../api/roleTags'
+
+const mono = "'JetBrains Mono', 'Fira Code', monospace"
+
+export function TagsPage() {
+  const { data, isLoading, isError, error, refetch } = useRoleTagsQuery()
+  const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set())
+  const [untaggedExpanded, setUntaggedExpanded] = useState(false)
+
+  const toggleRole = (slug: string) => {
+    setExpandedRoles((prev) => {
+      const next = new Set(prev)
+      if (next.has(slug)) next.delete(slug)
+      else next.add(slug)
+      return next
+    })
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="mx-auto w-full max-w-screen-xl px-4 pt-6 pb-8 sm:px-6 lg:px-12">
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '120px 0' }}>
+          <Spinner data-size="md" aria-label="Laster rolle-tags..." />
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="mx-auto w-full max-w-screen-xl px-4 pt-6 pb-8 sm:px-6 lg:px-12">
+        <Header />
+        <div
+          style={{
+            padding: '16px 20px',
+            borderRadius: '8px',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#dc2626',
+            fontSize: '0.88rem',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+          }}
+        >
+          <span>{error instanceof Error ? error.message : 'Kunne ikke laste rolle-tags.'}</span>
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            style={{
+              padding: '6px 16px',
+              fontSize: '0.84rem',
+              fontWeight: 700,
+              borderRadius: '6px',
+              border: '1px solid #fecaca',
+              backgroundColor: '#fff',
+              color: '#dc2626',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Prøv igjen
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Empty state
+  if (!data || data.total_documents === 0) {
+    return (
+      <div className="mx-auto w-full max-w-screen-xl px-4 pt-6 pb-8 sm:px-6 lg:px-12">
+        <Header />
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '80px 20px',
+            borderRadius: '10px',
+            border: '1px dashed #cbd5e1',
+            backgroundColor: '#f8fafc',
+          }}
+        >
+          <p style={{ fontSize: '0.95rem', color: '#64748b', margin: 0, lineHeight: 1.6 }}>
+            Ingen dokumenter funnet.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const rolesWithDocs = data.roles.filter((r) => r.document_count > 0)
+
+  return (
+    <div className="mx-auto w-full max-w-screen-xl px-4 pt-6 pb-8 sm:px-6 lg:px-12">
+      <Header />
+
+      {/* Summary stats row */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '24px',
+          marginBottom: '24px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <StatBadge label="Totalt dokumenter" value={data.total_documents} />
+        <StatBadge label="Roller med dokumenter" value={rolesWithDocs.length} />
+        <StatBadge label="Uten rolle-tag" value={data.untagged_count} />
+      </div>
+
+      {/* Role list */}
+      <div
+        style={{
+          borderRadius: '10px',
+          border: '1px solid #e2e8f0',
+          backgroundColor: '#fff',
+          overflow: 'hidden',
+          marginBottom: '20px',
+        }}
+      >
+        {data.roles.map((role, i) => (
+          <RoleRow
+            key={role.slug}
+            role={role}
+            expanded={expandedRoles.has(role.slug)}
+            onToggle={() => toggleRole(role.slug)}
+            isLast={i === data.roles.length - 1 && data.untagged_count === 0}
+          />
+        ))}
+      </div>
+
+      {/* Untagged section */}
+      {data.untagged_count > 0 && (
+        <div
+          style={{
+            borderRadius: '10px',
+            border: '1px solid #e2e8f0',
+            backgroundColor: '#fafafa',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setUntaggedExpanded(!untaggedExpanded)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setUntaggedExpanded(!untaggedExpanded)
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '12px 16px',
+              cursor: 'pointer',
+              userSelect: 'none',
+            }}
+          >
+            <span style={{ fontSize: '18px', color: '#94a3b8' }}>○</span>
+            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#94a3b8' }}>
+              Uten rolle-tag
+            </span>
+            <span
+              style={{
+                fontFamily: mono,
+                fontSize: '0.82rem',
+                color: '#94a3b8',
+                marginLeft: 'auto',
+              }}
+            >
+              {data.untagged_count}
+            </span>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                color: '#94a3b8',
+                transform: untaggedExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                transition: 'transform 0.15s ease',
+              }}
+            >
+              ▶
+            </span>
+          </div>
+          {untaggedExpanded && (
+            <DocumentList documents={data.untagged_documents} />
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Sub-components                                                      */
+/* ------------------------------------------------------------------ */
+
+function Header() {
+  return (
+    <header style={{ marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+        <div
+          style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: '#047FA4',
+          }}
+        />
+        <h1
+          style={{
+            fontSize: '1.4rem',
+            fontWeight: 800,
+            margin: 0,
+            color: '#025169',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          Role Tags
+        </h1>
+      </div>
+      <p style={{ fontSize: '0.88rem', color: '#64748b', margin: 0, maxWidth: '600px', lineHeight: 1.6 }}>
+        Oversikt over hvilke dokumenter som er tagget med de forskjellige rollene.
+      </p>
+    </header>
+  )
+}
+
+function StatBadge({ label, value }: { label: string; value: number }) {
+  return (
+    <div
+      style={{
+        padding: '10px 16px',
+        borderRadius: '8px',
+        backgroundColor: '#f8fafc',
+        border: '1px solid #e2e8f0',
+      }}
+    >
+      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '2px' }}>{label}</div>
+      <div
+        style={{
+          fontFamily: mono,
+          fontSize: '1.1rem',
+          fontWeight: 700,
+          color: '#025169',
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function RoleRow({
+  role,
+  expanded,
+  onToggle,
+  isLast,
+}: {
+  role: RoleTagGroup
+  expanded: boolean
+  onToggle: () => void
+  isLast: boolean
+}) {
+  return (
+    <div
+      style={{
+        borderBottom: isLast && !expanded ? 'none' : '1px solid #f1f5f9',
+      }}
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onToggle()
+          }
+        }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
+      >
+        <RoleIcon slug={role.slug} displayName={role.display_name} size={18} style={{ color: '#025169', flexShrink: 0 }} />
+        <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e293b' }}>
+          {role.display_name}
+        </span>
+        <span
+          style={{
+            fontFamily: mono,
+            fontSize: '0.82rem',
+            color: '#047FA4',
+            marginLeft: 'auto',
+          }}
+        >
+          {role.document_count}
+        </span>
+        <span
+          style={{
+            fontSize: '0.75rem',
+            color: '#94a3b8',
+            transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 0.15s ease',
+          }}
+        >
+          ▶
+        </span>
+      </div>
+      {expanded && <DocumentList documents={role.documents} />}
+    </div>
+  )
+}
+
+function DocumentList({ documents }: { documents: RoleTagDocument[] }) {
+  return (
+    <div
+      style={{
+        padding: '0 16px 12px 44px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+      }}
+    >
+      {documents.map((doc) => (
+        <div
+          key={doc.id}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 10px',
+            borderRadius: '6px',
+            backgroundColor: '#f8fafc',
+            fontSize: '0.84rem',
+          }}
+        >
+          <Link
+            to={buildContentUrl(doc)}
+            style={{
+              color: '#047FA4',
+              textDecoration: 'none',
+              fontWeight: 500,
+              flex: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.textDecoration = 'underline'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.textDecoration = 'none'
+            }}
+          >
+            {doc.title}
+          </Link>
+          <span
+            style={{
+              fontFamily: mono,
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              padding: '2px 8px',
+              borderRadius: '4px',
+              backgroundColor: '#e0f2fe',
+              color: '#0369a1',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            {doc.info_type}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
