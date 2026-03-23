@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { HiArrowRight, HiBeaker } from 'react-icons/hi2';
-import { IoChevronDown, IoPeople } from 'react-icons/io5';
+import { IoChevronDown, IoPeople, IoPricetag } from 'react-icons/io5';
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider';
 import { useRolesQuery } from '../../hooks/queries/useRolesQuery';
 import { useRoleStore } from '../../stores/roleStore';
@@ -172,7 +172,7 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
           );
         })}
 
-        {/* Dev page link */}
+        {/* Dev section links */}
         <div className="border-t border-gray-100 mt-1 pt-1">
           <Link
             to="/dev"
@@ -182,6 +182,20 @@ export function MenuDropdown({ isOpen, onClose, containerRef }: MenuDropdownProp
             <span className="flex items-center gap-2 text-[0.95rem] text-gray-500 group-hover:text-[#025169] transition-colors">
               <HiBeaker size={16} />
               Dev
+            </span>
+            <HiArrowRight
+              size={16}
+              className="text-gray-400 group-hover:text-[#025169] group-hover:translate-x-0.5 transition-all duration-150"
+            />
+          </Link>
+          <Link
+            to="/tags"
+            className="group flex items-center justify-between py-3 px-4 rounded-lg transition-colors duration-100 hover:bg-[#e8f4f8]"
+            onClick={handleClose}
+          >
+            <span className="flex items-center gap-2 text-[0.95rem] text-gray-500 group-hover:text-[#025169] transition-colors">
+              <IoPricetag size={16} />
+              Tags
             </span>
             <HiArrowRight
               size={16}
