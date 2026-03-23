@@ -5,6 +5,6 @@ export function useInfoTypesQuery() {
   return useQuery({
     queryKey: ['info-types'],
     queryFn: ({ signal }) => fetchInfoTypes(signal),
-    staleTime: Infinity,
+    staleTime: 5 * 60 * 1000,
   })
 }

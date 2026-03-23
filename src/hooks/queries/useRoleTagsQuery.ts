@@ -4,7 +4,7 @@ import { fetchRoleTags } from '../../api/roleTags'
 export function useRoleTagsQuery() {
   return useQuery({
     queryKey: ['role-tags'],
-    queryFn: ({ signal }) => fetchRoleTags(signal),
+    queryFn: ({ signal }) => fetchRoleTags(undefined, signal),
     staleTime: 5 * 60 * 1000,
   })
 }

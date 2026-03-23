@@ -135,10 +135,13 @@ export function SearchResultCard({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" style={{ pointerEvents: 'auto' }}>
           {roleTags.map((slug) => (
             <span
               key={slug}
+              tabIndex={0}
+              role="img"
+              aria-label={roleDisplayNames.get(slug) ?? slug}
               title={roleDisplayNames.get(slug) ?? slug}
               style={{
                 opacity: slug === selectedRole ? 1 : 0.35,

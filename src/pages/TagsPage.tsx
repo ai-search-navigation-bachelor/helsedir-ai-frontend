@@ -6,6 +6,7 @@ import { useInfoTypesQuery } from '../hooks/queries/useInfoTypesQuery'
 import { RoleIcon } from '../utils/roleIcons'
 import { buildContentUrl } from '../lib/contentUrl'
 import { DEFAULT_CONFIG } from '../constants/dev'
+import { ds } from '../styles/dsTokens'
 import type { RoleTagGroup, RoleTagDocument } from '../api/roleTags'
 
 const mono = "'JetBrains Mono', 'Fira Code', monospace"
@@ -77,9 +78,19 @@ export function TagsPage() {
     return docs
   }, [data, searchableTypes, searchQuery, isFiltering])
 
-  const totalFilteredDocs = isFiltering
-    ? filteredRoles.reduce((sum, r) => sum + r.document_count, 0) + filteredUntagged.length
-    : (data?.total_documents ?? 0)
+  const totalFilteredDocs = useMemo(() => {
+    if (!isFiltering) return data?.total_documents ?? 0
+    const uniqueIds = new Set<string>()
+    for (const role of filteredRoles) {
+      for (const doc of role.documents) {
+        uniqueIds.add(doc.id)
+      }
+    }
+    for (const doc of filteredUntagged) {
+      uniqueIds.add(doc.id)
+    }
+    return uniqueIds.size
+  }, [isFiltering, data, filteredRoles, filteredUntagged])
 
   // Loading state
   if (isLoading) {
@@ -101,9 +112,9 @@ export function TagsPage() {
           style={{
             padding: '16px 20px',
             borderRadius: '8px',
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            color: '#dc2626',
+            backgroundColor: ds.color('neutral', 'background-tinted'),
+            border: `1px solid ${ds.color('neutral', 'border-subtle')}`,
+            color: ds.color('neutral', 'text-default'),
             fontSize: '0.88rem',
             fontWeight: 500,
             display: 'flex',
@@ -121,9 +132,9 @@ export function TagsPage() {
               fontSize: '0.84rem',
               fontWeight: 700,
               borderRadius: '6px',
-              border: '1px solid #fecaca',
-              backgroundColor: '#fff',
-              color: '#dc2626',
+              border: `1px solid ${ds.color('neutral', 'border-subtle')}`,
+              backgroundColor: ds.color('neutral', 'surface-default'),
+              color: ds.color('neutral', 'text-default'),
               cursor: 'pointer',
               whiteSpace: 'nowrap',
             }}
@@ -168,6 +179,7 @@ export function TagsPage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Filtrer dokumenter..."
+          aria-label="Filtrer dokumenter"
           style={{
             width: '100%',
             maxWidth: '400px',
@@ -202,6 +214,8 @@ export function TagsPage() {
               type="button"
               onClick={() => setInfoTypesOpen((v) => !v)}
               title="Vis info-typer"
+              aria-expanded={infoTypesOpen}
+              aria-controls="infoTypes-panel"
               style={{
                 width: '18px',
                 height: '18px',
@@ -228,6 +242,7 @@ export function TagsPage() {
 
           {infoTypesOpen && infoTypes && (
             <div
+              id="infoTypes-panel"
               style={{
                 marginBottom: '12px',
                 padding: '12px 16px',
@@ -362,6 +377,8 @@ export function TagsPage() {
           <div
             role="button"
             tabIndex={0}
+            aria-expanded={untaggedExpanded}
+            aria-controls="untagged-panel"
             onClick={() => setUntaggedExpanded(!untaggedExpanded)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -404,7 +421,9 @@ export function TagsPage() {
             </span>
           </div>
           {untaggedExpanded && (
-            <DocumentList documents={filteredUntagged} />
+            <div id="untagged-panel">
+              <DocumentList documents={filteredUntagged} />
+            </div>
           )}
         </div>
       )}
@@ -492,6 +511,8 @@ function RoleRow({
       <div
         role="button"
         tabIndex={0}
+        aria-expanded={expanded}
+        aria-controls={`role-panel-${role.slug}`}
         onClick={onToggle}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -533,7 +554,11 @@ function RoleRow({
           ▶
         </span>
       </div>
-      {expanded && <DocumentList documents={role.documents} />}
+      {expanded && (
+        <div id={`role-panel-${role.slug}`}>
+          <DocumentList documents={role.documents} />
+        </div>
+      )}
     </div>
   )
 }
