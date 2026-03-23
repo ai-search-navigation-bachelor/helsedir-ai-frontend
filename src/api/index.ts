@@ -44,3 +44,7 @@ export type { Role } from './roles'
 // Role tags
 export { fetchRoleTags } from './roleTags'
 export type { RoleTagDocument, RoleTagGroup, RoleTagsResponse } from './roleTags'
+
+// Info types
+export { fetchInfoTypes } from './infoTypes'
+export type { InfoType } from './infoTypes'

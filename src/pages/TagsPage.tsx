@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Spinner } from '@digdir/designsystemet-react'
 import { useRoleTagsQuery } from '../hooks/queries/useRoleTagsQuery'
+import { useInfoTypesQuery } from '../hooks/queries/useInfoTypesQuery'
 import { RoleIcon } from '../utils/roleIcons'
 import { buildContentUrl } from '../lib/contentUrl'
 import type { RoleTagGroup, RoleTagDocument } from '../api/roleTags'
@@ -15,6 +16,7 @@ function filterDocuments(docs: RoleTagDocument[], query: string): RoleTagDocumen
 
 export function TagsPage() {
   const { data, isLoading, isError, error, refetch } = useRoleTagsQuery()
+  const { data: infoTypes } = useInfoTypesQuery()
   const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set())
   const [untaggedExpanded, setUntaggedExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -121,6 +123,20 @@ export function TagsPage() {
     return filterDocuments(data.untagged_documents, searchQuery)
   }, [data.untagged_documents, searchQuery, isFiltering])
 
+  const searchableTypes = useMemo(() => {
+    if (!infoTypes) return null
+    return new Set(infoTypes.filter((t) => t.searchable).map((t) => t.slug))
+  }, [infoTypes])
+
+  const searchableCount = useMemo(() => {
+    if (!searchableTypes) return null
+    const allDocs = [
+      ...data.roles.flatMap((r) => r.documents),
+      ...data.untagged_documents,
+    ]
+    return allDocs.filter((d) => searchableTypes.has(d.info_type)).length
+  }, [data, searchableTypes])
+
   const totalFilteredDocs = isFiltering
     ? filteredRoles.reduce((sum, r) => sum + r.document_count, 0) + filteredUntagged.length
     : data.total_documents
@@ -161,6 +177,7 @@ export function TagsPage() {
         }}
       >
         <StatBadge label="Totalt dokumenter" value={data.total_documents} />
+        {searchableCount !== null && <StatBadge label="Søkbare" value={searchableCount} />}
         <StatBadge label="Med rolle-tag" value={data.total_documents - data.untagged_count} />
         <StatBadge label="Uten rolle-tag" value={data.untagged_count} />
         {isFiltering && <StatBadge label="Treff" value={totalFilteredDocs} />}
