@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Spinner } from '@digdir/designsystemet-react'
 import { useRoleTagsQuery } from '../hooks/queries/useRoleTagsQuery'
@@ -8,10 +8,16 @@ import type { RoleTagGroup, RoleTagDocument } from '../api/roleTags'
 
 const mono = "'JetBrains Mono', 'Fira Code', monospace"
 
+function filterDocuments(docs: RoleTagDocument[], query: string): RoleTagDocument[] {
+  const lower = query.toLowerCase()
+  return docs.filter((d) => d.title.toLowerCase().includes(lower) || d.info_type.toLowerCase().includes(lower))
+}
+
 export function TagsPage() {
   const { data, isLoading, isError, error, refetch } = useRoleTagsQuery()
   const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set())
   const [untaggedExpanded, setUntaggedExpanded] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const toggleRole = (slug: string) => {
     setExpandedRoles((prev) => {
@@ -98,11 +104,53 @@ export function TagsPage() {
     )
   }
 
+  const isFiltering = searchQuery.trim().length > 0
+
+  const filteredRoles = useMemo(() => {
+    if (!isFiltering) return data.roles
+    return data.roles
+      .map((role) => {
+        const docs = filterDocuments(role.documents, searchQuery)
+        return { ...role, documents: docs, document_count: docs.length }
+      })
+      .filter((role) => role.document_count > 0)
+  }, [data.roles, searchQuery, isFiltering])
+
+  const filteredUntagged = useMemo(() => {
+    if (!isFiltering) return data.untagged_documents
+    return filterDocuments(data.untagged_documents, searchQuery)
+  }, [data.untagged_documents, searchQuery, isFiltering])
+
   const rolesWithDocs = data.roles.filter((r) => r.document_count > 0)
+  const totalFilteredDocs = isFiltering
+    ? filteredRoles.reduce((sum, r) => sum + r.document_count, 0) + filteredUntagged.length
+    : data.total_documents
 
   return (
     <div className="mx-auto w-full max-w-screen-xl px-4 pt-6 pb-8 sm:px-6 lg:px-12">
       <Header />
+
+      {/* Search bar */}
+      <div style={{ marginBottom: '20px' }}>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Filtrer dokumenter..."
+          style={{
+            width: '100%',
+            maxWidth: '400px',
+            padding: '10px 14px',
+            fontSize: '0.88rem',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0',
+            outline: 'none',
+            transition: 'border-color 0.15s ease',
+          }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = '#047FA4' }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0' }}
+        />
+      </div>
 
       {/* Summary stats row */}
       <div
@@ -116,9 +164,29 @@ export function TagsPage() {
         <StatBadge label="Totalt dokumenter" value={data.total_documents} />
         <StatBadge label="Roller med dokumenter" value={rolesWithDocs.length} />
         <StatBadge label="Uten rolle-tag" value={data.untagged_count} />
+        {isFiltering && <StatBadge label="Treff" value={totalFilteredDocs} />}
       </div>
 
+      {/* No filter results */}
+      {isFiltering && totalFilteredDocs === 0 && (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '40px 20px',
+            borderRadius: '10px',
+            border: '1px dashed #cbd5e1',
+            backgroundColor: '#f8fafc',
+            marginBottom: '20px',
+          }}
+        >
+          <p style={{ fontSize: '0.9rem', color: '#64748b', margin: 0 }}>
+            Ingen dokumenter matcher &laquo;{searchQuery}&raquo;
+          </p>
+        </div>
+      )}
+
       {/* Role list */}
+      {filteredRoles.length > 0 && (
       <div
         style={{
           borderRadius: '10px',
@@ -128,19 +196,20 @@ export function TagsPage() {
           marginBottom: '20px',
         }}
       >
-        {data.roles.map((role, i) => (
+        {filteredRoles.map((role, i) => (
           <RoleRow
             key={role.slug}
             role={role}
-            expanded={expandedRoles.has(role.slug)}
+            expanded={isFiltering || expandedRoles.has(role.slug)}
             onToggle={() => toggleRole(role.slug)}
-            isLast={i === data.roles.length - 1 && data.untagged_count === 0}
+            isLast={i === filteredRoles.length - 1 && filteredUntagged.length === 0}
           />
         ))}
       </div>
+      )}
 
       {/* Untagged section */}
-      {data.untagged_count > 0 && (
+      {filteredUntagged.length > 0 && (
         <div
           style={{
             borderRadius: '10px',
@@ -180,7 +249,7 @@ export function TagsPage() {
                 marginLeft: 'auto',
               }}
             >
-              {data.untagged_count}
+              {filteredUntagged.length}
             </span>
             <span
               style={{
@@ -193,8 +262,8 @@ export function TagsPage() {
               ▶
             </span>
           </div>
-          {untaggedExpanded && (
-            <DocumentList documents={data.untagged_documents} />
+          {(untaggedExpanded || isFiltering) && (
+            <DocumentList documents={filteredUntagged} />
           )}
         </div>
       )}
