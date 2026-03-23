@@ -20,6 +20,7 @@ export function TagsPage() {
   const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set())
   const [untaggedExpanded, setUntaggedExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [infoTypesOpen, setInfoTypesOpen] = useState(false)
 
   const toggleRole = (slug: string) => {
     setExpandedRoles((prev) => {
@@ -191,9 +192,74 @@ export function TagsPage() {
             marginBottom: '24px',
           }}
         >
-          <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Søkbare dokumenter
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Søkbare dokumenter
+            </span>
+            <button
+              type="button"
+              onClick={() => setInfoTypesOpen((v) => !v)}
+              title="Vis info-typer"
+              style={{
+                width: '18px',
+                height: '18px',
+                borderRadius: '50%',
+                border: '1.5px solid #94a3b8',
+                background: infoTypesOpen ? '#025169' : 'transparent',
+                color: infoTypesOpen ? '#fff' : '#94a3b8',
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                fontStyle: 'italic',
+                fontFamily: 'Georgia, serif',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease',
+                padding: 0,
+                lineHeight: 1,
+              }}
+            >
+              i
+            </button>
           </div>
+
+          {infoTypesOpen && infoTypes && (
+            <div
+              style={{
+                marginBottom: '12px',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                backgroundColor: '#fff',
+                border: '1px solid #e2e8f0',
+                fontSize: '0.82rem',
+              }}
+            >
+              <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontWeight: 600, color: '#047FA4', marginBottom: '4px', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                    Søkbare
+                  </div>
+                  {infoTypes.filter((t) => t.searchable).map((t) => (
+                    <div key={t.slug} style={{ color: '#1e293b', padding: '2px 0' }}>
+                      {t.display_name} <span style={{ color: '#94a3b8', fontFamily: mono, fontSize: '0.72rem' }}>({t.slug})</span>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, color: '#94a3b8', marginBottom: '4px', fontSize: '0.75rem', textTransform: 'uppercase' }}>
+                    Ikke søkbare
+                  </div>
+                  {infoTypes.filter((t) => !t.searchable).map((t) => (
+                    <div key={t.slug} style={{ color: '#94a3b8', padding: '2px 0' }}>
+                      {t.display_name} <span style={{ fontFamily: mono, fontSize: '0.72rem' }}>({t.slug})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '32px', alignItems: 'baseline', flexWrap: 'wrap' }}>
             <div>
               <span style={{ fontFamily: mono, fontSize: '1.4rem', fontWeight: 800, color: '#025169' }}>
