@@ -4,6 +4,9 @@ import { HiArrowRight } from "react-icons/hi2";
 import { buildContentUrl } from "../../lib/contentUrl";
 import { getDisplayTitle } from "../../lib/displayTitle";
 import { ChildGroupDropdown } from "./ChildGroupDropdown";
+import { useRolesQuery } from "../../hooks/queries/useRolesQuery";
+import { useRoleStore } from "../../stores/roleStore";
+import { RoleIcon } from "../../utils/roleIcons";
 import type { SearchResult } from "../../types";
 
 interface SearchResultCardProps {
@@ -52,6 +55,11 @@ export function SearchResultCard({
 }: SearchResultCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isAnyGroupOpen, setIsAnyGroupOpen] = useState(false);
+
+  const { data: roles } = useRolesQuery();
+  const selectedRole = useRoleStore((s) => s.role);
+  const roleDisplayNames = new Map(roles?.map((r) => [r.slug, r.display_name]));
+  const roleTags = result.role_tags ?? [];
 
   const isTemaside = result.info_type === "temaside";
   const childGroups = Array.isArray(result.children) ? result.children : [];
@@ -127,10 +135,26 @@ export function SearchResultCard({
             </span>
           )}
         </div>
-        <HiArrowRight
-          size={16}
-          className="text-[#025169] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-        />
+        <div className="flex items-center gap-1">
+          {roleTags.map((slug) => (
+            <span
+              key={slug}
+              title={roleDisplayNames.get(slug) ?? slug}
+              style={{
+                opacity: slug === selectedRole ? 1 : 0.35,
+                color: slug === selectedRole ? '#025169' : '#64748b',
+                transition: 'opacity 0.15s ease',
+                display: 'inline-flex',
+              }}
+            >
+              <RoleIcon slug={slug} size={13} />
+            </span>
+          ))}
+          <HiArrowRight
+            size={16}
+            className="text-[#025169] opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+          />
+        </div>
       </div>
 
       <h3 className="relative z-10 mb-1 font-title text-[1.05rem] font-semibold leading-snug text-gray-900 pointer-events-none">
