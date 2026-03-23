@@ -4,6 +4,7 @@ import { HiArrowRight } from 'react-icons/hi2'
 import type { ContentLink } from '../../../types/content'
 import { ds } from '../../../styles/dsTokens'
 import { SectionIcon } from './TemasideContentSection'
+import { isInactiveTemasideNode } from '../../../lib/temaside/visibility'
 
 const brandColor = ds.color('logobla-1', 'base-default')
 
@@ -66,19 +67,35 @@ export function ChildTemasideSection({ links }: { links: ContentLink[] }) {
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-2 py-1">
           {filtered.map((link) => (
             <li key={link.href} className="border-b border-gray-100">
-              <Link
-                to={link.href}
-                className="group flex items-center justify-between gap-3 py-3 no-underline text-inherit transition-colors duration-100 hover:bg-gray-50/60"
-              >
-                <p className="min-w-0 text-[0.9375rem] font-medium leading-snug transition-colors" style={{ color: brandColor }}>
-                  {link.title || titleFromPath(link.href)}
-                </p>
-                <HiArrowRight
-                  size={14}
-                  className="flex-shrink-0 transition-all duration-150 group-hover:translate-x-1"
-                  style={{ color: brandColor }}
-                />
-              </Link>
+              {isInactiveTemasideNode(link) ? (
+                <div
+                  title="Denne temasiden har foreløpig ikke innhold"
+                  aria-disabled="true"
+                  className="flex items-center justify-between gap-3 py-3 text-gray-400 cursor-not-allowed"
+                >
+                  <p className="min-w-0 text-[0.9375rem] font-medium leading-snug">
+                    {link.title || titleFromPath(link.href)}
+                  </p>
+                  <HiArrowRight
+                    size={14}
+                    className="flex-shrink-0 text-gray-300"
+                  />
+                </div>
+              ) : (
+                <Link
+                  to={link.href}
+                  className="group flex items-center justify-between gap-3 py-3 no-underline text-inherit transition-colors duration-100 hover:bg-gray-50/60"
+                >
+                  <p className="min-w-0 text-[0.9375rem] font-medium leading-snug transition-colors" style={{ color: brandColor }}>
+                    {link.title || titleFromPath(link.href)}
+                  </p>
+                  <HiArrowRight
+                    size={14}
+                    className="flex-shrink-0 transition-all duration-150 group-hover:translate-x-1"
+                    style={{ color: brandColor }}
+                  />
+                </Link>
+              )}
             </li>
           ))}
         </ul>

@@ -4,9 +4,18 @@ type ThemeVisibilityMeta = {
   has_linked_content?: boolean
   has_children?: boolean
   child_count?: number
+  tags?: string[]
+}
+
+export function isInactiveTemasideNode(node: ThemeVisibilityMeta) {
+  return Boolean(node.tags?.includes('no_content'))
 }
 
 export function shouldDisplayTemasideNode(node: ThemeVisibilityMeta) {
+  if (isInactiveTemasideNode(node)) {
+    return true
+  }
+
   if (typeof node.should_display === 'boolean') {
     return node.should_display
   }

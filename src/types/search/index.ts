@@ -23,6 +23,7 @@ export interface SearchResult {
   short_title?: string | null;
   display_title?: string | null;
   info_type: string;
+  tags?: string[];
   path?: string | null;
   should_display?: boolean;
   has_body_content?: boolean;
