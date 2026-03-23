@@ -128,13 +128,26 @@ export function TagsPage() {
     return new Set(infoTypes.filter((t) => t.searchable).map((t) => t.slug))
   }, [infoTypes])
 
-  const searchableCount = useMemo(() => {
+  const searchableStats = useMemo(() => {
     if (!searchableTypes) return null
-    const allDocs = [
-      ...data.roles.flatMap((r) => r.documents),
-      ...data.untagged_documents,
-    ]
-    return allDocs.filter((d) => searchableTypes.has(d.info_type)).length
+    let tagged = 0
+    let untagged = 0
+    for (const role of data.roles) {
+      for (const doc of role.documents) {
+        if (searchableTypes.has(doc.info_type)) tagged++
+      }
+    }
+    for (const doc of data.untagged_documents) {
+      if (searchableTypes.has(doc.info_type)) untagged++
+    }
+    // tagged counts each doc per role it appears in, so deduplicate
+    const seenTagged = new Set<string>()
+    for (const role of data.roles) {
+      for (const doc of role.documents) {
+        if (searchableTypes.has(doc.info_type)) seenTagged.add(doc.id)
+      }
+    }
+    return { total: seenTagged.size + untagged, tagged: seenTagged.size, untagged }
   }, [data, searchableTypes])
 
   const totalFilteredDocs = isFiltering
@@ -167,21 +180,62 @@ export function TagsPage() {
         />
       </div>
 
-      {/* Summary stats row */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '24px',
-          marginBottom: '24px',
-          flexWrap: 'wrap',
-        }}
-      >
-        <StatBadge label="Totalt dokumenter" value={data.total_documents} />
-        {searchableCount !== null && <StatBadge label="Søkbare" value={searchableCount} />}
-        <StatBadge label="Med rolle-tag" value={data.total_documents - data.untagged_count} />
-        <StatBadge label="Uten rolle-tag" value={data.untagged_count} />
-        {isFiltering && <StatBadge label="Treff" value={totalFilteredDocs} />}
-      </div>
+      {/* Summary stats */}
+      {searchableStats && (
+        <div
+          style={{
+            padding: '16px 20px',
+            borderRadius: '10px',
+            border: '1px solid #e2e8f0',
+            backgroundColor: '#f0f9ff',
+            marginBottom: '24px',
+          }}
+        >
+          <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Søkbare dokumenter
+          </div>
+          <div style={{ display: 'flex', gap: '32px', alignItems: 'baseline', flexWrap: 'wrap' }}>
+            <div>
+              <span style={{ fontFamily: mono, fontSize: '1.4rem', fontWeight: 800, color: '#025169' }}>
+                {searchableStats.total}
+              </span>
+              <span style={{ fontSize: '0.82rem', color: '#64748b', marginLeft: '6px' }}>totalt</span>
+            </div>
+            <div>
+              <span style={{ fontFamily: mono, fontSize: '1.1rem', fontWeight: 700, color: '#047FA4' }}>
+                {searchableStats.tagged}
+              </span>
+              <span style={{ fontSize: '0.82rem', color: '#64748b', marginLeft: '6px' }}>med rolle-tag</span>
+            </div>
+            <div>
+              <span style={{ fontFamily: mono, fontSize: '1.1rem', fontWeight: 700, color: '#94a3b8' }}>
+                {searchableStats.untagged}
+              </span>
+              <span style={{ fontSize: '0.82rem', color: '#64748b', marginLeft: '6px' }}>uten rolle-tag</span>
+            </div>
+            {isFiltering && (
+              <div>
+                <span style={{ fontFamily: mono, fontSize: '1.1rem', fontWeight: 700, color: '#059669' }}>
+                  {totalFilteredDocs}
+                </span>
+                <span style={{ fontSize: '0.82rem', color: '#64748b', marginLeft: '6px' }}>treff</span>
+              </div>
+            )}
+          </div>
+          <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '6px' }}>
+            {data.total_documents} dokumenter totalt i databasen
+          </div>
+        </div>
+      )}
+
+      {!searchableStats && (
+        <div style={{ display: 'flex', gap: '24px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          <StatBadge label="Totalt dokumenter" value={data.total_documents} />
+          <StatBadge label="Med rolle-tag" value={data.total_documents - data.untagged_count} />
+          <StatBadge label="Uten rolle-tag" value={data.untagged_count} />
+          {isFiltering && <StatBadge label="Treff" value={totalFilteredDocs} />}
+        </div>
+      )}
 
       {/* No filter results */}
       {isFiltering && totalFilteredDocs === 0 && (
