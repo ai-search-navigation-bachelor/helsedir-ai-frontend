@@ -485,7 +485,7 @@ export function DetailContentDisplay({
 
       <div className={showSidebarLayout ? 'grid gap-8 lg:grid-cols-[minmax(230px,270px)_1fr]' : ''}>
         {showSidebarLayout && (
-        <aside className="space-y-6 border-slate-200 lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:border-r lg:pr-6">
+        <aside className="space-y-6 border-slate-200 lg:border-r lg:pr-6">
           {sections.length > 1 && (
             <nav aria-label="Innholdsnavigasjon" className="hidden lg:block">
               <ul className="m-0 list-none border-t border-slate-200 p-0">
