@@ -6,6 +6,8 @@ import { TemasideHeader } from './TemasideHeader'
 import { ContentSection } from './TemasideContentSection'
 import { ChildTemasideSection } from './TemasideChildSection'
 import { buildContentUrl } from '../../../lib/contentUrl'
+import { useThemePagesQuery } from '../../../hooks/queries/useThemePagesQuery'
+import { normalizeTemasidePath } from '../../../lib/temaside/hubUtils'
 
 interface TemasideContentDisplayProps {
   content: ContentDetail
@@ -52,7 +54,10 @@ function getTemasideLinkKey(link: ContentLink) {
   return link.id || link.path || link.href || ''
 }
 
-function getChildTemasideLinks(content: ContentDetail): ContentLink[] {
+function getChildTemasideLinks(
+  content: ContentDetail,
+  tagsByKey: Map<string, string[]>,
+): ContentLink[] {
   const groupedTemasideItems = content.child_groups
     ?.filter((group) => group.info_type === 'temaside')
     .flatMap((group) =>
@@ -62,6 +67,7 @@ function getChildTemasideLinks(content: ContentDetail): ContentLink[] {
           rel: 'barn',
           type: item.content_type || item.info_type || 'temaside',
           title: item.title,
+          tags: item.tags || tagsByKey.get(item.path ? normalizeTemasidePath(item.path) : item.id),
           href: item.path
             ? buildContentUrl({ path: item.path, id: item.id })
             : `/content/${item.id}`,
@@ -86,6 +92,7 @@ function getChildTemasideLinks(content: ContentDetail): ContentLink[] {
       result.push({
         ...link,
         href,
+        tags: link.tags || tagsByKey.get(link.path ? normalizeTemasidePath(link.path) : (link.id || '')),
         path: link.path || null,
       })
       return result
@@ -114,7 +121,17 @@ function EmptyState() {
 
 export function TemasideContentDisplay({ content }: TemasideContentDisplayProps) {
   const parentLink = useMemo(() => getParentLink(content), [content])
-  const childTemasideLinks = useMemo(() => getChildTemasideLinks(content), [content])
+  const { data: themePagesData } = useThemePagesQuery()
+  const tagsByKey = useMemo(() => {
+    const map = new Map<string, string[]>()
+    for (const page of themePagesData?.results ?? []) {
+      if (page.info_type !== 'temaside' || !page.tags?.length) continue
+      map.set(page.id, page.tags)
+      map.set(normalizeTemasidePath(page.path), page.tags)
+    }
+    return map
+  }, [themePagesData])
+  const childTemasideLinks = useMemo(() => getChildTemasideLinks(content, tagsByKey), [content, tagsByKey])
   const groups = useMemo(
     () => sortGroupsByPriority(content.linked_content ?? EMPTY_LINKED_CONTENT),
     [content.linked_content],

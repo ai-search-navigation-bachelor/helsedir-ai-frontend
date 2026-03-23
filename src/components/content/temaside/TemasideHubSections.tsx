@@ -11,7 +11,35 @@ interface TemasideHubSectionsProps {
   visibleSections: HubSection[]
 }
 
-function SectionLinkItem({ path, title, onOpenLinkedPath }: { path: string; title: string; onOpenLinkedPath: (path: string) => void }) {
+function SectionLinkItem({
+  path,
+  title,
+  isInactive = false,
+  onOpenLinkedPath,
+}: {
+  path: string
+  title: string
+  isInactive?: boolean
+  onOpenLinkedPath: (path: string) => void
+}) {
+  if (isInactive) {
+    return (
+      <li className="border-b border-gray-100 last:border-b-0">
+        <div
+          title="Denne temasiden har forelopig ikke innhold"
+          aria-disabled="true"
+          className="flex items-center justify-between gap-3 px-5 py-3 text-sm text-gray-400 cursor-not-allowed bg-gray-50/60"
+        >
+          <span>{title}</span>
+          <HiArrowRight
+            size={14}
+            className="flex-shrink-0 text-gray-300"
+          />
+        </div>
+      </li>
+    )
+  }
+
   return (
     <li className="border-b border-gray-100 last:border-b-0">
       <Link
@@ -40,7 +68,13 @@ function SectionCard({ title, links, onOpenLinkedPath }: { title: string; links:
       </div>
       <ul>
         {links.map((item) => (
-          <SectionLinkItem key={item.path} path={item.path} title={item.title} onOpenLinkedPath={onOpenLinkedPath} />
+          <SectionLinkItem
+            key={item.path}
+            path={item.path}
+            title={item.title}
+            isInactive={item.isInactive}
+            onOpenLinkedPath={onOpenLinkedPath}
+          />
         ))}
       </ul>
     </section>
@@ -84,7 +118,13 @@ export function TemasideHubSections({
         </div>
         <ul className="grid grid-cols-1 md:grid-cols-2">
           {primarySection.links.map((item) => (
-            <SectionLinkItem key={item.path} path={item.path} title={item.title} onOpenLinkedPath={onOpenLinkedPath} />
+            <SectionLinkItem
+              key={item.path}
+              path={item.path}
+              title={item.title}
+              isInactive={item.isInactive}
+              onOpenLinkedPath={onOpenLinkedPath}
+            />
           ))}
         </ul>
       </section>

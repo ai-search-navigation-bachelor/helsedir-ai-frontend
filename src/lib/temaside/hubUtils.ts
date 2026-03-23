@@ -6,6 +6,7 @@ import { normalizePath } from '../path'
 export type HubLink = {
   path: string
   title: string
+  isInactive?: boolean
 }
 
 export type HubSection = {
@@ -116,7 +117,7 @@ export function buildHubSections(
         links: customSection.paths
           .map((path) => lookupNodeByPath(path))
           .filter((linkNode): linkNode is ThemeNode => Boolean(linkNode))
-          .map((linkNode) => ({ path: linkNode.path, title: linkNode.title }))
+          .map((linkNode) => ({ path: linkNode.path, title: linkNode.title, isInactive: linkNode.isInactive }))
           .sort(sortByTitle),
       }))
       .filter((section) => section.links.length > 0)
@@ -132,7 +133,7 @@ export function buildHubSections(
         id: `${node.path}-all`,
         title: 'Alle undertemaer',
         links: flatNodes
-          .map((child) => ({ path: child.path, title: child.title }))
+          .map((child) => ({ path: child.path, title: child.title, isInactive: child.isInactive }))
           .sort(sortByTitle),
       },
     ]
@@ -145,7 +146,7 @@ export function buildHubSections(
           id: section.path,
           title: section.title,
           links: collectDisplayableNodes(section)
-            .map((item) => ({ path: item.path, title: item.title }))
+            .map((item) => ({ path: item.path, title: item.title, isInactive: item.isInactive }))
             .sort(sortByTitle),
         }
       }
@@ -158,7 +159,7 @@ export function buildHubSections(
         title: section.title,
         links: sectionItems
           .filter((item) => item.hasPage)
-          .map((item) => ({ path: item.path, title: item.title }))
+          .map((item) => ({ path: item.path, title: item.title, isInactive: item.isInactive }))
           .sort(sortByTitle),
       }
     })

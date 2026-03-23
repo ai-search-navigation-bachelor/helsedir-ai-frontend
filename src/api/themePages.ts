@@ -7,6 +7,7 @@ export interface ThemePage {
   title: string
   info_type: string
   path: string
+  tags?: string[]
   has_body_content?: boolean
   has_linked_content?: boolean
   has_children?: boolean

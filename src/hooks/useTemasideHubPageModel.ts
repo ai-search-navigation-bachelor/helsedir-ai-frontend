@@ -18,7 +18,7 @@ import {
   normalizeTemasidePath,
   sanitizeTemasideBreadcrumbItems,
 } from '../lib/temaside/hubUtils'
-import { shouldDisplayTemasideNode } from '../lib/temaside/visibility'
+import { isInactiveTemasideNode, shouldDisplayTemasideNode } from '../lib/temaside/visibility'
 import { useTemasideBreadcrumbStore } from '../stores'
 
 export function useTemasideHubPageModel(
@@ -52,6 +52,7 @@ export function useTemasideHubPageModel(
     const metaByPath: Record<string, {
       title?: string
       contentId?: string
+      isInactive?: boolean
       hasBodyContent?: boolean
       hasLinkedContent?: boolean
       hasChildren?: boolean
@@ -60,9 +61,11 @@ export function useTemasideHubPageModel(
     }> = {}
     const paths = visibleThemePages.map((result) => {
       const normalizedPath = normalizeTemasidePath(result.path)
+      const isInactiveThemePage = result.info_type === 'temaside' && isInactiveTemasideNode(result)
       metaByPath[normalizedPath] = {
         title: result.title,
         contentId: result.id,
+        isInactive: isInactiveThemePage,
         hasBodyContent: result.has_body_content,
         hasLinkedContent: result.has_linked_content,
         hasChildren: result.has_children,

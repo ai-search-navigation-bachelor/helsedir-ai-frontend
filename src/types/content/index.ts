@@ -11,6 +11,7 @@ export interface ContentLink {
   type: string
   title: string
   href: string | null
+  tags?: string[]
   id?: string | null
   path?: string | null
   strukturId?: string
@@ -23,6 +24,7 @@ export interface ContentRelationItem {
   title: string
   short_title?: string | null
   display_title?: string | null
+  tags?: string[]
   content_type?: string
   info_type?: string
   relation_kind?: string
