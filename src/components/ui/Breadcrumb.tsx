@@ -67,7 +67,15 @@ export function Breadcrumb({ items, collapsible = false }: BreadcrumbProps) {
   const navigable = items.filter((item) => item.href !== '#')
   if (navigable.length === 0) return null
 
-  const shouldCollapse = collapsible && !expanded && navigable.length >= 3
+  const totalLabelLength = navigable.reduce((sum, item) => sum + item.label.trim().length, 0)
+  const shouldCollapse =
+    collapsible &&
+    !expanded &&
+    (
+      navigable.length >= 5 ||
+      (navigable.length >= 4 && totalLabelLength > 80) ||
+      totalLabelLength > 110
+    )
 
   return (
     <nav
