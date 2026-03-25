@@ -28,6 +28,7 @@ function hasNavigableChildren(content: ContentPresentationInput) {
 
 export function resolveContentPresentation(content: ContentPresentationInput): ContentPresentationMode {
   const normalizedType = normalizeContentType(content.content_type)
+  const hasChildren = hasNavigableChildren(content)
 
   if (isTemasideContentType(normalizedType)) {
     return 'temaside'
@@ -38,10 +39,10 @@ export function resolveContentPresentation(content: ContentPresentationInput): C
   }
 
   if (isRecommendationContentType(normalizedType)) {
-    return 'detail'
+    return hasChildren ? 'hierarchical' : 'detail'
   }
 
-  return hasNavigableChildren(content) ? 'hierarchical' : 'detail'
+  return hasChildren ? 'hierarchical' : 'detail'
 }
 
 export function resolveContentPresentationFromHint(options: {

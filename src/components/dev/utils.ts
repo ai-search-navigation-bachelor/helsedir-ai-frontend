@@ -82,6 +82,7 @@ export function getPipelineScores(result: SearchResult) {
 export function formatInfoTypeLabel(infoType: string): string {
   const normalized = infoType.toLowerCase()
   const map: Record<string, string> = {
+    horing: 'Høring',
     'lov-eller-forskriftstekst-med-kommentar': 'Lov/forskrift m. kommentar',
     'regelverk-lov-eller-forskrift': 'Regelverk',
     'nasjonal-faglig-retningslinje': 'Retningslinje',
