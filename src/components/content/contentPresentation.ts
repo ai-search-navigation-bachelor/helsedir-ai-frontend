@@ -39,7 +39,7 @@ export function resolveContentPresentation(content: ContentPresentationInput): C
   }
 
   if (isRecommendationContentType(normalizedType)) {
-    return hasChildren ? 'hierarchical' : 'detail'
+    return normalizedType === 'rad' && hasChildren ? 'hierarchical' : 'detail'
   }
 
   return hasChildren ? 'hierarchical' : 'detail'
