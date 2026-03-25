@@ -186,7 +186,7 @@ function PipelineRow({
         display: 'flex',
         alignItems: 'center',
         gap: 0,
-        padding: '12px 12px 72px 12px',
+        padding: '12px 12px 32px 12px',
         backgroundColor: '#fff',
         borderRadius: activeStage ? '10px 10px 0 0' : '10px',
         border: '1px solid #e2e8f0',
@@ -211,7 +211,7 @@ function PipelineRow({
         >
           {label}
         </div>
-        <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', maxWidth: '110px' }}>
+        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', maxWidth: '160px' }}>
           {PRESETS.map(({ label: pLabel, config: pConfig }) => {
             const isMatch = configMatchesPreset(config, pConfig)
             return (
@@ -220,8 +220,8 @@ function PipelineRow({
                 type="button"
                 onClick={() => onPreset(pConfig)}
                 style={{
-                  padding: '2px 6px',
-                  fontSize: '0.6rem',
+                  padding: '5px 12px',
+                  fontSize: '0.78rem',
                   fontWeight: 600,
                   borderRadius: '8px',
                   border: isMatch ? `1px solid ${labelColor}` : '1px solid #d1d5db',
