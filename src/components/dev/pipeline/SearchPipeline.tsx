@@ -186,12 +186,12 @@ function PipelineRow({
         display: 'flex',
         alignItems: 'center',
         gap: 0,
-        padding: '12px 12px',
+        padding: '12px 12px 72px 12px',
         backgroundColor: '#fff',
         borderRadius: activeStage ? '10px 10px 0 0' : '10px',
         border: '1px solid #e2e8f0',
         borderBottom: activeStage ? 'none' : '1px solid #e2e8f0',
-        overflowX: 'auto',
+        overflow: 'visible',
       }}
     >
       {/* Config label + presets */}
@@ -286,98 +286,167 @@ function PipelineRow({
       {/* Arrow → RRF */}
       <PipelineConnector type="straight" />
 
-      {/* RRF */}
+      {/* RRF → Boosts group with LTR bypass path below */}
       {(() => {
         const rrfStage = linear[0] // rrf
         const ltrStage = linear[1] // ltr
         const boostsStage = linear[2] // boosts
+        const branchColor = config.rerank ? '#7c3aed' : '#d1d5db'
         return (
-          <>
-            <PipelineStage
-              id={rrfStage.id}
-              label={rrfStage.label}
-              description={rrfStage.description}
-              accentHex={rrfStage.accentHex}
-              isActive={activeStage === rrfStage.id}
-              onClick={() => onStageClick(rrfStage.id)}
-              summary={getStageSummary(rrfStage.id, config, activeModelName)}
-            />
-
-            {/* LTR section: connector + LTR + connector, with bypass when off */}
-            <div style={{ display: 'flex', alignItems: 'center', position: 'relative', flexShrink: 0 }}>
-              {/* Bypass: U-shaped dashed arrow: up from top of RRF, across above, down into top of Boosts */}
-              {!config.rerank && (
-                <>
-                  {/* Left vertical: from top-center of RRF up */}
-                  <div style={{
-                    position: 'absolute',
-                    left: '-80px',
-                    top: '-22px',
-                    height: '22px',
-                    width: '0px',
-                    borderLeft: '2px solid #94a3b8',
-                    zIndex: 1,
-                  }} />
-                  {/* Horizontal across above the boxes */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '-22px',
-                    left: '-80px',
-                    right: '-80px',
-                    height: '0px',
-                    borderTop: '2px solid #94a3b8',
-                    zIndex: 1,
-                  }} />
-                  {/* Right vertical: from above down to top-center of Post Processing + arrow */}
-                  <div style={{
-                    position: 'absolute',
-                    right: '-80px',
-                    top: '-22px',
-                    height: '22px',
-                    width: '0px',
-                    borderLeft: '2px solid #94a3b8',
-                    zIndex: 1,
-                  }}>
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '-1px',
-                      left: '-6px',
-                      width: 0,
-                      height: 0,
-                      borderLeft: '5px solid transparent',
-                      borderRight: '5px solid transparent',
-                      borderTop: '7px solid #94a3b8',
-                    }} />
-                  </div>
-                </>
-              )}
-
-              <PipelineConnector type="straight" dimmed={!config.rerank} />
-
+          <div style={{ flexShrink: 0, position: 'relative' }}>
+            {/* Main path: RRF → straight arrow → Boosts */}
+            <div style={{ display: 'flex', alignItems: 'stretch' }}>
               <PipelineStage
-                id={ltrStage.id}
-                label={ltrStage.label}
-                description={ltrStage.description}
-                accentHex={ltrStage.accentHex}
-                isActive={activeStage === ltrStage.id}
-                onClick={() => onStageClick(ltrStage.id)}
-                summary={getStageSummary(ltrStage.id, config, activeModelName)}
-                disabled={!config.rerank}
+                id={rrfStage.id}
+                label={rrfStage.label}
+                description={rrfStage.description}
+                accentHex={rrfStage.accentHex}
+                isActive={activeStage === rrfStage.id}
+                onClick={() => onStageClick(rrfStage.id)}
+                summary={getStageSummary(rrfStage.id, config, activeModelName)}
               />
-
-              <PipelineConnector type="straight" dimmed={!config.rerank} />
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <PipelineConnector type="straight" dimmed={!!config.rerank} />
+              </div>
+              <PipelineStage
+                id={boostsStage.id}
+                label={boostsStage.label}
+                description={boostsStage.description}
+                accentHex={boostsStage.accentHex}
+                isActive={activeStage === boostsStage.id}
+                onClick={() => onStageClick(boostsStage.id)}
+                summary={getStageSummary(boostsStage.id, config, activeModelName)}
+              />
             </div>
 
-            <PipelineStage
-              id={boostsStage.id}
-              label={boostsStage.label}
-              description={boostsStage.description}
-              accentHex={boostsStage.accentHex}
-              isActive={activeStage === boostsStage.id}
-              onClick={() => onStageClick(boostsStage.id)}
-              summary={getStageSummary(boostsStage.id, config, activeModelName)}
-            />
-          </>
+            {/* LTR bypass path: down from RRF center → horizontal through LTR → up into Boosts center */}
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+            }}>
+              {/* All three line segments are absolute at known positions */}
+              {/* Vertical line down from RRF bottom center */}
+              <div style={{
+                position: 'absolute',
+                left: '74px',
+                top: 0,
+                width: '2px',
+                height: '32px',
+                backgroundColor: branchColor,
+                transition: 'background-color 0.2s ease',
+              }} />
+
+              {/* Horizontal line connecting the two verticals */}
+              <div style={{
+                position: 'absolute',
+                left: '74px',
+                right: '74px',
+                top: '30px',
+                height: '2px',
+                backgroundColor: branchColor,
+                transition: 'background-color 0.2s ease',
+              }} />
+
+              {/* Vertical line up to Boosts bottom center + arrowhead */}
+              <div style={{
+                position: 'absolute',
+                right: '74px',
+                top: 0,
+                width: '2px',
+                height: '32px',
+                backgroundColor: branchColor,
+                transition: 'background-color 0.2s ease',
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: '-1px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 0,
+                  height: 0,
+                  borderLeft: '5px solid transparent',
+                  borderRight: '5px solid transparent',
+                  borderBottom: `7px solid ${branchColor}`,
+                  transition: 'border-bottom-color 0.2s ease',
+                }} />
+              </div>
+
+              {/* LTR button centered on the horizontal line */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                paddingTop: '12px',
+                position: 'relative',
+                zIndex: 1,
+              }}>
+                <button
+                  type="button"
+                  onClick={() => onStageClick(ltrStage.id)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    padding: '5px 14px',
+                    borderRadius: '6px',
+                    border: config.rerank
+                      ? `2px solid ${activeStage === ltrStage.id ? '#7c3aed' : '#c4b5fd'}`
+                      : '2px dashed #d1d5db',
+                    backgroundColor: config.rerank
+                      ? (activeStage === ltrStage.id ? '#f3f0ff' : '#faf5ff')
+                      : '#f8fafc',
+                    cursor: 'pointer',
+                    textAlign: 'center' as const,
+                    transition: 'all 0.2s ease',
+                    outline: 'none',
+                    opacity: config.rerank ? 1 : 0.6,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (config.rerank && activeStage !== ltrStage.id) {
+                      e.currentTarget.style.borderColor = '#7c3aed88'
+                      e.currentTarget.style.boxShadow = '0 2px 6px #7c3aed18'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (config.rerank && activeStage !== ltrStage.id) {
+                      e.currentTarget.style.borderColor = '#c4b5fd'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }
+                  }}
+                >
+                  <span style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    color: config.rerank ? '#7c3aed' : '#94a3b8',
+                    lineHeight: 1.2,
+                  }}>
+                    {ltrStage.label}
+                  </span>
+                  <span style={{
+                    fontSize: '0.64rem',
+                    fontWeight: 600,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    color: config.rerank ? '#7c3aed' : '#94a3b8',
+                  }}>
+                    {getStageSummary(ltrStage.id, config, activeModelName)}
+                  </span>
+                </button>
+                <span style={{
+                  fontSize: '0.56rem',
+                  color: '#94a3b8',
+                  fontWeight: 500,
+                  marginTop: '2px',
+                  whiteSpace: 'nowrap',
+                  letterSpacing: '0.02em',
+                }}>
+                  valgfri sidegren
+                </span>
+              </div>
+            </div>
+          </div>
         )
       })()}
 
