@@ -8,13 +8,27 @@ interface UseHierarchicalChaptersOptions {
   links?: ContentLink[]
 }
 
+function getUniqueNestedChildLinks(links?: ContentLink[] | null) {
+  const seen = new Set<string>()
+  const result: ContentLink[] = []
+
+  for (const link of links ?? []) {
+    const key = link.id || link.href
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    result.push(link)
+  }
+
+  return result
+}
+
 function contentLinkToStub(link: ContentLink): NestedContent {
   return {
     id: link.id || link.href || '',
     tittel: link.title,
     title: link.title,
     type: link.type,
-    children: link.children
+    children: getUniqueNestedChildLinks(link.children)
       ?.filter((c) => Boolean(c.id || c.href))
       .map(contentLinkToStub),
   }

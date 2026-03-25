@@ -6,6 +6,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import type { NestedContent } from '../../../types'
 import { buildContentUrl } from '../../../lib/contentUrl'
 import { fetchChapter } from '../../../lib/content/chapterFetch'
+import { dedupeNestedContents } from '../../../lib/content/nestedContentDedup'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import { formatDateLabel, getNodeTitle, getNodeType } from './treeUtils'
 
@@ -173,7 +174,7 @@ export function ExpandableSubcontent({
     (Boolean(item.path) || (Boolean(item.id) && !isHttpIdentifier(item.id))) &&
     !isReferenceNode(item) &&
     !isPicoNode(item)
-  const children = resolved.children ?? []
+  const children = dedupeNestedContents(resolved.children)
   const referenceChildren = children.filter((child) => isReferenceNode(child))
   const nestedChildren = children.filter((child) => !isReferenceNode(child) && !isPicoNode(child))
 

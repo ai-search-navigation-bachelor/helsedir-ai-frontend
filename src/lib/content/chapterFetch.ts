@@ -1,6 +1,7 @@
 import { getContent } from '../../api/content'
 import { fetchHelsedirContent } from '../../api/helsedir'
 import type { ContentDetail, NestedContent } from '../../types'
+import { dedupeNestedContents } from './nestedContentDedup'
 
 export function contentDetailToNestedContent(
   detail: ContentDetail,
@@ -118,10 +119,10 @@ async function fetchChapterFromBackend(
     sistFagligOppdatert: l.last_reviewed_date || undefined,
   }))
 
-  const children = [
+  const children = dedupeNestedContents([
     ...fetched.filter((c): c is NestedContent => Boolean(c)),
     ...kapittelStubs,
-  ]
+  ])
 
   const result = contentDetailToNestedContent(detail, children.length > 0 ? children : undefined)
   if (!result.sistFagligOppdatert && fallbackSistFagligOppdatert) {
@@ -167,10 +168,10 @@ async function fetchChapterFromHelsedir(href: string, signal?: AbortSignal): Pro
     type: l.type || 'kapittel',
   }))
 
-  const children = [
+  const children = dedupeNestedContents([
     ...fetched.filter((c): c is NestedContent => Boolean(c)),
     ...kapittelStubs,
-  ]
+  ])
 
   return {
     ...chapter,

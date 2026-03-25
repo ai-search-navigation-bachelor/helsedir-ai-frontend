@@ -20,6 +20,7 @@ import {
   getSelectedAncestorIds,
 } from './treeUtils'
 import { fetchChapter } from '../../../lib/content/chapterFetch'
+import { dedupeNestedContents } from '../../../lib/content/nestedContentDedup'
 import { RichContentHtml } from '../shared/RichContentHtml'
 
 const DESKTOP_LG_MEDIA_QUERY = '(min-width: 1024px)'
@@ -161,7 +162,7 @@ export function HierarchicalContentDisplay({
 
     if (lazyPageContent) {
       node = lazyPageContent
-      const allLazyChildren = lazyPageContent.children ?? []
+      const allLazyChildren = dedupeNestedContents(lazyPageContent.children)
       const lazyExpandable = isStubPage
         ? allLazyChildren
         : allLazyChildren.filter((child) => {
@@ -221,10 +222,10 @@ export function HierarchicalContentDisplay({
     if (!pageWithLazyContent) return pageWithLazyContent
 
     if (fetchedExpandableResult?.map && fetchedExpandableResult.map.size > 0) {
-      const expandableChildren = pageWithLazyContent.expandableChildren.map((stub) => {
+      const expandableChildren = dedupeNestedContents(pageWithLazyContent.expandableChildren.map((stub) => {
         if (!stub.id) return stub
         return fetchedExpandableResult.map.get(stub.id) ?? stub
-      })
+      }))
       return { ...pageWithLazyContent, expandableChildren }
     }
 
