@@ -1,6 +1,8 @@
 import { getContent } from '../../api/content'
 import { fetchHelsedirContent } from '../../api/helsedir'
 import type { ContentDetail, NestedContent } from '../../types'
+import { dedupeNestedContents } from './nestedContentDedup'
+import { getContentIdFromHref } from '../contentLinking'
 
 export function contentDetailToNestedContent(
   detail: ContentDetail,
@@ -39,6 +41,63 @@ export function contentDetailToNestedContent(
 
 function isKapittel(type?: string | null) {
   return type?.trim().toLowerCase() === 'kapittel'
+}
+
+function getCanonicalChildLinkKey(link: { id?: string | null; href?: string | null }) {
+  return link.id || getContentIdFromHref(link.href) || link.href || ''
+}
+
+function getChildLinkRichness(link: {
+  title?: string | null
+  tittel?: string | null
+  type?: string | null
+  last_reviewed_date?: string | null
+}) {
+  let score = 0
+
+  if (link.title || link.tittel) score += 1
+  if (link.type) score += 1
+  if (link.last_reviewed_date) score += 1
+
+  return score
+}
+
+function dedupeChildLinks<T extends {
+  id?: string | null
+  href?: string | null
+  title?: string | null
+  tittel?: string | null
+  type?: string | null
+  last_reviewed_date?: string | null
+}>(links: T[]) {
+  const deduped = new Map<string, T>()
+
+  for (const link of links) {
+    const key = getCanonicalChildLinkKey(link)
+    if (!key) continue
+
+    const existing = deduped.get(key)
+    if (!existing) {
+      deduped.set(key, link)
+      continue
+    }
+
+    const winner = getChildLinkRichness(link) > getChildLinkRichness(existing) ? link : existing
+    const loser = winner === link ? existing : link
+
+    deduped.set(key, {
+      ...loser,
+      ...winner,
+      id: winner.id || loser.id,
+      href: winner.href || loser.href,
+      title: winner.title || loser.title,
+      tittel: winner.tittel || loser.tittel,
+      type: winner.type || loser.type,
+      last_reviewed_date: winner.last_reviewed_date || loser.last_reviewed_date,
+    })
+  }
+
+  return Array.from(deduped.values())
 }
 
 /** Extract the backend content ID from a Helsedir URL path's last segment. */
@@ -92,7 +151,7 @@ async function fetchChapterFromBackend(
   fallbackSistFagligOppdatert?: string,
 ): Promise<NestedContent> {
   const detail = await getContent(id, undefined, { signal })
-  const childLinks = (detail.links ?? []).filter((l) => l.rel === 'barn')
+  const childLinks = dedupeChildLinks((detail.links ?? []).filter((l) => l.rel === 'barn'))
 
   const contentChildren = childLinks.filter((l) => !isKapittel(l.type) && Boolean(l.id || l.href))
   const kapittelChildren = childLinks.filter((l) => isKapittel(l.type))
@@ -118,10 +177,10 @@ async function fetchChapterFromBackend(
     sistFagligOppdatert: l.last_reviewed_date || undefined,
   }))
 
-  const children = [
+  const children = dedupeNestedContents([
     ...fetched.filter((c): c is NestedContent => Boolean(c)),
     ...kapittelStubs,
-  ]
+  ])
 
   const result = contentDetailToNestedContent(detail, children.length > 0 ? children : undefined)
   if (!result.sistFagligOppdatert && fallbackSistFagligOppdatert) {
@@ -141,17 +200,11 @@ async function fetchChapterFromHelsedir(href: string, signal?: AbortSignal): Pro
     links?: HelsedirLink[]
   }
 
-  const allLinks = [
+  const allLinks = dedupeChildLinks([
     ...(chapter.lenker ?? []),
     ...((chapter.links ?? []) as HelsedirLink[]),
-  ]
-  const seen = new Set<string>()
-  const barnLinks = allLinks.filter((l) => {
-    if (l.rel !== 'barn' || !l.href) return false
-    if (seen.has(l.href)) return false
-    seen.add(l.href)
-    return true
-  })
+  ])
+  const barnLinks = allLinks.filter((l) => l.rel === 'barn' && l.href)
 
   const contentChildren = barnLinks.filter((l) => !isKapittel(l.type))
   const kapittelChildren = barnLinks.filter((l) => isKapittel(l.type))
@@ -167,10 +220,10 @@ async function fetchChapterFromHelsedir(href: string, signal?: AbortSignal): Pro
     type: l.type || 'kapittel',
   }))
 
-  const children = [
+  const children = dedupeNestedContents([
     ...fetched.filter((c): c is NestedContent => Boolean(c)),
     ...kapittelStubs,
-  ]
+  ])
 
   return {
     ...chapter,
