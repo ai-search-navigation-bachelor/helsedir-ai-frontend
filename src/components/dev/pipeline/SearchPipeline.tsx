@@ -195,7 +195,7 @@ function PipelineRow({
       }}
     >
       {/* Config label + presets */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: 0, marginRight: '6px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: 0, marginRight: '20px' }}>
         <div
           style={{
             padding: '5px 10px',
