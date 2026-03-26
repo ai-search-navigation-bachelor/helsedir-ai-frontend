@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { ContentLink, NestedContent } from '../../types'
-import { getUniqueChildLinks } from '../../components/content/shared/linkUtils'
+import { getContentIdFromHref, getUniqueChildLinks } from '../../components/content/shared/linkUtils'
 import type { ChapterEntry } from '../../components/content/hierarchical/types'
 
 interface UseHierarchicalChaptersOptions {
@@ -8,29 +8,70 @@ interface UseHierarchicalChaptersOptions {
   links?: ContentLink[]
 }
 
+function getCanonicalContentLinkId(link: Pick<ContentLink, 'id' | 'href'>) {
+  return link.id || getContentIdFromHref(link.href) || link.href || ''
+}
+
+function getContentLinkRichness(link: ContentLink) {
+  let score = 0
+
+  if ((link.children?.length ?? 0) > 0) score += 3
+  if (link.path) score += 2
+  if (link.last_reviewed_date) score += 1
+  if (link.title) score += 1
+  if (link.type) score += 1
+
+  return score
+}
+
+function mergeContentLinks(current: ContentLink, incoming: ContentLink): ContentLink {
+  const winner = getContentLinkRichness(incoming) > getContentLinkRichness(current) ? incoming : current
+  const loser = winner === incoming ? current : incoming
+  const mergedChildren = getUniqueNestedChildLinks([
+    ...(winner.children ?? []),
+    ...(loser.children ?? []),
+  ])
+
+  return {
+    ...loser,
+    ...winner,
+    id: winner.id || loser.id,
+    href: winner.href || loser.href,
+    title: winner.title || loser.title,
+    type: winner.type || loser.type,
+    path: winner.path || loser.path,
+    last_reviewed_date: winner.last_reviewed_date || loser.last_reviewed_date,
+    tags: winner.tags?.length ? winner.tags : loser.tags,
+    strukturId: winner.strukturId || loser.strukturId,
+    ...(mergedChildren.length > 0 ? { children: mergedChildren } : {}),
+  }
+}
+
 function getUniqueNestedChildLinks(links?: ContentLink[] | null) {
-  const seen = new Set<string>()
-  const result: ContentLink[] = []
+  const deduped = new Map<string, ContentLink>()
 
   for (const link of links ?? []) {
-    const key = link.id || link.href
-    if (!key || seen.has(key)) continue
-    seen.add(key)
-    result.push(link)
+    const key = getCanonicalContentLinkId(link)
+    if (!key) continue
+
+    const existing = deduped.get(key)
+    deduped.set(key, existing ? mergeContentLinks(existing, link) : link)
   }
 
-  return result
+  return Array.from(deduped.values())
 }
 
 function contentLinkToStub(link: ContentLink): NestedContent {
+  const children = getUniqueNestedChildLinks(link.children)
+    .filter((c) => Boolean(c.id || c.href))
+    .map(contentLinkToStub)
+
   return {
-    id: link.id || link.href || '',
+    id: getCanonicalContentLinkId(link),
     tittel: link.title,
     title: link.title,
     type: link.type,
-    children: getUniqueNestedChildLinks(link.children)
-      ?.filter((c) => Boolean(c.id || c.href))
-      .map(contentLinkToStub),
+    ...(children.length > 0 ? { children } : {}),
   }
 }
 

@@ -36,6 +36,22 @@ function getNodeRichness(node: NestedContent) {
   return score
 }
 
+function pickString(primary?: string | null, secondary?: string | null) {
+  if (normalizeValue(primary)) return primary ?? undefined
+  if (normalizeValue(secondary)) return secondary ?? undefined
+  return undefined
+}
+
+function pickDefined<T>(primary: T | undefined, secondary: T | undefined) {
+  return primary !== undefined ? primary : secondary
+}
+
+function pickNonEmptyArray<T>(primary?: T[] | null, secondary?: T[] | null) {
+  if (primary && primary.length > 0) return primary
+  if (secondary && secondary.length > 0) return secondary
+  return undefined
+}
+
 function mergeNodes(current: NestedContent, incoming: NestedContent) {
   const winner = getNodeRichness(incoming) > getNodeRichness(current) ? incoming : current
   const loser = winner === incoming ? current : incoming
@@ -45,9 +61,55 @@ function mergeNodes(current: NestedContent, incoming: NestedContent) {
     ...(loser.children ?? []),
   ])
 
+  const mergedData = winner.data || loser.data
+    ? {
+        ...(loser.data ?? {}),
+        ...(winner.data ?? {}),
+        nokkelInfo: winner.data?.nokkelInfo || loser.data?.nokkelInfo
+          ? {
+              ...(loser.data?.nokkelInfo ?? {}),
+              ...(winner.data?.nokkelInfo ?? {}),
+            }
+          : undefined,
+      }
+    : undefined
+
+  const mergedTekniskeData = winner.tekniskeData || loser.tekniskeData
+    ? {
+        ...(loser.tekniskeData ?? {}),
+        ...(winner.tekniskeData ?? {}),
+      }
+    : undefined
+
   return {
     ...loser,
     ...winner,
+    id: pickString(winner.id, loser.id) || '',
+    path: pickString(winner.path, loser.path),
+    type: pickString(winner.type, loser.type),
+    tittel: pickString(winner.tittel, loser.tittel),
+    kortTittel: pickString(winner.kortTittel, loser.kortTittel),
+    title: pickString(winner.title, loser.title),
+    short_title: pickString(winner.short_title, loser.short_title),
+    display_title: pickString(winner.display_title, loser.display_title),
+    tekst: pickString(winner.tekst, loser.tekst),
+    body: pickString(winner.body, loser.body),
+    intro: pickString(winner.intro, loser.intro),
+    kortIntro: pickString(winner.kortIntro, loser.kortIntro),
+    has_text_content: pickDefined(winner.has_text_content, loser.has_text_content),
+    document_url: pickString(winner.document_url, loser.document_url),
+    is_pdf_only: pickDefined(winner.is_pdf_only, loser.is_pdf_only),
+    related_links: pickNonEmptyArray(winner.related_links, loser.related_links),
+    status: pickString(winner.status, loser.status),
+    forstPublisert: pickString(winner.forstPublisert, loser.forstPublisert),
+    sistOppdatert: pickString(winner.sistOppdatert, loser.sistOppdatert),
+    sistFagligOppdatert: pickString(winner.sistFagligOppdatert, loser.sistFagligOppdatert),
+    url: pickString(winner.url, loser.url),
+    data: mergedData,
+    attachments: pickNonEmptyArray(winner.attachments, loser.attachments),
+    tekniskeData: mergedTekniskeData,
+    lenker: pickNonEmptyArray(winner.lenker, loser.lenker),
+    links: pickNonEmptyArray(winner.links, loser.links),
     children: mergedChildren.length > 0 ? mergedChildren : undefined,
   }
 }
@@ -56,9 +118,10 @@ export function dedupeNestedContents(children?: NestedContent[] | null) {
   const deduped = new Map<string, NestedContent>()
 
   for (const child of children ?? []) {
-    const sanitizedChild = {
+    const dedupedChildren = dedupeNestedContents(child.children)
+    const sanitizedChild: NestedContent = {
       ...child,
-      children: dedupeNestedContents(child.children),
+      ...(dedupedChildren.length > 0 ? { children: dedupedChildren } : {}),
     }
     const key = getNestedContentKey(sanitizedChild)
 
