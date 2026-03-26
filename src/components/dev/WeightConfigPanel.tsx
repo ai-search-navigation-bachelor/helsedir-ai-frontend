@@ -268,8 +268,8 @@ export function WeightConfigPanel({
             type="button"
             onClick={() => onChange(preset)}
             style={{
-              padding: "5px 14px",
-              fontSize: "0.75rem",
+              padding: "12px 28px",
+              fontSize: "0.95rem",
               fontWeight: 600,
               borderRadius: "20px",
               border: "1px solid #bae6fd",
