@@ -37,6 +37,7 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
   const effectiveSearchId = searchId || undefined
 
   const contentPath = pathPrefix && wildcard ? `/${pathPrefix}/${wildcard}` : undefined
+  const isLegacyIdRoute = !pathPrefix && !wildcard
 
   const { data: content, isLoading, error } = useContentDetailQuery({
     contentId: contentPath ? undefined : id,
@@ -48,16 +49,6 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
 
   useTemasideCanonicalRedirect(content)
 
-  // When accessed via /content/:id and the content has a canonical path, redirect there
-  useEffect(() => {
-    if (!pathPrefix && !wildcard && content?.path) {
-      const normalize = (p: string) => p.replace(/\/+$/, '')
-      if (normalize(content.path) !== normalize(location.pathname)) {
-        navigate(content.path, { replace: true, state: location.state })
-      }
-    }
-  }, [content?.path, pathPrefix, wildcard, navigate, location.pathname, location.state])
-
   const { data: parentChainResult, isLoading: isParentChainLoading } = useParentChainQuery(
     content,
     effectiveSearchId,
@@ -65,6 +56,19 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
 
   const type = normalizeContentType(content?.content_type)
   const isChapterContent = type === 'kapittel'
+
+  // When accessed via /content/:id and the content has a canonical path, redirect there.
+  // Chapters should skip this so we do not bounce through the chapter path before redirecting
+  // to the hierarchical publication root.
+  useEffect(() => {
+    if (isChapterContent) return
+    if (!pathPrefix && !wildcard && content?.path) {
+      const normalize = (p: string) => p.replace(/\/+$/, '')
+      if (normalize(content.path) !== normalize(location.pathname)) {
+        navigate(content.path, { replace: true, state: location.state })
+      }
+    }
+  }, [content?.path, isChapterContent, pathPrefix, wildcard, navigate, location.pathname, location.state])
 
   const chapterRootEntry = useMemo(() => {
     if (!isChapterContent) return null
@@ -84,7 +88,12 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
 
   const redirectState = useMemo(() => {
     if (!routeState) {
-      return { sectionId: content?.id }
+      return {
+        sectionId: content?.id,
+        ...(chapterRootEntry?.contentType
+          ? { contentType: chapterRootEntry.contentType }
+          : {}),
+      }
     }
 
     const restRouteState = { ...routeState }
@@ -93,8 +102,11 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
     return {
       ...restRouteState,
       sectionId: content?.id,
+      ...(chapterRootEntry?.contentType
+        ? { contentType: chapterRootEntry.contentType }
+        : {}),
     }
-  }, [content?.id, routeState])
+  }, [chapterRootEntry?.contentType, content?.id, routeState])
 
   useEffect(() => {
     if (!content || !isChapterContent || !chapterRootEntry) return
@@ -106,9 +118,12 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
   }, [chapterRootEntry, content, isChapterContent, navigate, redirectState])
 
   if (isLoading) {
-    const presentation = resolveContentPresentationFromHint({
-      routeContentType,
-    })
+    const presentation =
+      isLegacyIdRoute && !routeContentType
+        ? 'hierarchical'
+        : resolveContentPresentationFromHint({
+            routeContentType,
+          })
 
     return (
       <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">
