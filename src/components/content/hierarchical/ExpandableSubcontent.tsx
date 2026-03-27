@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useQuery } from '@tanstack/react-query'
@@ -9,6 +9,7 @@ import { fetchChapter } from '../../../lib/content/chapterFetch'
 import { dedupeNestedContents } from '../../../lib/content/nestedContentDedup'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import { formatDateLabel, getNodeTitle, getNodeType } from './treeUtils'
+import { useContentDisclosureStore } from '../../../stores/contentDisclosureStore'
 
 const MAX_SUBCONTENT_DEPTH = 8
 
@@ -23,6 +24,56 @@ interface ExpandableSubcontentProps {
   defaultOpen?: boolean
 }
 
+interface PersistedDetailsProps {
+  pageStateKey: string
+  disclosureId: string
+}
+
+function getSectionIdFromLocationState(state: unknown) {
+  if (!state || typeof state !== 'object') return null
+  const sectionId = (state as { sectionId?: unknown }).sectionId
+  if (typeof sectionId !== 'string') return null
+  const trimmed = sectionId.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function PersistedDetails({
+  pageStateKey,
+  disclosureId,
+  summary,
+  children,
+  className,
+  summaryClassName,
+  contentClassName,
+}: React.PropsWithChildren<PersistedDetailsProps & {
+  summary: string
+  className: string
+  summaryClassName: string
+  contentClassName?: string
+}>) {
+  const isOpen = useContentDisclosureStore(
+    (state) => (state.openDisclosureIdsByPage[pageStateKey] ?? []).includes(disclosureId),
+  )
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
+
+  return (
+    <details
+      className={className}
+      open={isOpen}
+      onToggle={(event) => {
+        if (event.target !== event.currentTarget) return
+        setDisclosureOpen(pageStateKey, disclosureId, event.currentTarget.open)
+      }}
+    >
+      <summary className={summaryClassName}>
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-open/vurdering:rotate-90 group-hover/sub:text-brand group-hover/vurdering:text-brand" />
+        {summary}
+      </summary>
+      {contentClassName ? <div className={contentClassName}>{children}</div> : children}
+    </details>
+  )
+}
+
 function isReferenceNode(node: NestedContent) {
   return getNodeType(node).includes('referanse')
 }
@@ -31,16 +82,22 @@ function isPicoNode(node: NestedContent) {
   return getNodeType(node).includes('pico')
 }
 
-function ReferenceDropdown({ items }: { items: NestedContent[] }) {
+function ReferenceDropdown({
+  items,
+  pageStateKey,
+  disclosureId,
+}: { items: NestedContent[] } & PersistedDetailsProps) {
   if (items.length === 0) return null
 
   return (
-    <details className="group/sub border-t border-slate-200">
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
-        Referanser
-      </summary>
-      <div className="pb-4 pl-6">
+    <PersistedDetails
+      pageStateKey={pageStateKey}
+      disclosureId={disclosureId}
+      summary="Referanser"
+      className="group/sub border-t border-slate-200"
+      summaryClassName="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand"
+      contentClassName="pb-4 pl-6"
+    >
         <ul className="m-0 list-none space-y-2 p-0">
           {items.map((child, index) => (
             <li
@@ -51,28 +108,31 @@ function ReferenceDropdown({ items }: { items: NestedContent[] }) {
             </li>
           ))}
         </ul>
-      </div>
-    </details>
+    </PersistedDetails>
   )
 }
 
 interface SubSectionProps {
   label: string
   html: string
+  pageStateKey: string
+  disclosureId: string
 }
 
-function SubSection({ label, html }: SubSectionProps) {
+function SubSection({ label, html, pageStateKey, disclosureId }: SubSectionProps) {
   return (
-    <details className="group/sub border-t border-slate-200">
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
-        {label}
-      </summary>
+    <PersistedDetails
+      pageStateKey={pageStateKey}
+      disclosureId={disclosureId}
+      summary={label}
+      className="group/sub border-t border-slate-200"
+      summaryClassName="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand"
+    >
       <RichContentHtml
         className="content-html pb-4 pl-6 text-[0.9375rem] font-medium leading-7 text-slate-700"
         html={html}
       />
-    </details>
+    </PersistedDetails>
   )
 }
 
@@ -80,17 +140,27 @@ interface BegrunnelseSubSectionProps {
   html: string
   tradeoffs: string
   preferences: string
+  pageStateKey: string
+  disclosureId: string
 }
 
-function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubSectionProps) {
+function BegrunnelseSubSection({
+  html,
+  tradeoffs,
+  preferences,
+  pageStateKey,
+  disclosureId,
+}: BegrunnelseSubSectionProps) {
   const hasVurdering = Boolean(tradeoffs || preferences)
   return (
-    <details className="group/sub border-t border-slate-200">
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
-        Begrunnelse
-      </summary>
-      <div className="pb-2 pl-6">
+    <PersistedDetails
+      pageStateKey={pageStateKey}
+      disclosureId={disclosureId}
+      summary="Begrunnelse"
+      className="group/sub border-t border-slate-200"
+      summaryClassName="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand"
+      contentClassName="pb-2 pl-6"
+    >
         {html && (
           <RichContentHtml
             className="content-html pb-4 text-[0.9375rem] font-medium leading-7 text-slate-700"
@@ -98,12 +168,14 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
           />
         )}
         {hasVurdering && (
-          <details className="group/vurdering border-t border-slate-200">
-            <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
-              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-hover/vurdering:text-brand" />
-              Vurdering
-            </summary>
-            <div className="space-y-4 pb-4 pl-6">
+          <PersistedDetails
+            pageStateKey={pageStateKey}
+            disclosureId={`${disclosureId}-vurdering`}
+            summary="Vurdering"
+            className="group/vurdering border-t border-slate-200"
+            summaryClassName="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand"
+            contentClassName="space-y-4 pb-4 pl-6"
+          >
               {tradeoffs && (
                 <div>
                   <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 6 }}>
@@ -126,11 +198,9 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
                   />
                 </div>
               )}
-            </div>
-          </details>
+          </PersistedDetails>
         )}
-      </div>
-    </details>
+    </PersistedDetails>
   )
 }
 
@@ -140,10 +210,21 @@ export function ExpandableSubcontent({
   depth = 0,
   defaultOpen = false,
 }: ExpandableSubcontentProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
   const navigate = useNavigate()
   const location = useLocation()
   const { id: currentContentId } = useParams<{ id: string }>()
+  const locationSectionId = getSectionIdFromLocationState(location.state)
+  const pageStateKey = `hierarchical:${location.key}:${location.pathname}:${locationSectionId ?? 'overview'}`
+  const disclosureId = `expandable:${item.id || itemKey}`
+  const isOpen = useContentDisclosureStore(
+    (state) => (state.openDisclosureIdsByPage[pageStateKey] ?? []).includes(disclosureId),
+  )
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
+
+  useEffect(() => {
+    if (!defaultOpen) return
+    setDisclosureOpen(pageStateKey, disclosureId, true)
+  }, [defaultOpen, disclosureId, pageStateKey, setDisclosureOpen])
 
   const isStub = Boolean(item.id) && !item.body && !item.tekst && !item.intro && !item.data
 
@@ -183,11 +264,11 @@ export function ExpandableSubcontent({
       key={itemKey}
       className="expandable-subcontent group rounded-lg border border-slate-200 bg-white transition-colors open:border-brand/30 open:shadow-sm"
       style={{ marginLeft: `${depth * 14}px` }}
-      open={isOpen || undefined}
+      open={isOpen}
       data-expandable-id={item.id || undefined}
       onToggle={(e) => {
         if (e.target !== e.currentTarget) return
-        setIsOpen(e.currentTarget.open)
+        setDisclosureOpen(pageStateKey, disclosureId, e.currentTarget.open)
       }}
     >
       <summary className="cursor-pointer list-none rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open:rounded-b-none">
@@ -257,11 +338,28 @@ export function ExpandableSubcontent({
           />
         )}
 
-        {practical && <SubSection label="Praktisk informasjon" html={practical} />}
-        {(rationale || tradeoffs || preferences) && (
-          <BegrunnelseSubSection html={rationale} tradeoffs={tradeoffs} preferences={preferences} />
+        {practical && (
+          <SubSection
+            label="Praktisk informasjon"
+            html={practical}
+            pageStateKey={pageStateKey}
+            disclosureId={`${disclosureId}-praktisk`}
+          />
         )}
-        <ReferenceDropdown items={referenceChildren} />
+        {(rationale || tradeoffs || preferences) && (
+          <BegrunnelseSubSection
+            html={rationale}
+            tradeoffs={tradeoffs}
+            preferences={preferences}
+            pageStateKey={pageStateKey}
+            disclosureId={`${disclosureId}-begrunnelse`}
+          />
+        )}
+        <ReferenceDropdown
+          items={referenceChildren}
+          pageStateKey={pageStateKey}
+          disclosureId={`${disclosureId}-referanser`}
+        />
 
         {depth < MAX_SUBCONTENT_DEPTH && nestedChildren.length > 0 && (
           <div className="mt-3 space-y-3">

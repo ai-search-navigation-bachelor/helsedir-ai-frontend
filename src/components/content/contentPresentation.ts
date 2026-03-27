@@ -60,6 +60,7 @@ export function resolveContentPresentationFromHint(options: {
 
   if (
     isRetningslinjeContentType(normalizedRouteContentType) ||
+    normalizedRouteContentType === 'kapittel' ||
     HIERARCHICAL_SKELETON_HINT_TYPES.has(normalizedRouteContentType)
   ) {
     return 'hierarchical'
