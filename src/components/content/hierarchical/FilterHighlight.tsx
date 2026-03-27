@@ -175,6 +175,8 @@ function getOwnTexts(node: NestedContent): string[] {
   if (node.body) texts.push(node.body)
   if (node.data?.praktisk) texts.push(node.data.praktisk)
   if (node.data?.rasjonale) texts.push(node.data.rasjonale)
+  if (node.data?.nokkelInfo?.fordelerogulemper) texts.push(node.data.nokkelInfo.fordelerogulemper)
+  if (node.data?.nokkelInfo?.verdierogpreferanser) texts.push(node.data.nokkelInfo.verdierogpreferanser)
   return texts
 }
 
