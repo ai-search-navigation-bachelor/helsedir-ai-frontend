@@ -59,7 +59,7 @@ function PersistedDetails({
   return (
     <details
       className={className}
-      open={isOpen || undefined}
+      open={isOpen}
       onToggle={(event) => {
         if (event.target !== event.currentTarget) return
         setDisclosureOpen(pageStateKey, disclosureId, event.currentTarget.open)
@@ -264,7 +264,7 @@ export function ExpandableSubcontent({
       key={itemKey}
       className="expandable-subcontent group rounded-lg border border-slate-200 bg-white transition-colors open:border-brand/30 open:shadow-sm"
       style={{ marginLeft: `${depth * 14}px` }}
-      open={isOpen || undefined}
+      open={isOpen}
       data-expandable-id={item.id || undefined}
       onToggle={(e) => {
         if (e.target !== e.currentTarget) return

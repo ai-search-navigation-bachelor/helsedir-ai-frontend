@@ -52,7 +52,7 @@ function VurderingDetails({
   return (
     <details
       className="group/vurdering mt-4 rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm"
-      open={isOpen || undefined}
+      open={isOpen}
       onToggle={(event) => {
         if (event.target !== event.currentTarget) return
         setDisclosureOpen(pageStateKey, disclosureId, event.currentTarget.open)
@@ -129,7 +129,7 @@ function ReferenceDropdown({
   return (
     <details
       className={`group/dropdown rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm ${className}`.trim()}
-      open={isOpen || undefined}
+      open={isOpen}
       onToggle={(event) => {
         if (event.target !== event.currentTarget) return
         setDisclosureOpen(pageStateKey, disclosureId, event.currentTarget.open)
@@ -712,7 +712,7 @@ function PersistedDropdown({
   return (
     <details
       className={`group/dropdown rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm ${className}`.trim()}
-      open={isOpen || undefined}
+      open={isOpen}
       onToggle={(event) => {
         if (event.target !== event.currentTarget) return
         setDisclosureOpen(pageStateKey, disclosureId, event.currentTarget.open)

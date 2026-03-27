@@ -17,6 +17,20 @@ export const useContentDisclosureStore = create<ContentDisclosureState>()(
             ? (currentIds.includes(disclosureId) ? currentIds : [...currentIds, disclosureId])
             : currentIds.filter((id) => id !== disclosureId)
 
+          if (nextIds === currentIds) {
+            return state
+          }
+
+          if (nextIds.length === 0) {
+            if (!(pageKey in state.openDisclosureIdsByPage)) {
+              return state
+            }
+
+            const { [pageKey]: removedPageEntry, ...rest } = state.openDisclosureIdsByPage
+            void removedPageEntry
+            return { openDisclosureIdsByPage: rest }
+          }
+
           return {
             openDisclosureIdsByPage: {
               ...state.openDisclosureIdsByPage,
