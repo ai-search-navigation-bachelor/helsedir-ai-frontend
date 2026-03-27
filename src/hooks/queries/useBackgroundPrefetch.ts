@@ -5,10 +5,11 @@ import type { PageNode } from '../../components/content/hierarchical/types'
 
 /**
  * Background pre-fetches content for pages that are still stubs,
- * so they load instantly when the user selects them.
+ * so they load instantly when the user selects them and are
+ * available for text-based filtering on the overview page.
  *
- * Waits until the active page is done loading, then sequentially
- * prefetches remaining pages to avoid flooding the backend.
+ * Starts prefetching as soon as pages are available, sequentially
+ * to avoid flooding the backend.
  */
 export function useBackgroundPrefetch(
   pagesById: Map<string, PageNode>,
@@ -18,7 +19,9 @@ export function useBackgroundPrefetch(
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    if (!activePageId || isActiveLoading) return
+    // Wait for the active page to finish loading before prefetching others,
+    // but if no page is selected (overview mode), start immediately.
+    if (activePageId && isActiveLoading) return
 
     const pagesToPrefetch = Array.from(pagesById.values()).filter(
       (page) =>
@@ -29,6 +32,8 @@ export function useBackgroundPrefetch(
         !page.node.tekst &&
         !page.node.intro,
     )
+
+    if (pagesToPrefetch.length === 0) return
 
     let cancelled = false
 

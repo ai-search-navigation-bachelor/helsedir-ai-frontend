@@ -9,6 +9,7 @@ import { fetchChapter } from '../../../lib/content/chapterFetch'
 import { dedupeNestedContents } from '../../../lib/content/nestedContentDedup'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import { formatDateLabel, getNodeTitle, getNodeType } from './treeUtils'
+import { HighlightText } from './FilterHighlight'
 import { useContentDisclosureStore } from '../../../stores/contentDisclosureStore'
 
 const MAX_SUBCONTENT_DEPTH = 8
@@ -17,11 +18,29 @@ function isHttpIdentifier(value?: string) {
   return Boolean(value && /^https?:\/\//i.test(value))
 }
 
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function textContainsQuery(text: string, query: string) {
+  return stripHtml(text).toLowerCase().includes(query.toLowerCase())
+}
+
+function highlightHtml(html: string, query: string): string {
+  if (!query) return html
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${escaped})`, 'gi')
+  return html.replace(/(>)([^<]*)/g, (_, gt, text) =>
+    gt + text.replace(regex, '<mark class="rounded-sm bg-amber-100 px-0.5">$1</mark>'),
+  )
+}
+
 interface ExpandableSubcontentProps {
   item: NestedContent
   itemKey: string
   depth?: number
   defaultOpen?: boolean
+  filterQuery?: string
 }
 
 interface PersistedDetailsProps {
@@ -117,9 +136,18 @@ interface SubSectionProps {
   html: string
   pageStateKey: string
   disclosureId: string
+  filterQuery?: string
 }
 
-function SubSection({ label, html, pageStateKey, disclosureId }: SubSectionProps) {
+function SubSection({ label, html, pageStateKey, disclosureId, filterQuery }: SubSectionProps) {
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
+
+  useEffect(() => {
+    if (filterQuery && textContainsQuery(html, filterQuery)) {
+      setDisclosureOpen(pageStateKey, disclosureId, true)
+    }
+  }, [filterQuery, html, pageStateKey, disclosureId, setDisclosureOpen])
+
   return (
     <PersistedDetails
       pageStateKey={pageStateKey}
@@ -130,7 +158,7 @@ function SubSection({ label, html, pageStateKey, disclosureId }: SubSectionProps
     >
       <RichContentHtml
         className="content-html pb-4 pl-6 text-[0.9375rem] font-medium leading-7 text-slate-700"
-        html={html}
+        html={filterQuery ? highlightHtml(html, filterQuery) : html}
       />
     </PersistedDetails>
   )
@@ -142,6 +170,7 @@ interface BegrunnelseSubSectionProps {
   preferences: string
   pageStateKey: string
   disclosureId: string
+  filterQuery?: string
 }
 
 function BegrunnelseSubSection({
@@ -150,8 +179,28 @@ function BegrunnelseSubSection({
   preferences,
   pageStateKey,
   disclosureId,
+  filterQuery,
 }: BegrunnelseSubSectionProps) {
   const hasVurdering = Boolean(tradeoffs || preferences)
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
+
+  useEffect(() => {
+    if (!filterQuery) return
+    if (
+      (html && textContainsQuery(html, filterQuery)) ||
+      (tradeoffs && textContainsQuery(tradeoffs, filterQuery)) ||
+      (preferences && textContainsQuery(preferences, filterQuery))
+    ) {
+      setDisclosureOpen(pageStateKey, disclosureId, true)
+    }
+    if (
+      (tradeoffs && textContainsQuery(tradeoffs, filterQuery)) ||
+      (preferences && textContainsQuery(preferences, filterQuery))
+    ) {
+      setDisclosureOpen(pageStateKey, `${disclosureId}-vurdering`, true)
+    }
+  }, [filterQuery, html, tradeoffs, preferences, pageStateKey, disclosureId, setDisclosureOpen])
+
   return (
     <PersistedDetails
       pageStateKey={pageStateKey}
@@ -164,7 +213,7 @@ function BegrunnelseSubSection({
         {html && (
           <RichContentHtml
             className="content-html pb-4 text-[0.9375rem] font-medium leading-7 text-slate-700"
-            html={html}
+            html={filterQuery ? highlightHtml(html, filterQuery) : html}
           />
         )}
         {hasVurdering && (
@@ -183,7 +232,7 @@ function BegrunnelseSubSection({
                   </Heading>
                   <RichContentHtml
                     className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
-                    html={tradeoffs}
+                    html={filterQuery ? highlightHtml(tradeoffs, filterQuery) : tradeoffs}
                   />
                 </div>
               )}
@@ -194,7 +243,7 @@ function BegrunnelseSubSection({
                   </Heading>
                   <RichContentHtml
                     className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
-                    html={preferences}
+                    html={filterQuery ? highlightHtml(preferences, filterQuery) : preferences}
                   />
                 </div>
               )}
@@ -209,7 +258,14 @@ export function ExpandableSubcontent({
   itemKey,
   depth = 0,
   defaultOpen = false,
+  filterQuery = '',
 }: ExpandableSubcontentProps) {
+  const matchesFilter = Boolean(filterQuery) && (
+    getNodeTitle(item).toLowerCase().includes(filterQuery.toLowerCase()) ||
+    [item.intro, item.tekst, item.body, item.data?.praktisk, item.data?.rasjonale,
+     item.data?.nokkelInfo?.fordelerogulemper, item.data?.nokkelInfo?.verdierogpreferanser]
+      .some((t) => t && textContainsQuery(t, filterQuery))
+  )
   const navigate = useNavigate()
   const location = useLocation()
   const { id: currentContentId } = useParams<{ id: string }>()
@@ -222,9 +278,10 @@ export function ExpandableSubcontent({
   const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
 
   useEffect(() => {
-    if (!defaultOpen) return
-    setDisclosureOpen(pageStateKey, disclosureId, true)
-  }, [defaultOpen, disclosureId, pageStateKey, setDisclosureOpen])
+    if (defaultOpen || matchesFilter) {
+      setDisclosureOpen(pageStateKey, disclosureId, true)
+    }
+  }, [defaultOpen, matchesFilter, pageStateKey, disclosureId, setDisclosureOpen])
 
   const isStub = Boolean(item.id) && !item.body && !item.tekst && !item.intro && !item.data
 
@@ -276,7 +333,7 @@ export function ExpandableSubcontent({
           <div className="flex min-w-0 items-center gap-3">
             <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90 group-open:text-brand" />
             <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 group-open:text-brand">
-              {title}
+              <HighlightText text={title} query={filterQuery} />
             </span>
           </div>
 
@@ -334,7 +391,7 @@ export function ExpandableSubcontent({
         {body && (
           <RichContentHtml
             className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
-            html={body}
+            html={filterQuery ? highlightHtml(body, filterQuery) : body}
           />
         )}
 
@@ -344,6 +401,7 @@ export function ExpandableSubcontent({
             html={practical}
             pageStateKey={pageStateKey}
             disclosureId={`${disclosureId}-praktisk`}
+            filterQuery={filterQuery}
           />
         )}
         {(rationale || tradeoffs || preferences) && (
@@ -353,6 +411,7 @@ export function ExpandableSubcontent({
             preferences={preferences}
             pageStateKey={pageStateKey}
             disclosureId={`${disclosureId}-begrunnelse`}
+            filterQuery={filterQuery}
           />
         )}
         <ReferenceDropdown
@@ -369,6 +428,7 @@ export function ExpandableSubcontent({
                 item={child}
                 itemKey={`${itemKey}-child-${child.id || index}`}
                 depth={depth + 1}
+                filterQuery={filterQuery}
               />
             ))}
           </div>
