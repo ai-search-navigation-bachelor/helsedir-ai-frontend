@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useQuery } from '@tanstack/react-query'
@@ -10,6 +10,7 @@ import { dedupeNestedContents } from '../../../lib/content/nestedContentDedup'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import { formatDateLabel, getNodeTitle, getNodeType } from './treeUtils'
 import { HighlightText } from './FilterHighlight'
+import { useContentDisclosureStore } from '../../../stores/contentDisclosureStore'
 
 const MAX_SUBCONTENT_DEPTH = 8
 
@@ -42,6 +43,56 @@ interface ExpandableSubcontentProps {
   filterQuery?: string
 }
 
+interface PersistedDetailsProps {
+  pageStateKey: string
+  disclosureId: string
+}
+
+function getSectionIdFromLocationState(state: unknown) {
+  if (!state || typeof state !== 'object') return null
+  const sectionId = (state as { sectionId?: unknown }).sectionId
+  if (typeof sectionId !== 'string') return null
+  const trimmed = sectionId.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function PersistedDetails({
+  pageStateKey,
+  disclosureId,
+  summary,
+  children,
+  className,
+  summaryClassName,
+  contentClassName,
+}: React.PropsWithChildren<PersistedDetailsProps & {
+  summary: string
+  className: string
+  summaryClassName: string
+  contentClassName?: string
+}>) {
+  const isOpen = useContentDisclosureStore(
+    (state) => (state.openDisclosureIdsByPage[pageStateKey] ?? []).includes(disclosureId),
+  )
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
+
+  return (
+    <details
+      className={className}
+      open={isOpen}
+      onToggle={(event) => {
+        if (event.target !== event.currentTarget) return
+        setDisclosureOpen(pageStateKey, disclosureId, event.currentTarget.open)
+      }}
+    >
+      <summary className={summaryClassName}>
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-open/vurdering:rotate-90 group-hover/sub:text-brand group-hover/vurdering:text-brand" />
+        {summary}
+      </summary>
+      {contentClassName ? <div className={contentClassName}>{children}</div> : children}
+    </details>
+  )
+}
+
 function isReferenceNode(node: NestedContent) {
   return getNodeType(node).includes('referanse')
 }
@@ -50,16 +101,22 @@ function isPicoNode(node: NestedContent) {
   return getNodeType(node).includes('pico')
 }
 
-function ReferenceDropdown({ items }: { items: NestedContent[] }) {
+function ReferenceDropdown({
+  items,
+  pageStateKey,
+  disclosureId,
+}: { items: NestedContent[] } & PersistedDetailsProps) {
   if (items.length === 0) return null
 
   return (
-    <details className="group/sub border-t border-slate-200">
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
-        Referanser
-      </summary>
-      <div className="pb-4 pl-6">
+    <PersistedDetails
+      pageStateKey={pageStateKey}
+      disclosureId={disclosureId}
+      summary="Referanser"
+      className="group/sub border-t border-slate-200"
+      summaryClassName="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand"
+      contentClassName="pb-4 pl-6"
+    >
         <ul className="m-0 list-none space-y-2 p-0">
           {items.map((child, index) => (
             <li
@@ -70,41 +127,40 @@ function ReferenceDropdown({ items }: { items: NestedContent[] }) {
             </li>
           ))}
         </ul>
-      </div>
-    </details>
+    </PersistedDetails>
   )
 }
 
 interface SubSectionProps {
   label: string
   html: string
-  forceOpen?: boolean
+  pageStateKey: string
+  disclosureId: string
   filterQuery?: string
 }
 
-function SubSection({ label, html, forceOpen, filterQuery }: SubSectionProps) {
-  const [isOpen, setIsOpen] = useState(forceOpen ?? false)
+function SubSection({ label, html, pageStateKey, disclosureId, filterQuery }: SubSectionProps) {
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
 
   useEffect(() => {
-    if (forceOpen) setIsOpen(true)
-    if (!filterQuery) setIsOpen(false)
-  }, [forceOpen, filterQuery])
+    if (filterQuery && textContainsQuery(html, filterQuery)) {
+      setDisclosureOpen(pageStateKey, disclosureId, true)
+    }
+  }, [filterQuery, html, pageStateKey, disclosureId, setDisclosureOpen])
 
   return (
-    <details
+    <PersistedDetails
+      pageStateKey={pageStateKey}
+      disclosureId={disclosureId}
+      summary={label}
       className="group/sub border-t border-slate-200"
-      open={isOpen || undefined}
-      onToggle={(e) => { if (e.target === e.currentTarget) setIsOpen(e.currentTarget.open) }}
+      summaryClassName="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand"
     >
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
-        {label}
-      </summary>
       <RichContentHtml
         className="content-html pb-4 pl-6 text-[0.9375rem] font-medium leading-7 text-slate-700"
         html={filterQuery ? highlightHtml(html, filterQuery) : html}
       />
-    </details>
+    </PersistedDetails>
   )
 }
 
@@ -112,40 +168,48 @@ interface BegrunnelseSubSectionProps {
   html: string
   tradeoffs: string
   preferences: string
-  forceOpen?: boolean
+  pageStateKey: string
+  disclosureId: string
   filterQuery?: string
 }
 
-function BegrunnelseSubSection({ html, tradeoffs, preferences, forceOpen, filterQuery }: BegrunnelseSubSectionProps) {
+function BegrunnelseSubSection({
+  html,
+  tradeoffs,
+  preferences,
+  pageStateKey,
+  disclosureId,
+  filterQuery,
+}: BegrunnelseSubSectionProps) {
   const hasVurdering = Boolean(tradeoffs || preferences)
-  const vurderingMatches = Boolean(filterQuery && (
-    (tradeoffs && textContainsQuery(tradeoffs, filterQuery)) ||
-    (preferences && textContainsQuery(preferences, filterQuery))
-  ))
-  const [isOpen, setIsOpen] = useState(forceOpen ?? false)
-  const [isVurderingOpen, setIsVurderingOpen] = useState(vurderingMatches)
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
 
   useEffect(() => {
-    if (forceOpen) setIsOpen(true)
-    if (!filterQuery) setIsOpen(false)
-  }, [forceOpen, filterQuery])
-
-  useEffect(() => {
-    if (vurderingMatches) setIsVurderingOpen(true)
-    if (!filterQuery) setIsVurderingOpen(false)
-  }, [vurderingMatches, filterQuery])
+    if (!filterQuery) return
+    if (
+      (html && textContainsQuery(html, filterQuery)) ||
+      (tradeoffs && textContainsQuery(tradeoffs, filterQuery)) ||
+      (preferences && textContainsQuery(preferences, filterQuery))
+    ) {
+      setDisclosureOpen(pageStateKey, disclosureId, true)
+    }
+    if (
+      (tradeoffs && textContainsQuery(tradeoffs, filterQuery)) ||
+      (preferences && textContainsQuery(preferences, filterQuery))
+    ) {
+      setDisclosureOpen(pageStateKey, `${disclosureId}-vurdering`, true)
+    }
+  }, [filterQuery, html, tradeoffs, preferences, pageStateKey, disclosureId, setDisclosureOpen])
 
   return (
-    <details
+    <PersistedDetails
+      pageStateKey={pageStateKey}
+      disclosureId={disclosureId}
+      summary="Begrunnelse"
       className="group/sub border-t border-slate-200"
-      open={isOpen || undefined}
-      onToggle={(e) => { if (e.target === e.currentTarget) setIsOpen(e.currentTarget.open) }}
+      summaryClassName="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand"
+      contentClassName="pb-2 pl-6"
     >
-      <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
-        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
-        Begrunnelse
-      </summary>
-      <div className="pb-2 pl-6">
         {html && (
           <RichContentHtml
             className="content-html pb-4 text-[0.9375rem] font-medium leading-7 text-slate-700"
@@ -153,16 +217,14 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences, forceOpen, filter
           />
         )}
         {hasVurdering && (
-          <details
+          <PersistedDetails
+            pageStateKey={pageStateKey}
+            disclosureId={`${disclosureId}-vurdering`}
+            summary="Vurdering"
             className="group/vurdering border-t border-slate-200"
-            open={isVurderingOpen || undefined}
-            onToggle={(e) => { if (e.target === e.currentTarget) setIsVurderingOpen((e.currentTarget as HTMLDetailsElement).open) }}
+            summaryClassName="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand"
+            contentClassName="space-y-4 pb-4 pl-6"
           >
-            <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
-              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-hover/vurdering:text-brand" />
-              Vurdering
-            </summary>
-            <div className="space-y-4 pb-4 pl-6">
               {tradeoffs && (
                 <div>
                   <Heading level={3} data-size="xs" className="font-title" style={{ marginTop: 0, marginBottom: 6 }}>
@@ -185,11 +247,9 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences, forceOpen, filter
                   />
                 </div>
               )}
-            </div>
-          </details>
+          </PersistedDetails>
         )}
-      </div>
-    </details>
+    </PersistedDetails>
   )
 }
 
@@ -206,15 +266,22 @@ export function ExpandableSubcontent({
      item.data?.nokkelInfo?.fordelerogulemper, item.data?.nokkelInfo?.verdierogpreferanser]
       .some((t) => t && textContainsQuery(t, filterQuery))
   )
-  const [isOpen, setIsOpen] = useState(defaultOpen || matchesFilter)
-
-  useEffect(() => {
-    if (matchesFilter) setIsOpen(true)
-    if (!filterQuery) setIsOpen(defaultOpen)
-  }, [filterQuery, matchesFilter, defaultOpen])
   const navigate = useNavigate()
   const location = useLocation()
   const { id: currentContentId } = useParams<{ id: string }>()
+  const locationSectionId = getSectionIdFromLocationState(location.state)
+  const pageStateKey = `hierarchical:${location.key}:${location.pathname}:${locationSectionId ?? 'overview'}`
+  const disclosureId = `expandable:${item.id || itemKey}`
+  const isOpen = useContentDisclosureStore(
+    (state) => (state.openDisclosureIdsByPage[pageStateKey] ?? []).includes(disclosureId),
+  )
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
+
+  useEffect(() => {
+    if (defaultOpen || matchesFilter) {
+      setDisclosureOpen(pageStateKey, disclosureId, true)
+    }
+  }, [defaultOpen, matchesFilter, pageStateKey, disclosureId, setDisclosureOpen])
 
   const isStub = Boolean(item.id) && !item.body && !item.tekst && !item.intro && !item.data
 
@@ -254,11 +321,11 @@ export function ExpandableSubcontent({
       key={itemKey}
       className="expandable-subcontent group rounded-lg border border-slate-200 bg-white transition-colors open:border-brand/30 open:shadow-sm"
       style={{ marginLeft: `${depth * 14}px` }}
-      open={isOpen || undefined}
+      open={isOpen}
       data-expandable-id={item.id || undefined}
       onToggle={(e) => {
         if (e.target !== e.currentTarget) return
-        setIsOpen(e.currentTarget.open)
+        setDisclosureOpen(pageStateKey, disclosureId, e.currentTarget.open)
       }}
     >
       <summary className="cursor-pointer list-none rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open:rounded-b-none">
@@ -332,7 +399,8 @@ export function ExpandableSubcontent({
           <SubSection
             label="Praktisk informasjon"
             html={practical}
-            forceOpen={Boolean(filterQuery && textContainsQuery(practical, filterQuery))}
+            pageStateKey={pageStateKey}
+            disclosureId={`${disclosureId}-praktisk`}
             filterQuery={filterQuery}
           />
         )}
@@ -341,15 +409,16 @@ export function ExpandableSubcontent({
             html={rationale}
             tradeoffs={tradeoffs}
             preferences={preferences}
-            forceOpen={Boolean(filterQuery && (
-              (rationale && textContainsQuery(rationale, filterQuery)) ||
-              (tradeoffs && textContainsQuery(tradeoffs, filterQuery)) ||
-              (preferences && textContainsQuery(preferences, filterQuery))
-            ))}
+            pageStateKey={pageStateKey}
+            disclosureId={`${disclosureId}-begrunnelse`}
             filterQuery={filterQuery}
           />
         )}
-        <ReferenceDropdown items={referenceChildren} />
+        <ReferenceDropdown
+          items={referenceChildren}
+          pageStateKey={pageStateKey}
+          disclosureId={`${disclosureId}-referanser`}
+        />
 
         {depth < MAX_SUBCONTENT_DEPTH && nestedChildren.length > 0 && (
           <div className="mt-3 space-y-3">
