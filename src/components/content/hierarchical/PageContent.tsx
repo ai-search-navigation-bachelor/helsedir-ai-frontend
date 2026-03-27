@@ -12,7 +12,7 @@ import { ExpandableLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, getRelatedLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import { normalizeLinkForComparison, toAbsoluteHelsedirUrl } from '../../../lib/helsedirUrl'
-import { HighlightText, HighlightNodeTitle, TextMatchSnippets } from './FilterHighlight'
+import { HighlightText, HighlightNodeTitle, TextMatchSnippets, countNodeMatches, MatchCount } from './FilterHighlight'
 
 interface PageContentProps {
   activePage: PageNode
@@ -119,6 +119,7 @@ export function PageContent({
                 <span className="mr-2 transition-colors group-hover:text-brand">{activePage.numbering}</span>
               )}
               <HighlightText text={activePage.title} query={filterQuery} />
+              {filterQuery && <MatchCount count={countNodeMatches(getCachedNode(activePage.node.id) ?? activePage.node, filterQuery)} />}
             </Heading>
           </button>
         ) : (
@@ -262,6 +263,7 @@ export function PageContent({
                     <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-brand">
                       <HighlightText text={child.title} query={filterQuery} />
                     </span>
+                    {filterQuery && <MatchCount count={countNodeMatches(getCachedNode(child.node.id) ?? child.node, filterQuery)} />}
                     <HiArrowRight className="ml-1 h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-brand" />
                   </button>
                   {filterQuery && (
@@ -297,6 +299,7 @@ export function PageContent({
                   <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-brand">
                     <HighlightNodeTitle node={item} query={filterQuery} />
                   </span>
+                  {filterQuery && <MatchCount count={countNodeMatches(item, filterQuery)} />}
                 </div>
                 {filterQuery && (
                   <div className="ml-7 mt-1.5">

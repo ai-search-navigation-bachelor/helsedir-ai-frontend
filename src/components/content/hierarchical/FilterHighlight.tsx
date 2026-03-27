@@ -14,6 +14,53 @@ function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
+function countOccurrences(text: string, query: string): number {
+  const lower = text.toLowerCase()
+  const lowerQuery = query.toLowerCase()
+  let count = 0
+  let pos = 0
+  while ((pos = lower.indexOf(lowerQuery, pos)) !== -1) {
+    count++
+    pos += lowerQuery.length
+  }
+  return count
+}
+
+/** Count all matches in a NestedContent node's title + text, recursively including children */
+export function countNodeMatches(node: NestedContent, query: string): number {
+  if (!query || isReferenceNode(node)) return 0
+  const lowerQuery = query.toLowerCase()
+  let count = 0
+
+  // Title
+  count += countOccurrences(getNodeTitle(node), lowerQuery)
+
+  // Own texts
+  const texts = [node.intro, node.tekst, node.body, node.data?.praktisk, node.data?.rasjonale,
+    node.data?.nokkelInfo?.fordelerogulemper, node.data?.nokkelInfo?.verdierogpreferanser]
+  for (const t of texts) {
+    if (t) count += countOccurrences(stripHtml(t), lowerQuery)
+  }
+
+  // Children
+  if (node.children) {
+    for (const child of node.children) {
+      count += countNodeMatches(child, query)
+    }
+  }
+
+  return count
+}
+
+export function MatchCount({ count }: { count: number }) {
+  if (count === 0) return null
+  return (
+    <span className="ml-2 inline-flex translate-y-[-1px] items-center rounded-full bg-amber-100 px-2 py-0.5 align-middle text-xs font-semibold tabular-nums text-amber-800">
+      {count} {count === 1 ? 'treff' : 'treff'}
+    </span>
+  )
+}
+
 /**
  * Highlights all occurrences of `query` in `text` with a <mark> tag.
  * Returns plain text if no query or no match.
@@ -116,6 +163,8 @@ interface MatchGroup {
   childTitle: string | null
   /** ID of the child (for navigation) */
   childId: string | null
+  /** The child node (for match counting) */
+  childNode: NestedContent | null
   snippets: Snippet[]
 }
 
@@ -127,7 +176,7 @@ function buildMatchGroups(node: NestedContent, query: string): MatchGroup[] {
   // 1. Check own text
   const ownSnippets = extractSnippetsFromTexts(getOwnTexts(node), query, remaining)
   if (ownSnippets.length > 0) {
-    groups.push({ childTitle: null, childId: null, snippets: ownSnippets })
+    groups.push({ childTitle: null, childId: null, childNode: null, snippets: ownSnippets })
     remaining -= ownSnippets.length
   }
 
@@ -155,7 +204,7 @@ function buildMatchGroups(node: NestedContent, query: string): MatchGroup[] {
     const childSnippets = extractSnippetsFromTexts(collectAllTexts(child), query, remaining)
 
     if (titleMatches || childSnippets.length > 0) {
-      groups.push({ childTitle, childId: child.id || null, snippets: childSnippets })
+      groups.push({ childTitle, childId: child.id || null, childNode: child, snippets: childSnippets })
       remaining -= childSnippets.length
     }
   }
@@ -210,6 +259,7 @@ export function TextMatchSnippets({
               <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900">
                 <HighlightText text={group.childTitle} query={query} />
               </span>
+              {group.childNode && <MatchCount count={countNodeMatches(group.childNode, query)} />}
             </div>
             {group.snippets.length > 0 && (
               <div className="mt-1.5 ml-7 space-y-0.5">
