@@ -314,6 +314,7 @@ export function PageContent({
                 item={item}
                 itemKey={`${activePage.id}-rec-${item.id || index}`}
                 defaultOpen={Boolean(autoOpenExpandableId && item.id === autoOpenExpandableId)}
+                filterQuery={filterQuery}
               />
             ))}
           </section>

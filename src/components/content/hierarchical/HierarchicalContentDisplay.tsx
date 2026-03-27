@@ -427,6 +427,26 @@ export function HierarchicalContentDisplay({
     closeMobileSidebarNav()
   }, [closeMobileSidebarNav, handleShowOverview])
 
+  const handleSidebarSelectPage = useCallback((pageId: string, expandableId?: string, scrollTo?: boolean) => {
+    setOverviewFilter('')
+    handleSelectPage(pageId, expandableId, scrollTo)
+  }, [handleSelectPage])
+
+  const handleSidebarShowOverview = useCallback(() => {
+    setOverviewFilter('')
+    handleShowOverview()
+  }, [handleShowOverview])
+
+  const handleMobileSidebarSelectPage = useCallback((pageId: string) => {
+    setOverviewFilter('')
+    handleMobileSelectPage(pageId)
+  }, [handleMobileSelectPage])
+
+  const handleMobileSidebarShowOverview = useCallback(() => {
+    setOverviewFilter('')
+    handleMobileShowOverview()
+  }, [handleMobileShowOverview])
+
   const handleToggleExpand = useCallback((pageId: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev)
@@ -549,24 +569,13 @@ export function HierarchicalContentDisplay({
   ])
 
   useEffect(() => {
-    setOverviewFilter('')
-  }, [activePage?.id])
-
-  useEffect(() => {
     if (!activePage || autoOpenExpandableId || !scrollOnNextPageChange.current) return
     scrollOnNextPageChange.current = false
 
     const contentEl = contentRef.current
     if (!contentEl) return
 
-    const rect = contentEl.getBoundingClientRect()
-    const topThreshold = 24
-
-    // Only auto-scroll if the user is already below the content panel top.
-    // Avoid scrolling downward when the content top is already visible lower in the viewport.
-    if (rect.top < -topThreshold) {
-      contentEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    contentEl.scrollIntoView({ block: 'start' })
   }, [activePage, autoOpenExpandableId])
 
   useEffect(() => {
@@ -579,7 +588,8 @@ export function HierarchicalContentDisplay({
       const el = document.querySelector(`[data-expandable-id="${escaped}"]`)
       if (el) {
         clearInterval(interval)
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        const y = el.getBoundingClientRect().top + window.scrollY - 60
+        window.scrollTo({ top: y })
       }
       if (++attempts >= maxAttempts) clearInterval(interval)
     }, 100)
@@ -622,9 +632,9 @@ export function HierarchicalContentDisplay({
               expandedIds={effectiveExpandedIds}
               activePageId={activePage?.id}
               selectedAncestorIds={selectedAncestorIds}
-              onSelectPage={handleSelectPage}
+              onSelectPage={handleSidebarSelectPage}
               onToggleExpand={handleToggleExpand}
-              onShowOverview={handleShowOverview}
+              onShowOverview={handleSidebarShowOverview}
               isOverviewActive={!activePage}
             />
           )}
@@ -705,10 +715,10 @@ export function HierarchicalContentDisplay({
                         expandedIds={effectiveExpandedIds}
                         activePageId={activePage?.id}
                         selectedAncestorIds={selectedAncestorIds}
-                        onSelectPage={handleMobileSelectPage}
+                        onSelectPage={handleMobileSidebarSelectPage}
                         onToggleExpand={handleToggleExpand}
                         emphasizeExpandControl
-                        onShowOverview={handleMobileShowOverview}
+                        onShowOverview={handleMobileSidebarShowOverview}
                         isOverviewActive={!activePage}
                       />
                     </div>

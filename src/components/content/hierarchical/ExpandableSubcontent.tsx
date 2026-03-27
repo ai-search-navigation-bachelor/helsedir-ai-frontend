@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useQuery } from '@tanstack/react-query'
@@ -9,6 +9,7 @@ import { fetchChapter } from '../../../lib/content/chapterFetch'
 import { dedupeNestedContents } from '../../../lib/content/nestedContentDedup'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import { formatDateLabel, getNodeTitle, getNodeType } from './treeUtils'
+import { HighlightText } from './FilterHighlight'
 
 const MAX_SUBCONTENT_DEPTH = 8
 
@@ -16,11 +17,29 @@ function isHttpIdentifier(value?: string) {
   return Boolean(value && /^https?:\/\//i.test(value))
 }
 
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function textContainsQuery(text: string, query: string) {
+  return stripHtml(text).toLowerCase().includes(query.toLowerCase())
+}
+
+function highlightHtml(html: string, query: string): string {
+  if (!query) return html
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${escaped})`, 'gi')
+  return html.replace(/(>)([^<]*)/g, (_, gt, text) =>
+    gt + text.replace(regex, '<mark class="rounded-sm bg-amber-100 px-0.5">$1</mark>'),
+  )
+}
+
 interface ExpandableSubcontentProps {
   item: NestedContent
   itemKey: string
   depth?: number
   defaultOpen?: boolean
+  filterQuery?: string
 }
 
 function isReferenceNode(node: NestedContent) {
@@ -59,18 +78,31 @@ function ReferenceDropdown({ items }: { items: NestedContent[] }) {
 interface SubSectionProps {
   label: string
   html: string
+  forceOpen?: boolean
+  filterQuery?: string
 }
 
-function SubSection({ label, html }: SubSectionProps) {
+function SubSection({ label, html, forceOpen, filterQuery }: SubSectionProps) {
+  const [isOpen, setIsOpen] = useState(forceOpen ?? false)
+
+  useEffect(() => {
+    if (forceOpen) setIsOpen(true)
+    if (!filterQuery) setIsOpen(false)
+  }, [forceOpen, filterQuery])
+
   return (
-    <details className="group/sub border-t border-slate-200">
+    <details
+      className="group/sub border-t border-slate-200"
+      open={isOpen || undefined}
+      onToggle={(e) => { if (e.target === e.currentTarget) setIsOpen(e.currentTarget.open) }}
+    >
       <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
         <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
         {label}
       </summary>
       <RichContentHtml
         className="content-html pb-4 pl-6 text-[0.9375rem] font-medium leading-7 text-slate-700"
-        html={html}
+        html={filterQuery ? highlightHtml(html, filterQuery) : html}
       />
     </details>
   )
@@ -80,12 +112,35 @@ interface BegrunnelseSubSectionProps {
   html: string
   tradeoffs: string
   preferences: string
+  forceOpen?: boolean
+  filterQuery?: string
 }
 
-function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubSectionProps) {
+function BegrunnelseSubSection({ html, tradeoffs, preferences, forceOpen, filterQuery }: BegrunnelseSubSectionProps) {
   const hasVurdering = Boolean(tradeoffs || preferences)
+  const vurderingMatches = Boolean(filterQuery && (
+    (tradeoffs && textContainsQuery(tradeoffs, filterQuery)) ||
+    (preferences && textContainsQuery(preferences, filterQuery))
+  ))
+  const [isOpen, setIsOpen] = useState(forceOpen ?? false)
+  const [isVurderingOpen, setIsVurderingOpen] = useState(vurderingMatches)
+
+  useEffect(() => {
+    if (forceOpen) setIsOpen(true)
+    if (!filterQuery) setIsOpen(false)
+  }, [forceOpen, filterQuery])
+
+  useEffect(() => {
+    if (vurderingMatches) setIsVurderingOpen(true)
+    if (!filterQuery) setIsVurderingOpen(false)
+  }, [vurderingMatches, filterQuery])
+
   return (
-    <details className="group/sub border-t border-slate-200">
+    <details
+      className="group/sub border-t border-slate-200"
+      open={isOpen || undefined}
+      onToggle={(e) => { if (e.target === e.currentTarget) setIsOpen(e.currentTarget.open) }}
+    >
       <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
         <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/sub:rotate-90 group-hover/sub:text-brand" />
         Begrunnelse
@@ -94,11 +149,15 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
         {html && (
           <RichContentHtml
             className="content-html pb-4 text-[0.9375rem] font-medium leading-7 text-slate-700"
-            html={html}
+            html={filterQuery ? highlightHtml(html, filterQuery) : html}
           />
         )}
         {hasVurdering && (
-          <details className="group/vurdering border-t border-slate-200">
+          <details
+            className="group/vurdering border-t border-slate-200"
+            open={isVurderingOpen || undefined}
+            onToggle={(e) => { if (e.target === e.currentTarget) setIsVurderingOpen((e.currentTarget as HTMLDetailsElement).open) }}
+          >
             <summary className="flex cursor-pointer list-none items-center gap-2 py-3 text-sm font-semibold text-slate-700 hover:text-brand">
               <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-hover/vurdering:text-brand" />
               Vurdering
@@ -111,7 +170,7 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
                   </Heading>
                   <RichContentHtml
                     className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
-                    html={tradeoffs}
+                    html={filterQuery ? highlightHtml(tradeoffs, filterQuery) : tradeoffs}
                   />
                 </div>
               )}
@@ -122,7 +181,7 @@ function BegrunnelseSubSection({ html, tradeoffs, preferences }: BegrunnelseSubS
                   </Heading>
                   <RichContentHtml
                     className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
-                    html={preferences}
+                    html={filterQuery ? highlightHtml(preferences, filterQuery) : preferences}
                   />
                 </div>
               )}
@@ -139,8 +198,20 @@ export function ExpandableSubcontent({
   itemKey,
   depth = 0,
   defaultOpen = false,
+  filterQuery = '',
 }: ExpandableSubcontentProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
+  const matchesFilter = Boolean(filterQuery) && (
+    getNodeTitle(item).toLowerCase().includes(filterQuery.toLowerCase()) ||
+    [item.intro, item.tekst, item.body, item.data?.praktisk, item.data?.rasjonale,
+     item.data?.nokkelInfo?.fordelerogulemper, item.data?.nokkelInfo?.verdierogpreferanser]
+      .some((t) => t && textContainsQuery(t, filterQuery))
+  )
+  const [isOpen, setIsOpen] = useState(defaultOpen || matchesFilter)
+
+  useEffect(() => {
+    if (matchesFilter) setIsOpen(true)
+    if (!filterQuery) setIsOpen(defaultOpen)
+  }, [filterQuery, matchesFilter, defaultOpen])
   const navigate = useNavigate()
   const location = useLocation()
   const { id: currentContentId } = useParams<{ id: string }>()
@@ -195,7 +266,7 @@ export function ExpandableSubcontent({
           <div className="flex min-w-0 items-center gap-3">
             <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open:rotate-90 group-open:text-brand" />
             <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 group-open:text-brand">
-              {title}
+              <HighlightText text={title} query={filterQuery} />
             </span>
           </div>
 
@@ -253,13 +324,30 @@ export function ExpandableSubcontent({
         {body && (
           <RichContentHtml
             className="content-html text-[0.9375rem] font-medium leading-7 text-slate-700"
-            html={body}
+            html={filterQuery ? highlightHtml(body, filterQuery) : body}
           />
         )}
 
-        {practical && <SubSection label="Praktisk informasjon" html={practical} />}
+        {practical && (
+          <SubSection
+            label="Praktisk informasjon"
+            html={practical}
+            forceOpen={Boolean(filterQuery && textContainsQuery(practical, filterQuery))}
+            filterQuery={filterQuery}
+          />
+        )}
         {(rationale || tradeoffs || preferences) && (
-          <BegrunnelseSubSection html={rationale} tradeoffs={tradeoffs} preferences={preferences} />
+          <BegrunnelseSubSection
+            html={rationale}
+            tradeoffs={tradeoffs}
+            preferences={preferences}
+            forceOpen={Boolean(filterQuery && (
+              (rationale && textContainsQuery(rationale, filterQuery)) ||
+              (tradeoffs && textContainsQuery(tradeoffs, filterQuery)) ||
+              (preferences && textContainsQuery(preferences, filterQuery))
+            ))}
+            filterQuery={filterQuery}
+          />
         )}
         <ReferenceDropdown items={referenceChildren} />
 
@@ -271,6 +359,7 @@ export function ExpandableSubcontent({
                 item={child}
                 itemKey={`${itemKey}-child-${child.id || index}`}
                 depth={depth + 1}
+                filterQuery={filterQuery}
               />
             ))}
           </div>
