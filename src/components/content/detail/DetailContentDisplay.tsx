@@ -40,14 +40,14 @@ function VurderingDetails({
   pageStateKey,
   disclosureId,
 }: { vurdering?: VurderingSection } & PersistedDetailsProps) {
-  if (!vurdering) return null
-  const showTradeoffs = hasVisibleContent(vurdering.tradeoffs)
-  const showPreferences = hasVisibleContent(vurdering.preferences)
-  if (!showTradeoffs && !showPreferences) return null
   const isOpen = useContentDisclosureStore(
     (state) => (state.openDisclosureIdsByPage[pageStateKey] ?? []).includes(disclosureId),
   )
   const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
+  if (!vurdering) return null
+  const showTradeoffs = hasVisibleContent(vurdering.tradeoffs)
+  const showPreferences = hasVisibleContent(vurdering.preferences)
+  if (!showTradeoffs && !showPreferences) return null
 
   return (
     <details
@@ -120,11 +120,11 @@ function ReferenceDropdown({
   items: NestedContent[]
   className?: string
 } & PersistedDetailsProps) {
-  if (items.length === 0) return null
   const isOpen = useContentDisclosureStore(
     (state) => (state.openDisclosureIdsByPage[pageStateKey] ?? []).includes(disclosureId),
   )
   const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
+  if (items.length === 0) return null
 
   return (
     <details

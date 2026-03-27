@@ -96,7 +96,7 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
     return reversedChain.find((entry) => normalizeContentType(entry.contentType) !== 'kapittel') ?? null
   }, [isChapterContent, parentChainResult?.chain])
 
-  const redirectState = useMemo(() => {
+  const redirectState = (() => {
     if (!routeState) {
       return {
         sectionId: content?.id,
@@ -116,7 +116,7 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
         ? { contentType: chapterRootEntry.contentType }
         : {}),
     }
-  }, [chapterRootEntry?.contentType, content?.id, routeState])
+  })()
 
   useEffect(() => {
     if (!content || !isChapterContent || !chapterRootEntry) return
