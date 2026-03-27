@@ -15,7 +15,8 @@ function configMatchesPreset(config: WeightConfig, preset: WeightConfig): boolea
     (config.role ?? null) === (preset.role ?? null) &&
     config.role_boost === preset.role_boost &&
     config.role_penalty === preset.role_penalty &&
-    !!config.rerank === !!preset.rerank
+    !!config.rerank === !!preset.rerank &&
+    (config.rerank_preset_id ?? undefined) === (preset.rerank_preset_id ?? undefined)
   )
 }
 
@@ -516,7 +517,8 @@ export function SearchPipeline({
   roles,
 }: SearchPipelineProps) {
   const { data: models } = useDevModelsQuery()
-  const activeModelName = models?.find((m) => m.active)?.name ?? null
+  const modelNameA = models?.find((m) => m.preset_id === configA.rerank_preset_id)?.name ?? null
+  const modelNameB = models?.find((m) => m.preset_id === configB.rerank_preset_id)?.name ?? null
 
   return (
     <div style={{ marginBottom: '20px' }}>
@@ -530,7 +532,7 @@ export function SearchPipeline({
           onPreset={(p) => onChangeA({ ...p })}
           onChange={onChangeA}
           roles={roles}
-          activeModelName={activeModelName}
+          activeModelName={modelNameA}
         />
         <PipelineRow
           label="Konfig B"
@@ -541,7 +543,7 @@ export function SearchPipeline({
           onPreset={(p) => onChangeB({ ...p })}
           onChange={onChangeB}
           roles={roles}
-          activeModelName={activeModelName}
+          activeModelName={modelNameB}
         />
       </div>
     </div>
