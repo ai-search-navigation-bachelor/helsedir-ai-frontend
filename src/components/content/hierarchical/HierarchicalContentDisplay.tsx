@@ -42,7 +42,8 @@ function isReferenceType(node: NestedContent) {
 function nestedContentMatchesQuery(node: NestedContent, lower: string): boolean {
   if (isReferenceType(node)) return false
   if (getNodeTitle(node).toLowerCase().includes(lower)) return true
-  if (textMatchesQuery([node.intro, node.tekst, node.body, node.data?.praktisk, node.data?.rasjonale], lower)) return true
+  if (textMatchesQuery([node.intro, node.tekst, node.body, node.data?.praktisk, node.data?.rasjonale,
+    node.data?.nokkelInfo?.fordelerogulemper, node.data?.nokkelInfo?.verdierogpreferanser], lower)) return true
   if (node.children) {
     return node.children.some((child) => nestedContentMatchesQuery(child, lower))
   }
@@ -77,9 +78,7 @@ function filterPage(
 ): PageNode | null {
   const lower = query.toLowerCase()
   const cached = getCachedContent(page.node.id)
-
-  // If the page's own title/text matches, show everything
-  if (pageOwnContentMatches(page, lower, cached)) return page
+  const ownMatches = pageOwnContentMatches(page, lower, cached)
 
   // Filter expandable children to only matching ones
   const expandableSource = getExpandableChildren(page, cached)
@@ -94,7 +93,7 @@ function filterPage(
     return filterPage(child, lower, pagesById, getCachedContent) !== null
   })
 
-  if (matchingExpandable.length === 0 && matchingChildIds.length === 0) return null
+  if (!ownMatches && matchingExpandable.length === 0 && matchingChildIds.length === 0) return null
 
   return {
     ...page,

@@ -10,8 +10,14 @@ function isReferenceNode(node: NestedContent) {
 const MAX_SNIPPETS = 5
 const CONTEXT_CHARS = 60
 
+function decodeEntities(text: string) {
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = text
+  return textarea.value
+}
+
 function stripHtml(html: string) {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  return decodeEntities(html.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim()
 }
 
 function countOccurrences(text: string, query: string): number {
@@ -47,6 +53,26 @@ export function countNodeMatches(node: NestedContent, query: string): number {
     for (const child of node.children) {
       count += countNodeMatches(child, query)
     }
+  }
+
+  return count
+}
+
+/** Count matches for a PageNode including all child pages in the tree */
+export function countPageMatches(
+  page: { node: NestedContent; childrenIds: string[]; expandableChildren: NestedContent[] },
+  query: string,
+  pagesById: Map<string, { node: NestedContent; childrenIds: string[]; expandableChildren: NestedContent[] }>,
+  getCachedContent: (nodeId: string) => NestedContent | null,
+): number {
+  if (!query) return 0
+  const cached = getCachedContent(page.node.id)
+  let count = countNodeMatches(cached ?? page.node, query)
+
+  // Count from child pages in the tree
+  for (const childId of page.childrenIds) {
+    const child = pagesById.get(childId)
+    if (child) count += countPageMatches(child, query, pagesById, getCachedContent)
   }
 
   return count
@@ -171,20 +197,17 @@ interface MatchGroup {
 function buildMatchGroups(node: NestedContent, query: string): MatchGroup[] {
   const lowerQuery = query.toLowerCase()
   const groups: MatchGroup[] = []
-  let remaining = MAX_SNIPPETS
 
   // 1. Check own text
-  const ownSnippets = extractSnippetsFromTexts(getOwnTexts(node), query, remaining)
+  const ownSnippets = extractSnippetsFromTexts(getOwnTexts(node), query, MAX_SNIPPETS)
   if (ownSnippets.length > 0) {
     groups.push({ childTitle: null, childId: null, childNode: null, snippets: ownSnippets })
-    remaining -= ownSnippets.length
   }
 
-  if (remaining <= 0 || !node.children) return groups
+  if (!node.children) return groups
 
   // 2. Check each child (and their descendants), skip references
   for (const child of node.children) {
-    if (remaining <= 0) break
     if (isReferenceNode(child)) continue
 
     const childTitle = getNodeTitle(child)
@@ -201,11 +224,10 @@ function buildMatchGroups(node: NestedContent, query: string): MatchGroup[] {
       return texts
     }
 
-    const childSnippets = extractSnippetsFromTexts(collectAllTexts(child), query, remaining)
+    const childSnippets = extractSnippetsFromTexts(collectAllTexts(child), query, MAX_SNIPPETS)
 
     if (titleMatches || childSnippets.length > 0) {
       groups.push({ childTitle, childId: child.id || null, childNode: child, snippets: childSnippets })
-      remaining -= childSnippets.length
     }
   }
 
