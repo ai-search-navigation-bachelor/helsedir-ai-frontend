@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
+import { IoSearch, IoClose } from 'react-icons/io5'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useHierarchicalChapters } from '../../../hooks/queries/useHierarchicalChapters'
 import { useBackgroundPrefetch } from '../../../hooks/queries/useBackgroundPrefetch'
 import type { ContentDisplayProps } from '../../../types/pages'
@@ -16,13 +17,90 @@ import {
   buildPageTree,
   formatDateLabel,
   getAncestorIds,
+  getNodeTitle,
   getNodeType,
   getSelectedAncestorIds,
 } from './treeUtils'
 import { fetchChapter } from '../../../lib/content/chapterFetch'
+import { dedupeNestedContents } from '../../../lib/content/nestedContentDedup'
 import { RichContentHtml } from '../shared/RichContentHtml'
 
 const DESKTOP_LG_MEDIA_QUERY = '(min-width: 1024px)'
+
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function textMatchesQuery(texts: Array<string | undefined | null>, lower: string): boolean {
+  return texts.some((t) => t && stripHtml(t).toLowerCase().includes(lower))
+}
+
+function isReferenceType(node: NestedContent) {
+  return getNodeType(node).includes('referanse')
+}
+
+function nestedContentMatchesQuery(node: NestedContent, lower: string): boolean {
+  if (isReferenceType(node)) return false
+  if (getNodeTitle(node).toLowerCase().includes(lower)) return true
+  if (textMatchesQuery([node.intro, node.tekst, node.body, node.data?.praktisk, node.data?.rasjonale,
+    node.data?.nokkelInfo?.fordelerogulemper, node.data?.nokkelInfo?.verdierogpreferanser], lower)) return true
+  if (node.children) {
+    return node.children.some((child) => nestedContentMatchesQuery(child, lower))
+  }
+  return false
+}
+
+/** Only checks the page's own title/text, not its children */
+function pageOwnContentMatches(
+  node: PageNode,
+  lower: string,
+  cachedContent: NestedContent | null,
+): boolean {
+  if (node.title.toLowerCase().includes(lower)) return true
+  if (textMatchesQuery([node.node.intro, node.node.tekst, node.node.body], lower)) return true
+  if (cachedContent && textMatchesQuery([cachedContent.intro, cachedContent.tekst, cachedContent.body], lower)) return true
+  return false
+}
+
+function getExpandableChildren(page: PageNode, cached: NestedContent | null): NestedContent[] {
+  if (!cached?.children) return page.expandableChildren
+  return cached.children.filter((c) => {
+    const t = getNodeType(c)
+    return t && t !== 'kapittel'
+  })
+}
+
+function filterPage(
+  page: PageNode,
+  query: string,
+  pagesById: Map<string, PageNode>,
+  getCachedContent: (nodeId: string) => NestedContent | null,
+): PageNode | null {
+  const lower = query.toLowerCase()
+  const cached = getCachedContent(page.node.id)
+  const ownMatches = pageOwnContentMatches(page, lower, cached)
+
+  // Filter expandable children to only matching ones
+  const expandableSource = getExpandableChildren(page, cached)
+  const matchingExpandable = expandableSource.filter((child) =>
+    nestedContentMatchesQuery(child, lower),
+  )
+
+  // Recursively filter tree children
+  const matchingChildIds = page.childrenIds.filter((childId) => {
+    const child = pagesById.get(childId)
+    if (!child) return false
+    return filterPage(child, lower, pagesById, getCachedContent) !== null
+  })
+
+  if (!ownMatches && matchingExpandable.length === 0 && matchingChildIds.length === 0) return null
+
+  return {
+    ...page,
+    expandableChildren: matchingExpandable,
+    childrenIds: matchingChildIds,
+  }
+}
 
 function getSectionIdFromLocationState(state: unknown) {
   if (!state || typeof state !== 'object') return null
@@ -47,9 +125,11 @@ export function HierarchicalContentDisplay({
 }: HierarchicalContentDisplayProps) {
   const location = useLocation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [autoOpenExpandableId, setAutoOpenExpandableId] = useState<string | null>(null)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [overviewFilter, setOverviewFilter] = useState('')
   const contentRef = useRef<HTMLElement>(null)
   const mobileSidebarDialogRef = useRef<HTMLDivElement>(null)
   const mobileSidebarCloseButtonRef = useRef<HTMLButtonElement>(null)
@@ -161,7 +241,7 @@ export function HierarchicalContentDisplay({
 
     if (lazyPageContent) {
       node = lazyPageContent
-      const allLazyChildren = lazyPageContent.children ?? []
+      const allLazyChildren = dedupeNestedContents(lazyPageContent.children)
       const lazyExpandable = isStubPage
         ? allLazyChildren
         : allLazyChildren.filter((child) => {
@@ -221,10 +301,10 @@ export function HierarchicalContentDisplay({
     if (!pageWithLazyContent) return pageWithLazyContent
 
     if (fetchedExpandableResult?.map && fetchedExpandableResult.map.size > 0) {
-      const expandableChildren = pageWithLazyContent.expandableChildren.map((stub) => {
+      const expandableChildren = dedupeNestedContents(pageWithLazyContent.expandableChildren.map((stub) => {
         if (!stub.id) return stub
         return fetchedExpandableResult.map.get(stub.id) ?? stub
-      })
+      }))
       return { ...pageWithLazyContent, expandableChildren }
     }
 
@@ -345,6 +425,26 @@ export function HierarchicalContentDisplay({
     handleShowOverview()
     closeMobileSidebarNav()
   }, [closeMobileSidebarNav, handleShowOverview])
+
+  const handleSidebarSelectPage = useCallback((pageId: string, expandableId?: string, scrollTo?: boolean) => {
+    setOverviewFilter('')
+    handleSelectPage(pageId, expandableId, scrollTo)
+  }, [handleSelectPage])
+
+  const handleSidebarShowOverview = useCallback(() => {
+    setOverviewFilter('')
+    handleShowOverview()
+  }, [handleShowOverview])
+
+  const handleMobileSidebarSelectPage = useCallback((pageId: string) => {
+    setOverviewFilter('')
+    handleMobileSelectPage(pageId)
+  }, [handleMobileSelectPage])
+
+  const handleMobileSidebarShowOverview = useCallback(() => {
+    setOverviewFilter('')
+    handleMobileShowOverview()
+  }, [handleMobileShowOverview])
 
   const handleToggleExpand = useCallback((pageId: string) => {
     setExpandedIds((prev) => {
@@ -474,14 +574,7 @@ export function HierarchicalContentDisplay({
     const contentEl = contentRef.current
     if (!contentEl) return
 
-    const rect = contentEl.getBoundingClientRect()
-    const topThreshold = 24
-
-    // Only auto-scroll if the user is already below the content panel top.
-    // Avoid scrolling downward when the content top is already visible lower in the viewport.
-    if (rect.top < -topThreshold) {
-      contentEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    contentEl.scrollIntoView({ block: 'start' })
   }, [activePage, autoOpenExpandableId])
 
   useEffect(() => {
@@ -494,7 +587,8 @@ export function HierarchicalContentDisplay({
       const el = document.querySelector(`[data-expandable-id="${escaped}"]`)
       if (el) {
         clearInterval(interval)
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        const y = el.getBoundingClientRect().top + window.scrollY - 60
+        window.scrollTo({ top: y })
       }
       if (++attempts >= maxAttempts) clearInterval(interval)
     }, 100)
@@ -537,9 +631,9 @@ export function HierarchicalContentDisplay({
               expandedIds={effectiveExpandedIds}
               activePageId={activePage?.id}
               selectedAncestorIds={selectedAncestorIds}
-              onSelectPage={handleSelectPage}
+              onSelectPage={handleSidebarSelectPage}
               onToggleExpand={handleToggleExpand}
-              onShowOverview={handleShowOverview}
+              onShowOverview={handleSidebarShowOverview}
               isOverviewActive={!activePage}
             />
           )}
@@ -620,10 +714,10 @@ export function HierarchicalContentDisplay({
                         expandedIds={effectiveExpandedIds}
                         activePageId={activePage?.id}
                         selectedAncestorIds={selectedAncestorIds}
-                        onSelectPage={handleMobileSelectPage}
+                        onSelectPage={handleMobileSidebarSelectPage}
                         onToggleExpand={handleToggleExpand}
                         emphasizeExpandControl
-                        onShowOverview={handleMobileShowOverview}
+                        onShowOverview={handleMobileSidebarShowOverview}
                         isOverviewActive={!activePage}
                       />
                     </div>
@@ -649,40 +743,124 @@ export function HierarchicalContentDisplay({
 
           {isStubPage && isLazyFetching && <ContentBodyLoadingSkeleton />}
 
-          {effectiveActivePage && !(isStubPage && isLazyFetching) && (
-            <PageContent
-              activePage={effectiveActivePage}
-              pagesById={pageTree.pagesById}
-              onSelectPage={handleSelectPage}
-              previousPage={previousPage}
-              nextPage={nextPage}
-              isLoadingExpandable={isExpandableFetching || (isLazyPageFetching && needsExpandableContent)}
-              autoOpenExpandableId={autoOpenExpandableId}
-            />
-          )}
+          {effectiveActivePage && !(isStubPage && isLazyFetching) && (() => {
+            const hasChildren = effectiveActivePage.childrenIds.length > 0 || effectiveActivePage.expandableChildren.length > 0
+            const trimmedFilter = overviewFilter.trim().length >= 3 ? overviewFilter.trim() : ''
+            const getCachedContent = (nodeId: string): NestedContent | null =>
+              queryClient.getQueryData<NestedContent>(['lazy-page-content', nodeId]) ?? null
+            const filteredActivePage = hasChildren && trimmedFilter
+              ? filterPage(effectiveActivePage, trimmedFilter, pageTree.pagesById, getCachedContent) ?? effectiveActivePage
+              : effectiveActivePage
+            const noResults = hasChildren && trimmedFilter && filterPage(effectiveActivePage, trimmedFilter, pageTree.pagesById, getCachedContent) === null
 
-          {!activePage && !isChaptersLoading && orderedPageIds.length > 0 && (
-            <div>
-              {orderedPageIds
-                .map((pageId) => pageTree.pagesById.get(pageId))
-                .filter((page): page is PageNode => !!page && !page.isPlaceholder && page.depth <= 1)
-                .map((page, index) => (
-                  <div key={page.id} style={{
-                    marginTop: index === 0 ? 0 : 40,
-                    paddingTop: index > 0 ? 40 : undefined,
-                    borderTop: index > 0 ? '1px solid #e2e8f0' : undefined,
-                  }}>
-                    <PageContent
-                      activePage={page}
-                      pagesById={pageTree.pagesById}
-                      onSelectPage={handleSelectPage}
-                      isOverview
+            return (
+              <>
+                {hasChildren && (
+                  <div className="relative mb-4">
+                    <IoSearch className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                    <input
+                      type="text"
+                      value={overviewFilter}
+                      onChange={(e) => setOverviewFilter(e.target.value)}
+                      placeholder="Søk i innholdet (minst 3 tegn)..."
+                      className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
                     />
+                    {overviewFilter && (
+                      <button
+                        type="button"
+                        onClick={() => setOverviewFilter('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border-0 bg-slate-200 p-0 text-slate-500 cursor-pointer transition-colors hover:bg-slate-300 hover:text-slate-700"
+                        aria-label="Tøm filter"
+                      >
+                        <IoClose className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
-                ))
-              }
-            </div>
-          )}
+                )}
+                {noResults ? (
+                  <Paragraph style={{ marginTop: 0, color: '#64748b' }}>
+                    Ingen treff for «{trimmedFilter}»
+                  </Paragraph>
+                ) : (
+                  <PageContent
+                    activePage={trimmedFilter ? filteredActivePage : effectiveActivePage}
+                    pagesById={pageTree.pagesById}
+                    onSelectPage={handleSelectPage}
+                    previousPage={previousPage}
+                    nextPage={nextPage}
+                    isLoadingExpandable={isExpandableFetching || (isLazyPageFetching && needsExpandableContent)}
+                    autoOpenExpandableId={autoOpenExpandableId}
+                    filterQuery={trimmedFilter}
+                  />
+                )}
+              </>
+            )
+          })()}
+
+          {!activePage && !isChaptersLoading && orderedPageIds.length > 0 && (() => {
+            const allOverviewPages = orderedPageIds
+              .map((pageId) => pageTree.pagesById.get(pageId))
+              .filter((page): page is PageNode => !!page && !page.isPlaceholder && page.depth <= 1)
+
+            const trimmedFilter = overviewFilter.trim().length >= 3 ? overviewFilter.trim() : ''
+            const getCachedContent = (nodeId: string): NestedContent | null =>
+              queryClient.getQueryData<NestedContent>(['lazy-page-content', nodeId]) ?? null
+            const filteredPages = trimmedFilter
+              ? allOverviewPages
+                  .map((page) => filterPage(page, trimmedFilter, pageTree.pagesById, getCachedContent))
+                  .filter((page): page is PageNode => page !== null)
+              : allOverviewPages
+
+            return (
+              <div>
+                <div className="relative mb-4">
+                  <IoSearch
+                    className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400"
+                    aria-hidden="true"
+                  />
+                  <input
+                    type="text"
+                    value={overviewFilter}
+                    onChange={(e) => setOverviewFilter(e.target.value)}
+                    placeholder="Søk i innholdet (minst 3 tegn)..."
+                    className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  />
+                  {overviewFilter && (
+                    <button
+                      type="button"
+                      onClick={() => setOverviewFilter('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border-0 bg-slate-200 p-0 text-slate-500 cursor-pointer transition-colors hover:bg-slate-300 hover:text-slate-700"
+                      aria-label="Tøm filter"
+                    >
+                      <IoClose className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {filteredPages.length === 0 ? (
+                  <Paragraph style={{ marginTop: 0, color: '#64748b' }}>
+                    Ingen treff for «{trimmedFilter}»
+                  </Paragraph>
+                ) : (
+                  filteredPages.map((page, index) => (
+                    <div key={page.id} style={{
+                      marginTop: index === 0 ? 0 : 40,
+                      paddingTop: index > 0 ? 40 : undefined,
+                      borderTop: index > 0 ? '1px solid #e2e8f0' : undefined,
+                    }}>
+                      <PageContent
+                        activePage={page}
+                        pagesById={pageTree.pagesById}
+                        onSelectPage={handleSelectPage}
+                        isOverview
+                        filterQuery={trimmedFilter}
+                      />
+                    </div>
+                  ))
+                )}
+              </div>
+            )
+          })()}
 
           {!activePage && !isChaptersLoading && pageTree.rootIds.length === 0 && content.body && (
             <RichContentHtml

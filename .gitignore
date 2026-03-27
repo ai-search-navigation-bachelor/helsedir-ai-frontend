@@ -26,5 +26,7 @@ dist-ssr
 *.sln
 *.sw?
 
+# AI tooling artifacts
+docs/superpowers
 
 .env

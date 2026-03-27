@@ -45,7 +45,7 @@ export interface DevSearchReturn {
 export function useDevSearch(): DevSearchReturn {
   const [query, setQuery] = useState('')
   const [slotA, setSlotA] = useState<SlotState>(() => initialSlot({ ...DEFAULT_CONFIG }))
-  const [slotB, setSlotB] = useState<SlotState>(() => initialSlot({ ...DEFAULT_CONFIG, rerank: false }))
+  const [slotB, setSlotB] = useState<SlotState>(() => initialSlot({ ...DEFAULT_CONFIG, rerank: true }))
   const [slotHelsedir, setSlotHelsedir] = useState<SlotState>(() =>
     initialSlot({ ...HELSEDIR_STYLE_CONFIG }),
   )

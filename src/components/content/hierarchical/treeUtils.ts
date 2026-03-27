@@ -1,5 +1,6 @@
 import type { NestedContent } from '../../../types'
 export { formatDateLabel } from '../../../lib/content/date'
+import { dedupeNestedContents } from '../../../lib/content/nestedContentDedup'
 import { getDisplayTitle } from '../../../lib/displayTitle'
 import type { ChapterEntry, PageNode, TreeResult } from './types'
 export { hasVisibleContent } from '../shared/contentTextUtils'
@@ -59,7 +60,7 @@ export function buildPageTree(entries: ChapterEntry[]): TreeResult {
       rootIds.push(id)
     }
 
-    node.children?.forEach((child, childIndex) => {
+    dedupeNestedContents(node.children).forEach((child, childIndex) => {
       const childType = getNodeType(child)
 
       if (childType.includes('anbefaling') || (childType && childType !== 'kapittel')) {

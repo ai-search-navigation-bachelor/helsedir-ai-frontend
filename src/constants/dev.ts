@@ -9,7 +9,7 @@ export const DEFAULT_CONFIG: WeightConfig = {
   role: null,
   role_boost: 1.15,
   role_penalty: 0.85,
-  rerank: true,
+  rerank: false,
   explain: true,
 }
 
@@ -50,12 +50,12 @@ export const PRESETS: Array<{ label: string; config: WeightConfig }> = [
     config: { ...DEFAULT_CONFIG },
   },
   {
-    label: 'Vår løsning\n(uten rerank)',
-    config: { ...DEFAULT_CONFIG, rerank: false },
+    label: 'Med\nreranking',
+    config: { ...DEFAULT_CONFIG, rerank: true },
   },
   {
     label: 'Kun BM25',
-    config: { ...DEFAULT_CONFIG, bm25_weight: 1.0, semantic_weight: 0.0, rerank: false },
+    config: { ...DEFAULT_CONFIG, bm25_weight: 1.0, semantic_weight: 0.0 },
   },
   {
     label: 'Kun semantisk',

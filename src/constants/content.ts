@@ -34,16 +34,20 @@ const CANONICAL_CONTENT_TYPE_MAP: Record<string, string> = {
 const DETAIL_TYPE_LABEL_BY_CONTENT_TYPE: Record<string, string> = {
   anbefaling: 'Anbefaling',
   rad: 'Råd',
+  horing: 'Høring',
   'pakkeforlop-anbefaling': 'Pakkeforløp-anbefaling',
 }
 
 const TYPE_SEGMENT_LABEL_OVERRIDES: Record<string, string> = {
   api: 'API',
+  horing: 'Høring',
   pdf: 'PDF',
   pico: 'PICO',
 }
 
 const TYPE_LABEL_BY_CONTENT_TYPE: Record<string, string> = {
+  horing: 'Høring',
+  rad: 'Råd',
   ehelsestandard: 'Nasjonal e-helsestandard',
 }
 

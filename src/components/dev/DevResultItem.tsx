@@ -15,13 +15,12 @@ interface DevResultItemProps {
 const mono = "'JetBrains Mono', 'Fira Code', monospace"
 
 const FEATURE_LABELS: Record<string, string> = {
-  semantic_score: 'Semantisk likhet',
-  bm25_score: 'BM25 ordmatch',
   smoothed_ctr: 'Klikk-rate (CTR)',
-  role_match: 'Rollematch',
-  query_length: 'Lengde på søk',
+  semantic_score: 'Semantisk likhet',
   title_query_overlap: 'Tittel-overlap',
-  content_freshness: 'Innholdsferskhet',
+  role_match: 'Rollematch',
+  bm25_score: 'BM25 ordmatch',
+  query_length: 'Lengde på søk',
 }
 
 function computeRetRanks(result: SearchResult, allResults: SearchResult[]) {
