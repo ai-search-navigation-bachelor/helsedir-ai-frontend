@@ -23,6 +23,7 @@ export interface SearchOptions extends BaseRequestOptions {
   log?: boolean
   method?: 'hybrid' | 'keyword' | 'semantic'
   rerank?: boolean
+  rerank_preset_id?: number
   explain?: boolean
   bm25_weight?: number
   semantic_weight?: number
@@ -66,6 +67,7 @@ export async function search(
     log,
     method,
     rerank,
+    rerank_preset_id,
     explain,
     bm25_weight,
     semantic_weight,
@@ -93,6 +95,7 @@ export async function search(
     log,
     method,
     rerank,
+    rerank_preset_id,
     explain,
     bm25_weight,
     semantic_weight,
