@@ -1,4 +1,4 @@
-import { useMemo, type MouseEvent } from 'react'
+import { useMemo, type MouseEvent, type PropsWithChildren } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Alert, Heading, Paragraph } from '@digdir/designsystemet-react'
 import { useNavigate } from 'react-router-dom'
@@ -28,15 +28,36 @@ import {
   type VurderingSection,
 } from './detailContentModel'
 import { ContentStatisticsSection } from './ContentStatisticsSection'
+import { useContentDisclosureStore } from '../../../stores/contentDisclosureStore'
 
-function VurderingDetails({ vurdering }: { vurdering?: VurderingSection }) {
+interface PersistedDetailsProps {
+  pageStateKey: string
+  disclosureId: string
+}
+
+function VurderingDetails({
+  vurdering,
+  pageStateKey,
+  disclosureId,
+}: { vurdering?: VurderingSection } & PersistedDetailsProps) {
   if (!vurdering) return null
   const showTradeoffs = hasVisibleContent(vurdering.tradeoffs)
   const showPreferences = hasVisibleContent(vurdering.preferences)
   if (!showTradeoffs && !showPreferences) return null
+  const isOpen = useContentDisclosureStore(
+    (state) => (state.openDisclosureIdsByPage[pageStateKey] ?? []).includes(disclosureId),
+  )
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
 
   return (
-    <details className="group/vurdering mt-4 rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm">
+    <details
+      className="group/vurdering mt-4 rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm"
+      open={isOpen || undefined}
+      onToggle={(event) => {
+        if (event.target !== event.currentTarget) return
+        setDisclosureOpen(pageStateKey, disclosureId, event.currentTarget.open)
+      }}
+    >
       <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open/vurdering:rounded-b-none">
         <ChevronRightIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/vurdering:rotate-90 group-open/vurdering:text-[#025169]" />
         <span className="text-[0.9375rem] font-medium text-slate-800 group-open/vurdering:text-[#025169]">
@@ -93,14 +114,27 @@ function isNestedDetailChild(source: ContentRelationItem | NestedContent) {
 function ReferenceDropdown({
   items,
   className = '',
+  pageStateKey,
+  disclosureId,
 }: {
   items: NestedContent[]
   className?: string
-}) {
+} & PersistedDetailsProps) {
   if (items.length === 0) return null
+  const isOpen = useContentDisclosureStore(
+    (state) => (state.openDisclosureIdsByPage[pageStateKey] ?? []).includes(disclosureId),
+  )
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
 
   return (
-    <details className={`group/dropdown rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm ${className}`.trim()}>
+    <details
+      className={`group/dropdown rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm ${className}`.trim()}
+      open={isOpen || undefined}
+      onToggle={(event) => {
+        if (event.target !== event.currentTarget) return
+        setDisclosureOpen(pageStateKey, disclosureId, event.currentTarget.open)
+      }}
+    >
       <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open/dropdown:rounded-b-none">
         <ChevronRightIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/dropdown:rotate-90 group-open/dropdown:text-[#025169]" />
         <span className="text-[0.9375rem] font-medium text-slate-800 group-open/dropdown:text-[#025169]">
@@ -210,6 +244,7 @@ export function DetailContentDisplay({
   primarySectionTitle = 'Hovedanbefaling',
 }: DetailContentDisplayProps) {
   const navigate = useNavigate()
+  const pageStateKey = `detail:${content.id}`
   const normalizedType = normalizeContentType(content.content_type)
   const backendDocumentUrl = content.document_url?.trim() || ''
   const isPdfOnlyContent = Boolean(content.is_pdf_only)
@@ -463,32 +498,49 @@ export function DetailContentDisplay({
                 className="content-html text-base leading-7 text-slate-800"
                 html={section.html}
               />
-              <VurderingDetails vurdering={section.vurdering} />
+              <VurderingDetails
+                vurdering={section.vurdering}
+                pageStateKey={pageStateKey}
+                disclosureId={`${section.id}-vurdering`}
+              />
               {section.appendedDropdowns && section.appendedDropdowns.length > 0 && (
                 <div className="mt-6 space-y-3">
                   {section.appendedDropdowns.map((dropdown) => (
-                    <details key={dropdown.id} className="group/dropdown rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm">
-                      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open/dropdown:rounded-b-none">
-                        <ChevronRightIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/dropdown:rotate-90 group-open/dropdown:text-[#025169]" />
-                        <span className="text-[0.9375rem] font-medium text-slate-800 group-open/dropdown:text-[#025169]">
-                          {dropdown.title}
-                        </span>
-                      </summary>
+                    <PersistedDropdown
+                      key={dropdown.id}
+                      title={dropdown.title}
+                      pageStateKey={pageStateKey}
+                      disclosureId={dropdown.id}
+                    >
                       <div className="border-t border-slate-200 pr-4 pl-[2.75rem] pb-5 pt-3">
                         <RichContentHtml
                           className="content-html text-base leading-7 text-slate-800"
                           html={dropdown.html}
                         />
-                        <VurderingDetails vurdering={dropdown.vurdering} />
+                        <VurderingDetails
+                          vurdering={dropdown.vurdering}
+                          pageStateKey={pageStateKey}
+                          disclosureId={`${dropdown.id}-vurdering`}
+                        />
                       </div>
-                    </details>
+                    </PersistedDropdown>
                   ))}
-                  {index === 0 && <ReferenceDropdown items={referenceItems} />}
+                  {index === 0 && (
+                    <ReferenceDropdown
+                      items={referenceItems}
+                      pageStateKey={pageStateKey}
+                      disclosureId="references"
+                    />
+                  )}
                 </div>
               )}
               {index === 0 && (!section.appendedDropdowns || section.appendedDropdowns.length === 0) && (
                 <div className="mt-6">
-                  <ReferenceDropdown items={referenceItems} />
+                  <ReferenceDropdown
+                    items={referenceItems}
+                    pageStateKey={pageStateKey}
+                    disclosureId="references"
+                  />
                 </div>
               )}
             </article>
@@ -552,7 +604,13 @@ export function DetailContentDisplay({
             </section>
           )}
 
-          {sections.length === 0 && referenceItems.length > 0 && <ReferenceDropdown items={referenceItems} />}
+          {sections.length === 0 && referenceItems.length > 0 && (
+            <ReferenceDropdown
+              items={referenceItems}
+              pageStateKey={pageStateKey}
+              disclosureId="references"
+            />
+          )}
 
           {sections.length === 0 && (visibleDocumentLinks.length > 0 || visibleRelatedLinks.length > 0 || shouldShowPublicationFallback) && (
             <section className="space-y-4">
@@ -633,5 +691,40 @@ export function DetailContentDisplay({
           })()}
         </section>
     </div>
+  )
+}
+
+function PersistedDropdown({
+  title,
+  className = '',
+  children,
+  pageStateKey,
+  disclosureId,
+}: PropsWithChildren<{
+  title: string
+  className?: string
+} & PersistedDetailsProps>) {
+  const isOpen = useContentDisclosureStore(
+    (state) => (state.openDisclosureIdsByPage[pageStateKey] ?? []).includes(disclosureId),
+  )
+  const setDisclosureOpen = useContentDisclosureStore((state) => state.setDisclosureOpen)
+
+  return (
+    <details
+      className={`group/dropdown rounded-lg border border-slate-200 bg-white transition-colors open:border-[#025169]/30 open:shadow-sm ${className}`.trim()}
+      open={isOpen || undefined}
+      onToggle={(event) => {
+        if (event.target !== event.currentTarget) return
+        setDisclosureOpen(pageStateKey, disclosureId, event.currentTarget.open)
+      }}
+    >
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-lg px-4 py-3.5 transition-colors hover:bg-slate-50 group-open/dropdown:rounded-b-none">
+        <ChevronRightIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 group-open/dropdown:rotate-90 group-open/dropdown:text-[#025169]" />
+        <span className="text-[0.9375rem] font-medium text-slate-800 group-open/dropdown:text-[#025169]">
+          {title}
+        </span>
+      </summary>
+      {children}
+    </details>
   )
 }

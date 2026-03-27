@@ -13,7 +13,10 @@ import {
   ContentPageLoadingSkeleton,
   DetailPageLoadingSkeleton,
 } from '../components/content/ContentSkeletons'
-import { resolveContentPresentationFromHint } from '../components/content/contentPresentation'
+import {
+  resolveContentPresentation,
+  resolveContentPresentationFromHint,
+} from '../components/content/contentPresentation'
 import { ContentPageLayout } from '../components/content/ContentPageLayout'
 import { ContentDisplay } from '../components/content/ContentDisplay'
 
@@ -56,6 +59,13 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
 
   const type = normalizeContentType(content?.content_type)
   const isChapterContent = type === 'kapittel'
+  const normalizePath = (path: string) => path.replace(/\/+$/, '')
+  const pendingCanonicalRedirect = Boolean(
+    !isChapterContent &&
+    isLegacyIdRoute &&
+    content?.path &&
+    normalizePath(content.path) !== normalizePath(location.pathname),
+  )
 
   // When accessed via /content/:id and the content has a canonical path, redirect there.
   // Chapters should skip this so we do not bounce through the chapter path before redirecting
@@ -147,6 +157,16 @@ export function ContentDetail({ pathPrefix }: ContentDetailProps) {
   if (!content) return null
 
   if (isTemasideContentType(type)) return null
+
+  if (pendingCanonicalRedirect) {
+    const presentation = resolveContentPresentation(content)
+
+    return (
+      <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-8 sm:px-6 lg:px-12">
+        {presentation === 'hierarchical' ? <ContentPageLoadingSkeleton /> : <DetailPageLoadingSkeleton />}
+      </div>
+    )
+  }
 
   if (isChapterContent && (isParentChainLoading || chapterRootEntry)) {
     return (
