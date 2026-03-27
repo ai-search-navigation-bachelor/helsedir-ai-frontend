@@ -10,6 +10,7 @@ export interface WeightConfig {
   role_boost: number
   role_penalty: number
   rerank?: boolean
+  rerank_preset_id?: number
   explain?: boolean
 }
 

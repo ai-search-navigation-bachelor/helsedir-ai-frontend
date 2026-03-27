@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
 import type { WeightConfig, PipelineStageId } from '../../../types/dev'
 import { SliderRow } from '../SliderRow'
-import { useDevModelsQuery, useSelectDevModel } from '../../../hooks/queries/useDevModelsQuery'
+import { useDevModelsQuery, useDevModelImportances, useSelectDevModel } from '../../../hooks/queries/useDevModelsQuery'
 
 interface RoleOption {
   slug: string
@@ -358,10 +357,11 @@ export function PipelineDetailPanel({ stage, config, onChange, accentHex, roles 
 
 function LtrPanel({ config, onChange }: { config: WeightConfig; onChange: (c: WeightConfig) => void }) {
   const { data: models, isLoading: loading, error: fetchError } = useDevModelsQuery()
+  const { data: featureImportances } = useDevModelImportances()
   const selectMutation = useSelectDevModel()
-  const [featureImportances, setFeatureImportances] = useState<Record<string, number> | null>(null)
 
-  const activeModel = models?.find((m) => m.active)
+  const selectedPresetId = config.rerank_preset_id
+  const selectedModel = models?.find((m) => m.preset_id === selectedPresetId)
   const selecting = selectMutation.isPending
   const error = fetchError
     ? (fetchError instanceof Error ? fetchError.message : 'Kunne ikke hente modeller')
@@ -370,18 +370,9 @@ function LtrPanel({ config, onChange }: { config: WeightConfig; onChange: (c: We
       : null
 
   function handleSelectModel(presetId: number) {
-    selectMutation.mutate(presetId, {
-      onSuccess: (res) => setFeatureImportances(res.feature_importances),
-    })
+    onChange({ ...config, rerank_preset_id: presetId })
+    selectMutation.mutate(presetId)
   }
-
-  useEffect(() => {
-    if (activeModel && !featureImportances) {
-      selectMutation.mutate(activeModel.preset_id, {
-        onSuccess: (res) => setFeatureImportances(res.feature_importances),
-      })
-    }
-  }, [activeModel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const sortedImportances = featureImportances
     ? Object.entries(featureImportances).sort(([, a], [, b]) => b - a)
@@ -489,50 +480,53 @@ function LtrPanel({ config, onChange }: { config: WeightConfig; onChange: (c: We
 
         {!loading && models && models.length > 0 && (
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '10px' }}>
-            {models.map((m) => (
-              <button
-                key={m.preset_id}
-                type="button"
-                onClick={() => handleSelectModel(m.preset_id)}
-                disabled={selecting}
-                title={m.description}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: '0.78rem',
-                  fontWeight: m.active ? 700 : 500,
-                  borderRadius: '6px',
-                  border: `2px solid ${m.active ? '#7c3aed' : '#d1d5db'}`,
-                  backgroundColor: m.active ? '#f5f3ff' : '#fff',
-                  color: m.active ? '#7c3aed' : '#475569',
-                  cursor: selecting ? 'wait' : 'pointer',
-                  transition: 'all 0.15s ease',
-                  opacity: selecting ? 0.6 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!m.active) {
-                    e.currentTarget.style.borderColor = '#7c3aed'
-                    e.currentTarget.style.backgroundColor = '#faf5ff'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!m.active) {
-                    e.currentTarget.style.borderColor = '#d1d5db'
-                    e.currentTarget.style.backgroundColor = '#fff'
-                  }
-                }}
-              >
-                {m.name}
-                {m.active && (
-                  <span style={{ marginLeft: '6px', fontSize: '0.68rem', color: '#15803d' }}>{'\u2713'}</span>
-                )}
-              </button>
-            ))}
+            {models.map((m) => {
+              const isSelected = m.preset_id === selectedPresetId
+              return (
+                <button
+                  key={m.preset_id}
+                  type="button"
+                  onClick={() => handleSelectModel(m.preset_id)}
+                  disabled={selecting}
+                  title={m.description}
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: '0.78rem',
+                    fontWeight: isSelected ? 700 : 500,
+                    borderRadius: '6px',
+                    border: `2px solid ${isSelected ? '#7c3aed' : '#d1d5db'}`,
+                    backgroundColor: isSelected ? '#f5f3ff' : '#fff',
+                    color: isSelected ? '#7c3aed' : '#475569',
+                    cursor: selecting ? 'wait' : 'pointer',
+                    transition: 'all 0.15s ease',
+                    opacity: selecting ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = '#7c3aed'
+                      e.currentTarget.style.backgroundColor = '#faf5ff'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.borderColor = '#d1d5db'
+                      e.currentTarget.style.backgroundColor = '#fff'
+                    }
+                  }}
+                >
+                  {m.name}
+                  {isSelected && (
+                    <span style={{ marginLeft: '6px', fontSize: '0.68rem', color: '#15803d' }}>{'\u2713'}</span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         )}
 
-        {activeModel && (
+        {selectedModel && (
           <p style={{ fontSize: '0.75rem', color: '#7c3aed', margin: '8px 0 0', fontWeight: 600 }}>
-            Aktiv modell: {activeModel.name}
+            Aktiv modell: {selectedModel.name}
           </p>
         )}
       </div>
