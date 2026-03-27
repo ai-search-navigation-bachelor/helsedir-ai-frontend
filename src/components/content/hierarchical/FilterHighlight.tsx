@@ -1,0 +1,252 @@
+import type { ReactNode } from 'react'
+import { ChevronRightIcon } from '@navikt/aksel-icons'
+import type { NestedContent } from '../../../types'
+import { getNodeTitle } from './treeUtils'
+
+const MAX_SNIPPETS = 5
+const CONTEXT_CHARS = 60
+
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+/**
+ * Highlights all occurrences of `query` in `text` with a <mark> tag.
+ * Returns plain text if no query or no match.
+ */
+export function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>
+
+  const lower = text.toLowerCase()
+  const lowerQuery = query.toLowerCase()
+  const parts: ReactNode[] = []
+  let lastIndex = 0
+  let matchIndex = lower.indexOf(lowerQuery)
+
+  while (matchIndex !== -1) {
+    if (matchIndex > lastIndex) {
+      parts.push(text.slice(lastIndex, matchIndex))
+    }
+    parts.push(
+      <mark
+        key={matchIndex}
+        className="rounded-sm bg-amber-100 px-0.5 text-inherit"
+      >
+        {text.slice(matchIndex, matchIndex + query.length)}
+      </mark>,
+    )
+    lastIndex = matchIndex + query.length
+    matchIndex = lower.indexOf(lowerQuery, lastIndex)
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex))
+  }
+
+  return parts.length > 0 ? <>{parts}</> : <>{text}</>
+}
+
+interface Snippet {
+  before: string
+  match: string
+  after: string
+}
+
+function extractSnippets(text: string, query: string, max: number): Snippet[] {
+  const plain = stripHtml(text)
+  const lower = plain.toLowerCase()
+  const lowerQuery = query.toLowerCase()
+  const snippets: Snippet[] = []
+  let searchFrom = 0
+
+  while (snippets.length < max) {
+    const idx = lower.indexOf(lowerQuery, searchFrom)
+    if (idx === -1) break
+
+    const beforeStart = Math.max(0, idx - CONTEXT_CHARS)
+    const afterEnd = Math.min(plain.length, idx + query.length + CONTEXT_CHARS)
+
+    const rawBefore = plain.slice(beforeStart, idx)
+    const rawAfter = plain.slice(idx + query.length, afterEnd)
+
+    const before = (beforeStart > 0 ? '...' : '') +
+      (beforeStart > 0 ? rawBefore.replace(/^\S*\s/, '') : rawBefore)
+    const after =
+      (afterEnd < plain.length ? rawAfter.replace(/\s\S*$/, '') : rawAfter) +
+      (afterEnd < plain.length ? '...' : '')
+
+    snippets.push({
+      before,
+      match: plain.slice(idx, idx + query.length),
+      after,
+    })
+
+    searchFrom = idx + query.length
+  }
+
+  return snippets
+}
+
+function getOwnTexts(node: NestedContent): string[] {
+  const texts: string[] = []
+  if (node.intro) texts.push(node.intro)
+  if (node.tekst) texts.push(node.tekst)
+  if (node.body) texts.push(node.body)
+  if (node.data?.praktisk) texts.push(node.data.praktisk)
+  if (node.data?.rasjonale) texts.push(node.data.rasjonale)
+  return texts
+}
+
+function extractSnippetsFromTexts(texts: string[], query: string, max: number): Snippet[] {
+  const snippets: Snippet[] = []
+  for (const text of texts) {
+    if (snippets.length >= max) break
+    const found = extractSnippets(text, query, max - snippets.length)
+    snippets.push(...found)
+  }
+  return snippets
+}
+
+interface MatchGroup {
+  /** Title of the child where matches were found, null for own-text matches */
+  childTitle: string | null
+  /** ID of the child (for navigation) */
+  childId: string | null
+  snippets: Snippet[]
+}
+
+function buildMatchGroups(node: NestedContent, query: string): MatchGroup[] {
+  const lowerQuery = query.toLowerCase()
+  const groups: MatchGroup[] = []
+  let remaining = MAX_SNIPPETS
+
+  // 1. Check own text
+  const ownSnippets = extractSnippetsFromTexts(getOwnTexts(node), query, remaining)
+  if (ownSnippets.length > 0) {
+    groups.push({ childTitle: null, childId: null, snippets: ownSnippets })
+    remaining -= ownSnippets.length
+  }
+
+  if (remaining <= 0 || !node.children) return groups
+
+  // 2. Check each child (and their descendants)
+  for (const child of node.children) {
+    if (remaining <= 0) break
+
+    const childTitle = getNodeTitle(child)
+    const titleMatches = childTitle.toLowerCase().includes(lowerQuery)
+
+    // Collect text from this child and all its descendants
+    const collectAllTexts = (n: NestedContent): string[] => {
+      const texts = getOwnTexts(n)
+      if (n.children) {
+        for (const c of n.children) texts.push(...collectAllTexts(c))
+      }
+      return texts
+    }
+
+    const childSnippets = extractSnippetsFromTexts(collectAllTexts(child), query, remaining)
+
+    if (titleMatches || childSnippets.length > 0) {
+      groups.push({ childTitle, childId: child.id || null, snippets: childSnippets })
+      remaining -= childSnippets.length
+    }
+  }
+
+  return groups
+}
+
+function SnippetLine({ snippet }: { snippet: Snippet }) {
+  return (
+    <p className="m-0 text-xs leading-relaxed text-slate-500">
+      {snippet.before}
+      <mark className="rounded-sm bg-amber-100 px-0.5 font-medium text-slate-700">
+        {snippet.match}
+      </mark>
+      {snippet.after}
+    </p>
+  )
+}
+
+/**
+ * Shows up to 3 context snippets from text matches in a NestedContent node.
+ * Groups results by child, showing child titles so users know where matches come from.
+ * Child groups are clickable when onNavigateToChild is provided.
+ */
+export function TextMatchSnippets({
+  node,
+  query,
+  onNavigateToChild,
+}: {
+  node: NestedContent
+  query: string
+  onNavigateToChild?: (expandableId: string) => void
+}) {
+  if (!query) return null
+
+  const groups = buildMatchGroups(node, query)
+  if (groups.length === 0) return null
+
+  return (
+    <div className="mt-1.5 space-y-1.5">
+      {groups.map((group, gi) => {
+        if (!group.childTitle) {
+          return group.snippets.map((snippet, si) => (
+            <SnippetLine key={`own-${si}`} snippet={snippet} />
+          ))
+        }
+
+        const content = (
+          <>
+            <div className="flex items-center gap-3">
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400" />
+              <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900">
+                <HighlightText text={group.childTitle} query={query} />
+              </span>
+            </div>
+            {group.snippets.length > 0 && (
+              <div className="mt-1.5 ml-7 space-y-0.5 border-l-2 border-slate-200 pl-2.5">
+                {group.snippets.map((snippet, si) => (
+                  <SnippetLine key={si} snippet={snippet} />
+                ))}
+              </div>
+            )}
+          </>
+        )
+
+        return onNavigateToChild && group.childId ? (
+          <button
+            key={gi}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onNavigateToChild(group.childId!)
+            }}
+            className="group/match flex w-full flex-col rounded-lg border border-slate-200 bg-white px-4 py-3.5 text-left cursor-pointer transition-all hover:border-brand/30 hover:shadow-sm [&_span.text-slate-900]:group-hover/match:text-brand [&_svg.text-slate-400]:group-hover/match:text-brand"
+          >
+            {content}
+          </button>
+        ) : (
+          <div key={gi} className="flex flex-col rounded-lg border border-slate-200 bg-white px-4 py-3.5">
+            {content}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * Renders highlighted title for a NestedContent node.
+ */
+export function HighlightNodeTitle({
+  node,
+  query,
+  fallback = 'Uten tittel',
+}: {
+  node: NestedContent
+  query: string
+  fallback?: string
+}) {
+  return <HighlightText text={getNodeTitle(node, fallback)} query={query} />
+}
