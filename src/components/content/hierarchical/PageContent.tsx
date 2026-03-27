@@ -3,13 +3,16 @@ import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { HiArrowRight } from 'react-icons/hi2'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import type { NestedContent } from '../../../types'
 import type { PageNode } from './types'
-import { hasVisibleContent, getNodeTitle, formatDateLabel } from './treeUtils'
+import { hasVisibleContent, formatDateLabel } from './treeUtils'
 import { ExpandableSubcontent } from './ExpandableSubcontent'
 import { ExpandableLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, getRelatedLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import { normalizeLinkForComparison, toAbsoluteHelsedirUrl } from '../../../lib/helsedirUrl'
+import { HighlightText, HighlightNodeTitle, TextMatchSnippets } from './FilterHighlight'
 
 interface PageContentProps {
   activePage: PageNode
@@ -20,6 +23,7 @@ interface PageContentProps {
   isLoadingExpandable?: boolean
   isOverview?: boolean
   autoOpenExpandableId?: string | null
+  filterQuery?: string
 }
 
 export function PageContent({
@@ -31,8 +35,12 @@ export function PageContent({
   isLoadingExpandable = false,
   isOverview = false,
   autoOpenExpandableId = null,
+  filterQuery = '',
 }: PageContentProps) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const getCachedNode = (nodeId: string): NestedContent | null =>
+    queryClient.getQueryData<NestedContent>(['lazy-page-content', nodeId]) ?? null
   const isPdfOnlyContent = Boolean(activePage.node.is_pdf_only)
   const hasIntro = hasVisibleContent(activePage.node.intro)
   const hasBody = !isPdfOnlyContent && hasVisibleContent(activePage.node.tekst || activePage.node.body)
@@ -110,7 +118,7 @@ export function PageContent({
               {activePage.numbering && (
                 <span className="mr-2 transition-colors group-hover:text-brand">{activePage.numbering}</span>
               )}
-              {activePage.title}
+              <HighlightText text={activePage.title} query={filterQuery} />
             </Heading>
           </button>
         ) : (
@@ -118,7 +126,7 @@ export function PageContent({
             {activePage.numbering && (
               <span className="mr-2 text-slate-800">{activePage.numbering}</span>
             )}
-            {activePage.title}
+            <HighlightText text={activePage.title} query={filterQuery} />
           </Heading>
         )}
       </div>
@@ -252,10 +260,19 @@ export function PageContent({
                       {child.numbering}
                     </span>
                     <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-brand">
-                      {child.title}
+                      <HighlightText text={child.title} query={filterQuery} />
                     </span>
                     <HiArrowRight className="ml-1 h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-brand" />
                   </button>
+                  {filterQuery && (
+                    <div className="pb-2 pl-12">
+                      <TextMatchSnippets
+                        node={getCachedNode(child.node.id) ?? child.node}
+                        query={filterQuery}
+                        onNavigateToChild={(expandableId) => onSelectPage(child.id, expandableId, true)}
+                      />
+                    </div>
+                  )}
                 </li>
               )
             })}
@@ -273,12 +290,19 @@ export function PageContent({
                 key={`${activePage.id}-overview-${item.id || index}`}
                 type="button"
                 onClick={() => onSelectPage(activePage.id, item.id || undefined)}
-                className="group flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3.5 text-left cursor-pointer transition-all hover:border-brand/30 hover:shadow-sm"
+                className="group flex w-full flex-col rounded-lg border border-slate-200 bg-white px-4 py-3.5 text-left cursor-pointer transition-all hover:border-brand/30 hover:shadow-sm"
               >
-                <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-colors group-hover:text-brand" />
-                <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-brand">
-                  {getNodeTitle(item)}
-                </span>
+                <div className="flex items-center gap-3">
+                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-400 transition-colors group-hover:text-brand" />
+                  <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-brand">
+                    <HighlightNodeTitle node={item} query={filterQuery} />
+                  </span>
+                </div>
+                {filterQuery && (
+                  <div className="ml-7 mt-1.5">
+                    <TextMatchSnippets node={item} query={filterQuery} />
+                  </div>
+                )}
               </button>
             ))}
           </section>
