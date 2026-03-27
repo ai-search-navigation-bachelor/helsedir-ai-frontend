@@ -212,7 +212,7 @@ export function TextMatchSnippets({
               </span>
             </div>
             {group.snippets.length > 0 && (
-              <div className="mt-1.5 ml-7 space-y-0.5 border-l-2 border-slate-200 pl-2.5">
+              <div className="mt-1.5 ml-7 space-y-0.5">
                 {group.snippets.map((snippet, si) => (
                   <SnippetLine key={si} snippet={snippet} />
                 ))}
