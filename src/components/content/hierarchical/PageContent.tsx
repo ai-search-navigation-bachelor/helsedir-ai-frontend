@@ -119,7 +119,7 @@ export function PageContent({
                 <span className="mr-2 transition-colors group-hover:text-brand">{activePage.numbering}</span>
               )}
               <HighlightText text={activePage.title} query={filterQuery} />
-              {filterQuery && <MatchCount count={countPageMatches(activePage, filterQuery, pagesById, getCachedNode)} />}
+              {filterQuery && <MatchCount count={countPageMatches(activePage, filterQuery, pagesById, getCachedNode)} inline />}
             </Heading>
           </button>
         ) : (
@@ -260,11 +260,11 @@ export function PageContent({
                     <span className="w-8 shrink-0 text-right text-sm font-bold tabular-nums text-brand">
                       {child.numbering}
                     </span>
-                    <span className="min-w-0 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-brand">
+                    <span className="min-w-0 flex-1 whitespace-normal break-words text-[0.9375rem] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-brand">
                       <HighlightText text={child.title} query={filterQuery} />
                     </span>
                     {filterQuery && <MatchCount count={countPageMatches(child, filterQuery, pagesById, getCachedNode)} />}
-                    <HiArrowRight className="ml-1 h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-brand" />
+                    <HiArrowRight className="shrink-0 h-4 w-4 text-slate-300 transition-colors group-hover:text-brand" />
                   </button>
                   {filterQuery && (
                     <div className="pb-2 pl-12">

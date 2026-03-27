@@ -78,11 +78,15 @@ export function countPageMatches(
   return count
 }
 
-export function MatchCount({ count }: { count: number }) {
+export function MatchCount({ count, inline }: { count: number; inline?: boolean }) {
   if (count === 0) return null
-  return (
-    <span className="ml-2 shrink-0 inline-flex translate-y-[-1px] items-center whitespace-nowrap rounded-md bg-amber-100 px-2.5 py-0.5 align-middle text-xs font-semibold tabular-nums text-amber-800">
-      {count} {count === 1 ? 'treff' : 'treff'}
+  return inline ? (
+    <span className="ml-2 shrink-0 inline-flex translate-y-[-1px] items-center whitespace-nowrap align-middle text-xs tabular-nums text-slate-400">
+      {count} treff
+    </span>
+  ) : (
+    <span className="ml-auto shrink-0 inline-flex translate-y-[-1px] items-center whitespace-nowrap align-middle text-xs tabular-nums text-slate-400">
+      {count} treff
     </span>
   )
 }
