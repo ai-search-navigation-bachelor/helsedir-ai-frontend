@@ -1,7 +1,11 @@
 import type { ReactNode } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import type { NestedContent } from '../../../types'
-import { getNodeTitle } from './treeUtils'
+import { getNodeTitle, getNodeType } from './treeUtils'
+
+function isReferenceNode(node: NestedContent) {
+  return getNodeType(node).includes('referanse')
+}
 
 const MAX_SNIPPETS = 5
 const CONTEXT_CHARS = 60
@@ -129,18 +133,21 @@ function buildMatchGroups(node: NestedContent, query: string): MatchGroup[] {
 
   if (remaining <= 0 || !node.children) return groups
 
-  // 2. Check each child (and their descendants)
+  // 2. Check each child (and their descendants), skip references
   for (const child of node.children) {
     if (remaining <= 0) break
+    if (isReferenceNode(child)) continue
 
     const childTitle = getNodeTitle(child)
     const titleMatches = childTitle.toLowerCase().includes(lowerQuery)
 
-    // Collect text from this child and all its descendants
+    // Collect text from this child and all its descendants, skipping references
     const collectAllTexts = (n: NestedContent): string[] => {
       const texts = getOwnTexts(n)
       if (n.children) {
-        for (const c of n.children) texts.push(...collectAllTexts(c))
+        for (const c of n.children) {
+          if (!isReferenceNode(c)) texts.push(...collectAllTexts(c))
+        }
       }
       return texts
     }

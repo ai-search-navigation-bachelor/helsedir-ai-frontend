@@ -35,7 +35,12 @@ function textMatchesQuery(texts: Array<string | undefined | null>, lower: string
   return texts.some((t) => t && stripHtml(t).toLowerCase().includes(lower))
 }
 
+function isReferenceType(node: NestedContent) {
+  return getNodeType(node).includes('referanse')
+}
+
 function nestedContentMatchesQuery(node: NestedContent, lower: string): boolean {
+  if (isReferenceType(node)) return false
   if (getNodeTitle(node).toLowerCase().includes(lower)) return true
   if (textMatchesQuery([node.intro, node.tekst, node.body, node.data?.praktisk, node.data?.rasjonale], lower)) return true
   if (node.children) {
