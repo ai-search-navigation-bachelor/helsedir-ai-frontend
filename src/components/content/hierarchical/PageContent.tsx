@@ -12,7 +12,8 @@ import { ExpandableLoadingSkeleton } from '../ContentSkeletons'
 import { getDocumentLinks, getRelatedLinks, isHelsedirektoratetPdfUrl } from '../detail/documentUtils'
 import { RichContentHtml } from '../shared/RichContentHtml'
 import { normalizeLinkForComparison, toAbsoluteHelsedirUrl } from '../../../lib/helsedirUrl'
-import { HighlightText, HighlightNodeTitle, TextMatchSnippets, countNodeMatches, countPageMatches, MatchCount } from './FilterHighlight'
+import { HighlightText, HighlightNodeTitle, TextMatchSnippets, MatchCount } from './FilterHighlight'
+import { countNodeMatches, countPageMatches } from './filterMatchCount'
 
 interface PageContentProps {
   activePage: PageNode
