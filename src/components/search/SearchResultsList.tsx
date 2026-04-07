@@ -106,11 +106,7 @@ export function SearchResultsList({
   }, [onLoadMore, hasNextPage, isFetchingNextPage]);
 
   const normalizedLabel = (activeTabLabel || "").trim().toLocaleLowerCase("nb-NO");
-  const filteredCount = visibleResults.length;
-  const displayCount =
-    typeof total === "number" && filteredCount === total
-      ? total
-      : filteredCount;
+  const displayCount = typeof total === "number" ? total : visibleResults.length;
   const resultsLabel =
     activeTab === "all" || !normalizedLabel
       ? `${displayCount} treff på "${searchQuery}"`
