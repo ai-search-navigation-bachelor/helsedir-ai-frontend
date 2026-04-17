@@ -56,7 +56,7 @@ function ItemLabel({ item }: { item: BreadcrumbItem }) {
 
 function Separator() {
   return (
-    <span aria-hidden style={{ margin: '0 8px', color: '#94a3b8', userSelect: 'none' }}>
+    <span aria-hidden style={{ margin: '0 8px', color: '#475569', userSelect: 'none' }}>
       /
     </span>
   )
