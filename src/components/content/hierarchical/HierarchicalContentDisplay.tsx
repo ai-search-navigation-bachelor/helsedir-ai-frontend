@@ -24,6 +24,7 @@ import {
 import { fetchChapter } from '../../../lib/content/chapterFetch'
 import { dedupeNestedContents } from '../../../lib/content/nestedContentDedup'
 import { RichContentHtml } from '../shared/RichContentHtml'
+import { ds } from '../../../styles/dsTokens'
 
 const DESKTOP_LG_MEDIA_QUERY = '(min-width: 1024px)'
 
@@ -756,25 +757,40 @@ export function HierarchicalContentDisplay({
             return (
               <>
                 {hasChildren && (
-                  <div className="relative mb-4">
-                    <IoSearch className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" aria-hidden="true" />
-                    <input
-                      type="text"
-                      value={overviewFilter}
-                      onChange={(e) => setOverviewFilter(e.target.value)}
-                      placeholder="Søk i innholdet (minst 3 tegn)..."
-                      className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                    />
-                    {overviewFilter && (
-                      <button
-                        type="button"
-                        onClick={() => setOverviewFilter('')}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border-0 bg-slate-200 p-0 text-slate-500 cursor-pointer transition-colors hover:bg-slate-300 hover:text-slate-700"
-                        aria-label="Tøm filter"
-                      >
-                        <IoClose className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+                  <div className="mb-4">
+                    <label
+                      htmlFor="chapter-filter-input"
+                      className="block mb-1.5 font-title"
+                      style={{
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                        letterSpacing: '-0.01em',
+                        color: ds.color('logobla-1', 'text-default'),
+                      }}
+                    >
+                      Søk i dette kapittelet
+                    </label>
+                    <div className="relative">
+                      <IoSearch className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                      <input
+                        id="chapter-filter-input"
+                        type="text"
+                        value={overviewFilter}
+                        onChange={(e) => setOverviewFilter(e.target.value)}
+                        placeholder="Skriv minst 3 tegn..."
+                        className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                      />
+                      {overviewFilter && (
+                        <button
+                          type="button"
+                          onClick={() => setOverviewFilter('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border-0 bg-slate-200 p-0 text-slate-500 cursor-pointer transition-colors hover:bg-slate-300 hover:text-slate-700"
+                          aria-label="Tøm filter"
+                        >
+                          <IoClose className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
                 {noResults ? (
@@ -813,28 +829,43 @@ export function HierarchicalContentDisplay({
 
             return (
               <div>
-                <div className="relative mb-4">
-                  <IoSearch
-                    className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400"
-                    aria-hidden="true"
-                  />
-                  <input
-                    type="text"
-                    value={overviewFilter}
-                    onChange={(e) => setOverviewFilter(e.target.value)}
-                    placeholder="Søk i innholdet (minst 3 tegn)..."
-                    className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                  />
-                  {overviewFilter && (
-                    <button
-                      type="button"
-                      onClick={() => setOverviewFilter('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border-0 bg-slate-200 p-0 text-slate-500 cursor-pointer transition-colors hover:bg-slate-300 hover:text-slate-700"
-                      aria-label="Tøm filter"
-                    >
-                      <IoClose className="h-3.5 w-3.5" />
-                    </button>
-                  )}
+                <div className="mb-4">
+                  <label
+                    htmlFor="overview-filter-input"
+                    className="block mb-1.5 font-title"
+                    style={{
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      letterSpacing: '-0.01em',
+                      color: ds.color('logobla-1', 'text-default'),
+                    }}
+                  >
+                    Søk i innholdet
+                  </label>
+                  <div className="relative">
+                    <IoSearch
+                      className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400"
+                      aria-hidden="true"
+                    />
+                    <input
+                      id="overview-filter-input"
+                      type="text"
+                      value={overviewFilter}
+                      onChange={(e) => setOverviewFilter(e.target.value)}
+                      placeholder="Skriv minst 3 tegn..."
+                      className="w-full rounded-lg border border-slate-200 bg-white py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                    />
+                    {overviewFilter && (
+                      <button
+                        type="button"
+                        onClick={() => setOverviewFilter('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full border-0 bg-slate-200 p-0 text-slate-500 cursor-pointer transition-colors hover:bg-slate-300 hover:text-slate-700"
+                        aria-label="Tøm filter"
+                      >
+                        <IoClose className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {filteredPages.length === 0 ? (
