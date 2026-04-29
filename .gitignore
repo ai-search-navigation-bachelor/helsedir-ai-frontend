@@ -26,6 +26,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# Test coverage output
+coverage/
+
 # AI tooling artifacts
 docs/superpowers
 
