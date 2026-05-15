@@ -1,3 +1,4 @@
+/** Empty state displayed when a search query returns no results. */
 import { Alert, Paragraph } from '@digdir/designsystemet-react';
 
 export function SearchEmptyState() {

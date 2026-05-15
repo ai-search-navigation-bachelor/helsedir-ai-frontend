@@ -1,3 +1,9 @@
+/**
+ * Maps health-professional role slugs to React Icons components.
+ * {@link getRoleIconKey} fuzzy-matches a slug/display name against known keys
+ * so minor naming variations still resolve to the correct icon.
+ * {@link RoleIcon} renders the matched icon as a React element.
+ */
 import { createElement, type ComponentProps } from 'react'
 import type { IconType } from 'react-icons'
 import { IoPerson } from 'react-icons/io5'

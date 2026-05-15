@@ -1,3 +1,4 @@
+/** Header for temaside pages; shows the category icon (tinted SVG) and page title using the category's brand color. */
 import { ds } from '../../../styles/dsTokens'
 
 interface TemasideHeaderProps {

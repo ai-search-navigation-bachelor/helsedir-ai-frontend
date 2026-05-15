@@ -1,3 +1,4 @@
+// Shared UI components barrel export.
 export { Breadcrumb } from './Breadcrumb'
 export { SearchForm } from './SearchForm'
 export { SearchSuggestions } from './SearchSuggestions'

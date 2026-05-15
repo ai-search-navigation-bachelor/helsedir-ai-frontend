@@ -1,3 +1,4 @@
+/** Status wrapper for temaside hub pages; renders loading skeletons, error alerts, or the "not found" empty state as appropriate. */
 import type { ReactNode } from 'react'
 import { Heading } from '@digdir/designsystemet-react'
 import { Breadcrumb } from '../../ui/Breadcrumb'

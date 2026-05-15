@@ -1,3 +1,4 @@
+/** Type definitions for statistics data from the content statistics API (data points, dimensions, chart series). */
 export interface StatisticPointDimensions {
   [key: string]: string | null | undefined
 }

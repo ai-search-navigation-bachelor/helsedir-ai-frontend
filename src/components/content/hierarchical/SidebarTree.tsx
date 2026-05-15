@@ -1,3 +1,4 @@
+/** Tree navigation sidebar for hierarchical content; renders the chapter tree with expand/collapse and active-node highlighting. */
 import { ChevronDownIcon, ChevronRightIcon } from '@navikt/aksel-icons'
 import type { PageNode } from './types'
 

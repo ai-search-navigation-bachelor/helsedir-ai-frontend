@@ -1,3 +1,4 @@
+/** Wraps content nodes with text-match highlighting; shows a match count badge and highlights the query term in body text. */
 import type { ReactNode } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import type { NestedContent } from '../../../types'

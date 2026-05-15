@@ -1,3 +1,4 @@
+/** Read-only display of a weight configuration snapshot; mirrors WeightConfigPanel layout without interactive controls. */
 import type { WeightConfig } from '../../types/dev'
 import { SliderRow } from './SliderRow'
 

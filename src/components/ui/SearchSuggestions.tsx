@@ -1,3 +1,4 @@
+/** Autocomplete suggestions dropdown rendered below the search input; shows debounced query suggestions from the API. */
 import type { ReactNode } from 'react'
 import { ds } from '../../styles/dsTokens'
 import { SEARCH_SUBCATEGORY_LABELS } from '../../constants/categories'

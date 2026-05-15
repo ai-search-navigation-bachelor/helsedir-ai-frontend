@@ -1,3 +1,4 @@
+// Content display components barrel export.
 export { ContentDisplay } from './ContentDisplay'
 export { DetailContentDisplay } from './detail/DetailContentDisplay'
 export { HierarchicalContentDisplay } from './hierarchical/HierarchicalContentDisplay'

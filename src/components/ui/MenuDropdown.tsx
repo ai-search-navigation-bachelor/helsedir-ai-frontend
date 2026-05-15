@@ -1,3 +1,4 @@
+/** Generic accessible dropdown menu; closes on outside click or Escape key. */
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { HiArrowRight, HiBeaker } from 'react-icons/hi2';

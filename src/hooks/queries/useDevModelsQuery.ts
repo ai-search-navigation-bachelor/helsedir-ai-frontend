@@ -1,3 +1,8 @@
+/**
+ * TanStack Query hooks for the developer model-selection panel.
+ * Used in the DevPage pipeline view to list available rerank presets,
+ * inspect feature importances, and switch the active model.
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getDevModels, getModelInfo, selectDevModel } from '../../api/training'
 

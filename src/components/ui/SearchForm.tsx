@@ -1,3 +1,4 @@
+/** Search input form with autocomplete suggestions, a clear button, and an accessible label. Used on the home page and in SearchShell. */
 import { useId, useRef, useState, useEffect, useCallback, forwardRef } from 'react'
 import { IoSearch, IoClose } from 'react-icons/io5'
 import { ds } from '../../styles/dsTokens'

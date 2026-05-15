@@ -1,3 +1,11 @@
+/**
+ * Deduplication utilities for NestedContent trees.
+ *
+ * The Helsedirektoratet API occasionally returns the same content node through
+ * multiple links (e.g. a chapter referenced both as a direct child and via a
+ * related-content link). These helpers identify duplicates by id/path/url and,
+ * when duplicates exist, keep the node with the richest data (most fields filled).
+ */
 import type { NestedContent } from '../../types'
 import { getDisplayTitle } from '../displayTitle'
 

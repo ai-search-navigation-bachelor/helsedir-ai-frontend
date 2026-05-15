@@ -1,3 +1,4 @@
+/** SVG connector line between pipeline stage boxes; renders straight, fork, or merge arrow shapes. */
 interface PipelineConnectorProps {
   type: 'straight' | 'fork' | 'merge'
   dimmed?: boolean

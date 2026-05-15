@@ -1,3 +1,4 @@
+/** Routes a content item to the correct display component based on its content type (detail, hierarchical, or temaside). */
 import type { ContentDisplayProps } from '../../types/pages'
 import {
   toContentTypeLabel,

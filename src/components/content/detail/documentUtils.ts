@@ -1,3 +1,8 @@
+/**
+ * Utilities for extracting document and link lists from content detail data.
+ * Handles deduplication of child links, filtering by relation type, and
+ * building frontend URLs for internal content references.
+ */
 import type {
   ContentLink,
   ContentDetail,

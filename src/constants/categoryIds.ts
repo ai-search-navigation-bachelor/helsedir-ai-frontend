@@ -1,3 +1,4 @@
+/** String IDs for the five primary content category types used throughout search and routing. */
 export const TEMASIDE_CATEGORY = 'temaside'
 export const RETNINGSLINJE_CATEGORY = 'retningslinje'
 export const ANBEFALINGER_CATEGORY = 'anbefaling'

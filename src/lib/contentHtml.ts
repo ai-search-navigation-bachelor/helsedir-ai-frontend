@@ -1,3 +1,10 @@
+/**
+ * HTML sanitisation and link rewriting for content from the Helsedirektoratet API.
+ *
+ * Raw HTML from the API may contain api.helsedirektoratet.no hrefs that should
+ * resolve to internal React Router routes. This module sanitises the HTML with
+ * DOMPurify and rewrites those anchors before they are rendered.
+ */
 import DOMPurify from 'dompurify'
 import { getApiContentInternalPath } from './contentLinking'
 

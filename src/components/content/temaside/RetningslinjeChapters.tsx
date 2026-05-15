@@ -1,3 +1,4 @@
+/** Displays retningslinje chapters as a collapsible accordion list; used inside TemasideContentDisplay for guideline content. */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi2'

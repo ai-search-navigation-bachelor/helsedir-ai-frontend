@@ -1,3 +1,8 @@
+/**
+ * Top-level content display for temaside (theme page) nodes.
+ * Renders either a hub view (grouped child links) or a leaf view (body content + sections),
+ * depending on whether the node has children.
+ */
 import { useMemo } from 'react'
 import type { ContentDetail, ContentLink, LinkedContentGroup } from '../../../types/content'
 import { SEARCH_MAIN_CATEGORIES } from '../../../constants/categories'

@@ -1,3 +1,4 @@
+/** Editable panel for configuring BM25/semantic/RRF/rerank weights and applying preset configurations. */
 import type { WeightConfig } from "../../types/dev";
 import { PRESETS } from "../../constants/dev";
 import { SliderRow } from "./SliderRow";

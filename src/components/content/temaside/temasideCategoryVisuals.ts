@@ -1,3 +1,4 @@
+/** Maps each temaside category slug to its display color (from the design token palette) and React icon. */
 import type { IconType } from 'react-icons'
 import {
   IoBarChartOutline,

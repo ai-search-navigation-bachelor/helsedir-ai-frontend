@@ -1,3 +1,8 @@
+/**
+ * Full-page search shell that combines the search form, category tabs, child-group filter,
+ * role picker, and results list. Manages URL query params as the canonical source of truth
+ * for the active query so the page is shareable and browser-back works correctly.
+ */
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { SearchForm } from './SearchForm'

@@ -1,3 +1,11 @@
+/**
+ * View-model hook for the SearchPage.
+ *
+ * Owns all search state: active tab, pagination, prefetching adjacent categories,
+ * and synchronising URL params with the Zustand search store. Components on the
+ * SearchPage should derive their data from this hook rather than reading stores
+ * or query caches directly.
+ */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'

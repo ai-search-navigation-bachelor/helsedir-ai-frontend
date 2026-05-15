@@ -1,3 +1,4 @@
+/** Loading skeleton placeholders for search result cards while a search is in progress. */
 import { Skeleton } from '@digdir/designsystemet-react'
 
 const badgeWidths = [50, 70, 110, 42, 65]

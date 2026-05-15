@@ -1,3 +1,9 @@
+/**
+ * TanStack Query hook that fetches the ancestor chain for a content item.
+ * Walks `parent` links in the API response to build a list of ancestor entries,
+ * each with a title and URL. Used by {@link useContentDetailBreadcrumbs} to
+ * construct full breadcrumb trails for content detail pages.
+ */
 import { useQuery } from '@tanstack/react-query'
 import { getContent, fetchHelsedirContent } from '../../api'
 import type { HelselinkContent } from '../../api'

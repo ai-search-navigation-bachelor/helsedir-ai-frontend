@@ -1,3 +1,4 @@
+/** Individual search result card; shows title, content type badge, excerpt, and a link to the full content page. */
 import { useCallback, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { HiArrowRight } from "react-icons/hi2";

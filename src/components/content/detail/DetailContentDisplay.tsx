@@ -410,11 +410,9 @@ export function DetailContentDisplay({
     [backendDocumentUrl, content, enrichedContent],
   )
   const relatedLinks = useMemo(() => getRelatedLinks(content), [content])
-  const visibleDocumentLinks = documentLinks
-  const visibleRelatedLinks = relatedLinks
   const hasIntrinsicFallbackContent =
-    visibleDocumentLinks.length > 0 ||
-    visibleRelatedLinks.length > 0 ||
+    documentLinks.length > 0 ||
+    relatedLinks.length > 0 ||
     referenceItems.length > 0
   const publicationUrl = useMemo(() => {
     const url = toAbsoluteHelsedirUrl(content.url) || toAbsoluteHelsedirUrl(enrichedContent?.url)
@@ -425,11 +423,11 @@ export function DetailContentDisplay({
     Boolean(publicationUrl) &&
     sections.length === 0 &&
     referenceItems.length === 0 &&
-    visibleRelatedLinks.length === 0 &&
+    relatedLinks.length === 0 &&
     documentLinks.length === 0
   const hasAnyActionLinks =
-    visibleDocumentLinks.length > 0 ||
-    visibleRelatedLinks.length > 0 ||
+    documentLinks.length > 0 ||
+    relatedLinks.length > 0 ||
     shouldShowPublicationFallback
   const statisticsStatus = statistics?.statistics_status
   const shouldRenderStatisticsSection =
@@ -443,7 +441,7 @@ export function DetailContentDisplay({
       shouldRenderStatisticsSection
     )
   const resourceSectionTitle =
-    visibleDocumentLinks.length > 0 && visibleRelatedLinks.length === 0 ? 'Dokumenter' : 'Lenker'
+    documentLinks.length > 0 && relatedLinks.length === 0 ? 'Dokumenter' : 'Lenker'
 
   const handleRelatedLinkClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -546,13 +544,13 @@ export function DetailContentDisplay({
             </article>
           ))}
 
-          {sections.length > 0 && (visibleDocumentLinks.length > 0 || visibleRelatedLinks.length > 0) && (
+          {sections.length > 0 && (documentLinks.length > 0 || relatedLinks.length > 0) && (
             <section className="space-y-4">
               <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
                 {resourceSectionTitle}
               </Heading>
               <ul className="m-0 list-none space-y-3 p-0">
-                {visibleDocumentLinks.map((document) => (
+                {documentLinks.map((document) => (
                   <li key={`inline-document-${document.href}`}>
                     <a
                       href={document.href}
@@ -567,7 +565,7 @@ export function DetailContentDisplay({
                     </a>
                   </li>
                 ))}
-                {visibleRelatedLinks.map((link) => (
+                {relatedLinks.map((link) => (
                   <li key={`inline-related-${link.href}`}>
                     <a
                       href={link.internalPath || link.href}
@@ -612,13 +610,13 @@ export function DetailContentDisplay({
             />
           )}
 
-          {sections.length === 0 && (visibleDocumentLinks.length > 0 || visibleRelatedLinks.length > 0 || shouldShowPublicationFallback) && (
+          {sections.length === 0 && (documentLinks.length > 0 || relatedLinks.length > 0 || shouldShowPublicationFallback) && (
             <section className="space-y-4">
               <Heading level={2} data-size="sm" className="font-title" style={{ marginTop: 0, marginBottom: 0 }}>
                 {resourceSectionTitle}
               </Heading>
               <ul className="m-0 list-none space-y-3 p-0">
-                {visibleDocumentLinks.map((document) => (
+                {documentLinks.map((document) => (
                   <li key={`fallback-document-${document.href}`}>
                     <a
                       href={document.href}
@@ -633,7 +631,7 @@ export function DetailContentDisplay({
                     </a>
                   </li>
                 ))}
-                {visibleRelatedLinks.map((link) => (
+                {relatedLinks.map((link) => (
                   <li key={`fallback-related-${link.href}`}>
                     <a
                       href={link.internalPath || link.href}

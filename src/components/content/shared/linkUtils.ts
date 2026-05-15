@@ -1,3 +1,4 @@
+/** Utilities for extracting, deduplicating, and counting content links from API responses. */
 import { getContentIdFromHref } from '../../../lib/contentLinking'
 
 interface LinkLike {

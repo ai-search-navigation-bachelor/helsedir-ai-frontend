@@ -1,3 +1,7 @@
+/**
+ * Utilities for extracting content IDs from Helsedirektoratet API hrefs
+ * and mapping external API links to internal app routes.
+ */
 const API_HELSEDIREKTORATET_HOST = 'api.helsedirektoratet.no'
 
 export function getContentIdFromHref(href?: string | null) {

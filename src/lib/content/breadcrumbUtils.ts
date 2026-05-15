@@ -1,3 +1,10 @@
+/**
+ * Utilities for extracting temaside (theme page) metadata from content links.
+ *
+ * Content detail responses include a `temaside` rel-link pointing to the theme
+ * page the document belongs to. These helpers extract that link and resolve it
+ * to a {@link TemasideInfo} object used for breadcrumb construction and context.
+ */
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider'
 import { stripTemasidePrefix } from '../path'
 import { buildContentUrl } from '../contentUrl'

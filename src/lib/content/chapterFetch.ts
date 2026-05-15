@@ -1,3 +1,11 @@
+/**
+ * Chapter and nested content fetching logic.
+ *
+ * Resolves the full hierarchical content tree for a given document by
+ * following child links from the backend API and, where needed, falling back
+ * to the Helsedirektoratet external API. Results are deduplicated before
+ * being returned to the caller.
+ */
 import { getContent } from '../../api/content'
 import { fetchHelsedirContent } from '../../api/helsedir'
 import type { ContentDetail, NestedContent } from '../../types'

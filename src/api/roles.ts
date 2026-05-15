@@ -1,3 +1,9 @@
+/**
+ * Roles API.
+ * Returns the list of health-professional roles available for search personalisation
+ * (e.g. "lege", "sykepleier"). The selected role is forwarded with search requests
+ * to boost results relevant to that profession.
+ */
 import { httpRequest, buildUrl } from '../lib/httpClient'
 import { BACKEND_BASE_URL } from './backendBaseUrl'
 

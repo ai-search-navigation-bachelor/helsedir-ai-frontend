@@ -39,32 +39,24 @@ function normalizeHelsedirApiBaseUrl(rawValue: string) {
 
 const HELSEDIR_API_URL = normalizeHelsedirApiBaseUrl(HELSEDIR_API_URL_FROM_ENV)
 
-function buildHelsedirContentByTypeAndIdUrl(endpoint: string, id: string) {
-  const path = `innhold/${endpoint}/${encodeURIComponent(id)}`
+function buildHelsedirUrl(path: string) {
   const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(HELSEDIR_API_URL)
-
   if (hasScheme) {
     return new URL(path, `${HELSEDIR_API_URL}/`).toString()
   }
-
   const normalizedRelativeBase = HELSEDIR_API_URL.replace(/^\/+|\/+$/g, '')
   const relativePrefix = normalizedRelativeBase ? `/${normalizedRelativeBase}` : ''
   return `${relativePrefix}/${path}`
 }
 
+function buildHelsedirContentByTypeAndIdUrl(endpoint: string, id: string) {
+  return buildHelsedirUrl(`innhold/${endpoint}/${encodeURIComponent(id)}`)
+}
+
 function buildHelsedirContentByIdUrl(id: string) {
   // Helsedirektoratet API uses `/innhold/innhold/{id}` for generic content-by-id.
   // The repeated `innhold` segment is intentional.
-  const path = `innhold/innhold/${encodeURIComponent(id)}`
-  const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(HELSEDIR_API_URL)
-
-  if (hasScheme) {
-    return new URL(path, `${HELSEDIR_API_URL}/`).toString()
-  }
-
-  const normalizedRelativeBase = HELSEDIR_API_URL.replace(/^\/+|\/+$/g, '')
-  const relativePrefix = normalizedRelativeBase ? `/${normalizedRelativeBase}` : ''
-  return `${relativePrefix}/${path}`
+  return buildHelsedirUrl(`innhold/innhold/${encodeURIComponent(id)}`)
 }
 
 /**

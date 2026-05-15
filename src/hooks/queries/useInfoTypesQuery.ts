@@ -1,3 +1,7 @@
+/**
+ * TanStack Query hook for the available content info-type identifiers.
+ * Used by the developer tools to populate info-type filter dropdowns.
+ */
 import { useQuery } from '@tanstack/react-query'
 import { fetchInfoTypes } from '../../api/infoTypes'
 

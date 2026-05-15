@@ -6,6 +6,8 @@ import type { ContentStatisticsResponse, StatisticPoint, StatisticSeries } from 
 const ALL_FILTER_VALUE = '__all__'
 const CHART_COLORS = ['#025169', '#b45309', '#0f766e', '#4338ca', '#be123c', '#7c3aed', '#0369a1', '#15803d']
 const MAX_SELECTED_LOCATIONS = 8
+/** Maximum number of rows rendered in the raw data tables to prevent DOM overload. */
+const MAX_TABLE_ROWS = 200
 
 type LocationMode = 'average' | 'all' | 'custom'
 
@@ -523,9 +525,8 @@ function DataTable({
   allRows: Array<{ label: string; key: string }>
   seriesColors: string[]
 }) {
-  const MAX_ROWS = 200
-  const displayRows = allRows.slice(0, MAX_ROWS)
-  const truncated = allRows.length > MAX_ROWS
+  const displayRows = allRows.slice(0, MAX_TABLE_ROWS)
+  const truncated = allRows.length > MAX_TABLE_ROWS
 
   return (
     <div>
@@ -568,7 +569,7 @@ function DataTable({
       </div>
       {truncated && (
         <p style={{ margin: '8px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
-          Viser de første {MAX_ROWS} av {allRows.length} rader.
+          Viser de første {MAX_TABLE_ROWS} av {allRows.length} rader.
         </p>
       )}
     </div>
@@ -615,9 +616,8 @@ function RawDataTable({
   rows: RawStatisticRow[]
   dimensionKeys: string[]
 }) {
-  const MAX_ROWS = 200
-  const displayRows = rows.slice(0, MAX_ROWS)
-  const truncated = rows.length > MAX_ROWS
+  const displayRows = rows.slice(0, MAX_TABLE_ROWS)
+  const truncated = rows.length > MAX_TABLE_ROWS
 
   return (
     <div>
@@ -662,7 +662,7 @@ function RawDataTable({
       </div>
       {truncated && (
         <p style={{ margin: '8px 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
-          Viser de første {MAX_ROWS} av {rows.length} rader.
+          Viser de første {MAX_TABLE_ROWS} av {rows.length} rader.
         </p>
       )}
     </div>

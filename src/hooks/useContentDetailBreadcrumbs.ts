@@ -1,3 +1,11 @@
+/**
+ * Builds the breadcrumb trail for a content detail page.
+ *
+ * Combines the synchronous content object with an async parent-chain query to
+ * produce a full path from home → temaside category → temaside → parent → current.
+ * Falls back to a minimal home → current trail while the parent chain is loading
+ * or when the content has no navigable ancestors.
+ */
 import { useParentChainQuery } from './queries/useParentChainQuery'
 import { extractTemasideInfo } from '../lib/content/breadcrumbUtils'
 import {

@@ -1,3 +1,8 @@
+/**
+ * Shared TanStack Query client.
+ * Global defaults: 30-minute staleTime, 1-hour gcTime, single retry, no refetch on window focus.
+ * Individual query hooks override these where tighter or looser caching is appropriate.
+ */
 import { QueryClient } from '@tanstack/react-query'
 
 export const queryClient = new QueryClient({

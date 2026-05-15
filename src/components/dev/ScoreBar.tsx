@@ -1,3 +1,4 @@
+/** Proportional bar showing the relative BM25 / semantic / RRF / rerank score components for a search result. */
 import { resolveScoreColor, type ScoreColorKey } from './scoreColors'
 
 interface ScoreBarProps {

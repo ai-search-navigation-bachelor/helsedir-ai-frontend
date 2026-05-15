@@ -1,3 +1,4 @@
+/** API functions for training dataset management (list, create, delete datasets and their search results). */
 import { BACKEND_BASE_URL } from './backendBaseUrl'
 import { httpRequest, ApiError } from '../lib/httpClient'
 

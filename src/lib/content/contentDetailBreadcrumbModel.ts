@@ -1,3 +1,8 @@
+/**
+ * Assembles breadcrumb items for content detail pages.
+ * Combines the parent chain from the API, temaside path info, and content metadata
+ * to build a full ancestor trail from the home page down to the current content item.
+ */
 import { stripTemasidePrefix } from '../path'
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider'
 import { getContentIdFromHref } from '../../components/content/shared/linkUtils'

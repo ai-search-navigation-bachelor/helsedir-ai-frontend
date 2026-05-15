@@ -1,3 +1,4 @@
+/** A section grouping content items of a single type within a temaside content page; collapsible when the list is long. */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HiArrowRight, HiChevronDown, HiChevronUp } from 'react-icons/hi2'

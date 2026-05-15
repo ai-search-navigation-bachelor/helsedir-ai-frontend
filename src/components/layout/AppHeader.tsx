@@ -1,3 +1,4 @@
+/** Application header with logo, main navigation links, role picker, and a link to the developer tools page. */
 import { useRef, useState } from "react";
 import { Button } from "@digdir/designsystemet-react";
 import { Link } from "react-router-dom";

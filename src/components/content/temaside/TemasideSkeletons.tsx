@@ -1,3 +1,4 @@
+/** Loading skeleton placeholders for temaside hub and content pages while data is being fetched. */
 import { Skeleton } from '@digdir/designsystemet-react'
 
 export function TemasideHubLoadingSkeleton() {

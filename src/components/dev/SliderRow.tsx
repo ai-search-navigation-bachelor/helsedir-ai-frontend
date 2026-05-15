@@ -1,3 +1,4 @@
+/** Labeled range slider row used in the weight configuration and pipeline detail panels. */
 interface SliderRowProps {
   id: string
   label: string

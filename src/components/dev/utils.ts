@@ -1,3 +1,4 @@
+/** Utility functions for the dev page: aggregate result statistics, rank-difference calculation, and per-result rank maps. */
 import type { SearchResponse, SearchResult } from '../../types'
 import type { ResultStats } from '../../types/dev'
 
