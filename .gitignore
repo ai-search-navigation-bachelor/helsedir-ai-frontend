@@ -29,8 +29,9 @@ dist-ssr
 # Test coverage output
 coverage/
 
-# AI tooling artifacts
-docs/superpowers
+# AI tooling artifacts and local dev directories
 .claude/
+.github/
+docs/
 
 .env
