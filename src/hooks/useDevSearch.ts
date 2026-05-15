@@ -1,3 +1,8 @@
+/**
+ * State and query logic for the developer search-tuning page.
+ * Manages two parallel search "slots" so results from different weight
+ * configurations can be compared side-by-side in real time.
+ */
 import { useRef, useState } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { search, searchKeyword } from '../api/search'

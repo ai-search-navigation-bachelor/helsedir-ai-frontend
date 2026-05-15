@@ -1,3 +1,11 @@
+/**
+ * View-model hook for the TemasideHubPage.
+ *
+ * Builds the full theme-page tree from the flat API response, resolves the
+ * active hub node, applies custom layouts where configured, and provides
+ * filtered hub sections and breadcrumbs. Components on the hub page should
+ * read all their data from this hook.
+ */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {

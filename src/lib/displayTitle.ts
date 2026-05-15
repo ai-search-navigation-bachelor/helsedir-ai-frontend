@@ -1,3 +1,10 @@
+/**
+ * Resolves the best available display title from a content object.
+ *
+ * Both the backend API and the Helsedirektoratet API use different field names
+ * for the same concept (display_title, kortTittel, tittel, title). This utility
+ * centralises the priority order so all components show a consistent title.
+ */
 type DisplayTitleSource = {
   display_title?: string | null
   short_title?: string | null

@@ -1,3 +1,4 @@
+/** 404 not-found page with a link back to the home page. */
 import { Link } from 'react-router-dom'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'
 import { HiArrowLeft } from 'react-icons/hi2'

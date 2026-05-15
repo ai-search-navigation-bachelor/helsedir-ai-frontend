@@ -1,3 +1,8 @@
+/**
+ * Layout wrapper for content detail pages.
+ * Renders the breadcrumb, back-to-search button, and main content area.
+ * Handles the "back to search" navigation by reading last search state from the store.
+ */
 import { type ReactNode, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@digdir/designsystemet-react'

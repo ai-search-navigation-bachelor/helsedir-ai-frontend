@@ -1,3 +1,4 @@
+/** Loading skeleton placeholders used while content detail pages are fetching data. */
 import { Skeleton } from '@digdir/designsystemet-react'
 
 /** Placeholder for the breadcrumb row so content doesn't jump when it appears. */

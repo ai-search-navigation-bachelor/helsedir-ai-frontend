@@ -1,3 +1,8 @@
+/**
+ * Static metadata for the five temaside (theme page) top-level categories.
+ * Each entry defines the URL slug, canonical path, display title, and category icon.
+ * This list is the authoritative source for temaside routing and navigation.
+ */
 export const TEMASIDE_CATEGORIES = [
   {
     slug: 'forebygging-diagnose-og-behandling',

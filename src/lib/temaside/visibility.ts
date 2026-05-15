@@ -1,3 +1,12 @@
+/**
+ * Visibility rules for temaside (theme page) nodes.
+ *
+ * The API may return nodes that should not be shown to users (e.g. pages
+ * marked with the "no_content" tag or pages with no body, children, or
+ * linked content). Nodes tagged "no_content" are an exception — they are
+ * shown but displayed as inactive (greyed out) links so users can see the
+ * structure even when content is not yet available.
+ */
 type ThemeVisibilityMeta = {
   should_display?: boolean
   has_body_content?: boolean

@@ -1,3 +1,8 @@
+/**
+ * Tree construction and navigation utilities for hierarchical content.
+ * Converts flat NestedContent API responses into the PageNode tree consumed by
+ * the sidebar and chapter list, handling deduplication and title resolution.
+ */
 import type { NestedContent } from '../../../types'
 export { formatDateLabel } from '../../../lib/content/date'
 import { dedupeNestedContents } from '../../../lib/content/nestedContentDedup'

@@ -1,3 +1,4 @@
+/** Color constants for the four search scoring components (BM25, semantic, RRF, rerank) used in dev page charts and legends. */
 export type ScoreColorKey = 'bm25' | 'semantic' | 'rrf' | 'rerank'
 
 const SCORE_COLOR_MAP: Record<ScoreColorKey, string> = {

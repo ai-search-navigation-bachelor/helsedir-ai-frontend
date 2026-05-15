@@ -1,3 +1,4 @@
+/** Header section rendered at the top of a content detail page; shows the content type label and title. */
 
 type ContentPageHeaderProps = {
   typeLabel: string

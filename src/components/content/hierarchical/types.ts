@@ -1,3 +1,4 @@
+/** Type definitions for hierarchical content tree nodes used by the chapter sidebar, page content, and tree utilities. */
 import type { ContentLink, NestedContent } from '../../../types'
 
 export interface ChapterEntry {

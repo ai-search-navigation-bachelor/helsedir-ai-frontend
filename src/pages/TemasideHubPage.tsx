@@ -1,3 +1,4 @@
+/** Hub page for a temaside category; shows section groups and filtered topic links driven by {@link useTemasideHubPageModel}. */
 import { TemasideHubSections, TemasideHubStatusView } from '../components/content/temaside'
 import { TemasideHubLoadingSkeleton } from '../components/content/temaside/TemasideSkeletons'
 import { Breadcrumb } from '../components/ui/Breadcrumb'

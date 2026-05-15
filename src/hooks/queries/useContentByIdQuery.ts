@@ -1,3 +1,8 @@
+/**
+ * TanStack Query hook for fetching a single content item by its backend ID.
+ * Used when the app already knows the content ID (e.g. from a search result)
+ * and does not need path-based routing or the Helsedirektoratet fallback.
+ */
 import { useQuery } from '@tanstack/react-query'
 import { getContent } from '../../api'
 import type { ContentDetail } from '../../types'

@@ -1,3 +1,4 @@
+// Developer tool components barrel export.
 export { SliderRow } from './SliderRow'
 export { SearchPipeline } from './pipeline'
 export { ReadOnlyConfigPanel } from './ReadOnlyConfigPanel'

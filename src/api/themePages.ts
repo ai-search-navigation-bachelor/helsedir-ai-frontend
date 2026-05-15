@@ -1,3 +1,7 @@
+/**
+ * Theme pages (temasider) API.
+ * Returns the list of all published theme pages, optionally filtered by category.
+ */
 import { buildUrl, httpRequest } from '../lib/httpClient'
 import type { BaseRequestOptions } from '../types'
 import { BACKEND_BASE_URL } from './backendBaseUrl'

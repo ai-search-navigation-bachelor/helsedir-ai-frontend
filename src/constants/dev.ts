@@ -1,3 +1,4 @@
+/** Default and preset weight configurations for the developer search-tuning page. */
 import type { WeightConfig, PipelineStageId } from '../types/dev'
 
 export const DEFAULT_CONFIG: WeightConfig = {

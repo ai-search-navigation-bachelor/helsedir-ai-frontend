@@ -1,3 +1,8 @@
+/**
+ * Developer page for testing and tuning search parameters.
+ * Runs two parallel search slots with configurable BM25/semantic/RRF weights
+ * so results from different configurations can be compared side-by-side.
+ */
 import { useState } from 'react'
 import { useDevSearch } from '../hooks/useDevSearch'
 import { useRolesQuery } from '../hooks/queries/useRolesQuery'

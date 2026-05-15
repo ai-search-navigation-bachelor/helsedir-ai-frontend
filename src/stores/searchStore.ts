@@ -1,3 +1,9 @@
+/**
+ * Global store for search state.
+ * Persists query text, searchId, active filters, and selected role across navigation via localStorage.
+ * The searchId ties a category-search request back to the originating categorized search so the
+ * backend can return consistent ranked results.
+ */
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 

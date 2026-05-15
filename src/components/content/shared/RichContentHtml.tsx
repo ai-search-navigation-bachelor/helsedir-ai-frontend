@@ -1,3 +1,4 @@
+/** Renders sanitized HTML content; intercepts clicks on internal links and navigates with React Router instead of full page reloads. */
 import { type MouseEvent, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sanitizeContentHtml } from '../../../lib/contentHtml'

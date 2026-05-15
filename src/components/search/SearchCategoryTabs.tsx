@@ -1,3 +1,4 @@
+/** Tab bar for switching between content type categories on the search results page. */
 import { useEffect, useRef, useState } from "react";
 
 interface SearchCategoryTabsProps {

@@ -1,3 +1,4 @@
+/** Search results page; wraps SearchShell with the shared page title. */
 import { Alert, Paragraph, Skeleton } from '@digdir/designsystemet-react'
 import {
   SearchCategoryTabs,

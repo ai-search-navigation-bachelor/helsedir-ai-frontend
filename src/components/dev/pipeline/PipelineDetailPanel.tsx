@@ -1,3 +1,4 @@
+/** Detail panel that appears when a pipeline stage is selected; shows sliders and model importance for that stage. */
 import type { WeightConfig, PipelineStageId } from '../../../types/dev'
 import { SliderRow } from '../SliderRow'
 import { useDevModelsQuery, useDevModelImportances, useSelectDevModel } from '../../../hooks/queries/useDevModelsQuery'

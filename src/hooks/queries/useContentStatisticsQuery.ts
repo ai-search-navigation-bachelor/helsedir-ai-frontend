@@ -1,3 +1,7 @@
+/**
+ * TanStack Query hook for per-content usage statistics.
+ * Statistics data is relatively stable so the cache is set to 1 hour.
+ */
 import { useQuery } from '@tanstack/react-query'
 import { getContentStatistics } from '../../api'
 import type { ContentStatisticsResponse } from '../../types'

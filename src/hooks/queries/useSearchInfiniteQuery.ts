@@ -1,3 +1,9 @@
+/**
+ * TanStack Query infinite-scroll hook for paginated search results.
+ * Each page fetches {@link PAGE_SIZE} results at the next offset.
+ * Carries the searchId from the first page forward so the backend can maintain
+ * session context across paginated requests.
+ */
 import { useInfiniteQuery, type InfiniteData, type QueryClient } from '@tanstack/react-query'
 import { search } from '../../api'
 import type { SearchOptions } from '../../api'

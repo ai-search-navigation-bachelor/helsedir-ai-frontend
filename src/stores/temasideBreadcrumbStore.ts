@@ -2,6 +2,13 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import type { BreadcrumbItem } from '../components/ui/Breadcrumb'
 
+/**
+ * Caches breadcrumb trails for temaside (theme page) navigation paths.
+ * Enables consistent breadcrumbs when navigating back after deep content traversal,
+ * without requiring another API call to reconstruct the trail.
+ * Persisted to sessionStorage.
+ */
+
 interface TemasideBreadcrumbState {
   trailByPath: Record<string, BreadcrumbItem[]>
   lastPath: string | null

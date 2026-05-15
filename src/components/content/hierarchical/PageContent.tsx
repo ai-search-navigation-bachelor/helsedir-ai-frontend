@@ -1,3 +1,4 @@
+/** Renders the main text area for a single page/chapter node including title, date, body HTML, and child links. */
 import type { MouseEvent } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'

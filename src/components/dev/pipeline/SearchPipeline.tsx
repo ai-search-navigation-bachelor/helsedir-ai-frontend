@@ -1,3 +1,4 @@
+/** Interactive diagram of the full search pipeline (BM25 → Semantic → RRF → Rerank); clicking a stage opens its config panel. */
 import type { WeightConfig, PipelineStageId } from '../../../types/dev'
 import { PIPELINE_STAGES, PRESETS } from '../../../constants/dev'
 import { PipelineStage } from './PipelineStage'

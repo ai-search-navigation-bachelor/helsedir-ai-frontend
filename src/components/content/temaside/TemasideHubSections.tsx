@@ -1,3 +1,4 @@
+/** Renders the hub sections (grouped topic links) on a temaside hub page, with an optional filter input. */
 import { Link } from 'react-router-dom'
 import { HiArrowRight } from 'react-icons/hi2'
 import type { HubSection } from '../../../lib/temaside/hubUtils'

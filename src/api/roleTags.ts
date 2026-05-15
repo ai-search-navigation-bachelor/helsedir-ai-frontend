@@ -1,3 +1,8 @@
+/**
+ * Role tags API (developer/admin endpoint).
+ * Returns documents grouped by their assigned role tags, used by the Tags page
+ * to show which health-professional roles each document is relevant for.
+ */
 import { httpRequest, buildUrl } from '../lib/httpClient'
 import { BACKEND_BASE_URL } from './backendBaseUrl'
 import type { RoleTagDocument, RoleTagGroup } from '../types/api'

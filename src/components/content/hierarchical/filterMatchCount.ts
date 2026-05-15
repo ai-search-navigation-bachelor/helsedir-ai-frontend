@@ -1,3 +1,8 @@
+/**
+ * Counts the number of text-filter matches within a NestedContent subtree.
+ * Used by the hierarchical sidebar to show match counts per chapter so users
+ * can quickly identify which sections contain the search term.
+ */
 import type { NestedContent } from '../../../types'
 import { getNodeTitle, getNodeType } from './treeUtils'
 
