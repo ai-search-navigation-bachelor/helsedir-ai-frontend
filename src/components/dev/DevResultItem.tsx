@@ -1,3 +1,4 @@
+/** Search result row for the dev page; shows rank, score breakdown, rank-diff badge, and expandable score details. */
 import { useState, useMemo } from 'react'
 import type { SearchResult } from '../../types'
 import type { WeightConfig } from '../../types/dev'

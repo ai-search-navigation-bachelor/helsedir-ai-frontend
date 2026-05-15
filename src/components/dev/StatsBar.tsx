@@ -1,3 +1,4 @@
+/** Side-by-side comparison bar showing aggregate statistics (avg score, top-10 coverage) for both dev search slots. */
 import React from 'react'
 import type { ResultStats } from '../../types/dev'
 

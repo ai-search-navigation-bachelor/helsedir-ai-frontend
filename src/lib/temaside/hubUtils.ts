@@ -1,3 +1,8 @@
+/**
+ * Utility functions for the temaside hub page model.
+ * Handles hub section construction, breadcrumb building, path normalization,
+ * query-based filtering, and link counting across the temaside tree.
+ */
 import type { CustomLayout } from '../../components/content/temaside/customLayouts'
 import type { ThemeNode } from './temasiderTree'
 import type { BreadcrumbItem } from '../../components/ui/Breadcrumb'

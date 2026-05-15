@@ -1,3 +1,4 @@
+/** Root layout component; wraps all pages with the AppHeader and AppFooter, and renders the current page via &lt;Outlet&gt;. */
 import { useState, useEffect, useRef } from 'react'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 

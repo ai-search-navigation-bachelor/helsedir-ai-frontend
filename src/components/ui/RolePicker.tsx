@@ -1,3 +1,4 @@
+/** Role selector that lets users choose their health-professional role to personalise search result ranking. */
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { IoChevronDown, IoPeople, IoPerson } from 'react-icons/io5'
 import { useRolesQuery } from '../../hooks/queries/useRolesQuery'

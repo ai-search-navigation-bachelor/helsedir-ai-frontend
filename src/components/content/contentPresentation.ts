@@ -1,3 +1,8 @@
+/**
+ * Derives presentation metadata for content items (section header text, badge labels,
+ * child-link display logic). Used by content display components to avoid embedding
+ * content-type logic directly in JSX.
+ */
 import {
   isEhelsestandardContentType,
   isRecommendationContentType,

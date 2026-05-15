@@ -1,3 +1,4 @@
+/** Type definitions for the developer search-tuning page (weight config, pipeline stages, per-slot state, result statistics). */
 import type { SearchResponse } from './search'
 
 export interface WeightConfig {

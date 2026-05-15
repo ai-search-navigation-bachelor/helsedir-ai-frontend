@@ -1,3 +1,8 @@
+/**
+ * Derives the display model for the detail content view.
+ * Extracts structured sections (vurdering, praktisk, rasjonale), document links,
+ * and related content items from a raw ContentDetail API response.
+ */
 import type { ContentLink, ContentRelationItem } from '../../../types'
 import { hasVisibleContent } from '../shared/contentTextUtils'
 import { getContentIdFromHref } from '../shared/linkUtils'

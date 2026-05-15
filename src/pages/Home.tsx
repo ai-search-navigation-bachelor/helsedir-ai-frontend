@@ -1,3 +1,4 @@
+/** Home/landing page with the main search form and temaside category navigation buttons. */
 import { HiArrowRight } from 'react-icons/hi2'
 import { CategoryButtons } from '../components/ui/CategoryButtons'
 

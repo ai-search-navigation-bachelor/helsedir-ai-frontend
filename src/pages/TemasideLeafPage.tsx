@@ -1,3 +1,4 @@
+/** Leaf page for a deep temaside path; shows either hierarchical content or hub sub-sections depending on the node type. */
 import { Alert, Paragraph } from '@digdir/designsystemet-react'
 import { ContentDisplay } from '../components/content'
 import { TemasideHubSections, TemasideHubStatusView } from '../components/content/temaside'

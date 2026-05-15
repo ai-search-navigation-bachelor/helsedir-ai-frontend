@@ -1,3 +1,4 @@
+/** A single clickable stage box in the search pipeline visualization (BM25, Semantic, RRF, Rerank). */
 import type { PipelineStageId } from '../../../types/dev'
 
 interface PipelineStageProps {

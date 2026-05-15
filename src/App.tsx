@@ -1,3 +1,4 @@
+/** Root component that defines all client-side routes and wraps pages in the shared AppLayout. */
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppLayout } from './components/layout'
 import { Home, ContentDetail, SearchPage, TemasideHubPage, TemasideLeafPage, NotFound, DevPage, TagsPage } from './pages'

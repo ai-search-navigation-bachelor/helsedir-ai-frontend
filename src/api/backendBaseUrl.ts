@@ -5,7 +5,7 @@
  * when running behind a reverse proxy on the VM.
  */
 
-const DEFAULT_BACKEND_BASE_URL = 'http://129.241.150.141:8000'
+const DEFAULT_BACKEND_BASE_URL = 'http://localhost:8000'
 
 function normalizeBaseUrl(value: string): string {
   const trimmed = value.trim()

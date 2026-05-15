@@ -1,3 +1,4 @@
+/** Scrollable list of search result cards with infinite-scroll pagination and loading/error states. */
 import { Alert, Paragraph, Spinner } from "@digdir/designsystemet-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SearchResultCard } from "./SearchResultCard";

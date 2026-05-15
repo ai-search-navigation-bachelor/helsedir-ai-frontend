@@ -1,3 +1,4 @@
+/** A single child-topic section within a temaside content page; shows a heading and a collapsed/expanded list of sub-links. */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HiArrowRight } from 'react-icons/hi2'

@@ -1,3 +1,4 @@
+/** Color-coded legend explaining each scoring component displayed in the dev page score bars. */
 import { resolveScoreColor, type ScoreColorKey } from './scoreColors'
 
 interface ScoreLegendProps {

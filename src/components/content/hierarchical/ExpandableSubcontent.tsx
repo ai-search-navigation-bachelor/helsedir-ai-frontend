@@ -1,3 +1,7 @@
+/**
+ * Accordion-style expandable section for a single node in the hierarchical content tree.
+ * Fetches child content on expansion and persists open/closed state to the disclosure store.
+ */
 import { useEffect } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { Heading, Paragraph } from '@digdir/designsystemet-react'

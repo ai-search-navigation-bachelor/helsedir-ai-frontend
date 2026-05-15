@@ -1,3 +1,8 @@
+/**
+ * Sets and type-guard helpers for classifying backend `info_type` values.
+ * A single logical category (e.g. "Retningslinjer") can cover several API info_types —
+ * these sets allow membership checks without scattered string comparisons across the codebase.
+ */
 export const RETNINGSLINJE_CONTENT_TYPES = new Set([
   'retningslinje',
   'nasjonal-faglig-retningslinje',

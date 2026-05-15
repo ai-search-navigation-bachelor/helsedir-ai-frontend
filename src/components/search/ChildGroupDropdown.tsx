@@ -1,3 +1,4 @@
+/** Dropdown for filtering search results by a content subgroup (e.g. a specific guideline type within a category). */
 import {
   useEffect,
   useRef,

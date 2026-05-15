@@ -1,3 +1,4 @@
+/** Row of temaside category navigation buttons displayed on the home page. */
 import { Link } from 'react-router-dom';
 import { HiArrowRight } from 'react-icons/hi2';
 import { TEMASIDE_CATEGORIES } from '../../constants/temasider';

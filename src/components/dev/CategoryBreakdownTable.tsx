@@ -1,3 +1,4 @@
+/** Table showing result count breakdown by content category for each dev search slot. */
 import { useState } from 'react'
 import { SEARCH_MAIN_CATEGORIES } from '../../constants/categories'
 import { formatInfoTypeLabel } from './utils'

@@ -1,3 +1,8 @@
+/**
+ * Content detail page.
+ * Fetches content by ID or path param, redirects temaside content to its canonical path,
+ * and delegates rendering to {@link ContentDisplay} based on content type.
+ */
 import { useEffect, useMemo } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Alert, Paragraph } from '@digdir/designsystemet-react'

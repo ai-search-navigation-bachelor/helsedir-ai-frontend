@@ -1,3 +1,4 @@
+/** Application entry point. Mounts the React root with BrowserRouter and TanStack QueryClientProvider. */
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'

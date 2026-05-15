@@ -1,3 +1,7 @@
+/**
+ * Fetches an SVG icon by URL and renders it inline with a CSS color tint applied.
+ * Used for temaside category icons so they can adopt the category's brand color.
+ */
 import { useEffect, useState } from 'react'
 import DOMPurify from 'dompurify'
 

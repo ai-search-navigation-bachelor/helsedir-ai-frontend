@@ -1,3 +1,9 @@
+/**
+ * Design system token helpers for the Helsedirektoratet theme.
+ * Provides typed access to Digdir Designsystemet CSS custom properties so
+ * components can reference brand colors without hardcoding raw values.
+ * Use {@link ds} for semantic color lookups and {@link colors} for common shortcuts.
+ */
 export type DsColorName =
   | 'logobla-1'
   | 'logobla-2'

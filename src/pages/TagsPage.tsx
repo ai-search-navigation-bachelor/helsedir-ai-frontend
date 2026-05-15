@@ -1,3 +1,4 @@
+/** Tags page that shows health-professional roles and the documents tagged to each role. */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Spinner } from '@digdir/designsystemet-react'

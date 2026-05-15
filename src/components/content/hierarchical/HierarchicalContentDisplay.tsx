@@ -1,3 +1,8 @@
+/**
+ * Full-page display for multi-chapter hierarchical content (retningslinjer, veiledere, etc.).
+ * Provides a collapsible sidebar tree, chapter navigation, and a text-filter input
+ * that highlights and counts matches across the entire chapter tree.
+ */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRightIcon } from '@navikt/aksel-icons'
 import { IoSearch, IoClose } from 'react-icons/io5'

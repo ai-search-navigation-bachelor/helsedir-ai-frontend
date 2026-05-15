@@ -1,3 +1,9 @@
+/**
+ * Builds the temaside navigation tree from a flat list of URL paths.
+ * Each path segment becomes a ThemeNode; metadata (title, contentId, visibility flags)
+ * is attached from the API response. The tree is used by the hub page model to
+ * render hub sections and breadcrumbs.
+ */
 import { normalizePath } from '../path'
 
 export type ThemeNode = {
