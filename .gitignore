@@ -31,5 +31,6 @@ coverage/
 
 # AI tooling artifacts
 docs/superpowers
+.claude/
 
 .env

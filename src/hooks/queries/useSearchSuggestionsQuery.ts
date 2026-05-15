@@ -1,3 +1,8 @@
+/**
+ * TanStack Query hook for search autocomplete suggestions.
+ * Input is debounced (500 ms) before triggering a request so the backend is
+ * not flooded on every keystroke.
+ */
 import { useQuery } from '@tanstack/react-query'
 import { fetchSearchSuggestions } from '../../api'
 import type { SearchSuggestionsResponse } from '../../types'

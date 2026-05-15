@@ -1,3 +1,7 @@
+/**
+ * TanStack Query hook for fetching all published theme pages (temasider),
+ * optionally filtered by category. Used to build the temaside navigation tree.
+ */
 import { useQuery } from '@tanstack/react-query'
 import { getThemePages } from '../../api'
 import type { ThemePagesResponse } from '../../api'

@@ -1,3 +1,9 @@
+/**
+ * Pure model functions for the SearchPage tab structure.
+ *
+ * Separated from the view-model hook so the tab definitions and ordering
+ * can be unit-tested without a React environment.
+ */
 import {
   SEARCH_MAIN_CATEGORIES,
   type SearchMainCategoryId,

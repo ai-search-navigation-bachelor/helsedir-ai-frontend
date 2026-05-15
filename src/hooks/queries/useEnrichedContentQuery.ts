@@ -1,3 +1,13 @@
+/**
+ * TanStack Query hook for fetching enriched (full-depth) content from the
+ * Helsedirektoratet external API.
+ *
+ * The backend API sometimes returns shallow content without chapter bodies.
+ * This hook supplements that data by fetching the same document directly from
+ * helsedirektoratet.no, giving the content detail view access to the full text,
+ * nested chapters, and Helsedirektoratet-specific fields (styrke, praktisk, etc.).
+ * Falls back to the typed endpoint if the generic ID lookup fails with 400/404.
+ */
 import { useQuery } from '@tanstack/react-query'
 import {
   fetchHelsedirContentById,

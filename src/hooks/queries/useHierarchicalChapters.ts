@@ -1,3 +1,11 @@
+/**
+ * Derives a deduplicated, ordered list of chapter entries from a content node's links.
+ *
+ * Multiple links in the API response can reference the same child document
+ * (e.g. once with metadata and once as a bare href). This hook merges those
+ * duplicates, keeping the richest available data for each entry, so
+ * HierarchicalContentDisplay always has a clean, non-redundant chapter list.
+ */
 import { useMemo } from 'react'
 import type { ContentLink, NestedContent } from '../../types'
 import { getContentIdFromHref, getUniqueChildLinks } from '../../components/content/shared/linkUtils'

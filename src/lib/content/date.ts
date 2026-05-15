@@ -1,3 +1,4 @@
+/** Formats an ISO date string for display in the Norwegian locale (e.g. "15. mai 2025"). */
 export function formatDateLabel(value?: string) {
   if (!value) return ''
   const parsed = new Date(value)

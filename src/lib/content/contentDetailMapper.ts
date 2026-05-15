@@ -1,3 +1,11 @@
+/**
+ * Maps raw {@link NestedContent} objects from the Helsedirektoratet external API
+ * to the normalised {@link ContentDetail} shape used internally by the app.
+ *
+ * The external API uses Norwegian field names (tittel, tekst, lenker) and a
+ * looser link structure than the backend. This mapper bridges the gap so the
+ * rest of the codebase can work with a single content type regardless of source.
+ */
 import type { ContentDetail, ContentLink, NestedContent, RelatedContentLink } from '../../types'
 import { normalizeContentType } from '../../constants/content'
 

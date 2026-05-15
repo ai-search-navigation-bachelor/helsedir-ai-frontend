@@ -1,3 +1,11 @@
+/**
+ * URL helpers for distinguishing internal app routes from helsedirektoratet.no links.
+ *
+ * HTML content from the API contains hrefs that can be absolute Helsedirektoratet
+ * URLs, relative paths within the app, or external links. These helpers classify
+ * and normalise those URLs so the rendered HTML can use React Router navigation
+ * for internal links and open external links in a new tab.
+ */
 import { CONTENT_CATEGORY_GROUPS, CONTENT_ONLY_PREFIXES } from '../constants/contentRoutes'
 import { TEMASIDE_CATEGORY_SLUGS } from '../constants/temasider'
 

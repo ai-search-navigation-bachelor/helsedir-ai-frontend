@@ -1,3 +1,12 @@
+/**
+ * Content statistics API.
+ *
+ * Fetches usage statistics (e.g. page views, geographic breakdowns) for a given
+ * content item. The response shape is normalised here because the backend may
+ * return loosely typed numeric/string values; all coercion helpers in this module
+ * are intentionally private — consumers always receive the typed
+ * {@link ContentStatisticsResponse}.
+ */
 import type { BaseRequestOptions, ContentStatisticsResponse, StatisticPoint, StatisticSeries } from '../types'
 import { BACKEND_BASE_URL } from './backendBaseUrl'
 

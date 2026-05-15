@@ -233,8 +233,8 @@ Konsekvens:
 Eksempler verifisert 2026-02-09:
 
 - Backend:
-  - `GET http://129.241.150.141:8000/content/0006-0002-2422fdad-c242-4175-921d-a7218670bbb4` (`content_type=anbefaling`)
-  - `GET http://129.241.150.141:8000/content/0006-0023-8ed73637-ebdb-4125-9d49-6a4b4b300050` (`content_type=rad`)
+  - `GET <VITE_API_BASE_URL>/content/0006-0002-2422fdad-c242-4175-921d-a7218670bbb4` (`content_type=anbefaling`)
+  - `GET <VITE_API_BASE_URL>/content/0006-0023-8ed73637-ebdb-4125-9d49-6a4b4b300050` (`content_type=rad`)
 - Direkte API:
   - `GET /innhold/anbefalinger/0006-0002-2422fdad-c242-4175-921d-a7218670bbb4` (inkluderer `data.*`)
   - `GET /innhold/rad/0006-0023-8ed73637-ebdb-4125-9d49-6a4b4b300050` (inkluderer `data.*`)

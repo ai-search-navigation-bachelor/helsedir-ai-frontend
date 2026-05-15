@@ -1,3 +1,14 @@
+/**
+ * Primary TanStack Query hook for the content detail page.
+ *
+ * Resolution order:
+ * 1. Try the backend API by path or ID.
+ * 2. On 400/404/405, fall back to the Helsedirektoratet external API by ID.
+ * 3. On a typed Helsedirektoratet 400/404/405, retry using the content-type-specific endpoint.
+ *
+ * Successful Helsedirektoratet responses are stored in the enriched-content cache
+ * so {@link useEnrichedContentQuery} consumers do not need a second fetch.
+ */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   fetchHelsedirContentById,
